@@ -1,7 +1,8 @@
 import { Calendar, Infinity, Trophy, Sun, Moon } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
+import type { HomePageProps } from "../types";
 
-const HomePage = ({ onSelectMode }) => {
+const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
 
   return (

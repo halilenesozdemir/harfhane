@@ -192,9 +192,9 @@ Nurdle, popüler Wordle oyunundan esinlenerek Risale-i Nur külliyatındaki keli
 
 ### Frontend Framework
 
-- **React 18+**: Component-based UI
-- **Vite**: Build tool ve dev server
-- **TypeScript** (opsiyonel): Type safety
+- **React 19+**: Component-based UI
+- **Vite 7**: Build tool ve dev server
+- **TypeScript 5+**: ✅ Type safety (zorunlu) - Strict mode
 
 ### State Management & Data Fetching
 
@@ -416,16 +416,32 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ### Yüksek Öncelik (P0)
 
-#### 1. Tema Sistemi ✅
+#### 1. Tema Sistemi ✅ (Tamamlandı)
 
 - [x] Light/Dark tema değiştirme toggle
 - [x] High contrast mod (CSS hazır, toggle eklenecek)
 - [x] Tema tercihi localStorage'da saklanır (`nurdle:theme`)
 - [x] Sistem teması algılama (prefers-color-scheme)
-- [x] useTheme hook
-- [x] ThemeProvider context
-- [x] SettingsModal bileşeni
+- [x] useTheme hook (TypeScript)
+- [x] ThemeProvider context (TypeScript)
+- [x] SettingsModal bileşeni (TypeScript)
 - [x] Tüm component'lar tema uyumlu
+- [x] CSS Variables ile dinamik renk sistemi
+- [x] Smooth theme transitions
+
+#### 0. TypeScript Migration ✅ (v2.0 için zorunlu)
+
+- [x] TypeScript ve @types paketleri kuruldu
+- [x] tsconfig.json (strict mode)
+- [x] Type definitions (src/types/index.ts)
+- [x] Tüm utils TypeScript'e çevrildi
+- [x] Tüm hooks TypeScript'e çevrildi
+- [x] Tüm components TypeScript'e çevrildi
+- [x] Generic types (useLocalStorage<T>)
+- [x] Context type safety
+- [x] Linter hatası: 0
+- [x] Build başarılı: ✅
+- [x] SECURITY.md oluşturuldu
 
 #### 2. Arşiv Modu
 
@@ -552,6 +568,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 | **Tailwind CSS**   | ^3.4.19  | [tailwindcss.com/docs](https://tailwindcss.com/docs)                                         |
 | **TanStack Query** | ^5.90.16 | [tanstack.com/query/latest](https://tanstack.com/query/latest/docs/framework/react/overview) |
 | **Lucide React**   | ^0.562.0 | [lucide.dev/guide/packages/lucide-react](https://lucide.dev/guide/packages/lucide-react)     |
+| **TypeScript**     | ^5.7.3   | [typescriptlang.org/docs](https://www.typescriptlang.org/docs/)                              |
 
 ### Geliştirme Araçları
 
@@ -562,12 +579,22 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 | **Autoprefixer**         | ^10.4.23 | [github.com/postcss/autoprefixer](https://github.com/postcss/autoprefixer)         |
 | **@vitejs/plugin-react** | ^5.1.1   | [github.com/vitejs/vite-plugin-react](https://github.com/vitejs/vite-plugin-react) |
 
+### TypeScript Types
+
+| Paket                | Versiyon | Açıklama                   |
+| -------------------- | -------- | -------------------------- |
+| **@types/react**     | ^19.0.11 | React type definitions     |
+| **@types/react-dom** | ^19.0.4  | React DOM type definitions |
+| **@types/node**      | ^22.14.0 | Node.js type definitions   |
+
 ### Faydalı Linkler
 
 - **React 19 Yenilikler**: [react.dev/blog/2024/12/05/react-19](https://react.dev/blog/2024/12/05/react-19)
 - **Tailwind CSS Cheat Sheet**: [tailwindcomponents.com/cheatsheet](https://tailwindcomponents.com/cheatsheet/)
 - **Vite Config Reference**: [vitejs.dev/config](https://vitejs.dev/config/)
 - **TanStack Query DevTools**: [tanstack.com/query/latest/docs/framework/react/devtools](https://tanstack.com/query/latest/docs/framework/react/devtools)
+- **TypeScript Handbook**: [typescriptlang.org/docs/handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- **TypeScript Deep Dive**: [basarat.gitbook.io/typescript](https://basarat.gitbook.io/typescript/)
 
 ### Referans Projeler
 
@@ -576,4 +603,62 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ---
 
-**Not:** Bu döküman MVP (v1.0) için temel özelliklere odaklanmaktadır. Proje ilerledikçe güncellenecektir.
+## 🔧 TypeScript Standartları
+
+### Type Safety Kuralları
+
+1. **Strict Mode**: Tüm TypeScript strict flags aktif
+
+   - `strict: true`
+   - `noUnusedLocals: true`
+   - `noUnusedParameters: true`
+   - `noFallthroughCasesInSwitch: true`
+   - `noImplicitReturns: true`
+   - `noUncheckedIndexedAccess: true`
+
+2. **Type Definitions**
+
+   - Tüm types `src/types/index.ts` içinde merkezi olarak tanımlanır
+   - Component props için interface kullanılır
+   - Generic types kullanılır (örn: `useLocalStorage<T>`)
+   - `any` kullanımı yasaktır
+
+3. **Component Type Safety**
+
+   - Tüm component'lar `.tsx` uzantılı
+   - Props için interface tanımı zorunlu
+   - Return type `JSX.Element` veya `JSX.Element | null`
+   - Event handler'lar için doğru type'lar
+
+4. **Hook Type Safety**
+
+   - Custom hook'lar için return type interface
+   - Generic types kullanımı
+   - State types açıkça belirtilir
+
+5. **Utility Function Types**
+   - Tüm fonksiyonlar için parametre ve return type'ları
+   - Pure functions için readonly types
+   - Type guards kullanımı
+
+### Naming Conventions
+
+- **Types/Interfaces**: PascalCase (örn: `GameState`, `TileStatus`)
+- **Type Files**: `index.ts` (types klasöründe)
+- **Component Props**: `ComponentNameProps` (örn: `HeaderProps`)
+- **Enums**: PascalCase values (örn: `GameStatus`)
+
+### Import/Export
+
+```typescript
+// ✅ İyi
+import type { GameState, TileStatus } from "../types";
+import { useState } from "react";
+
+// ❌ Kötü
+import { GameState } from "../types";
+```
+
+---
+
+**Not:** Proje v2.0 ile TypeScript'e tamamen geçirilmiştir. Tüm kod strict mode ile type-safe'tir.

@@ -19,6 +19,7 @@ Risale-i Nur külliyatından kelimelerle oynanan günlük kelime tahmin oyunu.
 ## 🚀 Teknolojiler
 
 - **React 19** - UI framework
+- **TypeScript 5** - Type-safe development (strict mode)
 - **Vite 7** - Build tool
 - **TailwindCSS 3** - Styling
 - **TanStack Query 5** - State management
@@ -34,7 +35,10 @@ npm install
 # Geliştirme sunucusunu başlat
 npm run dev
 
-# Production build
+# TypeScript type kontrolü
+npm run type-check
+
+# Production build (TypeScript check + Vite build)
 npm run build
 
 # Build'i önizle
@@ -91,5 +95,13 @@ Sorularınız için GitHub Issues kullanabilirsiniz.
 
 ---
 
-**Versiyon:** v1.0.0  
+**Versiyon:** v2.0.0 (TypeScript Migration)  
 **Tarih:** 4 Ocak 2026
+
+### 🎉 v2.0 Yenilikleri
+
+- ✅ **TypeScript**: Tüm kod TypeScript'e çevrildi (strict mode)
+- ✅ **Type Safety**: Merkezi type definitions
+- ✅ **Light/Dark Tema**: Sistem, açık, koyu tema seçenekleri
+- ✅ **Settings Modal**: Tema ve ayarlar
+- ✅ **Improved DX**: Better IDE support, autocomplete, type checking

@@ -1,4 +1,8 @@
-const Toast = ({ message }) => {
+interface ToastProps {
+  message: string;
+}
+
+const Toast = ({ message }: ToastProps): React.JSX.Element | null => {
   if (!message) return null;
 
   return (

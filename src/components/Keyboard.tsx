@@ -1,14 +1,15 @@
 import Key from './Key';
+import type { KeyboardProps } from '../types';
 
 // Türkçe Q klavye düzeni
-const KEYBOARD_ROWS = [
+const KEYBOARD_ROWS: string[][] = [
   ['E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Ğ', 'Ü'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ş', 'İ'],
   ['ENTER', 'Z', 'C', 'V', 'B', 'N', 'M', 'Ö', 'Ç', 'BACKSPACE'],
 ];
 
-const Keyboard = ({ onKeyPress, keyboardStatus }) => {
-  const handleKeyClick = (key) => {
+const Keyboard = ({ onKeyPress, keyboardStatus }: KeyboardProps): React.JSX.Element => {
+  const handleKeyClick = (key: string): void => {
     onKeyPress(key);
   };
 

@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
+import type { ModalProps } from '../types';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children }: ModalProps): React.JSX.Element | null => {
   if (!isOpen) return null;
 
   return (

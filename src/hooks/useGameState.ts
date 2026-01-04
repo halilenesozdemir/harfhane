@@ -9,23 +9,48 @@ import {
   getGameNumber,
   normalizeWord
 } from '../utils/gameLogic';
+import type { GameMode, GameState, DailyStats, UnlimitedStats, TileStatus } from '../types';
 import wordsData from '../data/words.json';
 
 const WORD_LENGTH = 5;
-const MAX_GUESSES = 6;
 
 // Rastgele kelime seç (sınırsız mod için)
-const getRandomWord = () => {
+const getRandomWord = (): string => {
   const words = wordsData.dailyWords;
   const randomIndex = Math.floor(Math.random() * words.length);
-  return words[randomIndex];
+  return words[randomIndex]!;
 };
 
-export const useGameState = (mode = 'daily') => {
+interface UseGameStateReturn {
+  // State
+  guesses: string[];
+  evaluations: TileStatus[][];
+  currentGuess: string;
+  gameStatus: 'playing' | 'won' | 'lost';
+  keyboardStatus: Record<string, TileStatus>;
+  solution: string;
+  gameNumber: number;
+  stats: DailyStats | UnlimitedStats;
+  isRevealing: boolean;
+  shakeRow: boolean;
+  message: string;
+  hasSeenHelp: boolean;
+  mode: GameMode;
+  isUnlimited: boolean;
+  
+  // Actions
+  addLetter: (letter: string) => void;
+  removeLetter: () => void;
+  submitGuess: () => void;
+  setHasSeenHelp: (value: boolean) => void;
+  startNewGame: () => void;
+}
+
+export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
   const isUnlimited = mode === 'unlimited';
   
   // Günlük veya rastgele kelime
-  const [solution, setSolution] = useState(() => {
+  const [solution, setSolution] = useState<string>(() => {
     return isUnlimited ? getRandomWord() : getDailyWord(wordsData.dailyWords);
   });
   
@@ -33,7 +58,7 @@ export const useGameState = (mode = 'daily') => {
   const todayString = getTodayString();
 
   // Kalıcı veriler (localStorage) - sadece günlük mod için
-  const [stats, setStats] = useLocalStorage('nurdle:stats', {
+  const [stats, setStats] = useLocalStorage<DailyStats>('nurdle:stats', {
     gamesPlayed: 0,
     gamesWon: 0,
     currentStreak: 0,
@@ -43,14 +68,14 @@ export const useGameState = (mode = 'daily') => {
   });
 
   // Sınırsız mod için ayrı istatistik
-  const [unlimitedStats, setUnlimitedStats] = useLocalStorage('nurdle:unlimited:stats', {
+  const [unlimitedStats, setUnlimitedStats] = useLocalStorage<UnlimitedStats>('nurdle:unlimited:stats', {
     gamesPlayed: 0,
     gamesWon: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0],
   });
 
   // Günlük oyun state'i (localStorage'dan)
-  const [dailyGameState, setDailyGameState] = useLocalStorage(`nurdle:game:${todayString}`, {
+  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`nurdle:game:${todayString}`, {
     guesses: [],
     evaluations: [],
     currentGuess: '',
@@ -59,7 +84,7 @@ export const useGameState = (mode = 'daily') => {
   });
 
   // Sınırsız mod için geçici state
-  const [unlimitedGameState, setUnlimitedGameState] = useState({
+  const [unlimitedGameState, setUnlimitedGameState] = useState<GameState>({
     guesses: [],
     evaluations: [],
     currentGuess: '',
@@ -71,23 +96,22 @@ export const useGameState = (mode = 'daily') => {
   const gameState = isUnlimited ? unlimitedGameState : dailyGameState;
   const setGameState = isUnlimited ? setUnlimitedGameState : setDailyGameState;
   const currentStats = isUnlimited ? unlimitedStats : stats;
-  const setCurrentStats = isUnlimited ? setUnlimitedStats : setStats;
 
-  const [hasSeenHelp, setHasSeenHelp] = useLocalStorage('nurdle:has-seen-help', false);
+  const [hasSeenHelp, setHasSeenHelp] = useLocalStorage<boolean>('nurdle:has-seen-help', false);
 
   // Geçici state'ler (animasyonlar için)
-  const [isRevealing, setIsRevealing] = useState(false);
-  const [shakeRow, setShakeRow] = useState(false);
-  const [message, setMessage] = useState('');
+  const [isRevealing, setIsRevealing] = useState<boolean>(false);
+  const [shakeRow, setShakeRow] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>('');
 
   // Mesajı göster ve temizle
-  const showMessage = useCallback((msg, duration = 2000) => {
+  const showMessage = useCallback((msg: string, duration = 2000): void => {
     setMessage(msg);
     setTimeout(() => setMessage(''), duration);
   }, []);
 
   // Harf ekle
-  const addLetter = useCallback((letter) => {
+  const addLetter = useCallback((letter: string): void => {
     if (gameState.gameStatus !== 'playing') return;
     if (gameState.currentGuess.length >= WORD_LENGTH) return;
     if (isRevealing) return;
@@ -101,7 +125,7 @@ export const useGameState = (mode = 'daily') => {
   }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing, setGameState]);
 
   // Harf sil
-  const removeLetter = useCallback(() => {
+  const removeLetter = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;
     if (gameState.currentGuess.length === 0) return;
     if (isRevealing) return;
@@ -113,7 +137,7 @@ export const useGameState = (mode = 'daily') => {
   }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing, setGameState]);
 
   // Tahmin yap
-  const submitGuess = useCallback(() => {
+  const submitGuess = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;
     if (gameState.currentGuess.length !== WORD_LENGTH) {
       setShakeRow(true);
@@ -151,7 +175,9 @@ export const useGameState = (mode = 'daily') => {
       
       // Oyun bittiyse istatistikleri güncelle
       if (newGameStatus === 'won') {
-        showMessage(['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'][newGuesses.length - 1], 3000);
+        const messages = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'];
+        const messageIndex = newGuesses.length - 1;
+        showMessage(messages[messageIndex] ?? 'Tebrikler!', 3000);
         updateStats(true, newGuesses.length);
       } else if (newGameStatus === 'lost') {
         showMessage(`Kelime: ${solution}`, 5000);
@@ -171,12 +197,13 @@ export const useGameState = (mode = 'daily') => {
   ]);
 
   // İstatistikleri güncelle
-  const updateStats = useCallback((won, guessCount) => {
+  const updateStats = useCallback((won: boolean, guessCount: number): void => {
     if (isUnlimited) {
       setUnlimitedStats(prev => {
         const newDistribution = [...prev.guessDistribution];
-        if (won && guessCount > 0) {
-          newDistribution[guessCount - 1]++;
+        if (won && guessCount > 0 && guessCount <= 6) {
+          const index = guessCount - 1;
+          newDistribution[index] = (newDistribution[index] ?? 0) + 1;
         }
         return {
           gamesPlayed: prev.gamesPlayed + 1,
@@ -188,13 +215,14 @@ export const useGameState = (mode = 'daily') => {
       setStats(prev => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayString = yesterday.toISOString().split('T')[0];
+        const yesterdayString = yesterday.toISOString().split('T')[0]!;
         const isConsecutive = prev.lastPlayedDate === yesterdayString;
         const newCurrentStreak = won ? (isConsecutive ? prev.currentStreak + 1 : 1) : 0;
         
         const newDistribution = [...prev.guessDistribution];
-        if (won && guessCount > 0) {
-          newDistribution[guessCount - 1]++;
+        if (won && guessCount > 0 && guessCount <= 6) {
+          const index = guessCount - 1;
+          newDistribution[index] = (newDistribution[index] ?? 0) + 1;
         }
 
         return {
@@ -210,7 +238,7 @@ export const useGameState = (mode = 'daily') => {
   }, [isUnlimited, setStats, setUnlimitedStats]);
 
   // Yeni oyun başlat (sınırsız mod için)
-  const startNewGame = useCallback(() => {
+  const startNewGame = useCallback((): void => {
     if (!isUnlimited) return;
     
     setSolution(getRandomWord());
@@ -225,7 +253,7 @@ export const useGameState = (mode = 'daily') => {
 
   // Klavye event listener
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey) return;
       
       if (e.key === 'Enter') {

@@ -1,6 +1,8 @@
+import type { TileStatus, TimeCountdown } from '../types';
+
 // Türkçe karakterleri normalize et (büyük harfe çevir)
-export const normalizeChar = (char) => {
-  const turkishMap = {
+export const normalizeChar = (char: string): string => {
+  const turkishMap: Record<string, string> = {
     'i': 'İ',
     'ı': 'I',
     'ğ': 'Ğ',
@@ -14,25 +16,25 @@ export const normalizeChar = (char) => {
 };
 
 // Kelimeyi normalize et (tüm harfleri büyük yap)
-export const normalizeWord = (word) => {
+export const normalizeWord = (word: string): string => {
   return word.split('').map(normalizeChar).join('');
 };
 
 // Günlük kelimeyi seç (tarih bazlı)
-export const getDailyWord = (words) => {
+export const getDailyWord = (words: string[]): string => {
   const today = new Date();
   const startDate = new Date('2026-01-01');
-  const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+  const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   const index = daysSinceStart % words.length;
-  return words[index];
+  return words[index] ?? words[0]!;
 };
 
 // Tahmin sonuçlarını hesapla
-export const evaluateGuess = (guess, solution) => {
-  const result = [];
+export const evaluateGuess = (guess: string, solution: string): TileStatus[] => {
+  const result: TileStatus[] = [];
   const solutionArray = solution.split('');
   const guessArray = guess.split('');
-  const solutionCharCount = {};
+  const solutionCharCount: Record<string, number> = {};
   
   // Çözümdeki harf sayılarını say
   solutionArray.forEach(char => {
@@ -41,9 +43,10 @@ export const evaluateGuess = (guess, solution) => {
   
   // İlk geçiş: Doğru pozisyonları bul
   guessArray.forEach((char, i) => {
-    if (char === solutionArray[i]) {
+    const solutionChar = solutionArray[i];
+    if (char === solutionChar && solutionChar) {
       result[i] = 'correct';
-      solutionCharCount[char]--;
+      solutionCharCount[char] = (solutionCharCount[char] ?? 0) - 1;
     }
   });
   
@@ -51,9 +54,9 @@ export const evaluateGuess = (guess, solution) => {
   guessArray.forEach((char, i) => {
     if (result[i]) return; // Zaten işaretlendi
     
-    if (solutionCharCount[char] > 0) {
+    if ((solutionCharCount[char] ?? 0) > 0) {
       result[i] = 'present';
-      solutionCharCount[char]--;
+      solutionCharCount[char] = (solutionCharCount[char] ?? 0) - 1;
     } else {
       result[i] = 'absent';
     }
@@ -63,16 +66,22 @@ export const evaluateGuess = (guess, solution) => {
 };
 
 // Klavye için harf durumlarını güncelle
-export const updateKeyboardStatus = (currentStatus, guess, evaluation) => {
+export const updateKeyboardStatus = (
+  currentStatus: Record<string, TileStatus>,
+  guess: string,
+  evaluation: TileStatus[]
+): Record<string, TileStatus> => {
   const newStatus = { ...currentStatus };
-  const statusPriority = { 'correct': 3, 'present': 2, 'absent': 1 };
+  const statusPriority: Record<string, number> = { 'correct': 3, 'present': 2, 'absent': 1 };
   
   guess.split('').forEach((char, i) => {
-    const currentPriority = statusPriority[newStatus[char]] || 0;
-    const newPriority = statusPriority[evaluation[i]];
+    const currentStatus = newStatus[char];
+    const currentPriority = currentStatus ? statusPriority[currentStatus] || 0 : 0;
+    const evalStatus = evaluation[i];
+    const newPriority = evalStatus ? statusPriority[evalStatus] || 0 : 0;
     
-    if (newPriority > currentPriority) {
-      newStatus[char] = evaluation[i];
+    if (newPriority > currentPriority && evalStatus) {
+      newStatus[char] = evalStatus;
     }
   });
   
@@ -80,7 +89,7 @@ export const updateKeyboardStatus = (currentStatus, guess, evaluation) => {
 };
 
 // Oyun durumunu kontrol et
-export const checkGameStatus = (guesses, solution) => {
+export const checkGameStatus = (guesses: string[], solution: string): 'won' | 'lost' | 'playing' => {
   const lastGuess = guesses[guesses.length - 1];
   
   if (lastGuess === solution) {
@@ -95,13 +104,13 @@ export const checkGameStatus = (guesses, solution) => {
 };
 
 // Sonraki güne kalan süreyi hesapla
-export const getTimeUntilMidnight = () => {
+export const getTimeUntilMidnight = (): TimeCountdown => {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   
-  const diff = tomorrow - now;
+  const diff = tomorrow.getTime() - now.getTime();
   
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -115,8 +124,13 @@ export const getTimeUntilMidnight = () => {
 };
 
 // Paylaşım metnini oluştur
-export const generateShareText = (guesses, evaluations, modeText, isWon) => {
-  const emojiMap = {
+export const generateShareText = (
+  guesses: string[],
+  evaluations: TileStatus[][],
+  modeText: string | number,
+  isWon: boolean
+): string => {
+  const emojiMap: Record<string, string> = {
     'correct': '🟩',
     'present': '🟨',
     'absent': '⬜',
@@ -127,7 +141,7 @@ export const generateShareText = (guesses, evaluations, modeText, isWon) => {
   let text = `Nurdle ${modeText} ${attemptText}\n\n`;
   
   evaluations.forEach(evaluation => {
-    const row = evaluation.map(status => emojiMap[status]).join('');
+    const row = evaluation.map(status => (status ? emojiMap[status] : '⬜') || '⬜').join('');
     text += row + '\n';
   });
   
@@ -137,15 +151,14 @@ export const generateShareText = (guesses, evaluations, modeText, isWon) => {
 };
 
 // Bugünün tarihini YYYY-MM-DD formatında al
-export const getTodayString = () => {
+export const getTodayString = (): string => {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  return today.toISOString().split('T')[0]!;
 };
 
 // Oyun numarasını hesapla
-export const getGameNumber = () => {
+export const getGameNumber = (): number => {
   const startDate = new Date('2026-01-01');
   const today = new Date();
-  return Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  return Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 };
-

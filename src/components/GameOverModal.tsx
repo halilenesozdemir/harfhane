@@ -2,8 +2,14 @@ import { useState, useEffect } from 'react';
 import { Share2, Check, RotateCcw, Home } from 'lucide-react';
 import Modal from './Modal';
 import { getTimeUntilMidnight, generateShareText } from '../utils/gameLogic';
+import type { GameOverModalProps, TimeCountdown } from '../types';
 
-const StatBox = ({ value, label }) => (
+interface StatBoxProps {
+  value: number;
+  label: string;
+}
+
+const StatBox = ({ value, label }: StatBoxProps): React.JSX.Element => (
   <div className="flex flex-col items-center">
     <span className="text-2xl font-bold text-text-primary">{value}</span>
     <span className="text-xs text-text-secondary">{label}</span>
@@ -22,9 +28,9 @@ const GameOverModal = ({
   isUnlimited,
   onPlayAgain,
   onGoHome,
-}) => {
-  const [countdown, setCountdown] = useState(getTimeUntilMidnight());
-  const [copied, setCopied] = useState(false);
+}: GameOverModalProps): React.JSX.Element => {
+  const [countdown, setCountdown] = useState<TimeCountdown>(getTimeUntilMidnight());
+  const [copied, setCopied] = useState<boolean>(false);
 
   // Geri sayım (sadece günlük mod)
   useEffect(() => {
@@ -38,7 +44,7 @@ const GameOverModal = ({
   }, [isOpen, isUnlimited]);
 
   // Paylaş
-  const handleShare = async () => {
+  const handleShare = async (): Promise<void> => {
     const modeText = isUnlimited ? 'Sınırsız' : `#${gameNumber}`;
     const shareText = generateShareText(
       guesses,
@@ -85,7 +91,7 @@ const GameOverModal = ({
         <div className="grid grid-cols-4 gap-2 py-4 border-y border-border-color">
           <StatBox value={stats.gamesPlayed} label="Oyun" />
           <StatBox value={winPercentage} label="Kazanma %" />
-          {!isUnlimited && (
+          {!isUnlimited && 'currentStreak' in stats && (
             <>
               <StatBox value={stats.currentStreak} label="Seri" />
               <StatBox value={stats.maxStreak} label="En İyi" />

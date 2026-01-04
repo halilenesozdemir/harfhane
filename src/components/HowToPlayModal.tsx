@@ -1,7 +1,13 @@
 import Modal from './Modal';
+import type { TileStatus } from '../types';
 
-const ExampleTile = ({ letter, status }) => {
-  const getStatusClasses = () => {
+interface ExampleTileProps {
+  letter: string;
+  status?: TileStatus;
+}
+
+const ExampleTile = ({ letter, status }: ExampleTileProps): React.JSX.Element => {
+  const getStatusClasses = (): string => {
     switch (status) {
       case 'correct':
         return 'bg-correct text-white';
@@ -21,7 +27,12 @@ const ExampleTile = ({ letter, status }) => {
   );
 };
 
-const HowToPlayModal = ({ isOpen, onClose }) => {
+interface HowToPlayModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps): React.JSX.Element => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nasıl Oynanır?">
       <div className="text-text-primary space-y-4">

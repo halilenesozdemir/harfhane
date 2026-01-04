@@ -1,7 +1,8 @@
 import { HelpCircle, BarChart2, Settings, Sun, Moon } from 'lucide-react';
 import { useThemeContext } from '../context/ThemeContext';
+import type { HeaderProps } from '../types';
 
-const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }) => {
+const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }: HeaderProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
 
   return (

@@ -1,5 +1,7 @@
-const Key = ({ keyValue, onClick, status, isWide = false }) => {
-  const getStatusClasses = () => {
+import type { KeyProps } from '../types';
+
+const Key = ({ keyValue, onClick, status, isWide = false }: KeyProps): React.JSX.Element => {
+  const getStatusClasses = (): string => {
     switch (status) {
       case 'correct':
         return 'bg-correct text-white';
@@ -12,7 +14,7 @@ const Key = ({ keyValue, onClick, status, isWide = false }) => {
     }
   };
 
-  const displayValue = () => {
+  const displayValue = (): string => {
     if (keyValue === 'ENTER') return 'ENTER';
     if (keyValue === 'BACKSPACE') return '⌫';
     return keyValue;

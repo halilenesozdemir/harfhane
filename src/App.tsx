@@ -11,10 +11,16 @@ import StatsModal from './components/StatsModal';
 import GameOverModal from './components/GameOverModal';
 import SettingsModal from './components/SettingsModal';
 import { useGameState } from './hooks/useGameState';
+import type { GameMode } from './types';
 
 const queryClient = new QueryClient();
 
-function Game({ mode, onGoHome }) {
+interface GameProps {
+  mode: GameMode;
+  onGoHome: () => void;
+}
+
+function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
   const {
     guesses,
     evaluations,
@@ -37,10 +43,10 @@ function Game({ mode, onGoHome }) {
   } = useGameState(mode);
 
   // Modal states
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showStatsModal, setShowStatsModal] = useState(false);
-  const [showGameOverModal, setShowGameOverModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
+  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
 
   // İlk girişte yardım modalını göster
   useEffect(() => {
@@ -58,10 +64,11 @@ function Game({ mode, onGoHome }) {
       }, 1500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [gameStatus]);
 
   // Klavye tuşlarını handle et
-  const handleKeyPress = (key) => {
+  const handleKeyPress = (key: string): void => {
     if (key === 'ENTER') {
       submitGuess();
     } else if (key === 'BACKSPACE') {
@@ -72,13 +79,13 @@ function Game({ mode, onGoHome }) {
   };
 
   // Tekrar oyna (sınırsız mod)
-  const handlePlayAgain = () => {
+  const handlePlayAgain = (): void => {
     setShowGameOverModal(false);
     startNewGame();
   };
 
   // Ana sayfaya dön
-  const handleGoHome = () => {
+  const handleGoHome = (): void => {
     setShowGameOverModal(false);
     onGoHome();
   };
@@ -155,29 +162,33 @@ function Game({ mode, onGoHome }) {
   );
 }
 
-function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home', 'daily', 'unlimited'
+type ViewType = 'home' | 'daily' | 'unlimited';
 
-  const handleSelectMode = (mode) => {
+function App(): React.JSX.Element {
+  const [currentView, setCurrentView] = useState<ViewType>('home');
+
+  const handleSelectMode = (mode: GameMode): void => {
     setCurrentView(mode);
   };
 
-  const handleGoHome = () => {
+  const handleGoHome = (): void => {
     setCurrentView('home');
+  };
+
+  const renderView = (): React.JSX.Element => {
+    if (currentView === 'home') {
+      return <HomePage onSelectMode={handleSelectMode} />;
+    }
+    if (currentView === 'daily') {
+      return <Game mode="daily" onGoHome={handleGoHome} />;
+    }
+    return <Game mode="unlimited" onGoHome={handleGoHome} />;
   };
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        {currentView === 'home' && (
-          <HomePage onSelectMode={handleSelectMode} />
-        )}
-        {currentView === 'daily' && (
-          <Game mode="daily" onGoHome={handleGoHome} />
-        )}
-        {currentView === 'unlimited' && (
-          <Game mode="unlimited" onGoHome={handleGoHome} />
-        )}
+        {renderView()}
       </ThemeProvider>
     </QueryClientProvider>
   );

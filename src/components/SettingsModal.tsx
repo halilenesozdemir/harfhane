@@ -1,8 +1,17 @@
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
 import Modal from './Modal';
 import { useThemeContext } from '../context/ThemeContext';
+import type { Theme } from '../types';
 
-const ThemeOption = ({ icon: Icon, label, value, isActive, onClick }) => (
+interface ThemeOptionProps {
+  icon: LucideIcon;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const ThemeOption = ({ icon: Icon, label, isActive, onClick }: ThemeOptionProps): React.JSX.Element => (
   <button
     onClick={onClick}
     className={`
@@ -19,10 +28,15 @@ const ThemeOption = ({ icon: Icon, label, value, isActive, onClick }) => (
   </button>
 );
 
-const SettingsModal = ({ isOpen, onClose }) => {
+interface SettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Element => {
   const { theme, setTheme, resolvedTheme } = useThemeContext();
 
-  const themeOptions = [
+  const themeOptions: Array<{ icon: LucideIcon; label: string; value: Theme }> = [
     { icon: Sun, label: 'Açık Tema', value: 'light' },
     { icon: Moon, label: 'Koyu Tema', value: 'dark' },
     { icon: Monitor, label: 'Sistem Ayarı', value: 'system' },
@@ -40,7 +54,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
                 key={option.value}
                 icon={option.icon}
                 label={option.label}
-                value={option.value}
                 isActive={theme === option.value}
                 onClick={() => setTheme(option.value)}
               />
@@ -95,4 +108,3 @@ const SettingsModal = ({ isOpen, onClose }) => {
 };
 
 export default SettingsModal;
-

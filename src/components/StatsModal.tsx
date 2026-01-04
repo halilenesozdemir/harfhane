@@ -1,13 +1,26 @@
 import Modal from './Modal';
+import type { StatsModalProps } from '../types';
 
-const StatBox = ({ value, label }) => (
+interface StatBoxProps {
+  value: number;
+  label: string;
+}
+
+const StatBox = ({ value, label }: StatBoxProps): React.JSX.Element => (
   <div className="flex flex-col items-center">
     <span className="text-3xl font-bold text-text-primary">{value}</span>
     <span className="text-xs text-text-secondary">{label}</span>
   </div>
 );
 
-const DistributionBar = ({ count, maxCount, guessNumber, isHighlighted }) => {
+interface DistributionBarProps {
+  count: number;
+  maxCount: number;
+  guessNumber: number;
+  isHighlighted: boolean;
+}
+
+const DistributionBar = ({ count, maxCount, guessNumber, isHighlighted }: DistributionBarProps): React.JSX.Element => {
   const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
   const minWidth = count > 0 ? Math.max(percentage, 7) : 7;
 
@@ -24,7 +37,7 @@ const DistributionBar = ({ count, maxCount, guessNumber, isHighlighted }) => {
   );
 };
 
-const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnlimited }) => {
+const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnlimited }: StatsModalProps): React.JSX.Element => {
   const winPercentage = stats.gamesPlayed > 0 
     ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) 
     : 0;
@@ -38,7 +51,7 @@ const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
         <div className={`grid ${isUnlimited ? 'grid-cols-3' : 'grid-cols-4'} gap-2 mb-6`}>
           <StatBox value={stats.gamesPlayed} label="Oyun" />
           <StatBox value={winPercentage} label="Kazanma %" />
-          {!isUnlimited && (
+          {!isUnlimited && 'currentStreak' in stats && (
             <>
               <StatBox value={stats.currentStreak} label="Seri" />
               <StatBox value={stats.maxStreak} label="En İyi Seri" />

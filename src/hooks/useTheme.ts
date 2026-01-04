@@ -1,16 +1,17 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import type { Theme, ThemeContextValue } from '../types';
 
 /**
  * Theme hook for managing light/dark/system theme
- * @returns {Object} theme state and controls
+ * @returns {ThemeContextValue} theme state and controls
  */
-export const useTheme = () => {
+export const useTheme = (): ThemeContextValue => {
   // Stored preference: 'light' | 'dark' | 'system'
-  const [themePreference, setThemePreference] = useLocalStorage('nurdle:theme', 'system');
+  const [themePreference, setThemePreference] = useLocalStorage<Theme>('nurdle:theme', 'system');
   
   // Track system preference
-  const [systemTheme, setSystemTheme] = useState(() => {
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
@@ -19,7 +20,7 @@ export const useTheme = () => {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    const handleChange = (e) => {
+    const handleChange = (e: MediaQueryListEvent): void => {
       setSystemTheme(e.matches ? 'dark' : 'light');
     };
 
@@ -28,7 +29,7 @@ export const useTheme = () => {
   }, []);
 
   // Resolve actual theme to apply
-  const resolvedTheme = useMemo(() => {
+  const resolvedTheme = useMemo<'light' | 'dark'>(() => {
     if (themePreference === 'system') {
       return systemTheme;
     }
@@ -55,11 +56,11 @@ export const useTheme = () => {
   }, [resolvedTheme]);
 
   // Theme setters
-  const setTheme = useCallback((theme) => {
+  const setTheme = useCallback((theme: Theme): void => {
     setThemePreference(theme);
   }, [setThemePreference]);
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = useCallback((): void => {
     if (themePreference === 'system') {
       // If system, switch to opposite of current
       setThemePreference(systemTheme === 'dark' ? 'light' : 'dark');
@@ -69,25 +70,24 @@ export const useTheme = () => {
     }
   }, [themePreference, systemTheme, setThemePreference]);
 
-  const setSystemPreference = useCallback(() => {
+  const setSystemPreference = useCallback((): void => {
     setThemePreference('system');
   }, [setThemePreference]);
 
   return {
     // Current values
-    theme: themePreference,        // User's preference: 'light' | 'dark' | 'system'
-    resolvedTheme,                 // Actually applied: 'light' | 'dark'
-    systemTheme,                   // System preference: 'light' | 'dark'
+    theme: themePreference,
+    resolvedTheme,
+    systemTheme,
     isDark: resolvedTheme === 'dark',
     isLight: resolvedTheme === 'light',
     isSystem: themePreference === 'system',
     
     // Actions
-    setTheme,                      // Set specific theme
-    toggleTheme,                   // Toggle between light/dark
-    setSystemPreference,           // Use system preference
+    setTheme,
+    toggleTheme,
+    setSystemPreference,
   };
 };
 
 export default useTheme;
-

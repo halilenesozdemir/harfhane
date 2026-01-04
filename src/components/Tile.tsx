@@ -1,5 +1,7 @@
-const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }) => {
-  const getStatusClasses = () => {
+import type { TileProps } from '../types';
+
+const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }: TileProps): React.JSX.Element => {
+  const getStatusClasses = (): string => {
     if (!status) return '';
     switch (status) {
       case 'correct':
@@ -13,14 +15,14 @@ const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }) => {
     }
   };
 
-  const getBorderClass = () => {
+  const getBorderClass = (): string => {
     if (status) return '';
     if (isFilled) return 'border-tile-filled';
     return 'border-tile-empty';
   };
 
   // Text color: white on status colors, otherwise theme-based
-  const getTextClass = () => {
+  const getTextClass = (): string => {
     if (status) return 'text-white';
     return 'text-text-primary';
   };
