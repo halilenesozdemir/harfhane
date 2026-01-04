@@ -2,13 +2,13 @@ const Key = ({ keyValue, onClick, status, isWide = false }) => {
   const getStatusClasses = () => {
     switch (status) {
       case 'correct':
-        return 'bg-correct';
+        return 'bg-correct text-white';
       case 'present':
-        return 'bg-present';
+        return 'bg-present text-white';
       case 'absent':
-        return 'bg-absent';
+        return 'bg-absent text-white';
       default:
-        return 'bg-key-bg';
+        return 'bg-key-bg text-text-primary';
     }
   };
 
@@ -26,7 +26,7 @@ const Key = ({ keyValue, onClick, status, isWide = false }) => {
         h-14
         ${getStatusClasses()}
         rounded-md
-        text-white text-sm md:text-base font-semibold
+        text-sm md:text-base font-semibold
         flex items-center justify-center
         transition-all duration-100
         active:scale-95

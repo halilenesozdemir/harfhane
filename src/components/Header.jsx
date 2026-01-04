@@ -1,8 +1,11 @@
-import { HelpCircle, BarChart2, Settings } from 'lucide-react';
+import { HelpCircle, BarChart2, Settings, Sun, Moon } from 'lucide-react';
+import { useThemeContext } from '../context/ThemeContext';
 
 const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }) => {
+  const { isDark, toggleTheme } = useThemeContext();
+
   return (
-    <header className="w-full border-b border-tile-empty py-3 px-4">
+    <header className="w-full border-b border-border-color py-3 px-4 bg-bg-primary">
       <div className="max-w-lg mx-auto flex items-center justify-between">
         {/* Sol - Logo */}
         <div className="flex items-center gap-2">
@@ -21,39 +24,51 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
             onClick={onTitleClick}
             className="hover:opacity-80 transition-opacity"
           >
-            <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-white">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-text-primary">
               NURDLE
             </h1>
           </button>
           {modeLabel && (
-            <span className="text-xs text-gray-400 block -mt-1">
+            <span className="text-xs text-text-secondary block -mt-1">
               {modeLabel}
             </span>
           )}
         </div>
         
         {/* Sağ - Butonlar */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          {/* Tema Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 hover:bg-tile-empty rounded-md transition-colors"
+            aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
+          >
+            {isDark ? (
+              <Sun size={22} className="text-text-primary" />
+            ) : (
+              <Moon size={22} className="text-text-primary" />
+            )}
+          </button>
           <button
             onClick={onHelpClick}
             className="p-2 hover:bg-tile-empty rounded-md transition-colors"
             aria-label="Nasıl Oynanır"
           >
-            <HelpCircle size={24} className="text-white" />
+            <HelpCircle size={22} className="text-text-primary" />
           </button>
           <button
             onClick={onStatsClick}
             className="p-2 hover:bg-tile-empty rounded-md transition-colors"
             aria-label="İstatistikler"
           >
-            <BarChart2 size={24} className="text-white" />
+            <BarChart2 size={22} className="text-text-primary" />
           </button>
           <button
             onClick={onSettingsClick}
             className="p-2 hover:bg-tile-empty rounded-md transition-colors"
             aria-label="Ayarlar"
           >
-            <Settings size={24} className="text-white" />
+            <Settings size={22} className="text-text-primary" />
           </button>
         </div>
       </div>

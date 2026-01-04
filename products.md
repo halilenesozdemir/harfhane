@@ -416,12 +416,16 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ### Yüksek Öncelik (P0)
 
-#### 1. Tema Sistemi
+#### 1. Tema Sistemi ✅
 
-- [ ] Light/Dark tema değiştirme toggle
-- [ ] High contrast mod (erişilebilirlik)
-- [ ] Tema tercihi localStorage'da saklanır
-- [ ] Sistem teması algılama (prefers-color-scheme)
+- [x] Light/Dark tema değiştirme toggle
+- [x] High contrast mod (CSS hazır, toggle eklenecek)
+- [x] Tema tercihi localStorage'da saklanır (`nurdle:theme`)
+- [x] Sistem teması algılama (prefers-color-scheme)
+- [x] useTheme hook
+- [x] ThemeProvider context
+- [x] SettingsModal bileşeni
+- [x] Tüm component'lar tema uyumlu
 
 #### 2. Arşiv Modu
 

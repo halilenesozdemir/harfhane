@@ -2,6 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme CSS Variables */
+:root {
+  /* Light Theme (default for light class) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f3f3;
+  --tile-empty: #d3d6da;
+  --tile-filled: #878a8c;
+  --key-bg: #d3d6da;
+  --text-primary: #1a1a1b;
+  --text-secondary: #787c7e;
+  --border-color: #d3d6da;
+}
+
+/* Dark Theme */
+.dark {
+  --bg-primary: #121213;
+  --bg-secondary: #1a1a1b;
+  --tile-empty: #3a3a3c;
+  --tile-filled: #565758;
+  --key-bg: #818384;
+  --text-primary: #ffffff;
+  --text-secondary: #818384;
+  --border-color: #3a3a3c;
+}
+
+/* Light Theme explicit (for when class is set) */
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f3f3;
+  --tile-empty: #d3d6da;
+  --tile-filled: #878a8c;
+  --key-bg: #d3d6da;
+  --text-primary: #1a1a1b;
+  --text-secondary: #787c7e;
+  --border-color: #d3d6da;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #000000;
+  --tile-empty: #565758;
+  --tile-filled: #565758;
+  --key-bg: #565758;
+  --text-primary: #ffffff;
+  --text-secondary: #ffffff;
+  --border-color: #565758;
+}
+
+.high-contrast .bg-correct {
+  background-color: #f5793a !important;
+}
+
+.high-contrast .bg-present {
+  background-color: #85c0f9 !important;
+}
+
+/* Base styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Tile flip animation with delay support */
 .tile-flip {
   animation: flip 0.5s ease-in-out forwards;
@@ -17,4 +91,18 @@
   0% { transform: rotateX(0deg); }
   50% { transform: rotateX(90deg); }
   100% { transform: rotateX(0deg); }
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Disable transitions on animations */
+.tile-flip,
+.tile-flip *,
+.animate-pop,
+.animate-shake,
+.animate-bounce-in {
+  transition: none !important;
 }

@@ -4,17 +4,24 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       colors: {
+        // Game colors (same in both themes)
         correct: '#6aaa64',
         present: '#c9b458',
         absent: '#3a3a3c',
-        'bg-primary': '#121213',
-        'bg-secondary': '#1a1a1b',
-        'tile-empty': '#3a3a3c',
-        'tile-filled': '#565758',
-        'key-bg': '#818384',
+        
+        // Dark theme colors
+        'bg-primary': 'var(--bg-primary)',
+        'bg-secondary': 'var(--bg-secondary)',
+        'tile-empty': 'var(--tile-empty)',
+        'tile-filled': 'var(--tile-filled)',
+        'key-bg': 'var(--key-bg)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'border-color': 'var(--border-color)',
       },
       animation: {
         'pop': 'pop 0.1s ease-in-out',
@@ -53,4 +60,3 @@ export default {
   },
   plugins: [],
 }
-

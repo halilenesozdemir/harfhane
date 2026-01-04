@@ -5,8 +5,8 @@ import { getTimeUntilMidnight, generateShareText } from '../utils/gameLogic';
 
 const StatBox = ({ value, label }) => (
   <div className="flex flex-col items-center">
-    <span className="text-2xl font-bold text-white">{value}</span>
-    <span className="text-xs text-gray-400">{label}</span>
+    <span className="text-2xl font-bold text-text-primary">{value}</span>
+    <span className="text-xs text-text-secondary">{label}</span>
   </div>
 );
 
@@ -66,23 +66,23 @@ const GameOverModal = ({
       onClose={onClose} 
       title={gameStatus === 'won' ? 'Tebrikler! 🎉' : 'Oyun Bitti'}
     >
-      <div className="text-white space-y-6">
+      <div className="space-y-6">
         {/* Sonuç Mesajı */}
         <div className="text-center">
           {gameStatus === 'won' ? (
-            <p className="text-lg">
+            <p className="text-lg text-text-primary">
               Kelimeyi <span className="text-correct font-bold">{guesses.length}</span> denemede buldunuz!
             </p>
           ) : (
             <div>
-              <p className="text-lg mb-2">Kelime:</p>
+              <p className="text-lg mb-2 text-text-primary">Kelime:</p>
               <p className="text-2xl font-bold text-present">{solution}</p>
             </div>
           )}
         </div>
 
         {/* Mini İstatistikler */}
-        <div className="grid grid-cols-4 gap-2 py-4 border-y border-tile-empty">
+        <div className="grid grid-cols-4 gap-2 py-4 border-y border-border-color">
           <StatBox value={stats.gamesPlayed} label="Oyun" />
           <StatBox value={winPercentage} label="Kazanma %" />
           {!isUnlimited && (
@@ -102,8 +102,8 @@ const GameOverModal = ({
         {/* Sonraki Kelime Geri Sayım (sadece günlük mod) */}
         {!isUnlimited && (
           <div className="text-center">
-            <p className="text-sm text-gray-400 mb-2">Sonraki Nurdle</p>
-            <p className="text-3xl font-mono font-bold">
+            <p className="text-sm text-text-secondary mb-2">Sonraki Nurdle</p>
+            <p className="text-3xl font-mono font-bold text-text-primary">
               {countdown.hours}:{countdown.minutes}:{countdown.seconds}
             </p>
           </div>
@@ -143,7 +143,7 @@ const GameOverModal = ({
           {/* Ana Sayfa Butonu */}
           <button
             onClick={onGoHome}
-            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-tile-empty hover:bg-tile-filled text-white flex items-center justify-center gap-2 transition-all duration-200"
+            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-tile-empty hover:bg-tile-filled text-text-primary flex items-center justify-center gap-2 transition-all duration-200"
           >
             <Home size={20} />
             Ana Sayfa

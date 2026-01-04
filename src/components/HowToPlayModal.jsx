@@ -1,23 +1,21 @@
-import Modal from "./Modal";
+import Modal from './Modal';
 
 const ExampleTile = ({ letter, status }) => {
   const getStatusClasses = () => {
     switch (status) {
-      case "correct":
-        return "bg-correct";
-      case "present":
-        return "bg-present";
-      case "absent":
-        return "bg-absent";
+      case 'correct':
+        return 'bg-correct text-white';
+      case 'present':
+        return 'bg-present text-white';
+      case 'absent':
+        return 'bg-absent text-white';
       default:
-        return "border-2 border-tile-empty";
+        return 'border-2 border-tile-empty text-text-primary';
     }
   };
 
   return (
-    <div
-      className={`w-10 h-10 flex items-center justify-center text-lg font-bold text-white ${getStatusClasses()}`}
-    >
+    <div className={`w-10 h-10 flex items-center justify-center text-lg font-bold ${getStatusClasses()}`}>
       {letter}
     </div>
   );
@@ -26,26 +24,26 @@ const ExampleTile = ({ letter, status }) => {
 const HowToPlayModal = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nasıl Oynanır?">
-      <div className="text-white space-y-4">
+      <div className="text-text-primary space-y-4">
         <p>
           <strong>NURDLE</strong> kelimesini 6 denemede tahmin edin.
         </p>
-
-        <p>
-          Her tahmin, Risale-i Nur külliyatından 5 harfli geçerli bir kelime
-          olmalıdır. Tahmini göndermek için Enter tuşuna basın.
+        
+        <p className="text-text-secondary">
+          Her tahmin, Risale-i Nur külliyatından 5 harfli geçerli bir kelime olmalıdır.
+          Tahmini göndermek için Enter tuşuna basın.
+        </p>
+        
+        <p className="text-text-secondary">
+          Her tahminden sonra, kutucukların rengi harflerin doğru kelimeye ne kadar
+          yakın olduğunu gösterecek şekilde değişecektir.
         </p>
 
-        <p>
-          Her tahminden sonra, kutucukların rengi harflerin doğru kelimeye ne
-          kadar yakın olduğunu gösterecek şekilde değişecektir.
-        </p>
-
-        <hr className="border-tile-empty" />
+        <hr className="border-border-color" />
 
         <div>
           <p className="font-bold mb-2">Örnekler</p>
-
+          
           {/* Örnek 1 - Doğru */}
           <div className="mb-4">
             <div className="flex gap-1 mb-2">
@@ -55,8 +53,8 @@ const HowToPlayModal = ({ isOpen, onClose }) => {
               <ExampleTile letter="L" />
               <ExampleTile letter="U" />
             </div>
-            <p className="text-sm text-gray-300">
-              <strong>N</strong> harfi kelimede var ve doğru yerde.
+            <p className="text-sm text-text-secondary">
+              <strong className="text-text-primary">N</strong> harfi kelimede var ve doğru yerde.
             </p>
           </div>
 
@@ -69,8 +67,8 @@ const HowToPlayModal = ({ isOpen, onClose }) => {
               <ExampleTile letter="I" />
               <ExampleTile letter="R" />
             </div>
-            <p className="text-sm text-gray-300">
-              <strong>A</strong> harfi kelimede var ama yanlış yerde.
+            <p className="text-sm text-text-secondary">
+              <strong className="text-text-primary">A</strong> harfi kelimede var ama yanlış yerde.
             </p>
           </div>
 
@@ -83,19 +81,19 @@ const HowToPlayModal = ({ isOpen, onClose }) => {
               <ExampleTile letter="Ü" />
               <ExampleTile letter="R" />
             </div>
-            <p className="text-sm text-gray-300">
-              <strong>K</strong> harfi kelimede hiç yok.
+            <p className="text-sm text-text-secondary">
+              <strong className="text-text-primary">K</strong> harfi kelimede hiç yok.
             </p>
           </div>
         </div>
 
-        <hr className="border-tile-empty" />
+        <hr className="border-border-color" />
 
-        <p className="text-sm text-gray-300">
-          Her gün yeni bir <strong>NURDLE</strong> kelimesi gelir!
+        <p className="text-sm text-text-secondary">
+          Her gün yeni bir <strong className="text-text-primary">NURDLE</strong> kelimesi gelir!
         </p>
-
-        <p className="text-sm text-gray-400 italic">
+        
+        <p className="text-sm text-text-secondary/70 italic">
           Risale-i Nur külliyatından öğrenirken eğlenin.
         </p>
       </div>

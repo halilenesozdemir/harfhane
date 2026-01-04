@@ -46,11 +46,13 @@ git push --tags
 ### 4. Custom Domain (Opsiyonel)
 
 #### Vercel'de:
+
 1. Project Settings → Domains
 2. Domain ekle: `nurdle.app` (veya istediğin domain)
 3. DNS ayarlarını yap
 
 #### Netlify'de:
+
 1. Domain Settings → Add custom domain
 2. DNS kayıtlarını güncelle
 
@@ -101,6 +103,7 @@ git push -u origin feat/v2.0
 ## Sorun Giderme
 
 ### Port zaten kullanımda
+
 ```bash
 # Process'i kill et
 lsof -ti:5173 | xargs kill -9
@@ -110,6 +113,7 @@ npm run dev -- --port 3000
 ```
 
 ### Build hatası
+
 ```bash
 # Cache temizle
 rm -rf node_modules dist
@@ -126,8 +130,8 @@ npm run build
 ---
 
 **Not:** Her deployment sonrası manuel test yapılmalı:
+
 - ✅ Ana sayfa yükleniyor mu?
 - ✅ Her iki mod çalışıyor mu?
 - ✅ Mobil görünüm düzgün mü?
 - ✅ Paylaşım çalışıyor mu?
-

@@ -1,17 +1,33 @@
-import { Calendar, Infinity, Trophy } from "lucide-react";
+import { Calendar, Infinity, Trophy, Sun, Moon } from "lucide-react";
+import { useThemeContext } from "../context/ThemeContext";
 
 const HomePage = ({ onSelectMode }) => {
+  const { isDark, toggleTheme } = useThemeContext();
+
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
+      {/* Tema Toggle - Sağ Üst */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 p-3 hover:bg-tile-empty rounded-full transition-colors"
+        aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
+      >
+        {isDark ? (
+          <Sun size={24} className="text-text-primary" />
+        ) : (
+          <Moon size={24} className="text-text-primary" />
+        )}
+      </button>
+
       {/* Logo ve Başlık */}
       <div className="text-center mb-12">
         <div className="w-20 h-20 bg-correct rounded-xl flex items-center justify-center mx-auto mb-4">
           <span className="text-white font-bold text-4xl">N</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-white tracking-wider mb-2">
+        <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">
           NURDLE
         </h1>
-        <p className="text-gray-400 text-lg">Risale-i Nur Kelime Oyunu</p>
+        <p className="text-text-secondary text-lg">Risale-i Nur Kelime Oyunu</p>
       </div>
 
       {/* Mod Seçimi */}
@@ -56,10 +72,10 @@ const HomePage = ({ onSelectMode }) => {
 
       {/* Alt Bilgi */}
       <div className="mt-12 text-center">
-        <p className="text-gray-500 text-sm">
+        <p className="text-text-secondary text-sm">
           Risale-i Nur külliyatından kelimelerle
         </p>
-        <p className="text-gray-600 text-xs mt-1">v1.0.0</p>
+        <p className="text-text-secondary/60 text-xs mt-1">v2.0.0</p>
       </div>
     </div>
   );

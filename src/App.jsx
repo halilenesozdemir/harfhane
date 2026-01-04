@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './context/ThemeContext';
 import HomePage from './components/HomePage';
 import Header from './components/Header';
 import GameGrid from './components/GameGrid';
@@ -8,6 +9,7 @@ import Toast from './components/Toast';
 import HowToPlayModal from './components/HowToPlayModal';
 import StatsModal from './components/StatsModal';
 import GameOverModal from './components/GameOverModal';
+import SettingsModal from './components/SettingsModal';
 import { useGameState } from './hooks/useGameState';
 
 const queryClient = new QueryClient();
@@ -38,6 +40,7 @@ function Game({ mode, onGoHome }) {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // İlk girişte yardım modalını göster
   useEffect(() => {
@@ -90,7 +93,7 @@ function Game({ mode, onGoHome }) {
         onTitleClick={onGoHome}
         onHelpClick={() => setShowHelpModal(true)}
         onStatsClick={() => setShowStatsModal(true)}
-        onSettingsClick={() => {}}
+        onSettingsClick={() => setShowSettingsModal(true)}
         modeLabel={modeLabel}
       />
 
@@ -143,6 +146,11 @@ function Game({ mode, onGoHome }) {
         onPlayAgain={handlePlayAgain}
         onGoHome={handleGoHome}
       />
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </div>
   );
 }
@@ -160,15 +168,17 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {currentView === 'home' && (
-        <HomePage onSelectMode={handleSelectMode} />
-      )}
-      {currentView === 'daily' && (
-        <Game mode="daily" onGoHome={handleGoHome} />
-      )}
-      {currentView === 'unlimited' && (
-        <Game mode="unlimited" onGoHome={handleGoHome} />
-      )}
+      <ThemeProvider>
+        {currentView === 'home' && (
+          <HomePage onSelectMode={handleSelectMode} />
+        )}
+        {currentView === 'daily' && (
+          <Game mode="daily" onGoHome={handleGoHome} />
+        )}
+        {currentView === 'unlimited' && (
+          <Game mode="unlimited" onGoHome={handleGoHome} />
+        )}
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

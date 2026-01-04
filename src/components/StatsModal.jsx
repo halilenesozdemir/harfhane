@@ -2,8 +2,8 @@ import Modal from './Modal';
 
 const StatBox = ({ value, label }) => (
   <div className="flex flex-col items-center">
-    <span className="text-3xl font-bold text-white">{value}</span>
-    <span className="text-xs text-gray-400">{label}</span>
+    <span className="text-3xl font-bold text-text-primary">{value}</span>
+    <span className="text-xs text-text-secondary">{label}</span>
   </div>
 );
 
@@ -13,7 +13,7 @@ const DistributionBar = ({ count, maxCount, guessNumber, isHighlighted }) => {
 
   return (
     <div className="flex items-center gap-2 mb-1">
-      <span className="text-white w-4 text-right">{guessNumber}</span>
+      <span className="text-text-primary w-4 text-right">{guessNumber}</span>
       <div
         className={`h-5 px-2 flex items-center justify-end text-white text-sm font-semibold transition-all duration-300 ${isHighlighted ? 'bg-correct' : 'bg-absent'}`}
         style={{ width: `${minWidth}%`, minWidth: '24px' }}
@@ -33,7 +33,7 @@ const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isUnlimited ? 'Sınırsız Mod İstatistikleri' : 'İstatistikler'}>
-      <div className="text-white">
+      <div>
         {/* Ana İstatistikler */}
         <div className={`grid ${isUnlimited ? 'grid-cols-3' : 'grid-cols-4'} gap-2 mb-6`}>
           <StatBox value={stats.gamesPlayed} label="Oyun" />
@@ -51,7 +51,7 @@ const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
 
         {/* Tahmin Dağılımı */}
         <div className="mb-6">
-          <h3 className="text-lg font-bold mb-3">Tahmin Dağılımı</h3>
+          <h3 className="text-lg font-bold mb-3 text-text-primary">Tahmin Dağılımı</h3>
           <div className="px-2">
             {stats.guessDistribution.map((count, index) => (
               <DistributionBar
@@ -67,7 +67,7 @@ const StatsModal = ({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
 
         {/* İlk oyun mesajı */}
         {stats.gamesPlayed === 0 && (
-          <p className="text-center text-gray-400 text-sm">
+          <p className="text-center text-text-secondary text-sm">
             İlk oyununuzu tamamladığınızda istatistikler burada görünecek.
           </p>
         )}
