@@ -95,8 +95,15 @@ Sorularınız için GitHub Issues kullanabilirsiniz.
 
 ---
 
-**Versiyon:** v2.1.0 (Kelime Sistemi)  
+**Versiyon:** v2.2.0 (PWA Desteği)  
 **Tarih:** 4 Ocak 2026
+
+### 🎉 v2.2 Yenilikleri
+
+- ✅ **PWA**: Ana ekrana eklenebilir, offline çalışır
+- ✅ **Install Prompt**: Akıllı kurulum banner'ı
+- ✅ **Service Worker**: Otomatik cache ve güncelleme
+- ✅ **Fast Loading**: Workbox optimizasyonu
 
 ### 🎉 v2.1 Yenilikleri
 
@@ -104,6 +111,7 @@ Sorularınız için GitHub Issues kullanabilirsiniz.
 - ✅ **90+ Kelime**: Gerçek Türkçe Risale-i Nur kelimeleri
 - ✅ **Zenginleştirilmiş JSON**: WordEntry interface ile type-safe data
 - ✅ **GameOverModal**: Kelime bilgisi kartı ve öğretici içerik
+- ✅ **Günlük Yenileme**: Otomatik yeni kelime yükleme
 
 ### 🎉 v2.0 Yenilikleri
 

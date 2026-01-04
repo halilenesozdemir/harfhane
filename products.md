@@ -414,6 +414,21 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ## 📦 Versiyon Geçmişi
 
+### v2.2.0 - PWA Desteği (4 Ocak 2026) ✅
+
+- ✅ **PWA**: Progressive Web App desteği
+- ✅ **Service Worker**: Offline çalışma
+- ✅ **Install Prompt**: Ana ekrana ekle banner
+- ✅ **Auto Update**: Otomatik güncelleme
+- ✅ **Manifest**: Web app manifest
+- ✅ **Cache Strategy**: Workbox ile akıllı caching
+
+### v2.1.1 - Günlük Kelime Yenilenme (4 Ocak 2026) ✅
+
+- ✅ **Geri Sayım**: Yeni gün tespiti
+- ✅ **Otomatik Yenileme**: "Yeni Nurdle'ı Başlat" butonu
+- ✅ **UX İyileştirmesi**: Kullanıcı bilgilendirmesi
+
 ### v2.1.0 - Kelime Sistemi (4 Ocak 2026) ✅
 
 - ✅ **Kelime Bilgisi Sistemi**: Her kelime için anlam, alıntı, kategori
@@ -485,13 +500,18 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ### Orta Öncelik (P1)
 
-#### 5. PWA (Progressive Web App)
+#### 5. PWA (Progressive Web App) ✅ (Tamamlandı - v2.2)
 
-- [ ] Service worker kurulumu
-- [ ] Offline oyun desteği
-- [ ] "Ana ekrana ekle" banner
-- [ ] Push notification (günlük hatırlatma)
-- [ ] App manifest dosyası
+- [x] **Service Worker**: vite-plugin-pwa ile otomatik kurulum
+- [x] **Offline Oyun Desteği**: Workbox cache stratejisi
+- [x] **"Ana Ekrana Ekle"**: InstallPrompt component'i (3 sn sonra)
+- [x] **App Manifest**: manifest.json ve meta tags
+- [x] **Auto Update**: Yeni versiyon algılama ve güncelleme
+- [x] **Runtime Caching**: Font ve asset caching
+- [x] **Dev Mode**: PWA dev modda da test edilebilir
+- [x] **TypeScript**: Tüm PWA kodları type-safe
+- [x] **7 Gün Dismiss**: Kullanıcı reddederse 7 gün tekrar gösterilmez
+- [ ] Push notification (gelecek - permission gerekli)
 
 #### 6. SEO ve Performans
 
