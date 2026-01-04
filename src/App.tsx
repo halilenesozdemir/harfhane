@@ -28,6 +28,7 @@ function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
     gameStatus,
     keyboardStatus,
     solution,
+    solutionEntry,
     gameNumber,
     stats,
     isRevealing,
@@ -145,6 +146,7 @@ function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
         onClose={() => setShowGameOverModal(false)}
         gameStatus={gameStatus}
         solution={solution}
+        solutionEntry={solutionEntry}
         guesses={guesses}
         evaluations={evaluations}
         gameNumber={gameNumber}

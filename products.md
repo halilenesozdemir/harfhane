@@ -412,7 +412,27 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ---
 
-## 🚀 v2.0 Roadmap (Sıradaki Özellikler)
+## 📦 Versiyon Geçmişi
+
+### v2.1.0 - Kelime Sistemi (4 Ocak 2026) ✅
+
+- ✅ **Kelime Bilgisi Sistemi**: Her kelime için anlam, alıntı, kategori
+- ✅ **90+ Risale-i Nur Kelimesi**: Gerçek Türkçe kelimeler
+- ✅ **JSON Yapısı**: `WordEntry` interface ile zenginleştirilmiş data
+- ✅ **GameOverModal**: Kelime bilgisi kartı
+- ✅ **Azerice Temizliği**: Tüm Azerice karakterler düzeltildi
+- ✅ **Type Safety**: WordEntry, WordData types
+
+### v2.0.0 - TypeScript Migration (4 Ocak 2026) ✅
+
+- ✅ **TypeScript**: Tüm kod TypeScript'e çevrildi (strict mode)
+- ✅ **Tema Sistemi**: Light/Dark/System tema
+- ✅ **Settings Modal**: Tema ve ayarlar
+- ✅ **30+ Type Definitions**: Merkezi type yönetimi
+
+---
+
+## 🚀 v2.x Roadmap (Sıradaki Özellikler)
 
 ### Yüksek Öncelik (P0)
 
@@ -443,19 +463,18 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 - [x] Build başarılı: ✅
 - [x] SECURITY.md oluşturuldu
 
-#### 2. Arşiv Modu
+#### 2. Kelime Bilgisi ve Alıntılar ✅ (Tamamlandı - v2.1)
 
-- [ ] Geçmiş günlerin kelimelerini oynama
-- [ ] Tarih seçici (calendar picker)
-- [ ] Arşiv istatistikleri
-- [ ] "Bugünü oyna" butonu
-
-#### 3. Kelime Bilgisi ve Alıntılar
-
-- [ ] Oyun bitince kelime anlamı göster
-- [ ] Risale-i Nur'dan ilgili alıntı/bağlam
-- [ ] "Daha fazla oku" linki
-- [ ] Kelime kategorisi (isim, sıfat, vb.)
+- [x] **JSON Yapısı Güncellendi**: Her kelime için `WordEntry` interface
+- [x] **Kelime Anlamı**: Oyun bitince kelime anlamı gösterilir
+- [x] **Risale-i Nur Alıntısı**: Her kelime için özgün alıntı
+- [x] **Kategori**: İsim, sıfat, fiil bilgisi
+- [x] **90+ Kelime**: Risale-i Nur'dan gerçek Türkçe kelimeler
+- [x] **Azerice Karakterler Temizlendi**: Tüm kelimeler Türkçe (İ, ı, Ş, ş, Ğ, ğ, Ü, ü, Ö, ö, Ç, ç)
+- [x] **GameOverModal Güncellendi**: Kelime bilgisi kartı eklendi
+- [x] **Type Safety**: `WordEntry`, `WordData` interfaces
+- [ ] "Daha fazla oku" linki (gelecek)
+- [ ] Kelime arama özelliği (gelecek)
 
 #### 4. Sert (Hard) Mod
 
@@ -661,4 +680,35 @@ import { GameState } from "../types";
 
 ---
 
-**Not:** Proje v2.0 ile TypeScript'e tamamen geçirilmiştir. Tüm kod strict mode ile type-safe'tir.
+## 📚 Kelime Kaynakları
+
+### Risale-i Nur Külliyatı
+
+Projedeki tüm kelimeler **Risale-i Nur külliyatı**ndan alınmıştır. Her kelime için:
+
+1. **Anlam**: Kelimenin Türkçe anlamı
+2. **Bağlam**: Risale-i Nur'dan özgün alıntı (kısa form)
+3. **Kategori**: Dilbilgisi kategorisi (isim, sıfat, fiil)
+
+### Kelime Seçim Kriterleri
+
+- ✅ 5 harfli Türkçe kelimeler
+- ✅ Risale-i Nur'da geçen terimler
+- ✅ Anlamlı ve öğretici kelimeler
+- ✅ Türkçe karakter desteği (İ, ı, Ş, ş, Ğ, ğ, Ü, ü, Ö, ö, Ç, ç)
+- ❌ Azerice karakterler kullanılmaz (Ə, ə)
+
+### Kelime Örnekleri
+
+```json
+{
+  "word": "İMAN",
+  "meaning": "İnanç, tasdik",
+  "context": "İman, saadet-i ebediyenin anahtarıdır.",
+  "category": "isim"
+}
+```
+
+---
+
+**Not:** Proje v2.1 ile kelime sistemi zenginleştirilmiştir. Her kelime anlam ve alıntı ile birlikte sunulur.

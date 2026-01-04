@@ -9,8 +9,10 @@ import {
   getGameNumber,
   normalizeWord
 } from '../utils/gameLogic';
-import type { GameMode, GameState, DailyStats, UnlimitedStats, TileStatus } from '../types';
-import wordsData from '../data/words.json';
+import type { GameMode, GameState, DailyStats, UnlimitedStats, TileStatus, WordEntry, WordData } from '../types';
+import wordsDataImport from '../data/words.json';
+
+const wordsData = wordsDataImport as WordData;
 
 const WORD_LENGTH = 5;
 
@@ -18,7 +20,7 @@ const WORD_LENGTH = 5;
 const getRandomWord = (): string => {
   const words = wordsData.dailyWords;
   const randomIndex = Math.floor(Math.random() * words.length);
-  return words[randomIndex]!;
+  return words[randomIndex]?.word ?? 'NURLU';
 };
 
 interface UseGameStateReturn {
@@ -29,6 +31,7 @@ interface UseGameStateReturn {
   gameStatus: 'playing' | 'won' | 'lost';
   keyboardStatus: Record<string, TileStatus>;
   solution: string;
+  solutionEntry: WordEntry | null;
   gameNumber: number;
   stats: DailyStats | UnlimitedStats;
   isRevealing: boolean;
@@ -52,6 +55,12 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
   // Günlük veya rastgele kelime
   const [solution, setSolution] = useState<string>(() => {
     return isUnlimited ? getRandomWord() : getDailyWord(wordsData.dailyWords);
+  });
+  
+  // Kelime bilgisi
+  const [solutionEntry, setSolutionEntry] = useState<WordEntry | null>(() => {
+    const entry = wordsData.dailyWords.find(w => w.word === solution);
+    return entry ?? null;
   });
   
   const gameNumber = isUnlimited ? 0 : getGameNumber();
@@ -241,7 +250,12 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
   const startNewGame = useCallback((): void => {
     if (!isUnlimited) return;
     
-    setSolution(getRandomWord());
+    const newWord = getRandomWord();
+    setSolution(newWord);
+    
+    const entry = wordsData.dailyWords.find(w => w.word === newWord);
+    setSolutionEntry(entry ?? null);
+    
     setUnlimitedGameState({
       guesses: [],
       evaluations: [],
@@ -277,6 +291,7 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
     gameStatus: gameState.gameStatus,
     keyboardStatus: gameState.keyboardStatus,
     solution,
+    solutionEntry,
     gameNumber,
     stats: currentStats,
     isRevealing,

@@ -30,8 +30,15 @@ export interface UnlimitedStats {
 }
 
 // Word data
+export interface WordEntry {
+  word: string;
+  meaning: string;
+  context: string;
+  category: 'isim' | 'sıfat' | 'fiil';
+}
+
 export interface WordData {
-  dailyWords: string[];
+  dailyWords: WordEntry[];
   validWords: string[];
 }
 
@@ -114,6 +121,7 @@ export interface GameOverModalProps {
   onClose: () => void;
   gameStatus: GameStatus;
   solution: string;
+  solutionEntry?: WordEntry | null;
   guesses: string[];
   evaluations: TileStatus[][];
   gameNumber: number | string;

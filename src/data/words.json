@@ -1,157 +1,539 @@
 {
   "dailyWords": [
-    "NURLU",
-    "ISLAH",
-    "HAKKI",
-    "SABIR",
-    "ŞÜKÜR",
-    "İNSAN",
-    "AHLAK",
-    "KALBI",
-    "RUHUN",
-    "NİYET",
-    "NAMAZ",
-    "ZEKAT",
-    "İLAHİ",
-    "TAKVA",
-    "İHLAS",
-    "TEVBE",
-    "SADİK",
-    "EMİNİ",
-    "MELEK",
-    "NEFİS",
-    "AKILI",
-    "HAYAT",
-    "KADER",
-    "HESAB",
-    "SEVAB",
-    "GÜNAH",
-    "HELAL",
-    "HARAM",
-    "ALLAH",
-    "SELAM",
-    "MÜMİN",
-    "RAHAT",
-    "HUZUR",
-    "BARİŞ",
-    "SEVGİ",
-    "UMUTI",
-    "DOĞRU",
-    "TEMİZ",
-    "MUTLU",
-    "GÜVEN",
-    "CESUR",
-    "YÜCEL",
-    "BÜYÜK",
-    "KÜÇÜK",
-    "DERİN",
-    "ADEMI",
-    "BEŞER",
-    "RUHANİ",
-    "İMAN",
-    "KURAN",
-    "SÜNNƏ",
-    "ZÜLÜM",
-    "ADLƏT",
-    "HIKMƏ",
-    "ƏBƏDI",
-    "FƏANI",
-    "DÜNYA",
-    "AHİRƏ",
-    "CƏNNƏ",
-    "CƏHƏM",
-    "RIZIK",
-    "ŞƏFAA",
-    "MƏĞFI",
-    "TÖVBƏ",
-    "ZİKİR",
-    "DƏVƏT",
-    "TƏBLİ",
-    "CIHAD",
-    "NƏFSI",
-    "QƏLBI",
-    "İRADƏ",
-    "QÜDRƏTİ",
-    "HİKMƏ",
-    "RƏHMƏ",
-    "KƏRİM",
-    "LƏTİF",
-    "HAFİZ",
-    "SAMİI",
-    "BASİR",
-    "ALİMI",
-    "HAKİM",
-    "CƏLAL",
-    "CƏMAL",
-    "KƏMAL",
-    "VƏHYI",
-    "İLHAM",
-    "KƏŞİF",
-    "TƏCƏLLİ"
+    {
+      "word": "NURLU",
+      "meaning": "Nur sahibi, aydınlık",
+      "context": "Nurlu bir iman ile ebedî saadete mazhar olur.",
+      "category": "sıfat"
+    },
+    {
+      "word": "İSLAH",
+      "meaning": "Düzeltme, iyileştirme",
+      "context": "Islah-ı nefs, insanın en büyük vazifesidir.",
+      "category": "isim"
+    },
+    {
+      "word": "HAKKİ",
+      "meaning": "Doğru, gerçek olan",
+      "context": "Hakkı hak, batılı batıl bilmek imandandır.",
+      "category": "isim"
+    },
+    {
+      "word": "SABIR",
+      "meaning": "Dayanma, tahammül",
+      "context": "Sabır, imanın yarısıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "ŞÜKÜR",
+      "meaning": "Nimete karşı minnettarlık",
+      "context": "Şükür bir nimettir ki, şükredilmeye lâyıktır.",
+      "category": "isim"
+    },
+    {
+      "word": "İNSAN",
+      "meaning": "Beşer, âdemoğlu",
+      "context": "İnsan, kâinatın meyvesi ve halifesidir.",
+      "category": "isim"
+    },
+    {
+      "word": "AHLAK",
+      "meaning": "Huy, karakter",
+      "context": "Güzel ahlak, imanın meyvesidir.",
+      "category": "isim"
+    },
+    {
+      "word": "KALBİ",
+      "meaning": "Gönül, yürek",
+      "context": "Kalp, mânevî hakikatlerin mazharıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "RUHUN",
+      "meaning": "Can, nefes",
+      "context": "Ruh, Cenab-ı Hakkın emrindendir.",
+      "category": "isim"
+    },
+    {
+      "word": "NİYET",
+      "meaning": "Kasıt, maksat",
+      "context": "Niyet, amelden hayırlıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "NAMAZ",
+      "meaning": "Beş vakit ibadet",
+      "context": "Namaz, mü'minin miracıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "ZEKAT",
+      "meaning": "Malın hakkı",
+      "context": "Zekat, malı temizler ve bereketlendirir.",
+      "category": "isim"
+    },
+    {
+      "word": "İLAHİ",
+      "meaning": "Allah'a ait, ilahi",
+      "context": "İlahî rahmet, her şeyi kuşatmıştır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "TAKVA",
+      "meaning": "Allah'tan korkma",
+      "context": "Takva, kalbin ziyadır.",
+      "category": "isim"
+    },
+    {
+      "word": "İHLAS",
+      "meaning": "Samimiyet, içtenlik",
+      "context": "İhlas ile yapılan amel, kabul olur.",
+      "category": "isim"
+    },
+    {
+      "word": "TEVBE",
+      "meaning": "Pişmanlık, dönüş",
+      "context": "Tevbe, günahın panzehiridir.",
+      "category": "isim"
+    },
+    {
+      "word": "SADİK",
+      "meaning": "Doğru sözlü",
+      "context": "Sadık olmak, iman alametidir.",
+      "category": "sıfat"
+    },
+    {
+      "word": "EMİNİ",
+      "meaning": "Güvenilir",
+      "context": "Emin olmak, İslâm'ın şiarıdır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "MELEK",
+      "meaning": "Nur varlık",
+      "context": "Melekler, emirlere mutî mahlûklardır.",
+      "category": "isim"
+    },
+    {
+      "word": "NEFİS",
+      "meaning": "Benlik, ego",
+      "context": "Nefis, emmare ise düşmandır.",
+      "category": "isim"
+    },
+    {
+      "word": "AKILÎ",
+      "meaning": "Akla ait",
+      "context": "Aklın rehberi, Kur'an'dır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "HAYAT",
+      "meaning": "Yaşam, ömür",
+      "context": "Hayat, imtihandır.",
+      "category": "isim"
+    },
+    {
+      "word": "KADER",
+      "meaning": "İlahi takdir",
+      "context": "Kadere iman, teselli verir.",
+      "category": "isim"
+    },
+    {
+      "word": "HESAB",
+      "meaning": "Sayma, muhakeme",
+      "context": "Hesap günü, mahşerdir.",
+      "category": "isim"
+    },
+    {
+      "word": "SEVAB",
+      "meaning": "Ecir, mükâfat",
+      "context": "Her iyiliğin sevabı vardır.",
+      "category": "isim"
+    },
+    {
+      "word": "GÜNAH",
+      "meaning": "Hata, kusur",
+      "context": "Günahtan tevbe ile kurtulunur.",
+      "category": "isim"
+    },
+    {
+      "word": "HELAL",
+      "meaning": "Meşru, caiz",
+      "context": "Helal kazanç, bereketlidir.",
+      "category": "sıfat"
+    },
+    {
+      "word": "HARAM",
+      "meaning": "Yasak, günah",
+      "context": "Haramdan sakınmak farzdır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "ALLAH",
+      "meaning": "Yüce Yaratan",
+      "context": "Allah, her şeyin Hâlık'ıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "SELAM",
+      "meaning": "Esenlik, barış",
+      "context": "Selam, müslümanın şiarıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "MÜMİN",
+      "meaning": "İman eden",
+      "context": "Mü'min, kardeştir.",
+      "category": "isim"
+    },
+    {
+      "word": "RAHAT",
+      "meaning": "Huzur, sükûnet",
+      "context": "Kalp rahatı, imandandır.",
+      "category": "isim"
+    },
+    {
+      "word": "HUZUR",
+      "meaning": "İç rahatlığı",
+      "context": "Huzur, zikrullahladır.",
+      "category": "isim"
+    },
+    {
+      "word": "BARİŞ",
+      "meaning": "Sulh, esenlik",
+      "context": "İslam, barış dinidir.",
+      "category": "isim"
+    },
+    {
+      "word": "SEVGİ",
+      "meaning": "Muhabbet",
+      "context": "Sevgi, imanın ruhudur.",
+      "category": "isim"
+    },
+    {
+      "word": "UMÛDÛ",
+      "meaning": "Ümit, umut",
+      "context": "Ümit, mü'minin sermayesidir.",
+      "category": "isim"
+    },
+    {
+      "word": "DOĞRU",
+      "meaning": "Hak, sıdk",
+      "context": "Doğruluk, imanın alametidir.",
+      "category": "sıfat"
+    },
+    {
+      "word": "TEMİZ",
+      "meaning": "Pak, saf",
+      "context": "Temizlik, imandandır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "MUTLU",
+      "meaning": "Mesut, bahtiyar",
+      "context": "Mutluluk, Allah'ın rızasındadır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "GÜVEN",
+      "meaning": "İtimat, emniyet",
+      "context": "Güven, imanın esasıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "CESUR",
+      "meaning": "Yiğit, kahraman",
+      "context": "Cesaret, hakikat namına gereklidir.",
+      "category": "sıfat"
+    },
+    {
+      "word": "YÜCEL",
+      "meaning": "Yüksek, ulvi",
+      "context": "Yüce makam, takvanındır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "BÜYÜK",
+      "meaning": "Azim, ulu",
+      "context": "En büyük, Allah'tır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "KÜÇÜK",
+      "meaning": "Ufak, sağir",
+      "context": "Küçük amellerden küçümsenilmez.",
+      "category": "sıfat"
+    },
+    {
+      "word": "DERİN",
+      "meaning": "Amik, derin",
+      "context": "Derin mânâlar, Kur'an'dadır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "AHİRE",
+      "meaning": "Ahiret, öte dünya",
+      "context": "Ahiret, ebedî hayattır.",
+      "category": "isim"
+    },
+    {
+      "word": "DÜNYA",
+      "meaning": "Fani âlem",
+      "context": "Dünya, ahiretin tarlasıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "RIZIK",
+      "meaning": "Nafaka, geçim",
+      "context": "Rızık, Allah'tan gelir.",
+      "category": "isim"
+    },
+    {
+      "word": "ZİKİR",
+      "meaning": "Anma, hatırlama",
+      "context": "Zikir, kalbin gıdasıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "CIHAD",
+      "meaning": "Mücadele, gayret",
+      "context": "Cihad-ı ekber, nefse karşıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "HAKİM",
+      "meaning": "Hikmet sahibi",
+      "context": "Hakim ismi, her işte tecelli eder.",
+      "category": "sıfat"
+    },
+    {
+      "word": "KERİM",
+      "meaning": "Cömert, kerem sahibi",
+      "context": "Kerim ismi, her nimette görünür.",
+      "category": "sıfat"
+    },
+    {
+      "word": "LATİF",
+      "meaning": "Lütuf sahibi",
+      "context": "Latif ismi, incelik ve rahmetle tecelli eder.",
+      "category": "sıfat"
+    },
+    {
+      "word": "HAFİZ",
+      "meaning": "Koruyucu, saklayan",
+      "context": "Hafiz ismi, her şeyi muhafaza eder.",
+      "category": "sıfat"
+    },
+    {
+      "word": "ALİMİ",
+      "meaning": "Her şeyi bilen",
+      "context": "Alim ismi, ilmin kaynağıdır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "KEMAL",
+      "meaning": "Olgunluk, kemâl",
+      "context": "Kemal, ancak Allah'a mahsustur.",
+      "category": "isim"
+    },
+    {
+      "word": "CEMAL",
+      "meaning": "Güzellik",
+      "context": "Cemal tecellisi, rahmet suretindedir.",
+      "category": "isim"
+    },
+    {
+      "word": "CELAL",
+      "meaning": "Azamet, ululuk",
+      "context": "Celal tecellisi, adalet suretindedir.",
+      "category": "isim"
+    },
+    {
+      "word": "VAHİY",
+      "meaning": "İlahi bildiri",
+      "context": "Vahy-i İlahî, peygamberlere gelir.",
+      "category": "isim"
+    },
+    {
+      "word": "İLHAM",
+      "meaning": "İçe doğma",
+      "context": "İlham, evliyaya has bir lütuftur.",
+      "category": "isim"
+    },
+    {
+      "word": "İMAN",
+      "meaning": "İnanç, tasdik",
+      "context": "İman, saadet-i ebediyenin anahtarıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "KURAN",
+      "meaning": "İlahi kitap",
+      "context": "Kur'an, hakikatin güneşidir.",
+      "category": "isim"
+    },
+    {
+      "word": "HİKME",
+      "meaning": "İlahi hikmet",
+      "context": "Hikmet, her şeyde vardır.",
+      "category": "isim"
+    },
+    {
+      "word": "RAHME",
+      "meaning": "Merhamet, şefkat",
+      "context": "Rahmet, her şeyi kuşatmıştır.",
+      "category": "isim"
+    },
+    {
+      "word": "İRADE",
+      "meaning": "Dileme, meşiet",
+      "context": "İrade-i İlahiye, her şeyi yaratır.",
+      "category": "isim"
+    },
+    {
+      "word": "KUDRE",
+      "meaning": "Güç, iktidar",
+      "context": "Kudret-i İlahiye, sınırsızdır.",
+      "category": "isim"
+    },
+    {
+      "word": "ADEMI",
+      "meaning": "Yokluk, adem",
+      "context": "Adem, vücuda gölge olur.",
+      "category": "isim"
+    },
+    {
+      "word": "BEŞER",
+      "meaning": "İnsan, âdemoğlu",
+      "context": "Beşer, zayıf yaratılmıştır.",
+      "category": "isim"
+    },
+    {
+      "word": "ADÂLE",
+      "meaning": "Adalet, hakkaniyet",
+      "context": "Adalet, her şeyin temelidir.",
+      "category": "isim"
+    },
+    {
+      "word": "ZÜLÜM",
+      "meaning": "Haksızlık, zulüm",
+      "context": "Zulüm, karanlıktır.",
+      "category": "isim"
+    },
+    {
+      "word": "EBEDİ",
+      "meaning": "Sonsuz, bâki",
+      "context": "Ebediyet, ahiretin sıfatıdır.",
+      "category": "sıfat"
+    },
+    {
+      "word": "FÂNİ",
+      "meaning": "Geçici, ölümlü",
+      "context": "Dünya fanidir, ahiret bakidir.",
+      "category": "sıfat"
+    },
+    {
+      "word": "CENÂB",
+      "meaning": "Yüce, ulvi",
+      "context": "Cenab-ı Hak, her şeyin sahibidir.",
+      "category": "isim"
+    },
+    {
+      "word": "MAKAM",
+      "meaning": "Derece, mevki",
+      "context": "Her amelin bir makamı vardır.",
+      "category": "isim"
+    },
+    {
+      "word": "HAŞIR",
+      "meaning": "Diriliş, kıyamet",
+      "context": "Haşir, bahar gibi kolaydır.",
+      "category": "isim"
+    },
+    {
+      "word": "ŞEFAA",
+      "meaning": "Yardım, aracılık",
+      "context": "Şefaat, Peygambere mahsustur.",
+      "category": "isim"
+    },
+    {
+      "word": "DÂVET",
+      "meaning": "Çağrı, davet",
+      "context": "Dâvet, tebliğin esasıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "EMSAL",
+      "meaning": "Örnekler, misaller",
+      "context": "Emsal, hakikati gösterir.",
+      "category": "isim"
+    },
+    {
+      "word": "MİSAL",
+      "meaning": "Örnek, numune",
+      "context": "Her şey, bir misaldir.",
+      "category": "isim"
+    },
+    {
+      "word": "HAKİM",
+      "meaning": "Hükümdar, yönetici",
+      "context": "Hakim-i Hakiki, Allah'tır.",
+      "category": "isim"
+    },
+    {
+      "word": "ŞÂHİD",
+      "meaning": "Şahit, tanık",
+      "context": "Kâinat, Allah'a şahittir.",
+      "category": "isim"
+    },
+    {
+      "word": "KELAM",
+      "meaning": "Söz, lâfız",
+      "context": "Kelâm-ı İlahî, Kur'an'dır.",
+      "category": "isim"
+    },
+    {
+      "word": "TEVHÎ",
+      "meaning": "Birlik, vahdet",
+      "context": "Tevhid, imanın esasıdır.",
+      "category": "isim"
+    },
+    {
+      "word": "ŞÜKUR",
+      "meaning": "Minnettarlık",
+      "context": "Şükür, nimeti artırır.",
+      "category": "isim"
+    },
+    {
+      "word": "TEMSİ",
+      "meaning": "Benzetme, örnek",
+      "context": "Temsil, hakikati gösterir.",
+      "category": "isim"
+    },
+    {
+      "word": "ESMÂA",
+      "meaning": "İsimler",
+      "context": "Esma-i İlahiye, kâinatta tecelli eder.",
+      "category": "isim"
+    },
+    {
+      "word": "SIFAT",
+      "meaning": "Özellikler",
+      "context": "Sıfat-ı İlahiye, kemaldir.",
+      "category": "isim"
+    }
   ],
   "validWords": [
-    "NURLU",
-    "ISLAH",
-    "HAKKI",
-    "SABIR",
-    "ŞÜKÜR",
-    "İNSAN",
-    "AHLAK",
-    "KALBI",
-    "RUHUN",
-    "NİYET",
-    "NAMAZ",
-    "ZEKAT",
-    "İLAHİ",
-    "TAKVA",
-    "İHLAS",
-    "TEVBE",
-    "SADİK",
-    "EMİNİ",
-    "MELEK",
-    "NEFİS",
-    "AKILI",
-    "HAYAT",
-    "KADER",
-    "HESAB",
-    "SEVAB",
-    "GÜNAH",
-    "HELAL",
-    "HARAM",
-    "ALLAH",
-    "SELAM",
-    "MÜMİN",
-    "RAHAT",
-    "HUZUR",
-    "BARİŞ",
-    "SEVGİ",
-    "UMUTI",
-    "DOĞRU",
-    "TEMİZ",
-    "MUTLU",
-    "GÜVEN",
-    "CESUR",
-    "YÜCEL",
-    "BÜYÜK",
-    "KÜÇÜK",
-    "DERİN",
-    "ADEMI",
-    "BEŞER",
-    "İMAN",
-    "KURAN",
-    "DÜNYA",
-    "RIZIK",
-    "ZİKİR",
-    "CIHAD",
-    "HAKİM",
-    "KERİM",
-    "LETİF",
-    "HAFİZ",
-    "ALİMİ",
-    "KEMAL",
-    "CEMAL",
-    "CELAL",
-    "VEHBI",
-    "İLHAM"
+    "NURLU", "İSLAH", "HAKKİ", "SABIR", "ŞÜKÜR", "İNSAN", "AHLAK", "KALBİ",
+    "RUHUN", "NİYET", "NAMAZ", "ZEKAT", "İLAHİ", "TAKVA", "İHLAS", "TEVBE",
+    "SADİK", "EMİNİ", "MELEK", "NEFİS", "AKILÎ", "HAYAT", "KADER", "HESAB",
+    "SEVAB", "GÜNAH", "HELAL", "HARAM", "ALLAH", "SELAM", "MÜMİN", "RAHAT",
+    "HUZUR", "BARİŞ", "SEVGİ", "UMÛDÛ", "DOĞRU", "TEMİZ", "MUTLU", "GÜVEN",
+    "CESUR", "YÜCEL", "BÜYÜK", "KÜÇÜK", "DERİN", "AHİRE", "DÜNYA", "RIZIK",
+    "ZİKİR", "CIHAD", "HAKİM", "KERİM", "LATİF", "HAFİZ", "ALİMİ", "KEMAL",
+    "CEMAL", "CELAL", "VAHİY", "İLHAM", "İMAN", "KURAN", "HİKME", "RAHME",
+    "İRADE", "KUDRE", "ADEMI", "BEŞER", "ADÂLE", "ZÜLÜM", "EBEDİ", "FÂNİ",
+    "CENÂB", "MAKAM", "HAŞIR", "ŞEFAA", "DÂVET", "EMSAL", "MİSAL", "ŞÂHİD",
+    "KELAM", "TEVHİ", "ŞÜKUR", "TEMSİ", "ESMÂA", "SIFAT"
   ]
 }

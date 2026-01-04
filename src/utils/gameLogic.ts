@@ -1,4 +1,4 @@
-import type { TileStatus, TimeCountdown } from '../types';
+import type { TileStatus, TimeCountdown, WordEntry } from '../types';
 
 // Türkçe karakterleri normalize et (büyük harfe çevir)
 export const normalizeChar = (char: string): string => {
@@ -21,12 +21,12 @@ export const normalizeWord = (word: string): string => {
 };
 
 // Günlük kelimeyi seç (tarih bazlı)
-export const getDailyWord = (words: string[]): string => {
+export const getDailyWord = (words: WordEntry[]): string => {
   const today = new Date();
   const startDate = new Date('2026-01-01');
   const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
   const index = daysSinceStart % words.length;
-  return words[index] ?? words[0]!;
+  return words[index]?.word ?? words[0]?.word ?? 'NURLU';
 };
 
 // Tahmin sonuçlarını hesapla

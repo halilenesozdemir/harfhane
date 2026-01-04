@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Share2, Check, RotateCcw, Home } from 'lucide-react';
-import Modal from './Modal';
-import { getTimeUntilMidnight, generateShareText } from '../utils/gameLogic';
-import type { GameOverModalProps, TimeCountdown } from '../types';
+import { useState, useEffect } from "react";
+import { Share2, Check, RotateCcw, Home } from "lucide-react";
+import Modal from "./Modal";
+import { getTimeUntilMidnight, generateShareText } from "../utils/gameLogic";
+import type { GameOverModalProps, TimeCountdown } from "../types";
 
 interface StatBoxProps {
   value: number;
@@ -16,12 +16,13 @@ const StatBox = ({ value, label }: StatBoxProps): React.JSX.Element => (
   </div>
 );
 
-const GameOverModal = ({ 
-  isOpen, 
-  onClose, 
-  gameStatus, 
-  solution, 
-  guesses, 
+const GameOverModal = ({
+  isOpen,
+  onClose,
+  gameStatus,
+  solution,
+  solutionEntry,
+  guesses,
   evaluations,
   gameNumber,
   stats,
@@ -29,28 +30,46 @@ const GameOverModal = ({
   onPlayAgain,
   onGoHome,
 }: GameOverModalProps): React.JSX.Element => {
-  const [countdown, setCountdown] = useState<TimeCountdown>(getTimeUntilMidnight());
+  const [countdown, setCountdown] = useState<TimeCountdown>(
+    getTimeUntilMidnight()
+  );
   const [copied, setCopied] = useState<boolean>(false);
+  const [isNewDayAvailable, setIsNewDayAvailable] = useState<boolean>(false);
 
   // Geri sayım (sadece günlük mod)
   useEffect(() => {
     if (!isOpen || isUnlimited) return;
-    
+
     const timer = setInterval(() => {
-      setCountdown(getTimeUntilMidnight());
+      const newCountdown = getTimeUntilMidnight();
+      setCountdown(newCountdown);
+
+      // Geri sayım bittiğinde (yeni gün başladığında)
+      if (
+        newCountdown.hours === "00" &&
+        newCountdown.minutes === "00" &&
+        newCountdown.seconds === "00"
+      ) {
+        setIsNewDayAvailable(true);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
   }, [isOpen, isUnlimited]);
 
+  // Yeni günü başlat
+  const handleNewDay = (): void => {
+    window.location.reload(); // Sayfayı yenile - yeni kelime yüklenecek
+  };
+
   // Paylaş
   const handleShare = async (): Promise<void> => {
-    const modeText = isUnlimited ? 'Sınırsız' : `#${gameNumber}`;
+    const modeText = isUnlimited ? "Sınırsız" : `#${gameNumber}`;
     const shareText = generateShareText(
       guesses,
       evaluations,
       modeText,
-      gameStatus === 'won'
+      gameStatus === "won"
     );
 
     try {
@@ -58,26 +77,29 @@ const GameOverModal = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Clipboard error:', err);
+      console.error("Clipboard error:", err);
     }
   };
 
-  const winPercentage = stats.gamesPlayed > 0 
-    ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) 
-    : 0;
+  const winPercentage =
+    stats.gamesPlayed > 0
+      ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
+      : 0;
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title={gameStatus === 'won' ? 'Tebrikler! 🎉' : 'Oyun Bitti'}
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={gameStatus === "won" ? "Tebrikler! 🎉" : "Oyun Bitti"}
     >
       <div className="space-y-6">
         {/* Sonuç Mesajı */}
         <div className="text-center">
-          {gameStatus === 'won' ? (
+          {gameStatus === "won" ? (
             <p className="text-lg text-text-primary">
-              Kelimeyi <span className="text-correct font-bold">{guesses.length}</span> denemede buldunuz!
+              Kelimeyi{" "}
+              <span className="text-correct font-bold">{guesses.length}</span>{" "}
+              denemede buldunuz!
             </p>
           ) : (
             <div>
@@ -87,11 +109,38 @@ const GameOverModal = ({
           )}
         </div>
 
+        {/* Kelime Bilgisi */}
+        {solutionEntry && (
+          <div className="bg-bg-primary p-4 rounded-lg border border-border-color">
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm text-text-secondary">Anlam:</span>
+                <p className="text-text-primary font-medium">
+                  {solutionEntry.meaning}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-text-secondary">
+                  Risale-i Nur'dan:
+                </span>
+                <p className="text-text-primary text-sm italic">
+                  "{solutionEntry.context}"
+                </p>
+              </div>
+              <div>
+                <span className="inline-block px-2 py-1 bg-tile-empty text-text-primary text-xs rounded">
+                  {solutionEntry.category}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mini İstatistikler */}
         <div className="grid grid-cols-4 gap-2 py-4 border-y border-border-color">
           <StatBox value={stats.gamesPlayed} label="Oyun" />
           <StatBox value={winPercentage} label="Kazanma %" />
-          {!isUnlimited && 'currentStreak' in stats && (
+          {!isUnlimited && "currentStreak" in stats && (
             <>
               <StatBox value={stats.currentStreak} label="Seri" />
               <StatBox value={stats.maxStreak} label="En İyi" />
@@ -100,7 +149,10 @@ const GameOverModal = ({
           {isUnlimited && (
             <>
               <StatBox value={stats.gamesWon} label="Kazanılan" />
-              <StatBox value={stats.gamesPlayed - stats.gamesWon} label="Kaybedilen" />
+              <StatBox
+                value={stats.gamesPlayed - stats.gamesWon}
+                label="Kaybedilen"
+              />
             </>
           )}
         </div>
@@ -108,15 +160,41 @@ const GameOverModal = ({
         {/* Sonraki Kelime Geri Sayım (sadece günlük mod) */}
         {!isUnlimited && (
           <div className="text-center">
-            <p className="text-sm text-text-secondary mb-2">Sonraki Nurdle</p>
-            <p className="text-3xl font-mono font-bold text-text-primary">
-              {countdown.hours}:{countdown.minutes}:{countdown.seconds}
-            </p>
+            {isNewDayAvailable ? (
+              <div className="space-y-2">
+                <p className="text-lg text-correct font-bold">
+                  🎉 Yeni kelime hazır!
+                </p>
+                <p className="text-sm text-text-secondary">
+                  Yeni Nurdle'ı oynamak için tıklayın
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-text-secondary mb-2">
+                  Sonraki Nurdle
+                </p>
+                <p className="text-3xl font-mono font-bold text-text-primary">
+                  {countdown.hours}:{countdown.minutes}:{countdown.seconds}
+                </p>
+              </>
+            )}
           </div>
         )}
 
         {/* Butonlar */}
         <div className="space-y-3">
+          {/* Yeni Gün Butonu (günlük mod, sayaç bitti) */}
+          {!isUnlimited && isNewDayAvailable && (
+            <button
+              onClick={handleNewDay}
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in"
+            >
+              <RotateCcw size={20} />
+              Yeni Nurdle'ı Başlat
+            </button>
+          )}
+
           {/* Paylaş Butonu */}
           <button
             onClick={handleShare}

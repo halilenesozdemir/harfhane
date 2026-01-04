@@ -95,8 +95,15 @@ Sorularınız için GitHub Issues kullanabilirsiniz.
 
 ---
 
-**Versiyon:** v2.0.0 (TypeScript Migration)  
+**Versiyon:** v2.1.0 (Kelime Sistemi)  
 **Tarih:** 4 Ocak 2026
+
+### 🎉 v2.1 Yenilikleri
+
+- ✅ **Kelime Bilgisi**: Her kelime için anlam, Risale-i Nur'dan alıntı, kategori
+- ✅ **90+ Kelime**: Gerçek Türkçe Risale-i Nur kelimeleri
+- ✅ **Zenginleştirilmiş JSON**: WordEntry interface ile type-safe data
+- ✅ **GameOverModal**: Kelime bilgisi kartı ve öğretici içerik
 
 ### 🎉 v2.0 Yenilikleri
 
