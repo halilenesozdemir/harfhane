@@ -3,9 +3,10 @@
 ## 📋 Proje Özeti
 
 **Proje Adı:** Nurdle  
-**Versiyon:** 1.0.0 (MVP)  
+**Versiyon:** 2.0.0 (In Development)  
+**v1.0.0:** Tamamlandı ve yayında ✅  
 **Tarih:** 4 Ocak 2026  
-**Durum:** Geliştirme Aşamasında
+**Durum:** v2.0 Geliştirme Aşamasında
 
 ### Proje Açıklaması
 
@@ -388,26 +389,135 @@ colors: {
 
 ---
 
-## 🚀 Gelecek Versiyonlar (v2.0+)
+---
 
-Bu özellikler MVP'den sonra geliştirilecek:
+## 📋 v1.0.0 Tamamlandı! ✅
 
-### v2.0 Planları
+v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
-- Light/Dark tema değiştirme
-- Sert (hard) mod
-- Arşiv modu (geçmiş kelimeleri oynama)
-- Kelime anlamı ve Risale-i Nur alıntıları
-- PWA desteği (offline mode)
-- SEO optimizasyonu
+### v1.0.0 Özellikleri (Tamamlandı)
 
-### v3.0 ve Sonrası
+- ✅ Günlük Mod (her gün aynı kelime)
+- ✅ Sınırsız Mod (sınırsız rastgele kelime)
+- ✅ Türkçe Q klavye düzeni
+- ✅ Tam Türkçe karakter desteği
+- ✅ 6x5 oyun grid'i
+- ✅ Animasyonlar (pop, flip, shake, bounce)
+- ✅ Modal sistemi (HowToPlay, Stats, GameOver)
+- ✅ İstatistik takibi (mod bazlı)
+- ✅ Paylaşım özelliği
+- ✅ Responsive tasarım
+- ✅ Dark theme
+- ✅ localStorage veri saklama
 
-- Farklı kelime uzunlukları (4, 6 harf)
-- Sınırsız mod
-- Çoklu dil desteği
-- Sosyal özellikler
-- Analytics entegrasyonu
+---
+
+## 🚀 v2.0 Roadmap (Sıradaki Özellikler)
+
+### Yüksek Öncelik (P0)
+
+#### 1. Tema Sistemi
+- [ ] Light/Dark tema değiştirme toggle
+- [ ] High contrast mod (erişilebilirlik)
+- [ ] Tema tercihi localStorage'da saklanır
+- [ ] Sistem teması algılama (prefers-color-scheme)
+
+#### 2. Arşiv Modu
+- [ ] Geçmiş günlerin kelimelerini oynama
+- [ ] Tarih seçici (calendar picker)
+- [ ] Arşiv istatistikleri
+- [ ] "Bugünü oyna" butonu
+
+#### 3. Kelime Bilgisi ve Alıntılar
+- [ ] Oyun bitince kelime anlamı göster
+- [ ] Risale-i Nur'dan ilgili alıntı/bağlam
+- [ ] "Daha fazla oku" linki
+- [ ] Kelime kategorisi (isim, sıfat, vb.)
+
+#### 4. Sert (Hard) Mod
+- [ ] Önceki ipuçları sonraki tahminlerde kullanılmalı
+- [ ] Yeşil harfler aynı pozisyonda kalmalı
+- [ ] Sarı harfler kelimede olmalı
+- [ ] Mod seçimi ayarlar menüsünde
+
+### Orta Öncelik (P1)
+
+#### 5. PWA (Progressive Web App)
+- [ ] Service worker kurulumu
+- [ ] Offline oyun desteği
+- [ ] "Ana ekrana ekle" banner
+- [ ] Push notification (günlük hatırlatma)
+- [ ] App manifest dosyası
+
+#### 6. SEO ve Performans
+- [ ] Meta tags optimizasyonu
+- [ ] Open Graph tags
+- [ ] Twitter Card tags
+- [ ] Sitemap.xml
+- [ ] robots.txt
+- [ ] Image optimization
+- [ ] Code splitting
+
+#### 7. Erişilebilirlik İyileştirmeleri
+- [ ] Klavye navigasyonu (Tab, Arrow keys)
+- [ ] Screen reader iyileştirmeleri
+- [ ] Focus trap modallar için
+- [ ] ARIA labels tamamlama
+- [ ] Renk körü modu iyileştirme
+
+#### 8. Gelişmiş İstatistikler
+- [ ] Grafik gösterimi (charts)
+- [ ] En çok tahmin edilen harfler
+- [ ] Ortalama tahmin süresi
+- [ ] En hızlı çözüm zamanı
+- [ ] İstatistik karşılaştırma (günlük vs sınırsız)
+
+### Düşük Öncelik (P2)
+
+#### 9. Sosyal Özellikler
+- [ ] Global günlük istatistikler
+- [ ] "Bugün X kişi oynadı" göstergesi
+- [ ] Başarı rozetleri (achievements)
+- [ ] Arkadaş davetiyesi (referral link)
+
+#### 10. Kelime Varyasyonları
+- [ ] 4 harfli kelime modu
+- [ ] 6 harfli kelime modu
+- [ ] Zorluk seviyesi (kolay/orta/zor)
+- [ ] Kategori seçimi (isim/fiil/sıfat)
+
+#### 11. Eğitim Modu
+- [ ] İpucu sistemi (hint)
+- [ ] Pratik modu (öğrenme)
+- [ ] Kelime kartları
+- [ ] Günlük kelime bilgisi
+
+---
+
+## 🎯 v3.0 ve Ötesi (Uzun Vadeli)
+
+### Topluluk Özellikleri
+- Kullanıcı hesap sistemi (opsiyonel)
+- Liderlik tablosu
+- Turnuva/yarışma modu
+- Kullanıcı oluşturmalı kelime listeleri
+
+### Platform Genişletme
+- React Native mobil uygulama
+- Telegram/WhatsApp bot
+- iOS/Android native app
+- Desktop app (Electron)
+
+### Çoklu Dil Desteği
+- Arapça kelime desteği
+- İngilizce arayüz
+- Çoklu dil arayüz seçenekleri
+
+### Analytics ve İyileştirmeler
+- Google Analytics entegrasyonu
+- A/B testing altyapısı
+- Error tracking (Sentry)
+- Performance monitoring
 
 ---
 
