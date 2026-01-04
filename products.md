@@ -417,24 +417,28 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 ### Yüksek Öncelik (P0)
 
 #### 1. Tema Sistemi
+
 - [ ] Light/Dark tema değiştirme toggle
 - [ ] High contrast mod (erişilebilirlik)
 - [ ] Tema tercihi localStorage'da saklanır
 - [ ] Sistem teması algılama (prefers-color-scheme)
 
 #### 2. Arşiv Modu
+
 - [ ] Geçmiş günlerin kelimelerini oynama
 - [ ] Tarih seçici (calendar picker)
 - [ ] Arşiv istatistikleri
 - [ ] "Bugünü oyna" butonu
 
 #### 3. Kelime Bilgisi ve Alıntılar
+
 - [ ] Oyun bitince kelime anlamı göster
 - [ ] Risale-i Nur'dan ilgili alıntı/bağlam
 - [ ] "Daha fazla oku" linki
 - [ ] Kelime kategorisi (isim, sıfat, vb.)
 
 #### 4. Sert (Hard) Mod
+
 - [ ] Önceki ipuçları sonraki tahminlerde kullanılmalı
 - [ ] Yeşil harfler aynı pozisyonda kalmalı
 - [ ] Sarı harfler kelimede olmalı
@@ -443,6 +447,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 ### Orta Öncelik (P1)
 
 #### 5. PWA (Progressive Web App)
+
 - [ ] Service worker kurulumu
 - [ ] Offline oyun desteği
 - [ ] "Ana ekrana ekle" banner
@@ -450,6 +455,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 - [ ] App manifest dosyası
 
 #### 6. SEO ve Performans
+
 - [ ] Meta tags optimizasyonu
 - [ ] Open Graph tags
 - [ ] Twitter Card tags
@@ -459,6 +465,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 - [ ] Code splitting
 
 #### 7. Erişilebilirlik İyileştirmeleri
+
 - [ ] Klavye navigasyonu (Tab, Arrow keys)
 - [ ] Screen reader iyileştirmeleri
 - [ ] Focus trap modallar için
@@ -466,6 +473,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 - [ ] Renk körü modu iyileştirme
 
 #### 8. Gelişmiş İstatistikler
+
 - [ ] Grafik gösterimi (charts)
 - [ ] En çok tahmin edilen harfler
 - [ ] Ortalama tahmin süresi
@@ -475,18 +483,21 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 ### Düşük Öncelik (P2)
 
 #### 9. Sosyal Özellikler
+
 - [ ] Global günlük istatistikler
 - [ ] "Bugün X kişi oynadı" göstergesi
 - [ ] Başarı rozetleri (achievements)
 - [ ] Arkadaş davetiyesi (referral link)
 
 #### 10. Kelime Varyasyonları
+
 - [ ] 4 harfli kelime modu
 - [ ] 6 harfli kelime modu
 - [ ] Zorluk seviyesi (kolay/orta/zor)
 - [ ] Kategori seçimi (isim/fiil/sıfat)
 
 #### 11. Eğitim Modu
+
 - [ ] İpucu sistemi (hint)
 - [ ] Pratik modu (öğrenme)
 - [ ] Kelime kartları
@@ -497,23 +508,27 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 ## 🎯 v3.0 ve Ötesi (Uzun Vadeli)
 
 ### Topluluk Özellikleri
+
 - Kullanıcı hesap sistemi (opsiyonel)
 - Liderlik tablosu
 - Turnuva/yarışma modu
 - Kullanıcı oluşturmalı kelime listeleri
 
 ### Platform Genişletme
+
 - React Native mobil uygulama
 - Telegram/WhatsApp bot
 - iOS/Android native app
 - Desktop app (Electron)
 
 ### Çoklu Dil Desteği
+
 - Arapça kelime desteği
 - İngilizce arayüz
 - Çoklu dil arayüz seçenekleri
 
 ### Analytics ve İyileştirmeler
+
 - Google Analytics entegrasyonu
 - A/B testing altyapısı
 - Error tracking (Sentry)
