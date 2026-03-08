@@ -34,6 +34,7 @@ const Key = ({ keyValue, onClick, status, isWide = false }: KeyProps): React.JSX
         active:scale-95
         select-none
         hover:opacity-80
+        cursor-pointer
       `}
       aria-label={keyValue}
     >

@@ -4,6 +4,7 @@ export type { WordEntry, WordData } from '@nurdle/shared';
 // Game types
 export type GameStatus = 'playing' | 'won' | 'lost';
 export type GameMode = 'daily' | 'unlimited';
+export type WordLength = 4 | 5 | 6 | 7;
 export type TileStatus = 'correct' | 'present' | 'absent' | null;
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -90,6 +91,7 @@ export interface GameGridProps {
   isRevealing: boolean;
   shakeRow: boolean;
   gameStatus: GameStatus;
+  wordLength: WordLength;
 }
 
 export interface KeyboardProps {
@@ -122,11 +124,12 @@ export interface GameOverModalProps {
 }
 
 export interface HomePageProps {
-  onSelectMode: (mode: GameMode) => void;
+  onSelectMode: (mode: GameMode, wordLength: WordLength) => void;
 }
 
 export interface GameProps {
   mode: GameMode;
+  wordLength: WordLength;
   onGoHome: () => void;
 }
 

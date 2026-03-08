@@ -611,6 +611,18 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 #### Yapılacaklar
 
+- [x] Admin paneli (route korumalı, secret tabanlı)
+  - [x] Kelime listeleme, arama, filtreleme
+  - [x] Kelime ekleme / düzenleme / deaktive etme
+  - [x] Günlük kelime programlama (takvim view)
+  - [x] Toplu kelime import (CSV + JSON)
+- [x] Değişken kelime uzunluğu (4-7 harf)
+  - [x] DB: `words` tablosuna `length` kolonu ekle (migration 0002)
+  - [x] API: uzunluk bazlı kelime filtreleme (`/api/words/daily?length=5`)
+  - [x] Frontend: mod seçiminde uzunluk seçeneği (4 / 5 / 6 / 7 harf)
+  - [x] GameGrid dinamik grid boyutu
+  - [x] Klavye değerlendirme uzunluğa göre çalışsın
+  - [ ] Admin: kelime eklerken uzunluk otomatik hesaplansın (admin panelde bakılacak)
 - [ ] Custom kelime listesi yükleme
   - [ ] CSV/JSON dosya upload → R2 depolama
   - [ ] R2'den D1'e kelime aktarımı (backend job)
@@ -620,16 +632,12 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
   - [ ] `GET /api/lists/:slug` — custom liste detayı
   - [ ] `GET /api/lists/:slug/play` — custom oyun başlatma
   - [ ] Frontend: `/play/:slug` route'u
-- [ ] Admin paneli (route korumalı, token bazlı)
-  - [ ] Kelime listeleme, arama, filtreleme
-  - [ ] Kelime ekleme / düzenleme / deaktive etme
-  - [ ] Günlük kelime programlama (takvim view)
-  - [ ] Toplu kelime import (CSV)
 - [ ] Paylaşım: Custom Nurdle linki oluşturma ve kopyalama
 
 **Başarı Kriterleri**:
+- Admin panel üzerinden kelime yönetimi yapılabiliyor ✅
+- 4/5/6/7 harfli mod seçilebiliyor
 - Kullanıcı CSV yükleyip custom Nurdle oluşturabiliyor
-- Admin panel üzerinden kelime yönetimi yapılabiliyor
 - Custom oyun linki paylaşılabiliyor
 
 ---
@@ -642,6 +650,11 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 #### Yapılacaklar
 
+- [ ] Yarışma / Rekabet Modu
+  - [ ] Aynı kelimeyi çözen iki kullanıcıyı karşılaştır
+  - [ ] Paylaşılabilir sonuç linki ile "challenge" daveti
+  - [ ] Kazanan belirleme (daha az deneme / daha hızlı)
+  - [ ] Skor tablosu (haftalık/aylık)
 - [ ] Kullanıcı hesapları
   - [ ] `users` tablosu (D1) — email, display_name, is_premium, is_admin
   - [ ] JWT tabanlı auth (Cloudflare Workers KV veya D1)

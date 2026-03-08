@@ -11,17 +11,20 @@ import StatsModal from "./components/StatsModal";
 import GameOverModal from "./components/GameOverModal";
 import SettingsModal from "./components/SettingsModal";
 import InstallPrompt from "./components/InstallPrompt";
+import AdminLogin from "./components/admin/AdminLogin";
+import AdminPanel from "./components/admin/AdminPanel";
 import { useGameState } from "./hooks/useGameState";
-import type { GameMode } from "./types";
+import type { GameMode, WordLength } from "./types";
 
 const queryClient = new QueryClient();
 
 interface GameProps {
   mode: GameMode;
+  wordLength: WordLength;
   onGoHome: () => void;
 }
 
-function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
+function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
   const {
     guesses,
     evaluations,
@@ -43,7 +46,7 @@ function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
     submitGuess,
     setHasSeenHelp,
     startNewGame,
-  } = useGameState(mode);
+  } = useGameState(mode, wordLength);
 
   // Modal states
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
@@ -129,6 +132,7 @@ function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
           isRevealing={isRevealing}
           shakeRow={shakeRow}
           gameStatus={gameStatus}
+          wordLength={wordLength}
         />
       </main>
 
@@ -175,10 +179,54 @@ function Game({ mode, onGoHome }: GameProps): React.JSX.Element {
 
 type ViewType = "home" | "daily" | "unlimited";
 
-function App(): React.JSX.Element {
-  const [currentView, setCurrentView] = useState<ViewType>("home");
+interface ActiveGame {
+  mode: GameMode;
+  wordLength: WordLength;
+}
 
-  const handleSelectMode = (mode: GameMode): void => {
+function AdminApp(): React.JSX.Element {
+  const [secret, setSecret] = useState<string | null>(
+    () => sessionStorage.getItem("nurdle-admin-secret")
+  );
+  const [authError, setAuthError] = useState('');
+
+  const handleLogin = async (s: string): Promise<void> => {
+    setAuthError('');
+    try {
+      const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
+      const res = await fetch(`${BASE_URL}/admin/words?limit=1`, {
+        headers: { 'X-Admin-Secret': s },
+      });
+      if (res.status === 401) {
+        setAuthError('Geçersiz anahtar.');
+        return;
+      }
+      sessionStorage.setItem("nurdle-admin-secret", s);
+      setSecret(s);
+    } catch {
+      setAuthError('Bağlantı hatası.');
+    }
+  };
+
+  const handleLogout = (): void => {
+    sessionStorage.removeItem("nurdle-admin-secret");
+    setSecret(null);
+  };
+
+  if (!secret) {
+    return <AdminLogin onLogin={(s) => void handleLogin(s)} error={authError} />;
+  }
+  return <AdminPanel secret={secret} onLogout={handleLogout} />;
+}
+
+function App(): React.JSX.Element {
+  const isAdmin = window.location.pathname.startsWith('/admin');
+
+  const [currentView, setCurrentView] = useState<ViewType>("home");
+  const [activeGame, setActiveGame] = useState<ActiveGame>({ mode: "daily", wordLength: 5 });
+
+  const handleSelectMode = (mode: GameMode, wordLength: WordLength): void => {
+    setActiveGame({ mode, wordLength });
     setCurrentView(mode);
   };
 
@@ -186,14 +234,21 @@ function App(): React.JSX.Element {
     setCurrentView("home");
   };
 
+  if (isAdmin) {
+    return <AdminApp />;
+  }
+
   const renderView = (): React.JSX.Element => {
     if (currentView === "home") {
       return <HomePage onSelectMode={handleSelectMode} />;
     }
-    if (currentView === "daily") {
-      return <Game mode="daily" onGoHome={handleGoHome} />;
-    }
-    return <Game mode="unlimited" onGoHome={handleGoHome} />;
+    return (
+      <Game
+        mode={activeGame.mode}
+        wordLength={activeGame.wordLength}
+        onGoHome={handleGoHome}
+      />
+    );
   };
 
   return (

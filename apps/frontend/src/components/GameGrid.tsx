@@ -1,38 +1,35 @@
 import Tile from './Tile';
 import type { GameGridProps } from '../types';
 
-const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 
-const GameGrid = ({ 
-  guesses, 
-  evaluations, 
-  currentGuess, 
-  isRevealing, 
+const GameGrid = ({
+  guesses,
+  evaluations,
+  currentGuess,
+  isRevealing,
   shakeRow,
-  gameStatus 
+  gameStatus,
+  wordLength,
 }: GameGridProps): React.JSX.Element => {
-  // Grid'i oluştur
   const rows = [];
-  
+
   for (let i = 0; i < MAX_GUESSES; i++) {
     const isCurrentRow = i === guesses.length && gameStatus === 'playing';
     const isRevealingRow = isRevealing && i === guesses.length - 1;
-    
+
     let rowContent = '';
     let rowEvaluation = evaluations[i] || null;
-    
+
     if (i < guesses.length) {
-      // Tamamlanmış satır
       rowContent = guesses[i]!;
       rowEvaluation = evaluations[i] || null;
     } else if (isCurrentRow) {
-      // Aktif satır
-      rowContent = currentGuess.padEnd(WORD_LENGTH, '');
+      rowContent = currentGuess.padEnd(wordLength, '');
     }
-    
+
     const tiles = [];
-    for (let j = 0; j < WORD_LENGTH; j++) {
+    for (let j = 0; j < wordLength; j++) {
       const letter = rowContent[j] || '';
       const status = rowEvaluation ? rowEvaluation[j]! : null;
       

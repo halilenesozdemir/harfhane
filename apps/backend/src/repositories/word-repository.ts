@@ -30,24 +30,25 @@ function toWordEntry(row: WordRow): WordEntry {
 
 export async function findDailyWord(
   db: Env['DB'],
-  date: string
+  date: string,
+  length = 5
 ): Promise<(WordEntry & { gameNumber: number }) | null> {
   const row = await db
     .prepare(
       `SELECT dw.word_id, dw.date, w.word, w.meaning, w.context, w.category
        FROM daily_words dw
        JOIN words w ON w.id = dw.word_id
-       WHERE dw.date = ?
+       WHERE dw.date = ? AND dw.length = ?
        LIMIT 1`
     )
-    .bind(date)
+    .bind(date, length)
     .first<DailyWordRow>();
 
   if (!row) return null;
 
   const countRow = await db
-    .prepare(`SELECT COUNT(*) as count FROM daily_words WHERE date <= ?`)
-    .bind(date)
+    .prepare(`SELECT COUNT(*) as count FROM daily_words WHERE date <= ? AND length = ?`)
+    .bind(date, length)
     .first<{ count: number }>();
 
   return {
@@ -59,15 +60,16 @@ export async function findDailyWord(
   };
 }
 
-export async function findRandomWord(db: Env['DB']): Promise<WordEntry | null> {
+export async function findRandomWord(db: Env['DB'], length = 5): Promise<WordEntry | null> {
   const row = await db
     .prepare(
       `SELECT id, word, meaning, context, category
        FROM words
-       WHERE is_active = 1
+       WHERE is_active = 1 AND length = ?
        ORDER BY RANDOM()
        LIMIT 1`
     )
+    .bind(length)
     .first<WordRow>();
 
   return row ? toWordEntry(row) : null;

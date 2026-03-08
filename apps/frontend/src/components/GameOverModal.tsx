@@ -119,14 +119,16 @@ const GameOverModal = ({
                   {solutionEntry.meaning}
                 </p>
               </div>
-              <div>
-                <span className="text-sm text-text-secondary">
-                  Risale-i Nur'dan:
-                </span>
-                <p className="text-text-primary text-sm italic">
-                  "{solutionEntry.context}"
-                </p>
-              </div>
+              {solutionEntry.context && (
+                <div>
+                  <span className="text-sm text-text-secondary">
+                    Risale-i Nur'dan:
+                  </span>
+                  <p className="text-text-primary text-sm italic">
+                    "{solutionEntry.context}"
+                  </p>
+                </div>
+              )}
               <div>
                 <span className="inline-block px-2 py-1 bg-tile-empty text-text-primary text-xs rounded">
                   {solutionEntry.category}

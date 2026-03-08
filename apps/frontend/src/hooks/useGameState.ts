@@ -9,9 +9,7 @@ import {
   getTodayString,
   normalizeWord,
 } from '../utils/gameLogic';
-import type { GameMode, GameState, DailyStats, UnlimitedStats, TileStatus, WordEntry } from '../types';
-
-const WORD_LENGTH = 5;
+import type { GameMode, GameState, DailyStats, UnlimitedStats, TileStatus, WordEntry, WordLength } from '../types';
 
 interface UseGameStateReturn {
   guesses: string[];
@@ -29,6 +27,7 @@ interface UseGameStateReturn {
   message: string;
   hasSeenHelp: boolean;
   mode: GameMode;
+  wordLength: WordLength;
   isUnlimited: boolean;
   addLetter: (letter: string) => void;
   removeLetter: () => void;
@@ -37,13 +36,13 @@ interface UseGameStateReturn {
   startNewGame: () => void;
 }
 
-export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
+export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 5): UseGameStateReturn => {
   const isUnlimited = mode === 'unlimited';
   const queryClient = useQueryClient();
   const todayString = getTodayString();
 
-  const { data: dailyData, isLoading: isDailyLoading } = useDailyWord();
-  const { data: randomData, isLoading: isRandomLoading, refetch: refetchRandom } = useRandomWord(isUnlimited);
+  const { data: dailyData, isLoading: isDailyLoading } = useDailyWord(wordLength);
+  const { data: randomData, isLoading: isRandomLoading, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
 
   const wordData = isUnlimited ? randomData : dailyData;
   const isLoading = isUnlimited ? isRandomLoading : isDailyLoading;
@@ -67,7 +66,7 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
     guessDistribution: [0, 0, 0, 0, 0, 0],
   });
 
-  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`nurdle:game:${todayString}`, {
+  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`nurdle:game:${todayString}:${wordLength}`, {
     guesses: [],
     evaluations: [],
     currentGuess: '',
@@ -99,14 +98,14 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
 
   const addLetter = useCallback((letter: string): void => {
     if (gameState.gameStatus !== 'playing') return;
-    if (gameState.currentGuess.length >= WORD_LENGTH) return;
+    if (gameState.currentGuess.length >= wordLength) return;
     if (isRevealing) return;
 
     setGameState(prev => ({
       ...prev,
       currentGuess: prev.currentGuess + normalizeWord(letter),
     }));
-  }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing, setGameState]);
+  }, [gameState.gameStatus, gameState.currentGuess.length, wordLength, isRevealing, setGameState]);
 
   const removeLetter = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;
@@ -159,13 +158,17 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
 
   const submitGuess = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;
-    if (gameState.currentGuess.length !== WORD_LENGTH) {
+    if (gameState.currentGuess.length !== wordLength) {
       setShakeRow(true);
-      showMessage('Kelime 5 harf olmalı');
+      showMessage(`Kelime ${wordLength} harf olmalı`);
       setTimeout(() => setShakeRow(false), 500);
       return;
     }
-    if (isRevealing || !solution) return;
+    if (isRevealing) return;
+    if (!solution) {
+      showMessage('Kelime yüklenemedi, sayfayı yenileyin');
+      return;
+    }
 
     const guess = gameState.currentGuess;
 
@@ -195,13 +198,14 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
         showMessage(`Kelime: ${solution}`, 5000);
         updateStats(false, 0);
       }
-    }, WORD_LENGTH * 300 + 200);
+    }, wordLength * 300 + 200);
   }, [
     gameState.gameStatus,
     gameState.currentGuess,
     gameState.guesses,
     gameState.evaluations,
     gameState.keyboardStatus,
+    wordLength,
     isRevealing,
     solution,
     setGameState,
@@ -213,7 +217,7 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
   const startNewGame = useCallback((): void => {
     if (!isUnlimited) return;
 
-    queryClient.removeQueries({ queryKey: ['word', 'random'] });
+    queryClient.removeQueries({ queryKey: ['word', 'random', wordLength] });
     refetchRandom();
 
     setUnlimitedGameState({
@@ -223,7 +227,7 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
       gameStatus: 'playing',
       keyboardStatus: {},
     });
-  }, [isUnlimited, queryClient, refetchRandom]);
+  }, [isUnlimited, wordLength, queryClient, refetchRandom]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
@@ -258,6 +262,7 @@ export const useGameState = (mode: GameMode = 'daily'): UseGameStateReturn => {
     message,
     hasSeenHelp,
     mode,
+    wordLength,
     isUnlimited,
     addLetter,
     removeLetter,

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
-import { dailyWordQuerySchema, validateWordBodySchema } from '../schemas/word-schemas';
+import { dailyWordQuerySchema, randomWordQuerySchema, validateWordBodySchema } from '../schemas/word-schemas';
 import { getDailyWord, getRandomWord, validateWord } from '../services/word-service';
 
 const words = new Hono<{ Bindings: Env }>();
@@ -15,16 +15,26 @@ words.get(
     return;
   }),
   async (c) => {
-    const { date } = c.req.valid('query');
-    const result = await getDailyWord(c.env.DB, date);
+    const { date, length } = c.req.valid('query');
+    const result = await getDailyWord(c.env.DB, date, length);
     return c.json({ data: result });
   }
 );
 
-words.get('/random', async (c) => {
-  const result = await getRandomWord(c.env.DB);
-  return c.json({ data: result });
-});
+words.get(
+  '/random',
+  zValidator('query', randomWordQuerySchema, (result, c) => {
+    if (!result.success) {
+      return c.json({ error: { code: 'BAD_REQUEST', message: result.error.issues[0]?.message ?? 'Invalid query' } }, 400);
+    }
+    return;
+  }),
+  async (c) => {
+    const { length } = c.req.valid('query');
+    const result = await getRandomWord(c.env.DB, length);
+    return c.json({ data: result });
+  }
+);
 
 words.post(
   '/validate',

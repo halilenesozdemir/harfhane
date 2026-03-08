@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Calendar, Infinity, Trophy, Sun, Moon } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
-import type { HomePageProps } from "../types";
+import type { HomePageProps, WordLength } from "../types";
+
+const WORD_LENGTHS: WordLength[] = [4, 5, 6, 7];
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
+  const [selectedLength, setSelectedLength] = useState<WordLength>(5);
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
@@ -33,10 +37,32 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
       {/* Mod Seçimi */}
       <div className="w-full max-w-md space-y-4">
+        {/* Kelime Uzunluğu Seçimi */}
+        <div>
+          <p className="text-text-secondary text-sm text-center mb-2">Kelime uzunluğu</p>
+          <div className="flex gap-2 justify-center">
+            {WORD_LENGTHS.map((len) => (
+              <button
+                key={len}
+                onClick={() => setSelectedLength(len)}
+                className={`
+                  w-14 h-12 rounded-lg font-bold text-lg transition-all cursor-pointer
+                  ${selectedLength === len
+                    ? 'bg-correct text-white'
+                    : 'bg-tile-empty text-text-primary hover:bg-tile-filled'
+                  }
+                `}
+              >
+                {len}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Günlük Mod */}
         <button
-          onClick={() => onSelectMode("daily")}
-          className="w-full bg-correct hover:bg-correct/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          onClick={() => onSelectMode("daily", selectedLength)}
+          className="w-full bg-correct hover:bg-correct/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
@@ -54,8 +80,8 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
         {/* Sınırsız Mod */}
         <button
-          onClick={() => onSelectMode("unlimited")}
-          className="w-full bg-present hover:bg-present/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+          onClick={() => onSelectMode("unlimited", selectedLength)}
+          className="w-full bg-present hover:bg-present/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">

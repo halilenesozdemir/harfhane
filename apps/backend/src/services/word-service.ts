@@ -17,21 +17,22 @@ function todayUTC(): string {
 
 export async function getDailyWord(
   db: Env['DB'],
-  date?: string
+  date?: string,
+  length = 5
 ): Promise<DailyWordResponse> {
   const targetDate = date ?? todayUTC();
 
   if (!isValidDate(targetDate)) throw INVALID_DATE();
 
-  const result = await findDailyWord(db, targetDate);
+  const result = await findDailyWord(db, targetDate, length);
   if (!result) throw NOT_FOUND('Daily word');
 
   const { gameNumber, ...word } = result;
   return { word, gameNumber, date: targetDate };
 }
 
-export async function getRandomWord(db: Env['DB']): Promise<RandomWordResponse> {
-  const word = await findRandomWord(db);
+export async function getRandomWord(db: Env['DB'], length = 5): Promise<RandomWordResponse> {
+  const word = await findRandomWord(db, length);
   if (!word) throw NOT_FOUND('Word');
   return { word };
 }

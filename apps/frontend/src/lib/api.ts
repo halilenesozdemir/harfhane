@@ -23,12 +23,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (json as { data: T }).data;
 }
 
-export function fetchDailyWord(): Promise<DailyWordResponse> {
-  return request<DailyWordResponse>('/words/daily');
+export function fetchDailyWord(length?: number): Promise<DailyWordResponse> {
+  const params = length && length !== 5 ? `?length=${length}` : '';
+  return request<DailyWordResponse>(`/words/daily${params}`);
 }
 
-export function fetchRandomWord(): Promise<RandomWordResponse> {
-  return request<RandomWordResponse>('/words/random');
+export function fetchRandomWord(length?: number): Promise<RandomWordResponse> {
+  const params = length && length !== 5 ? `?length=${length}` : '';
+  return request<RandomWordResponse>(`/words/random${params}`);
 }
 
 export async function validateWord(word: string): Promise<ValidateWordResponse> {
