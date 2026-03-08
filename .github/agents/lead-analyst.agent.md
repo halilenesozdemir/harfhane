@@ -1,17 +1,6 @@
----
-name: LeadAnalyst
-description: >
-  Tier 2.5 Lead Analyst Agent — Reviews and consolidates Analyst (Tier 3) outputs.
-  Ensures analysis quality, requests revisions, and produces consolidated reports.
-  Operates in read-only mode.
-user-invokable: false
-tools:
-  - read
-  - search
-  - fetch
-model: "Gemini 3.1 Pro (Preview) (copilot)"
-modelFallback: "Gemini 3.0 Pro (Preview) (copilot)"
----
+> Claude Code Agent — Tier 2.5 Lead Analyst (READ-ONLY)
+> Model: claude-haiku-4-5 | Fallback: claude-sonnet-4-6
+> Spawned via Claude Code `Agent` tool.
 
 # LeadAnalyst — Tier 2.5 Lead Analyst Agent
 

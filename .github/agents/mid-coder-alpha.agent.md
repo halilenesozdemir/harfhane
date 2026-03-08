@@ -1,16 +1,6 @@
----
-name: MidCoderAlpha
-description: >
-  Tier 2 MidCoder Agent — Simple to medium complexity coding tasks,
-  utility functions, boilerplate generation, and self-review of own outputs.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-model: "GPT-5.3-Codex (copilot)"
-modelFallback: "GPT-5.2-Codex (copilot)"
----
+> Claude Code Agent — Tier 2 MidCoder
+> Model: claude-sonnet-4-6 | Fallback: claude-sonnet-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # MidCoderAlpha — Tier 2 MidCoder Agent
 

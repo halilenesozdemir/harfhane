@@ -1,18 +1,6 @@
----
-name: StaffEngineerBeta
-description: >
-  Tier 1.5 Staff Engineer Agent (Secondary) — Parallel coder for implementation tasks.
-  Handles feature development, complex logic, and MidCoder reviews.
-  Works alongside StaffEngineerAlpha in larger configurations.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-  - fetch
-model: "Claude Sonnet 4.6 (copilot)"
-modelFallback: "Claude Sonnet 4.5 (copilot)"
----
+> Claude Code Agent — Tier 1.5 Staff Engineer (Secondary)
+> Model: claude-sonnet-4-6 | Fallback: claude-sonnet-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # StaffEngineerBeta — Tier 1.5 Staff Engineer Agent (Secondary)
 

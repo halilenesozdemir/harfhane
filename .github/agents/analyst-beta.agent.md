@@ -1,16 +1,6 @@
----
-name: AnalystBeta
-description: >
-  Tier 3 Analyst Agent (Secondary) — Dependency scanning, performance analysis,
-  security auditing. Operates in read-only mode.
-user-invokable: false
-tools:
-  - read
-  - search
-  - fetch
-model: "Gemini 3 Flash (copilot)"
-modelFallback: "Claude Haiku 4.5 (copilot)"
----
+> Claude Code Agent — Tier 3 Analyst (Secondary, READ-ONLY)
+> Model: claude-haiku-4-5 | Fallback: claude-sonnet-4-6
+> Spawned via Claude Code `Agent` tool.
 
 # AnalystBeta — Tier 3 Analyst Agent (Secondary)
 

@@ -1,0 +1,13 @@
+name = "nurdle-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nurdle-db"
+database_id = "1fad4aa7-baa4-41ce-a0f4-976904b8d29b"
+
+[dev]
+port = 8787
+local_protocol = "http"

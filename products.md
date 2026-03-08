@@ -564,6 +564,113 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ---
 
+## 🚀 Geliştirme Fazları (Cloudflare Stack)
+
+> v2.x PWA aşaması tamamlandı. Bundan sonraki geliştirme Cloudflare altyapısı üzerinde ilerler.
+> Monorepo yapısı: `apps/frontend/` + `apps/backend/` + `packages/shared/`
+
+---
+
+### Faz 1 — Backend & Veritabanı Temeli
+
+**Hedef**: Kelime listesini JSON'dan çıkarıp D1 veritabanında yönetmek; Hono API ile frontend'e servis etmek.
+
+**Stack**: Hono + Cloudflare Workers + D1 (SQLite)
+
+#### Yapılacaklar
+
+- [ ] Monorepo kurulumu (pnpm workspaces)
+  - [ ] Mevcut `src/` → `apps/frontend/src/`
+  - [ ] `apps/backend/` — Hono + Wrangler kurulumu
+  - [ ] `packages/shared/` — `WordEntry`, `ApiError` shared types
+- [ ] D1 veritabanı şeması
+  - [ ] `words` tablosu (id, word, meaning, context, category, is_active)
+  - [ ] `daily_words` tablosu (word_id, date UNIQUE)
+  - [ ] Migration dosyaları `apps/backend/migrations/`
+- [ ] `words.json` → D1'e aktarım scripti
+- [ ] Backend API endpoints
+  - [ ] `GET /api/words/daily` — günün kelimesi
+  - [ ] `GET /api/words/random` — rastgele kelime (sınırsız mod)
+  - [ ] `POST /api/words/validate` — kelime geçerlilik kontrolü
+- [ ] Frontend: `words.json` import → API çağrısı (TanStack Query)
+- [ ] CI/CD: GitHub Actions — Workers + Pages deploy
+- [ ] Cloudflare Pages deploy konfigürasyonu
+
+**Başarı Kriterleri**:
+- Kelime listesi D1'den geliyor
+- Günlük kelime tarih bazlı API'den alınıyor
+- Frontend'de `words.json` referansı kalmıyor
+
+---
+
+### Faz 2 — Custom Kelime Listeleri & Admin Paneli
+
+**Hedef**: Kullanıcıların kendi kelime listelerini yükleyip özel Nurdle oyunları oluşturabilmesi; admin paneli ile kelime yönetimi.
+
+**Stack**: Faz 1 + Cloudflare R2
+
+#### Yapılacaklar
+
+- [ ] Custom kelime listesi yükleme
+  - [ ] CSV/JSON dosya upload → R2 depolama
+  - [ ] R2'den D1'e kelime aktarımı (backend job)
+  - [ ] Dosya validasyonu (format, encoding, duplicate check)
+- [ ] Slug sistemi
+  - [ ] `word_lists` tablosu (slug, name, description, r2_key, is_public)
+  - [ ] `GET /api/lists/:slug` — custom liste detayı
+  - [ ] `GET /api/lists/:slug/play` — custom oyun başlatma
+  - [ ] Frontend: `/play/:slug` route'u
+- [ ] Admin paneli (route korumalı, token bazlı)
+  - [ ] Kelime listeleme, arama, filtreleme
+  - [ ] Kelime ekleme / düzenleme / deaktive etme
+  - [ ] Günlük kelime programlama (takvim view)
+  - [ ] Toplu kelime import (CSV)
+- [ ] Paylaşım: Custom Nurdle linki oluşturma ve kopyalama
+
+**Başarı Kriterleri**:
+- Kullanıcı CSV yükleyip custom Nurdle oluşturabiliyor
+- Admin panel üzerinden kelime yönetimi yapılabiliyor
+- Custom oyun linki paylaşılabiliyor
+
+---
+
+### Faz 3 — Ticari Model & Kullanıcı Sistemi
+
+**Hedef**: Kullanıcı hesapları, global istatistikler, premium özellikler ve monetizasyon altyapısı.
+
+**Stack**: Faz 2 + Cloudflare Analytics Engine + JWT Auth
+
+#### Yapılacaklar
+
+- [ ] Kullanıcı hesapları
+  - [ ] `users` tablosu (D1) — email, display_name, is_premium, is_admin
+  - [ ] JWT tabanlı auth (Cloudflare Workers KV veya D1)
+  - [ ] Google OAuth entegrasyonu (opsiyonel)
+  - [ ] Anonim → kayıtlı kullanıcı istatistik taşıma
+- [ ] Global istatistikler
+  - [ ] Günlük oynanan oyun sayısı
+  - [ ] Kelime bazlı çözüm dağılımı
+  - [ ] "Bugün X kişi oynadı" widget'ı
+  - [ ] Cloudflare Analytics Engine entegrasyonu (ücretsiz)
+- [ ] Liderboard
+  - [ ] Günlük / haftalık / tüm zamanlar sıralaması
+  - [ ] Arkadaş davetiyesi (referral sistem)
+- [ ] Premium özellikler
+  - [ ] Özel domain Nurdle oluşturma
+  - [ ] Marka özelleştirme (logo, renk)
+  - [ ] Gelişmiş istatistikler
+  - [ ] Ödeme entegrasyonu (Stripe veya Paddle)
+- [ ] Multi-language
+  - [ ] İngilizce arayüz
+  - [ ] Arapça kelime desteği (RTL layout)
+
+**Başarı Kriterleri**:
+- Kullanıcılar hesap açıp istatistiklerini kaydedebiliyor
+- Global leaderboard çalışıyor
+- Premium abonelik satın alınabiliyor
+
+---
+
 ## 🎯 v3.0 ve Ötesi (Uzun Vadeli)
 
 ### Topluluk Özellikleri

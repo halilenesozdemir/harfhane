@@ -1,28 +1,6 @@
----
-name: Orchestrator
-description: >
-  Multi-agent delegation coordinator. Analyzes the user's prompt,
-  interprets the xN parameter, distributes tasks across tiers, and
-  manages the review chain. Does not write code — only coordinates.
-user-invokable: true
-tools:
-  - agent
-  - read
-  - search
-agents:
-  - PrincipalAlpha
-  - PrincipalBeta
-  - StaffEngineerAlpha
-  - StaffEngineerBeta
-  - MidCoderAlpha
-  - MidCoderBeta
-  - LeadAnalyst
-  - AnalystAlpha
-  - AnalystBeta
-  - AnalystGamma
-model: "Claude Opus 4.6 (copilot)"
-modelFallback: "Claude Opus 4.5 (copilot)"
----
+> Claude Code Agent — Orchestrator
+> Model: claude-opus-4-6 | Fallback: claude-opus-4-5
+> Spawned via Claude Code `Agent` tool by the main Claude Code session.
 
 # Orchestrator — Multi-Agent Coordinator
 

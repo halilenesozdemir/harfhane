@@ -1,16 +1,6 @@
----
-name: MidCoderBeta
-description: >
-  Tier 2 MidCoder Agent (Secondary) — Simple coding tasks, utility functions,
-  boilerplate generation, and self-review of own outputs. Supports parallel execution.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-model: "GPT-5.3-Codex (copilot)"
-modelFallback: "GPT-5.2-Codex (copilot)"
----
+> Claude Code Agent — Tier 2 MidCoder (Secondary)
+> Model: claude-sonnet-4-6 | Fallback: claude-sonnet-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # MidCoderBeta — Tier 2 MidCoder Agent (Secondary)
 

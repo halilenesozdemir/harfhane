@@ -1,21 +1,6 @@
----
-name: PrincipalBeta
-description: >
-  Tier 1 Principal Agent (Secondary) — Architecture design, complex code
-  implementation, and review of Staff Engineer outputs. Runs in parallel in x10 mode.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-  - fetch
-  - agent
-agents:
-  - StaffEngineerAlpha
-  - StaffEngineerBeta
-model: "Claude Opus 4.6 (copilot)"
-modelFallback: "Claude Opus 4.5 (copilot)"
----
+> Claude Code Agent — Tier 1 Principal (Secondary, x10 mode)
+> Model: claude-opus-4-6 | Fallback: claude-opus-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # PrincipalBeta — Tier 1 Principal Agent (Secondary)
 

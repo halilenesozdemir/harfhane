@@ -1,0 +1,29 @@
+{
+  "name": "@nurdle/backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate:local": "wrangler d1 migrations apply nurdle-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply nurdle-db --remote"
+  },
+  "dependencies": {
+    "@nurdle/shared": "workspace:*",
+    "hono": "^4.7.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "@hono/zod-validator": "^0.4.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.0",
+    "wrangler": "^4.0.0"
+  }
+}

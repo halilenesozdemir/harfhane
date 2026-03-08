@@ -1,16 +1,6 @@
----
-name: AnalystGamma
-description: >
-  Tier 3 Analyst Agent (Tertiary) — Test scenario generation, documentation
-  analysis, user flow mapping. Operates in read-only mode.
-user-invokable: false
-tools:
-  - read
-  - search
-  - fetch
-model: "Gemini 3 Flash (copilot)"
-modelFallback: "Claude Haiku 4.5 (copilot)"
----
+> Claude Code Agent — Tier 3 Analyst (Tertiary, READ-ONLY)
+> Model: claude-haiku-4-5 | Fallback: claude-sonnet-4-6
+> Spawned via Claude Code `Agent` tool.
 
 # AnalystGamma — Tier 3 Analyst Agent (Tertiary)
 

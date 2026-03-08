@@ -1,21 +1,6 @@
----
-name: PrincipalAlpha
-description: >
-  Tier 1 Principal Agent — Architecture design, complex code implementation,
-  and review of Staff Engineer outputs. The team's most senior developer.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-  - fetch
-  - agent
-agents:
-  - StaffEngineerAlpha
-  - StaffEngineerBeta
-model: "Claude Opus 4.6 (copilot)"
-modelFallback: "Claude Opus 4.5 (copilot)"
----
+> Claude Code Agent — Tier 1 Principal
+> Model: claude-opus-4-6 | Fallback: claude-opus-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # PrincipalAlpha — Tier 1 Principal Agent
 

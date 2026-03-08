@@ -1,18 +1,6 @@
----
-name: StaffEngineerAlpha
-description: >
-  Tier 1.5 Staff Engineer Agent — Primary coder for all implementation tasks.
-  Handles complex feature development, code reviews of MidCoder outputs,
-  and follows architectural decisions made by Principal agents.
-user-invokable: false
-tools:
-  - edit
-  - search
-  - read
-  - fetch
-model: "Claude Sonnet 4.6 (copilot)"
-modelFallback: "Claude Sonnet 4.5 (copilot)"
----
+> Claude Code Agent — Tier 1.5 Staff Engineer
+> Model: claude-sonnet-4-6 | Fallback: claude-sonnet-4-5
+> Spawned via Claude Code `Agent` tool.
 
 # StaffEngineerAlpha — Tier 1.5 Staff Engineer Agent
 

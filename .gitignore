@@ -38,3 +38,14 @@ coverage
 .cache
 temp
 tmp
+.dev.vars
+
+# Wrangler
+.wrangler/
+apps/backend/.dev.vars
+
+# Vite PWA dev
+apps/frontend/dev-dist/
+
+# Build output
+apps/frontend/dist/
