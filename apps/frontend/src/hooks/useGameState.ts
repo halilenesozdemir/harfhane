@@ -53,7 +53,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
   const gameNumber = isUnlimited ? 0 : (dailyData?.gameNumber ?? 0);
 
-  const [stats, setStats] = useLocalStorage<DailyStats>('nurdle:stats', {
+  const [stats, setStats] = useLocalStorage<DailyStats>(`nurdle:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
     currentStreak: 0,
@@ -62,7 +62,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
     lastPlayedDate: null,
   });
 
-  const [unlimitedStats, setUnlimitedStats] = useLocalStorage<UnlimitedStats>('nurdle:unlimited:stats', {
+  const [unlimitedStats, setUnlimitedStats] = useLocalStorage<UnlimitedStats>(`nurdle:unlimited:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0],
