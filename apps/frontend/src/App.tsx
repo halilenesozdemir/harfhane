@@ -13,6 +13,7 @@ import SettingsModal from "./components/SettingsModal";
 import InstallPrompt from "./components/InstallPrompt";
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminPanel from "./components/admin/AdminPanel";
+import SlugGame from "./components/SlugGame";
 import { useGameState } from "./hooks/useGameState";
 import type { GameMode, WordLength } from "./types";
 
@@ -197,7 +198,7 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
   );
 }
 
-type ViewType = "home" | "daily" | "unlimited";
+type ViewType = "home" | "daily" | "unlimited" | "slug";
 
 interface ActiveGame {
   mode: GameMode;
@@ -240,7 +241,10 @@ function AdminApp(): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
-  const isAdmin = window.location.pathname.startsWith('/admin');
+  const pathname = window.location.pathname;
+  const isAdmin = pathname.startsWith('/admin');
+  const slugMatch = pathname.match(/^\/play\/([a-z0-9-]+)$/);
+  const playSlug = slugMatch?.[1] ?? null;
 
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [activeGame, setActiveGame] = useState<ActiveGame>({ mode: "daily", wordLength: 5 });
@@ -256,6 +260,16 @@ function App(): React.JSX.Element {
 
   if (isAdmin) {
     return <AdminApp />;
+  }
+
+  if (playSlug) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <SlugGame slug={playSlug} onGoHome={() => { window.location.href = '/'; }} />
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
   }
 
   const renderView = (): React.JSX.Element => {

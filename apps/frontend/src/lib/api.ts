@@ -39,3 +39,21 @@ export async function validateWord(word: string): Promise<ValidateWordResponse> 
     body: JSON.stringify({ word }),
   });
 }
+
+export interface WordListInfo {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  wordLength: number;
+  isPublic: boolean;
+  wordCount: number;
+}
+
+export function fetchListInfo(slug: string): Promise<{ list: WordListInfo }> {
+  return request<{ list: WordListInfo }>(`/lists/${slug}`);
+}
+
+export function fetchRandomWordFromList(slug: string): Promise<RandomWordResponse> {
+  return request<RandomWordResponse>(`/lists/${slug}/random`);
+}

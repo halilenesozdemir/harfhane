@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { LayoutList, CalendarDays, Upload, LogOut } from 'lucide-react';
+import { LayoutList, CalendarDays, Upload, LogOut, ListTree } from 'lucide-react';
 import WordsManager from './WordsManager';
 import DailyScheduler from './DailyScheduler';
 import ImportWords from './ImportWords';
+import ListsManager from './ListsManager';
 
 interface AdminPanelProps {
   secret: string;
   onLogout: () => void;
 }
 
-type Tab = 'words' | 'daily' | 'import';
+type Tab = 'words' | 'daily' | 'import' | 'lists';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'words', label: 'Kelimeler', icon: <LayoutList size={16} /> },
   { id: 'daily', label: 'Günlük Program', icon: <CalendarDays size={16} /> },
   { id: 'import', label: 'İçe Aktar', icon: <Upload size={16} /> },
+  { id: 'lists', label: 'Listeler', icon: <ListTree size={16} /> },
 ];
 
 export default function AdminPanel({ secret, onLogout }: AdminPanelProps): React.JSX.Element {
@@ -57,6 +59,7 @@ export default function AdminPanel({ secret, onLogout }: AdminPanelProps): React
         {tab === 'words' && <WordsManager secret={secret} />}
         {tab === 'daily' && <DailyScheduler secret={secret} />}
         {tab === 'import' && <ImportWords secret={secret} />}
+        {tab === 'lists' && <ListsManager secret={secret} />}
       </div>
     </div>
   );
