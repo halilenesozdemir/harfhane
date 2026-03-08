@@ -50,6 +50,10 @@ export interface WordListInfo {
   wordCount: number;
 }
 
+export function fetchPublicLists(): Promise<{ lists: WordListInfo[] }> {
+  return request<{ lists: WordListInfo[] }>('/lists');
+}
+
 export function fetchListInfo(slug: string): Promise<{ list: WordListInfo }> {
   return request<{ list: WordListInfo }>(`/lists/${slug}`);
 }
