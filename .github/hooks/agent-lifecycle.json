@@ -1,0 +1,32 @@
+[
+  {
+    "event": "SubagentStart",
+    "steps": [
+      {
+        "run": "echo '[AGENT-START] agent=${COPILOT_AGENT:-unknown} at $(date -u +\"%Y-%m-%d %H:%M:%S UTC\")' >> .github/logs/agent-activity.log"
+      },
+      {
+        "run": "mkdir -p .github/memory/sessions .github/logs"
+      }
+    ]
+  },
+  {
+    "event": "SubagentStop",
+    "steps": [
+      {
+        "run": "echo '[AGENT-STOP] agent=${COPILOT_AGENT:-unknown} at $(date -u +\"%Y-%m-%d %H:%M:%S UTC\")' >> .github/logs/agent-activity.log"
+      },
+      {
+        "run": "echo '---' >> .github/logs/agent-activity.log && echo \"[SESSION-MARKER] agent=${COPILOT_AGENT:-unknown} stopped at $(date -u +'%Y-%m-%d %H:%M:%S UTC'). Check .github/memory/sessions/ for session file.\" >> .github/logs/agent-activity.log"
+      }
+    ]
+  },
+  {
+    "event": "SubagentError",
+    "steps": [
+      {
+        "run": "echo '[AGENT-ERROR] agent=${COPILOT_AGENT:-unknown} at $(date -u +\"%Y-%m-%d %H:%M:%S UTC\")' >> .github/logs/agent-activity.log"
+      }
+    ]
+  }
+]
