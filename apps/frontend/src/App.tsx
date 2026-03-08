@@ -197,7 +197,7 @@ function AdminApp(): React.JSX.Element {
       const res = await fetch(`${BASE_URL}/admin/words?limit=1`, {
         headers: { 'X-Admin-Secret': s },
       });
-      if (res.status === 401) {
+      if (!res.ok) {
         setAuthError('Geçersiz anahtar.');
         return;
       }
