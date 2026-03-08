@@ -27,28 +27,20 @@ const MAX_LEN = getArg('--max', 7);
 const TARGET = getArg('--target', 100);
 const DELAY_MS = 1200; // sunucuya saygılı ol
 
-// Taranacak sayfalar (sozler ve mektubat'tan birkaç bölüm)
+// Taranacak sayfalar — sozler, mektubat, lemalar, sualar, barla
 const PAGES = [
-  '/oku/sozler/5',
-  '/oku/sozler/6',
-  '/oku/sozler/7',
-  '/oku/sozler/8',
-  '/oku/sozler/9',
-  '/oku/sozler/10',
-  '/oku/sozler/11',
-  '/oku/sozler/12',
-  '/oku/sozler/13',
-  '/oku/sozler/14',
-  '/oku/sozler/15',
-  '/oku/mektubat/100',
-  '/oku/mektubat/101',
-  '/oku/mektubat/102',
-  '/oku/lemalar/200',
-  '/oku/lemalar/201',
-  '/oku/lemalar/202',
-  '/oku/lemalar/203',
-  '/oku/sualar/300',
-  '/oku/sualar/301',
+  '/oku/sozler/5',  '/oku/sozler/6',  '/oku/sozler/7',  '/oku/sozler/8',
+  '/oku/sozler/9',  '/oku/sozler/10', '/oku/sozler/11', '/oku/sozler/12',
+  '/oku/sozler/13', '/oku/sozler/14', '/oku/sozler/15', '/oku/sozler/16',
+  '/oku/sozler/17', '/oku/sozler/18', '/oku/sozler/19', '/oku/sozler/20',
+  '/oku/sozler/21', '/oku/sozler/22', '/oku/sozler/23', '/oku/sozler/24',
+  '/oku/mektubat/100', '/oku/mektubat/101', '/oku/mektubat/102', '/oku/mektubat/103',
+  '/oku/mektubat/104', '/oku/mektubat/105', '/oku/mektubat/106', '/oku/mektubat/107',
+  '/oku/lemalar/200', '/oku/lemalar/201', '/oku/lemalar/202', '/oku/lemalar/203',
+  '/oku/lemalar/204', '/oku/lemalar/205', '/oku/lemalar/206', '/oku/lemalar/207',
+  '/oku/sualar/300',  '/oku/sualar/301',  '/oku/sualar/302',  '/oku/sualar/303',
+  '/oku/sualar/304',  '/oku/sualar/305',  '/oku/sualar/306',  '/oku/sualar/307',
+  '/oku/barla/400',   '/oku/barla/401',   '/oku/barla/402',   '/oku/barla/403',
 ];
 
 const BASE = 'https://risaleoku.com';
