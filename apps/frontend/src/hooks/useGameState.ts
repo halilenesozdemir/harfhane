@@ -23,6 +23,7 @@ interface UseGameStateReturn {
   stats: DailyStats | UnlimitedStats;
   isRevealing: boolean;
   isLoading: boolean;
+  isError: boolean;
   shakeRow: boolean;
   message: string;
   hasSeenHelp: boolean;
@@ -41,11 +42,12 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const queryClient = useQueryClient();
   const todayString = getTodayString();
 
-  const { data: dailyData, isLoading: isDailyLoading } = useDailyWord(wordLength);
-  const { data: randomData, isLoading: isRandomLoading, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
+  const { data: dailyData, isLoading: isDailyLoading, isError: isDailyError } = useDailyWord(wordLength);
+  const { data: randomData, isLoading: isRandomLoading, isError: isRandomError, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
 
   const wordData = isUnlimited ? randomData : dailyData;
   const isLoading = isUnlimited ? isRandomLoading : isDailyLoading;
+  const isError = isUnlimited ? isRandomError : isDailyError;
 
   const solution = wordData?.word.word ?? '';
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
@@ -258,6 +260,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
     stats: currentStats,
     isRevealing,
     isLoading,
+    isError,
     shakeRow,
     message,
     hasSeenHelp,

@@ -7,6 +7,7 @@ export function useDailyWord(length: number = 5) {
     queryFn: () => fetchDailyWord(length),
     staleTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
+    retry: false,
   });
 }
 
@@ -17,5 +18,6 @@ export function useRandomWord(enabled: boolean, length: number = 5) {
     enabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    retry: false,
   });
 }
