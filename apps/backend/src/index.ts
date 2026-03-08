@@ -11,9 +11,21 @@ const app = new Hono<{ Bindings: Env }>();
 app.use(
   '/api/*',
   cors({
-    origin: ['http://localhost:5173', 'https://nurdle.app', 'https://nurdle.pages.dev'],
+    origin: (origin) => {
+      if (!origin) return '*';
+      const allowed = [
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'https://nurdle.app',
+        'https://nurdle.pages.dev',
+      ];
+      if (allowed.includes(origin)) return origin;
+      if (origin.endsWith('.nurdle.pages.dev')) return origin;
+      return null;
+    },
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowHeaders: ['Content-Type', 'X-Admin-Secret'],
+    credentials: true,
   })
 );
 
