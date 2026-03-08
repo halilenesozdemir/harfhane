@@ -4,6 +4,7 @@ import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
 import { admin } from './routes/admin';
+import { lists } from './routes/lists';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -17,6 +18,7 @@ app.use(
 );
 
 app.route('/api/words', words);
+app.route('/api/lists', lists);
 app.route('/api/admin', admin);
 
 app.onError((err, c) => {

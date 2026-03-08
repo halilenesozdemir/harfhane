@@ -48,6 +48,18 @@ export const listWordsQuerySchema = z.object({
   active: z.enum(['0', '1']).optional(),
 });
 
+export const createListSchema = z.object({
+  slug: z.string().min(2).max(60).regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers and hyphens'),
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  word_length: z.number().int().min(4).max(7).default(5),
+  is_public: z.boolean().default(false),
+});
+
+export const listWordActionSchema = z.object({
+  word_id: z.number().int().positive(),
+});
+
 export const listDailyQuerySchema = z.object({
   from: z
     .string()

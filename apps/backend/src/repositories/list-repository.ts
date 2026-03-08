@@ -1,0 +1,149 @@
+import type { Env } from '../types/env';
+
+interface ListRow {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  word_length: number;
+  is_public: number;
+  created_at: string;
+  word_count?: number;
+}
+
+interface WordRow {
+  id: number;
+  word: string;
+  meaning: string;
+  context: string;
+  category: string;
+}
+
+export async function findListBySlug(db: Env['DB'], slug: string): Promise<ListRow | null> {
+  const row = await db
+    .prepare(
+      `SELECT wl.*, COUNT(wlw.word_id) as word_count
+       FROM word_lists wl
+       LEFT JOIN word_list_words wlw ON wlw.list_id = wl.id
+       WHERE wl.slug = ?
+       GROUP BY wl.id`
+    )
+    .bind(slug)
+    .first<ListRow>();
+  return row ?? null;
+}
+
+export async function findAllPublicLists(db: Env['DB']): Promise<ListRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT wl.*, COUNT(wlw.word_id) as word_count
+       FROM word_lists wl
+       LEFT JOIN word_list_words wlw ON wlw.list_id = wl.id
+       WHERE wl.is_public = 1
+       GROUP BY wl.id
+       ORDER BY wl.created_at DESC`
+    )
+    .all<ListRow>();
+  return results;
+}
+
+export async function findRandomWordFromList(
+  db: Env['DB'],
+  listId: number
+): Promise<WordRow | null> {
+  const row = await db
+    .prepare(
+      `SELECT w.id, w.word, w.meaning, w.context, w.category
+       FROM word_list_words wlw
+       JOIN words w ON w.id = wlw.word_id
+       WHERE wlw.list_id = ? AND w.is_active = 1
+       ORDER BY RANDOM()
+       LIMIT 1`
+    )
+    .bind(listId)
+    .first<WordRow>();
+  return row ?? null;
+}
+
+export async function createList(
+  db: Env['DB'],
+  slug: string,
+  name: string,
+  description: string | null,
+  wordLength: number,
+  isPublic: boolean
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `INSERT INTO word_lists (slug, name, description, word_length, is_public)
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING id`
+    )
+    .bind(slug, name, description ?? null, wordLength, isPublic ? 1 : 0)
+    .first<{ id: number }>();
+  return result!.id;
+}
+
+export async function addWordToList(
+  db: Env['DB'],
+  listId: number,
+  wordId: number
+): Promise<void> {
+  await db
+    .prepare(`INSERT OR IGNORE INTO word_list_words (list_id, word_id) VALUES (?, ?)`)
+    .bind(listId, wordId)
+    .run();
+}
+
+export async function removeWordFromList(
+  db: Env['DB'],
+  listId: number,
+  wordId: number
+): Promise<void> {
+  await db
+    .prepare(`DELETE FROM word_list_words WHERE list_id = ? AND word_id = ?`)
+    .bind(listId, wordId)
+    .run();
+}
+
+export async function deleteList(db: Env['DB'], listId: number): Promise<void> {
+  await db.prepare(`DELETE FROM word_lists WHERE id = ?`).bind(listId).run();
+}
+
+export async function findAllLists(db: Env['DB']): Promise<ListRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT wl.*, COUNT(wlw.word_id) as word_count
+       FROM word_lists wl
+       LEFT JOIN word_list_words wlw ON wlw.list_id = wl.id
+       GROUP BY wl.id
+       ORDER BY wl.created_at DESC`
+    )
+    .all<ListRow>();
+  return results;
+}
+
+export async function findListWords(
+  db: Env['DB'],
+  listId: number
+): Promise<WordRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT w.id, w.word, w.meaning, w.context, w.category
+       FROM word_list_words wlw
+       JOIN words w ON w.id = wlw.word_id
+       WHERE wlw.list_id = ?
+       ORDER BY w.word`
+    )
+    .bind(listId)
+    .all<WordRow>();
+  return results;
+}
+
+export async function slugExists(db: Env['DB'], slug: string): Promise<boolean> {
+  const row = await db
+    .prepare(`SELECT 1 FROM word_lists WHERE slug = ?`)
+    .bind(slug)
+    .first();
+  return row !== null;
+}

@@ -32,3 +32,22 @@ export interface ApiError {
     message: string;
   };
 }
+
+export interface WordList {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  wordLength: number;
+  isPublic: boolean;
+  createdAt: string;
+  wordCount?: number;
+}
+
+export interface WordListResponse {
+  list: WordList;
+}
+
+export interface WordListsResponse {
+  lists: WordList[];
+}
