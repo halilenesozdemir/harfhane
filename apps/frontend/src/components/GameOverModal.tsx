@@ -190,7 +190,7 @@ const GameOverModal = ({
           {!isUnlimited && isNewDayAvailable && (
             <button
               onClick={handleNewDay}
-              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in"
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in cursor-pointer"
             >
               <RotateCcw size={20} />
               Yeni Nurdle'ı Başlat
@@ -200,7 +200,7 @@ const GameOverModal = ({
           {/* Paylaş Butonu */}
           <button
             onClick={handleShare}
-            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200"
+            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
           >
             {copied ? (
               <>
@@ -219,7 +219,7 @@ const GameOverModal = ({
           {isUnlimited && (
             <button
               onClick={onPlayAgain}
-              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present hover:bg-present/90 text-white flex items-center justify-center gap-2 transition-all duration-200"
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present hover:bg-present/90 text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
             >
               <RotateCcw size={20} />
               Tekrar Oyna
@@ -229,7 +229,7 @@ const GameOverModal = ({
           {/* Ana Sayfa Butonu */}
           <button
             onClick={onGoHome}
-            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-tile-empty hover:bg-tile-filled text-text-primary flex items-center justify-center gap-2 transition-all duration-200"
+            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-tile-empty hover:bg-tile-filled text-text-primary flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
           >
             <Home size={20} />
             Ana Sayfa

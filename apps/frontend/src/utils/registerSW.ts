@@ -14,16 +14,10 @@ export const registerServiceWorker = (): void => {
       }
     },
     onOfflineReady() {
-      console.log('✅ Uygulama offline modda çalışmaya hazır');
-      
-      // Kullanıcıya bildir (toast gibi)
       const event = new CustomEvent('sw-offline-ready');
       window.dispatchEvent(event);
     },
     onRegistered(registration: ServiceWorkerRegistration | undefined) {
-      console.log('✅ Service Worker kaydedildi');
-      
-      // Her 1 saatte bir güncelleme kontrolü
       if (registration) {
         setInterval(() => {
           registration.update();
@@ -31,7 +25,7 @@ export const registerServiceWorker = (): void => {
       }
     },
     onRegisterError(error: unknown) {
-      console.error('❌ Service Worker kayıt hatası:', error);
+      console.error('Service Worker kayıt hatası:', error);
     },
   });
 };
@@ -39,7 +33,6 @@ export const registerServiceWorker = (): void => {
 // Notification permission request (günlük hatırlatma için)
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (!('Notification' in window)) {
-    console.log('Bu tarayıcı bildirim desteklemiyor');
     return false;
   }
 
@@ -76,7 +69,7 @@ export const scheduleDailyReminder = async (): Promise<void> => {
     const delay = reminderTime.getTime() - now.getTime();
 
     setTimeout(async () => {
-      await registration.showNotification('Günlük Nurdle hazır! 🎮', {
+      await registration.showNotification('Günlük Nurdle hazır!', {
         body: "Bugünün kelimesini tahmin etmeye hazır mısın?",
         icon: '/nurdle-icon-192.png',
         badge: '/nurdle-icon-192.png',

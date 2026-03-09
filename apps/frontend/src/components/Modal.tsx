@@ -22,7 +22,7 @@ const Modal = ({ isOpen, onClose, title, children }: ModalProps): React.JSX.Elem
           <h2 className="text-xl font-bold text-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-tile-empty rounded-md transition-colors"
+            className="p-1 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label="Kapat"
           >
             <X size={24} className="text-text-primary" />

@@ -12,7 +12,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
         <div className="flex items-center gap-2">
           <button 
             onClick={onTitleClick}
-            className="w-8 h-8 bg-correct rounded-md flex items-center justify-center hover:bg-correct/90 transition-colors"
+            className="w-8 h-8 bg-correct rounded-md flex items-center justify-center hover:bg-correct/90 transition-colors cursor-pointer"
             aria-label="Ana Sayfa"
           >
             <span className="text-white font-bold text-lg">N</span>
@@ -23,7 +23,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
         <div className="text-center">
           <button 
             onClick={onTitleClick}
-            className="hover:opacity-80 transition-opacity"
+            className="hover:opacity-80 transition-opacity cursor-pointer"
           >
             <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-text-primary">
               NURDLE
@@ -41,7 +41,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
           {/* Tema Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors"
+            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
           >
             {isDark ? (
@@ -52,21 +52,21 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
           </button>
           <button
             onClick={onHelpClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors"
+            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label="Nasıl Oynanır"
           >
             <HelpCircle size={22} className="text-text-primary" />
           </button>
           <button
             onClick={onStatsClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors"
+            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label="İstatistikler"
           >
             <BarChart2 size={22} className="text-text-primary" />
           </button>
           <button
             onClick={onSettingsClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors"
+            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label="Ayarlar"
           >
             <Settings size={22} className="text-text-primary" />

@@ -83,14 +83,14 @@ const InstallPrompt = (): React.JSX.Element | null => {
             <div className="flex gap-2">
               <button
                 onClick={handleInstall}
-                className="flex-1 bg-correct hover:bg-correct/90 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 bg-correct hover:bg-correct/90 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <Download size={16} />
                 Yükle
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-3 py-2 rounded-md text-text-secondary hover:bg-tile-empty transition-colors"
+                className="px-3 py-2 rounded-md text-text-secondary hover:bg-tile-empty transition-colors cursor-pointer"
                 aria-label="Kapat"
               >
                 <X size={20} />

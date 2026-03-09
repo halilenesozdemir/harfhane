@@ -15,9 +15,9 @@ const ThemeOption = ({ icon: Icon, label, isActive, onClick }: ThemeOptionProps)
   <button
     onClick={onClick}
     className={`
-      flex items-center gap-3 w-full p-3 rounded-lg transition-all
-      ${isActive 
-        ? 'bg-correct text-white' 
+      flex items-center gap-3 w-full p-3 rounded-lg transition-all cursor-pointer
+      ${isActive
+        ? 'bg-correct text-white'
         : 'bg-bg-secondary text-text-primary hover:bg-tile-empty'
       }
     `}
