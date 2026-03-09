@@ -59,6 +59,8 @@ export interface HeaderProps {
   onHelpClick: () => void;
   onStatsClick: () => void;
   onSettingsClick: () => void;
+  onLeaderboardClick: () => void;
+  onAuthClick: () => void;
   modeLabel?: string;
 }
 

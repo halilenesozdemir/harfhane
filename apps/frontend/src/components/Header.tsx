@@ -1,9 +1,11 @@
-import { HelpCircle, BarChart2, Settings, Sun, Moon } from 'lucide-react';
+import { HelpCircle, BarChart2, Settings, Sun, Moon, Trophy, User, LogOut } from 'lucide-react';
 import { useThemeContext } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import type { HeaderProps } from '../types';
 
-const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }: HeaderProps): React.JSX.Element => {
+const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLeaderboardClick, onAuthClick, modeLabel }: HeaderProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
+  const { user, logout } = useAuth();
 
   return (
     <header className="w-full border-b border-border-color py-3 px-4 bg-bg-primary">
@@ -38,39 +40,37 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
         
         {/* Sağ - Butonlar */}
         <div className="flex items-center gap-1">
-          {/* Tema Toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
           >
-            {isDark ? (
-              <Sun size={22} className="text-text-primary" />
-            ) : (
-              <Moon size={22} className="text-text-primary" />
-            )}
+            {isDark ? <Sun size={22} className="text-text-primary" /> : <Moon size={22} className="text-text-primary" />}
           </button>
-          <button
-            onClick={onHelpClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
-            aria-label="Nasıl Oynanır"
-          >
-            <HelpCircle size={22} className="text-text-primary" />
+          <button onClick={onLeaderboardClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Sıralama">
+            <Trophy size={22} className="text-text-primary" />
           </button>
-          <button
-            onClick={onStatsClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
-            aria-label="İstatistikler"
-          >
+          <button onClick={onStatsClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="İstatistikler">
             <BarChart2 size={22} className="text-text-primary" />
           </button>
-          <button
-            onClick={onSettingsClick}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
-            aria-label="Ayarlar"
-          >
+          <button onClick={onHelpClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Nasıl Oynanır">
+            <HelpCircle size={22} className="text-text-primary" />
+          </button>
+          <button onClick={onSettingsClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Ayarlar">
             <Settings size={22} className="text-text-primary" />
           </button>
+          {user ? (
+            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-border">
+              <span className="text-xs text-text-secondary hidden sm:block">{user.username}</span>
+              <button onClick={logout} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Çıkış">
+                <LogOut size={18} className="text-text-secondary" />
+              </button>
+            </div>
+          ) : (
+            <button onClick={onAuthClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer ml-1" aria-label="Giriş Yap">
+              <User size={22} className="text-text-primary" />
+            </button>
+          )}
         </div>
       </div>
     </header>

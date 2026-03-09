@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
 import { useDailyWord, useRandomWord } from './useWordApi';
+import { useAuth } from '../context/AuthContext';
+import { saveResult } from '../lib/auth-api';
 import {
   evaluateGuess,
   updateKeyboardStatus,
@@ -41,6 +43,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const isUnlimited = mode === 'unlimited';
   const queryClient = useQueryClient();
   const todayString = getTodayString();
+  const { token } = useAuth();
 
   const { data: dailyData, isLoading: isDailyLoading, isError: isDailyError } = useDailyWord(wordLength);
   const { data: randomData, isLoading: isRandomLoading, isError: isRandomError, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
@@ -154,7 +157,16 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
         };
       });
     }
-  }, [isUnlimited, setStats, setUnlimitedStats]);
+    // Backend'e kaydet (sadece giriş yapılmışsa, günlük modda)
+    if (token && !isUnlimited) {
+      void saveResult(token, {
+        date: getTodayString(),
+        word_length: wordLength,
+        guesses: won ? guessCount : 0,
+        won,
+      }).catch(() => { /* sessizce geç */ });
+    }
+  }, [isUnlimited, token, wordLength, setStats, setUnlimitedStats]);
 
   const submitGuess = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;

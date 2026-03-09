@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./components/HomePage";
 import Header from "./components/Header";
 import GameGrid from "./components/GameGrid";
@@ -10,6 +11,8 @@ import HowToPlayModal from "./components/HowToPlayModal";
 import StatsModal from "./components/StatsModal";
 import GameOverModal from "./components/GameOverModal";
 import SettingsModal from "./components/SettingsModal";
+import AuthModal from "./components/AuthModal";
+import LeaderboardModal from "./components/LeaderboardModal";
 import InstallPrompt from "./components/InstallPrompt";
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminPanel from "./components/admin/AdminPanel";
@@ -55,6 +58,8 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState<boolean>(false);
 
   // İlk girişte yardım modalını göster
   useEffect(() => {
@@ -138,6 +143,8 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
         onHelpClick={() => setShowHelpModal(true)}
         onStatsClick={() => setShowStatsModal(true)}
         onSettingsClick={() => setShowSettingsModal(true)}
+        onLeaderboardClick={() => setShowLeaderboardModal(true)}
+        onAuthClick={() => setShowAuthModal(true)}
         modeLabel={modeLabel}
       />
 
@@ -193,6 +200,16 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+
+      <LeaderboardModal
+        isOpen={showLeaderboardModal}
+        onClose={() => setShowLeaderboardModal(false)}
       />
     </div>
   );
@@ -288,8 +305,10 @@ function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        {renderView()}
-        <InstallPrompt />
+        <AuthProvider>
+          {renderView()}
+          <InstallPrompt />
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
