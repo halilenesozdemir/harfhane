@@ -78,12 +78,12 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
   }, []);
 
   const addLetter = useCallback((letter: string) => {
-    if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length >= wordLength || isRevealing) return;
+    if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length >= wordLength) return;
     setGameState(prev => ({ ...prev, currentGuess: prev.currentGuess + normalizeWord(letter) }));
   }, [gameState.gameStatus, gameState.currentGuess.length, wordLength, isRevealing]);
 
   const removeLetter = useCallback(() => {
-    if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length === 0 || isRevealing) return;
+    if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length === 0) return;
     setGameState(prev => ({ ...prev, currentGuess: prev.currentGuess.slice(0, -1) }));
   }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing]);
 

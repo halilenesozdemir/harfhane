@@ -101,24 +101,22 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const addLetter = useCallback((letter: string): void => {
     if (gameState.gameStatus !== 'playing') return;
     if (gameState.currentGuess.length >= wordLength) return;
-    if (isRevealing) return;
 
     setGameState(prev => ({
       ...prev,
       currentGuess: prev.currentGuess + normalizeWord(letter),
     }));
-  }, [gameState.gameStatus, gameState.currentGuess.length, wordLength, isRevealing, setGameState]);
+  }, [gameState.gameStatus, gameState.currentGuess.length, wordLength, setGameState]);
 
   const removeLetter = useCallback((): void => {
     if (gameState.gameStatus !== 'playing') return;
     if (gameState.currentGuess.length === 0) return;
-    if (isRevealing) return;
 
     setGameState(prev => ({
       ...prev,
       currentGuess: prev.currentGuess.slice(0, -1),
     }));
-  }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing, setGameState]);
+  }, [gameState.gameStatus, gameState.currentGuess.length, setGameState]);
 
   const updateStats = useCallback((won: boolean, guessCount: number): void => {
     if (isUnlimited) {
