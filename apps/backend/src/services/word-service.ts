@@ -11,8 +11,11 @@ function isValidDate(date: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(Date.parse(date));
 }
 
-function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10);
+function todayTR(): string {
+  // Türkiye saati UTC+3 — günlük kelime gece yarısı (TR) değişsin
+  const now = new Date();
+  now.setUTCHours(now.getUTCHours() + 3);
+  return now.toISOString().slice(0, 10);
 }
 
 export async function getDailyWord(
@@ -20,7 +23,7 @@ export async function getDailyWord(
   date?: string,
   length = 5
 ): Promise<DailyWordResponse> {
-  const targetDate = date ?? todayUTC();
+  const targetDate = date ?? todayTR();
 
   if (!isValidDate(targetDate)) throw INVALID_DATE();
 

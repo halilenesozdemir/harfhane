@@ -90,7 +90,7 @@ const GameOverModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={gameStatus === "won" ? "Tebrikler! 🎉" : "Oyun Bitti"}
+      title={gameStatus === "won" ? "Tebrikler!" : "Oyun Bitti"}
     >
       <div className="space-y-6">
         {/* Sonuç Mesajı */}
@@ -165,7 +165,7 @@ const GameOverModal = ({
             {isNewDayAvailable ? (
               <div className="space-y-2">
                 <p className="text-lg text-correct font-bold">
-                  🎉 Yeni kelime hazır!
+                  Yeni kelime hazır!
                 </p>
                 <p className="text-sm text-text-secondary">
                   Yeni Nurdle'ı oynamak için tıklayın

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Home, RotateCcw } from 'lucide-react';
 import { useListInfo, useSlugWord } from '../hooks/useWordApi';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
   evaluateGuess,
   updateKeyboardStatus,
@@ -12,7 +13,7 @@ import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
 import Toast from './Toast';
 import GameOverModal from './GameOverModal';
-import type { GameState, WordEntry } from '../types';
+import type { GameState, UnlimitedStats, WordEntry } from '../types';
 
 interface SlugGameProps {
   slug: string;
@@ -33,6 +34,12 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
 
   const solution = wordData?.word.word ?? '';
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
+
+  const [slugStats, setSlugStats] = useLocalStorage<UnlimitedStats>(`nurdle:slug:${slug}:stats`, {
+    gamesPlayed: 0,
+    gamesWon: 0,
+    guessDistribution: [0, 0, 0, 0, 0, 0],
+  });
 
   const [gameState, setGameState] = useState<GameState>({
     guesses: [],
@@ -111,11 +118,21 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
       if (newGameStatus === 'won') {
         const msgs = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'];
         showMessage(msgs[newGuesses.length - 1] ?? 'Tebrikler!', 3000);
+        setSlugStats(prev => {
+          const dist = [...prev.guessDistribution];
+          const idx = newGuesses.length - 1;
+          dist[idx] = (dist[idx] ?? 0) + 1;
+          return { gamesPlayed: prev.gamesPlayed + 1, gamesWon: prev.gamesWon + 1, guessDistribution: dist };
+        });
       } else if (newGameStatus === 'lost') {
         showMessage(`Kelime: ${solution}`, 5000);
+        setSlugStats(prev => ({
+          ...prev,
+          gamesPlayed: prev.gamesPlayed + 1,
+        }));
       }
     }, wordLength * 300 + 200);
-  }, [gameState, wordLength, isRevealing, solution, showMessage]);
+  }, [gameState, wordLength, isRevealing, solution, showMessage, setSlugStats]);
 
   const startNewGame = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['word', 'slug', slug] });
@@ -205,7 +222,7 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
         guesses={gameState.guesses}
         evaluations={gameState.evaluations}
         gameNumber={0}
-        stats={{ gamesPlayed: 0, gamesWon: 0, guessDistribution: [0, 0, 0, 0, 0, 0] }}
+        stats={slugStats}
         isUnlimited={true}
         onPlayAgain={() => { setShowGameOverModal(false); startNewGame(); }}
         onGoHome={onGoHome}
