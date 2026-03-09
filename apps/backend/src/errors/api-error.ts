@@ -17,3 +17,12 @@ export const INVALID_DATE = () =>
 
 export const INTERNAL = () =>
   new ApiError(500, 'INTERNAL_ERROR', 'An unexpected error occurred');
+
+export const UNAUTHORIZED = () =>
+  new ApiError(401, 'UNAUTHORIZED', 'Authentication required');
+
+export const FORBIDDEN = () =>
+  new ApiError(403, 'FORBIDDEN', 'Access denied');
+
+export const CONFLICT = (message: string) =>
+  new ApiError(409, 'CONFLICT', message);
