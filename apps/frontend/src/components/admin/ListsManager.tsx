@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, ChevronRight, ChevronLeft, Globe, Lock, Copy, Check } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, ChevronLeft, Globe, Lock, Copy, Check, Pencil } from 'lucide-react';
 import {
   listWordLists,
   createWordList,
+  updateWordList,
   deleteWordList,
   getListWords,
   addWordToList,
@@ -40,6 +41,9 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [editingList, setEditingList] = useState<AdminWordList | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', description: '', is_public: false });
+  const [editSaving, setEditSaving] = useState(false);
 
   const loadLists = useCallback(async () => {
     try {
@@ -120,6 +124,33 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
       await loadLists();
     } catch (e) {
       setError((e as Error).message);
+    }
+  };
+
+  const startEdit = (list: AdminWordList, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingList(list);
+    setEditForm({ name: list.name, description: list.description ?? '', is_public: list.isPublic });
+    setError('');
+  };
+
+  const handleEditSave = async () => {
+    if (!editingList) return;
+    setEditSaving(true);
+    setError('');
+    try {
+      const updated = await updateWordList(secret, editingList.slug, {
+        name: editForm.name,
+        description: editForm.description || null,
+        is_public: editForm.is_public,
+      });
+      setLists(prev => prev.map(l => l.slug === updated.slug ? updated : l));
+      if (selectedList?.slug === updated.slug) setSelectedList(updated);
+      setEditingList(null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -210,38 +241,87 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
 
         <div className="flex flex-col gap-1 overflow-y-auto">
           {lists.map(list => (
-            <div
-              key={list.id}
-              onClick={() => void handleSelectList(list)}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                selectedList?.slug === list.slug
-                  ? 'bg-tile-correct/20 border border-tile-correct'
-                  : 'bg-bg-secondary hover:bg-bg-secondary/80 border border-transparent'
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {list.isPublic ? <Globe size={11} className="text-tile-correct flex-shrink-0" /> : <Lock size={11} className="text-text-secondary flex-shrink-0" />}
-                  <span className="text-sm font-medium text-text-primary truncate">{list.name}</span>
+            <div key={list.id}>
+              {editingList?.slug === list.slug ? (
+                <div className="border border-tile-correct rounded-lg p-3 flex flex-col gap-2 bg-bg-secondary text-sm">
+                  <input
+                    value={editForm.name}
+                    onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Liste adı"
+                    className="w-full px-2 py-1.5 rounded border border-border bg-bg-primary text-text-primary focus:outline-none"
+                  />
+                  <input
+                    value={editForm.description}
+                    onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Açıklama (opsiyonel)"
+                    className="w-full px-2 py-1.5 rounded border border-border bg-bg-primary text-text-primary focus:outline-none"
+                  />
+                  <label className="flex items-center gap-1.5 cursor-pointer text-text-secondary text-xs">
+                    <input
+                      type="checkbox"
+                      checked={editForm.is_public}
+                      onChange={e => setEditForm(f => ({ ...f, is_public: e.target.checked }))}
+                      className="cursor-pointer"
+                    />
+                    Herkese açık
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => void handleEditSave()}
+                      disabled={editSaving || !editForm.name}
+                      className="flex-1 py-1.5 rounded bg-tile-correct text-white text-xs font-medium cursor-pointer hover:opacity-90 disabled:opacity-50"
+                    >
+                      {editSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                    </button>
+                    <button
+                      onClick={() => setEditingList(null)}
+                      className="flex-1 py-1.5 rounded border border-border text-text-secondary text-xs cursor-pointer hover:bg-bg-primary"
+                    >
+                      İptal
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-text-secondary mt-0.5">{list.slug} · {list.wordCount} kelime · {list.wordLength} harf</p>
-              </div>
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  onClick={e => { e.stopPropagation(); copyUrl(list.slug); }}
-                  className="p-1 rounded text-text-secondary hover:text-text-primary cursor-pointer"
-                  title="URL kopyala"
+              ) : (
+                <div
+                  onClick={() => void handleSelectList(list)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                    selectedList?.slug === list.slug
+                      ? 'bg-tile-correct/20 border border-tile-correct'
+                      : 'bg-bg-secondary hover:bg-bg-secondary/80 border border-transparent'
+                  }`}
                 >
-                  {copied ? <Check size={13} className="text-tile-correct" /> : <Copy size={13} />}
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); void handleDelete(list.slug); }}
-                  className="p-1 rounded text-text-secondary hover:text-red-500 cursor-pointer"
-                >
-                  <Trash2 size={13} />
-                </button>
-                <ChevronRight size={13} className="text-text-secondary" />
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      {list.isPublic ? <Globe size={11} className="text-tile-correct flex-shrink-0" /> : <Lock size={11} className="text-text-secondary flex-shrink-0" />}
+                      <span className="text-sm font-medium text-text-primary truncate">{list.name}</span>
+                    </div>
+                    <p className="text-xs text-text-secondary mt-0.5">{list.slug} · {list.wordCount} kelime · {list.wordLength} harf</p>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={e => startEdit(list, e)}
+                      className="p-1 rounded text-text-secondary hover:text-text-primary cursor-pointer"
+                      title="Düzenle"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); copyUrl(list.slug); }}
+                      className="p-1 rounded text-text-secondary hover:text-text-primary cursor-pointer"
+                      title="URL kopyala"
+                    >
+                      {copied ? <Check size={13} className="text-tile-correct" /> : <Copy size={13} />}
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); void handleDelete(list.slug); }}
+                      className="p-1 rounded text-text-secondary hover:text-red-500 cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                    <ChevronRight size={13} className="text-text-secondary" />
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {lists.length === 0 && (

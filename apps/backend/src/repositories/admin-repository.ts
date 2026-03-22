@@ -27,13 +27,15 @@ export interface ListWordsOptions {
   search?: string;
   category?: string;
   active?: '0' | '1';
+  length?: number;
+  sort?: 'az' | 'id_desc';
 }
 
 export async function adminFindWords(
   db: Env['DB'],
   opts: ListWordsOptions
 ): Promise<{ words: WordRow[]; total: number }> {
-  const { page, limit, search, category, active } = opts;
+  const { page, limit, search, category, active, length, sort } = opts;
   const offset = (page - 1) * limit;
   const conditions: string[] = [];
   const params: (string | number)[] = [];
@@ -51,14 +53,19 @@ export async function adminFindWords(
     conditions.push('is_active = ?');
     params.push(Number(active));
   }
+  if (length !== undefined) {
+    conditions.push('length = ?');
+    params.push(length);
+  }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const orderBy = sort === 'az' ? 'ORDER BY word ASC' : 'ORDER BY id DESC';
 
   const batchResults = await db.batch([
     db.prepare(
       `SELECT id, word, meaning, context, category, is_active, created_at
        FROM words ${where}
-       ORDER BY id DESC
+       ${orderBy}
        LIMIT ? OFFSET ?`
     ).bind(...params, limit, offset),
     db.prepare(
@@ -142,11 +149,11 @@ export async function adminFindDailySchedule(
 ): Promise<DailyWordRow[]> {
   const rows = await db
     .prepare(
-      `SELECT dw.id, dw.date, dw.word_id, w.word, w.meaning, w.category
+      `SELECT dw.id, dw.date, dw.word_id, dw.length, w.word, w.meaning, w.category
        FROM daily_words dw
        JOIN words w ON w.id = dw.word_id
        WHERE dw.date >= ? AND dw.date <= ?
-       ORDER BY dw.date ASC`
+       ORDER BY dw.date ASC, dw.length ASC`
     )
     .bind(from, to)
     .all<DailyWordRow>();
@@ -156,11 +163,15 @@ export async function adminFindDailySchedule(
 export async function adminScheduleDailyWord(
   db: Env['DB'],
   wordId: number,
-  date: string
+  date: string,
+  length: number
 ): Promise<number> {
   const result = await db
-    .prepare('INSERT INTO daily_words (word_id, date) VALUES (?, ?)')
-    .bind(wordId, date)
+    .prepare(
+      `INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, ?)
+       ON CONFLICT(date, length) DO UPDATE SET word_id = excluded.word_id`
+    )
+    .bind(wordId, date, length)
     .run();
   return result.meta.last_row_id as number;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -18,6 +18,7 @@ import AdminLogin from "./components/admin/AdminLogin";
 import AdminPanel from "./components/admin/AdminPanel";
 import SlugGame from "./components/SlugGame";
 import ListsPage from "./components/ListsPage";
+import SplashScreen from "./components/SplashScreen";
 import { useGameState } from "./hooks/useGameState";
 import type { GameMode, WordLength } from "./types";
 
@@ -285,6 +286,9 @@ function App(): React.JSX.Element {
   const slugMatch = pathname.match(/^\/play\/([a-z0-9-]+)$/);
   const playSlug = slugMatch?.[1] ?? null;
 
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [activeGame, setActiveGame] = useState<ActiveGame>({ mode: "daily", wordLength: 5 });
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -306,6 +310,10 @@ function App(): React.JSX.Element {
 
   if (isAdmin) {
     return <AdminApp />;
+  }
+
+  if (!splashDone) {
+    return <SplashScreen onDone={handleSplashDone} />;
   }
 
   if (isLists) {

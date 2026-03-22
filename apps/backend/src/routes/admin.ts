@@ -11,6 +11,7 @@ import {
   listWordsQuerySchema,
   listDailyQuerySchema,
   createListSchema,
+  updateListSchema,
   listWordActionSchema,
 } from '../schemas/admin-schemas';
 import {
@@ -145,6 +146,7 @@ admin.post(
 import {
   adminListAll,
   adminCreateList,
+  adminUpdateList,
   adminDeleteList,
   adminGetListWords,
   adminAddWord,
@@ -166,6 +168,18 @@ admin.post(
     const { slug, name, description, word_length, is_public } = c.req.valid('json');
     const list = await adminCreateList(c.env.DB, slug, name, description, word_length, is_public);
     return c.json({ data: list }, 201);
+  }
+);
+
+admin.patch(
+  '/lists/:slug',
+  zValidator('json', updateListSchema, (r, c) => {
+    if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
+    return;
+  }),
+  async (c) => {
+    const list = await adminUpdateList(c.env.DB, c.req.param('slug'), c.req.valid('json'));
+    return c.json({ data: list });
   }
 );
 

@@ -49,7 +49,7 @@ VS Code 1.109+ gereklidir. Copilot Chat veya GitHub Copilot Agent Mode aktif olm
 Kullanıcı modülünü oluştur
 
 # Multi-agent modu
-/delegate Auth modülünü oluştur, JWT authentication ekle x7
+/ Auth modülünü oluştur, JWT autdelegatehentication ekle x7
 ```
 
 ---
@@ -321,12 +321,12 @@ Bu boilerplate'i bir projeye kopyaladığınızda, agent'lar otomatik olarak hed
 
 ### Taranan Kaynaklar
 
-| Öncelik | Kaynak | Pattern | Açıklama |
-|---------|--------|---------|----------|
-| 1 | Root README | `README.md` | Ana proje dokümantasyonu |
-| 2 | Root markdown dosyaları | `*.md` (kök dizin) | Katkı rehberleri, kodlama standartları |
-| 3 | Docs klasörü | `docs/**/*.md` | Genişletilmiş dokümantasyon, tasarım dokümanları |
-| 4 | Docs klasörü (diğer) | `docs/**/*.{txt,rst,adoc}` | Alternatif dokümantasyon formatları |
+| Öncelik | Kaynak                  | Pattern                    | Açıklama                                         |
+| ------- | ----------------------- | -------------------------- | ------------------------------------------------ |
+| 1       | Root README             | `README.md`                | Ana proje dokümantasyonu                         |
+| 2       | Root markdown dosyaları | `*.md` (kök dizin)         | Katkı rehberleri, kodlama standartları           |
+| 3       | Docs klasörü            | `docs/**/*.md`             | Genişletilmiş dokümantasyon, tasarım dokümanları |
+| 4       | Docs klasörü (diğer)    | `docs/**/*.{txt,rst,adoc}` | Alternatif dokümantasyon formatları              |
 
 ### Hariç Tutulan Dosyalar
 
@@ -377,16 +377,16 @@ Vague veya eksik prompt'lar hatalı implementasyona, token israfına ve revizyon
 
 ### Ne Zaman Aktif Olur?
 
-| Durum | PEP Uygulanır? | Açıklama |
-|-------|:--------------:|----------|
-| Yeni feature, modül, component | ✅ Evet | Kapsam ve gereksinimler netleştirilir |
-| Mimari değişiklik, refactoring | ✅ Evet | Yaklaşım ve kısıtlamalar belirlenir |
-| Multi-file değişiklik | ✅ Evet | Etki alanı ve bağımlılıklar sorgulanır |
-| API/veritabanı tasarımı | ✅ Evet | Şema ve davranış kararları alınır |
-| Typo düzeltme, tek satır fix | ❌ Hayır | Trivial görevlerde atlanır |
-| Analiz-only görevler | ❌ Hayır | Kod değişikliği olmayan görevlerde atlanır |
-| `/resume` ile devam | ❌ Hayır | Zaten onaylanmış plan var |
-| Kullanıcı "skip questions" derse | ❌ Hayır | Kullanıcı override'ı |
+| Durum                            | PEP Uygulanır? | Açıklama                                   |
+| -------------------------------- | :------------: | ------------------------------------------ |
+| Yeni feature, modül, component   |    ✅ Evet     | Kapsam ve gereksinimler netleştirilir      |
+| Mimari değişiklik, refactoring   |    ✅ Evet     | Yaklaşım ve kısıtlamalar belirlenir        |
+| Multi-file değişiklik            |    ✅ Evet     | Etki alanı ve bağımlılıklar sorgulanır     |
+| API/veritabanı tasarımı          |    ✅ Evet     | Şema ve davranış kararları alınır          |
+| Typo düzeltme, tek satır fix     |    ❌ Hayır    | Trivial görevlerde atlanır                 |
+| Analiz-only görevler             |    ❌ Hayır    | Kod değişikliği olmayan görevlerde atlanır |
+| `/resume` ile devam              |    ❌ Hayır    | Zaten onaylanmış plan var                  |
+| Kullanıcı "skip questions" derse |    ❌ Hayır    | Kullanıcı override'ı                       |
 
 ### Soru Kategorileri
 
@@ -453,18 +453,18 @@ Tam protokol: `.github/instructions/prompt-enrichment.instructions.md`
 
 Her tier'ın kendine özgü skill dosyaları vardır:
 
-| Skill                | Konum                                          | Kullanan Tier                  |
-| -------------------- | ---------------------------------------------- | ------------------------------ |
+| Skill                | Konum                                          | Kullanan Tier                            |
+| -------------------- | ---------------------------------------------- | ---------------------------------------- |
 | Clean Code           | `.github/skills/clean-code/SKILL.md`           | Tüm kodlama tier'ları + T2.5 (awareness) |
-| Code Architecture    | `.github/skills/code-architecture/SKILL.md`    | Tier 1 (Principal)             |
-| Code Review          | `.github/skills/code-review/SKILL.md`          | Tier 1, 1.5, 2, 2.5            |
-| Frontend Development | `.github/skills/frontend-development/SKILL.md` | Tier 1, 1.5 & 2 (frontend işleri) |
-| Backend Development  | `.github/skills/backend-development/SKILL.md`  | Tier 1, 1.5 & 2 (backend işleri) |
-| Implementation       | `.github/skills/implementation/SKILL.md`       | Tier 1, 1.5 & 2                  |
-| Analysis             | `.github/skills/analysis/SKILL.md`             | Tier 2.5 & 3                   |
-| Commit Standards     | `.github/skills/commit-standards/SKILL.md`     | Tier 1, 1.5 & 2                |
-| PR Standards         | `.github/skills/pr-standards/SKILL.md`         | Tier 1, 1.5 & 2                |
-| Testing Standards    | `.github/skills/testing-standards/SKILL.md`    | Tier 1, 1.5 & 2                |
+| Code Architecture    | `.github/skills/code-architecture/SKILL.md`    | Tier 1 (Principal)                       |
+| Code Review          | `.github/skills/code-review/SKILL.md`          | Tier 1, 1.5, 2, 2.5                      |
+| Frontend Development | `.github/skills/frontend-development/SKILL.md` | Tier 1, 1.5 & 2 (frontend işleri)        |
+| Backend Development  | `.github/skills/backend-development/SKILL.md`  | Tier 1, 1.5 & 2 (backend işleri)         |
+| Implementation       | `.github/skills/implementation/SKILL.md`       | Tier 1, 1.5 & 2                          |
+| Analysis             | `.github/skills/analysis/SKILL.md`             | Tier 2.5 & 3                             |
+| Commit Standards     | `.github/skills/commit-standards/SKILL.md`     | Tier 1, 1.5 & 2                          |
+| PR Standards         | `.github/skills/pr-standards/SKILL.md`         | Tier 1, 1.5 & 2                          |
+| Testing Standards    | `.github/skills/testing-standards/SKILL.md`    | Tier 1, 1.5 & 2                          |
 
 ### Skill İçerikleri
 
@@ -523,6 +523,7 @@ Her tier'ın kendine özgü skill dosyaları vardır:
 5. Sistem doğrulama kurallarını (Kural 2 ve 7) çalıştırarak entegrasyonu doğrulayın.
 
 Manuel ekleme tercih ederseniz:
+
 1. `.github/agents/` dizinine yeni `.agent.md` dosyası oluşturun.
 2. YAML frontmatter'da `name`, `model`, `tools` tanımlayın.
 3. Orchestrator'ın `agents` listesine yeni agent'ı ekleyin.
@@ -685,6 +686,7 @@ Doğrulama zamanlaması: Her versiyon bumplanmasından sonra, agent eklenip çı
 Boilerplate'i bir projeye taşıdığınızda PCD otomatik olarak aktif olur. Özel yapılandırma gerekmez — agent'lar projenin root `README.md`, diğer `.md` dosyaları ve `docs/` klasörünü otomatik tarar.
 
 PCD davranışını özelleştirmek için:
+
 - **Proje kurallarını belirtin**: Projenin `README.md` veya `docs/` altındaki dosyalarda kodlama standartları, mimari kararlar ve konvansiyonları net şekilde yazın.
 - **Bağlam bütçesini bilin**: Her tier'ın PCD dosya ve token limiti vardır (T1: 5 dosya/8K, T3: 2 dosya/3K).
 - **Detaylar**: `.github/instructions/project-context-discovery.instructions.md`

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Plus, Search } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Trash2, Plus, Search, Pencil, X } from 'lucide-react';
 import * as api from '../../lib/admin-api';
 import type { AdminDailyEntry, AdminWord } from '../../lib/admin-api';
 
@@ -29,6 +29,8 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
   const [selectedWord, setSelectedWord] = useState<AdminWord | null>(null);
   const [scheduleDate, setScheduleDate] = useState(todayStr());
   const [scheduling, setScheduling] = useState(false);
+  const [replacingEntry, setReplacingEntry] = useState<AdminDailyEntry | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const loadSchedule = useCallback(async () => {
     setLoading(true);
@@ -69,12 +71,33 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
       setSelectedWord(null);
       setWordSearch('');
       setWordResults([]);
+      setReplacingEntry(null);
       await loadSchedule();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Programlanamadı');
     } finally {
       setScheduling(false);
     }
+  };
+
+  const startReplace = (entry: AdminDailyEntry): void => {
+    setReplacingEntry(entry);
+    setScheduleDate(entry.date);
+    setSelectedWord(null);
+    setWordSearch('');
+    setWordResults([]);
+    setError('');
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
+  const cancelReplace = (): void => {
+    setReplacingEntry(null);
+    setScheduleDate(todayStr());
+    setSelectedWord(null);
+    setWordSearch('');
+    setWordResults([]);
   };
 
   const handleRemove = async (id: number): Promise<void> => {
@@ -90,8 +113,19 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
   return (
     <div className="flex flex-col gap-6">
       {/* Schedule a word */}
-      <div className="p-4 rounded-xl bg-bg-secondary border border-border flex flex-col gap-4">
-        <h3 className="font-semibold text-text-primary text-sm">Günlük Kelime Programla</h3>
+      <div ref={formRef} className="p-4 rounded-xl bg-bg-secondary border border-border flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-text-primary text-sm">
+            {replacingEntry
+              ? `Değiştir: ${replacingEntry.date} — ${replacingEntry.word}`
+              : 'Günlük Kelime Programla'}
+          </h3>
+          {replacingEntry && (
+            <button onClick={cancelReplace} className="text-text-secondary hover:text-text-primary cursor-pointer">
+              <X size={16} />
+            </button>
+          )}
+        </div>
         <div className="flex flex-wrap gap-3 items-start">
           <div className="relative flex-1 min-w-48">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
@@ -120,15 +154,16 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
           <input
             type="date"
             value={scheduleDate}
-            onChange={(e) => setScheduleDate(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-bg-primary border border-border text-text-primary text-sm focus:outline-none focus:border-tile-filled cursor-pointer"
+            onChange={(e) => { setScheduleDate(e.target.value); setReplacingEntry(null); }}
+            disabled={!!replacingEntry}
+            className="px-3 py-2 rounded-lg bg-bg-primary border border-border text-text-primary text-sm focus:outline-none focus:border-tile-filled cursor-pointer disabled:opacity-50"
           />
           <button
             onClick={() => void handleSchedule()}
             disabled={!selectedWord || scheduling}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-tile-filled text-white text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-40"
           >
-            <Plus size={16} /> {scheduling ? 'Ekleniyor...' : 'Programla'}
+            <Plus size={16} /> {scheduling ? 'Kaydediliyor...' : replacingEntry ? 'Değiştir' : 'Programla'}
           </button>
         </div>
         {selectedWord && (
@@ -193,15 +228,24 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {!isPast && (
+                    <div className="flex gap-1 justify-end">
                       <button
-                        onClick={() => void handleRemove(entry.id)}
-                        className="p-1.5 rounded-lg hover:bg-tile-absent/10 text-tile-absent cursor-pointer transition-colors"
-                        title="Kaldır"
+                        onClick={() => startReplace(entry)}
+                        className="p-1.5 rounded-lg hover:bg-bg-primary text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+                        title="Kelimeyi değiştir"
                       >
-                        <Trash2 size={14} />
+                        <Pencil size={14} />
                       </button>
-                    )}
+                      {!isPast && (
+                        <button
+                          onClick={() => void handleRemove(entry.id)}
+                          className="p-1.5 rounded-lg hover:bg-tile-absent/10 text-tile-absent cursor-pointer transition-colors"
+                          title="Kaldır"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

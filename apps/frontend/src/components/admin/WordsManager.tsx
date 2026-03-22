@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Pencil, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Pencil, Check, X, ChevronLeft, ChevronRight, ArrowUpAZ } from 'lucide-react';
 import * as api from '../../lib/admin-api';
 import type { AdminWord } from '../../lib/admin-api';
 
@@ -9,6 +9,7 @@ interface WordsManagerProps {
 
 type Category = 'isim' | 'sıfat' | 'fiil';
 const CATEGORIES: Category[] = ['isim', 'sıfat', 'fiil'];
+const LENGTHS = [4, 5, 6] as const;
 
 const emptyForm = { word: '', meaning: '', context: '', category: 'isim' as Category };
 
@@ -19,6 +20,8 @@ export default function WordsManager({ secret }: WordsManagerProps): React.JSX.E
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
+  const [lengthFilter, setLengthFilter] = useState<number | undefined>(undefined);
+  const [sortAZ, setSortAZ] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,6 +42,8 @@ export default function WordsManager({ secret }: WordsManagerProps): React.JSX.E
         search: search || undefined,
         category: categoryFilter || undefined,
         active: (activeFilter as '0' | '1') || undefined,
+        length: lengthFilter,
+        sort: sortAZ ? 'az' : 'id_desc',
       });
       setWords(result.words);
       setTotal(result.total);
@@ -47,7 +52,7 @@ export default function WordsManager({ secret }: WordsManagerProps): React.JSX.E
     } finally {
       setLoading(false);
     }
-  }, [secret, page, search, categoryFilter, activeFilter]);
+  }, [secret, page, search, categoryFilter, activeFilter, lengthFilter, sortAZ]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -121,6 +126,32 @@ export default function WordsManager({ secret }: WordsManagerProps): React.JSX.E
           <option value="1">Aktif</option>
           <option value="0">Pasif</option>
         </select>
+        {/* Length filter */}
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-bg-primary p-1">
+          <button
+            onClick={() => { setLengthFilter(undefined); setPage(1); }}
+            className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${lengthFilter === undefined ? 'bg-tile-filled text-white' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            Tümü
+          </button>
+          {LENGTHS.map((l) => (
+            <button
+              key={l}
+              onClick={() => { setLengthFilter(lengthFilter === l ? undefined : l); setPage(1); }}
+              className={`px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${lengthFilter === l ? 'bg-tile-filled text-white' : 'text-text-secondary hover:text-text-primary'}`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        {/* A-Z sort toggle */}
+        <button
+          onClick={() => { setSortAZ((s) => !s); setPage(1); }}
+          title={sortAZ ? 'A-Z sıralı' : 'Son eklenen'}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${sortAZ ? 'border-tile-filled bg-tile-filled/10 text-tile-filled' : 'border-border text-text-secondary hover:text-text-primary'}`}
+        >
+          <ArrowUpAZ size={15} /> A-Z
+        </button>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setForm(emptyForm); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-tile-filled text-white text-sm font-semibold cursor-pointer hover:opacity-90"

@@ -58,6 +58,8 @@ export interface ListWordsParams {
   search?: string;
   category?: string;
   active?: '0' | '1';
+  length?: number;
+  sort?: 'az' | 'id_desc';
 }
 
 export function listWords(secret: string, params: ListWordsParams = {}): Promise<ListWordsResult> {
@@ -67,6 +69,8 @@ export function listWords(secret: string, params: ListWordsParams = {}): Promise
   if (params.search) q.set('search', params.search);
   if (params.category) q.set('category', params.category);
   if (params.active !== undefined) q.set('active', params.active);
+  if (params.length !== undefined) q.set('length', String(params.length));
+  if (params.sort) q.set('sort', params.sort);
   const qs = q.toString() ? `?${q.toString()}` : '';
   return adminRequest<ListWordsResult>(`/words${qs}`, secret);
 }
@@ -162,6 +166,17 @@ export function createWordList(
 ): Promise<AdminWordList> {
   return adminRequest<AdminWordList>('/lists', secret, {
     method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateWordList(
+  secret: string,
+  slug: string,
+  data: { name?: string; description?: string | null; is_public?: boolean }
+): Promise<AdminWordList> {
+  return adminRequest<AdminWordList>(`/lists/${slug}`, secret, {
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 }

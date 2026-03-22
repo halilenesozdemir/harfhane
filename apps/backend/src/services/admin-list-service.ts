@@ -6,6 +6,7 @@ import {
   findListBySlug,
   findListWords,
   createList,
+  updateList,
   addWordToList,
   removeWordFromList,
   deleteList,
@@ -50,6 +51,22 @@ export async function adminCreateList(
   await createList(db, slug, name, description ?? null, wordLength, isPublic);
   const row = await findListBySlug(db, slug);
   return toWordList(row!);
+}
+
+export async function adminUpdateList(
+  db: Env['DB'],
+  slug: string,
+  patch: { name?: string; description?: string | null; is_public?: boolean }
+) {
+  const row = await findListBySlug(db, slug);
+  if (!row) throw NOT_FOUND('Word list');
+  await updateList(db, row.id, {
+    name: patch.name,
+    description: patch.description,
+    isPublic: patch.is_public,
+  });
+  const updated = await findListBySlug(db, slug);
+  return toWordList(updated!);
 }
 
 export async function adminDeleteList(db: Env['DB'], slug: string) {

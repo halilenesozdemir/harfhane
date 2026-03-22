@@ -74,8 +74,9 @@ export async function getDailySchedule(db: Env['DB'], from?: string, to?: string
 export async function scheduleDailyWord(db: Env['DB'], wordId: number, date: string) {
   const word = await adminFindWordById(db, wordId);
   if (!word) throw NOT_FOUND('Word');
-  const id = await adminScheduleDailyWord(db, wordId, date);
-  return { id, word_id: wordId, date, word: word.word };
+  const length = word.word.length;
+  const id = await adminScheduleDailyWord(db, wordId, date, length);
+  return { id, word_id: wordId, date, word: word.word, length };
 }
 
 export async function removeDailyWord(db: Env['DB'], id: number) {

@@ -46,6 +46,14 @@ export const listWordsQuerySchema = z.object({
   search: z.string().optional(),
   category: categorySchema.optional(),
   active: z.enum(['0', '1']).optional(),
+  length: z.coerce.number().int().min(4).max(6).optional(),
+  sort: z.enum(['az', 'id_desc']).optional(),
+});
+
+export const updateListSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).nullable().optional(),
+  is_public: z.boolean().optional(),
 });
 
 export const createListSchema = z.object({
