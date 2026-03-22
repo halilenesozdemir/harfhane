@@ -5,12 +5,6 @@ import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
-const NURDLE_VARIANTS = [
-  { slug: "nurdle-4", label: "4 Harf" },
-  { slug: "nurdle",   label: "5 Harf" },
-  { slug: "nurdle-6", label: "6 Harf" },
-];
-
 const HomePage = ({ onSelectMode, onGoLists }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
@@ -36,28 +30,6 @@ const HomePage = ({ onSelectMode, onGoLists }: HomePageProps): React.JSX.Element
       </div>
 
       <div className="w-full max-w-md space-y-4">
-        {/* Nurdle — Öne çıkan listeler */}
-        <div>
-          <p className="text-text-secondary text-sm text-center mb-2">Nurdle — Risale-i Nur</p>
-          <div className="flex gap-2">
-            {NURDLE_VARIANTS.map(v => (
-              <button
-                key={v.slug}
-                onClick={() => { window.location.href = `/play/${v.slug}`; }}
-                className="flex-1 py-3 rounded-xl bg-bg-secondary hover:bg-tile-empty border border-border text-text-primary font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 py-1">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-text-secondary/50 text-xs">veya</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
         {/* Kelime Uzunluğu */}
         <div>
           <p className="text-text-secondary text-sm text-center mb-2">Kelime uzunluğu</p>
