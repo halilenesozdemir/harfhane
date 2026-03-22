@@ -14,7 +14,8 @@ import {
 
 function toWordList(row: {
   id: number; slug: string; name: string; description: string | null;
-  word_length: number; is_public: number; has_daily?: number; created_at: string; word_count?: number;
+  word_length: number; is_public: number; has_daily?: number; owner_user_id?: number | null;
+  created_at: string; word_count?: number;
 }): WordList {
   return {
     id: row.id,
@@ -24,6 +25,7 @@ function toWordList(row: {
     wordLength: row.word_length,
     isPublic: row.is_public === 1,
     hasDaily: (row.has_daily ?? 0) === 1,
+    ownerUserId: row.owner_user_id ?? null,
     createdAt: row.created_at,
     wordCount: row.word_count ?? 0,
   };

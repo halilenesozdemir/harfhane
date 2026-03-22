@@ -18,7 +18,8 @@ app.use(
       const allowed = [
         'http://localhost:5173',
         'http://localhost:4173',
-        'https://nurdle.app',
+        'https://harfhane.app',
+        'https://www.harfhane.app',
         'https://nurdle.pages.dev',
       ];
       if (allowed.includes(origin)) return origin;

@@ -15,11 +15,14 @@ import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
 import Toast from './Toast';
 import GameOverModal from './GameOverModal';
+import LikeButton from './LikeButton';
+import CommentSection from './CommentSection';
 import type { GameState, UnlimitedStats, WordEntry, TimeCountdown } from '../types';
 
 interface SlugGameProps {
   slug: string;
   onGoHome: () => void;
+  onAuthRequired?: () => void;
 }
 
 interface DailyGameState {
@@ -30,7 +33,7 @@ interface DailyGameState {
   keyboardStatus: Record<string, 'correct' | 'present' | 'absent' | null>;
 }
 
-export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.Element {
+export default function SlugGame({ slug, onGoHome, onAuthRequired }: SlugGameProps): React.JSX.Element {
   const queryClient = useQueryClient();
   const today = getTodayString();
 
@@ -300,6 +303,14 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
         onPlayAgain={() => { setShowGameOverModal(false); startNewGame(); }}
         onGoHome={onGoHome}
       />
+
+      {/* Social section */}
+      <div className="max-w-lg mx-auto w-full px-4 pb-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <LikeButton slug={slug} onLoginRequired={onAuthRequired} />
+        </div>
+        <CommentSection slug={slug} onLoginRequired={onAuthRequired} />
+      </div>
     </div>
   );
 }

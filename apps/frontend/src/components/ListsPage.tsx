@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { ArrowRight, ArrowLeft, Search } from "lucide-react";
+import { ArrowRight, ArrowLeft, Search, Plus, Heart, MessageCircle } from "lucide-react";
 import { usePublicLists } from "../hooks/useWordApi";
+import { useAuth } from "../context/AuthContext";
+import CreateListModal from "./CreateListModal";
+import type { WordList } from "@nurdle/shared";
 
 interface ListsPageProps {
   onGoHome: () => void;
+  onAuthRequired?: () => void;
 }
 
-export default function ListsPage({ onGoHome }: ListsPageProps): React.JSX.Element {
+export default function ListsPage({ onGoHome, onAuthRequired }: ListsPageProps): React.JSX.Element {
   const { data: listsData, isLoading } = usePublicLists();
+  const { token } = useAuth();
   const [slugInput, setSlugInput] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
   const lists = listsData?.lists ?? [];
 
   const handleSlugGo = () => {
@@ -16,18 +22,32 @@ export default function ListsPage({ onGoHome }: ListsPageProps): React.JSX.Eleme
     if (slug) window.location.href = `/play/${slug}`;
   };
 
+  const handleCreateClick = () => {
+    if (!token) { onAuthRequired?.(); return; }
+    setShowCreate(true);
+  };
+
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
       <header className="border-b border-border">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onGoHome}
+              className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              aria-label="Ana sayfaya dön"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="font-bold text-text-primary tracking-wide">Listeler</h1>
+          </div>
           <button
-            onClick={onGoHome}
-            className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-            aria-label="Ana sayfaya dön"
+            onClick={handleCreateClick}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-correct text-white text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity"
           >
-            <ArrowLeft size={20} />
+            <Plus size={16} />
+            Yeni liste
           </button>
-          <h1 className="font-bold text-text-primary tracking-wide">Listeler</h1>
         </div>
       </header>
 
@@ -68,28 +88,58 @@ export default function ListsPage({ onGoHome }: ListsPageProps): React.JSX.Eleme
           ) : (
             <div className="flex flex-col gap-2">
               {lists.map(list => (
-                <button
+                <div
                   key={list.slug}
-                  onClick={() => { window.location.href = `/play/${list.slug}`; }}
-                  className="w-full bg-bg-secondary hover:bg-tile-empty border border-border rounded-xl px-5 py-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer text-left flex items-center justify-between"
+                  className="w-full bg-bg-secondary border border-border rounded-xl px-5 py-4"
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-text-primary truncate">{list.name}</p>
-                    {list.description && (
-                      <p className="text-text-secondary text-xs mt-0.5 truncate">{list.description}</p>
-                    )}
-                    <p className="text-text-secondary text-xs mt-1">
-                      {list.wordLength} harf · {list.wordCount} kelime
-                      {list.hasDaily && <span className="ml-2 text-correct font-medium">Günlük</span>}
-                    </p>
+                  <button
+                    onClick={() => { window.location.href = `/play/${list.slug}`; }}
+                    className="w-full text-left flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-text-primary truncate">{list.name}</p>
+                      {list.description && (
+                        <p className="text-text-secondary text-xs mt-0.5 truncate">{list.description}</p>
+                      )}
+                      <p className="text-text-secondary text-xs mt-1">
+                        {list.wordLength} harf · {list.wordCount} kelime
+                        {list.hasDaily && <span className="ml-2 text-correct font-medium">Günlük</span>}
+                      </p>
+                    </div>
+                    <ArrowRight size={18} className="text-text-secondary flex-shrink-0 ml-3" />
+                  </button>
+
+                  {/* Social row */}
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
+                    <SocialCounts list={list} />
                   </div>
-                  <ArrowRight size={18} className="text-text-secondary flex-shrink-0 ml-3" />
-                </button>
+                </div>
               ))}
             </div>
           )}
         </div>
       </main>
+
+      <CreateListModal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={(slug) => { window.location.href = `/play/${slug}`; }}
+      />
+    </div>
+  );
+}
+
+function SocialCounts({ list }: { list: WordList }): React.JSX.Element {
+  return (
+    <div className="flex items-center gap-3 text-text-secondary">
+      <span className="flex items-center gap-1 text-xs">
+        <Heart size={12} />
+        <span>{list.likeCount ?? 0}</span>
+      </span>
+      <span className="flex items-center gap-1 text-xs">
+        <MessageCircle size={12} />
+        <span>{list.commentCount ?? 0}</span>
+      </span>
     </div>
   );
 }

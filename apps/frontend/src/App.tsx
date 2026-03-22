@@ -216,6 +216,26 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
   );
 }
 
+function ListsAndAuthWrapper({ onGoHome }: { onGoHome: () => void }): React.JSX.Element {
+  const [showAuth, setShowAuth] = useState(false);
+  return (
+    <>
+      <ListsPage onGoHome={onGoHome} onAuthRequired={() => setShowAuth(true)} />
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    </>
+  );
+}
+
+function SlugAndAuthWrapper({ slug, onGoHome }: { slug: string; onGoHome: () => void }): React.JSX.Element {
+  const [showAuth, setShowAuth] = useState(false);
+  return (
+    <>
+      <SlugGame slug={slug} onGoHome={onGoHome} onAuthRequired={() => setShowAuth(true)} />
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    </>
+  );
+}
+
 type ViewType = "home" | "lists" | "daily" | "unlimited" | "slug";
 
 interface ActiveGame {
@@ -267,6 +287,7 @@ function App(): React.JSX.Element {
 
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [activeGame, setActiveGame] = useState<ActiveGame>({ mode: "daily", wordLength: 5 });
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleSelectMode = (mode: GameMode, wordLength: WordLength): void => {
     setActiveGame({ mode, wordLength });
@@ -291,7 +312,9 @@ function App(): React.JSX.Element {
     return (
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <ListsPage onGoHome={() => { window.location.href = '/'; }} />
+          <AuthProvider>
+            <ListsAndAuthWrapper onGoHome={() => { window.location.href = '/'; }} />
+          </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     );
@@ -301,7 +324,9 @@ function App(): React.JSX.Element {
     return (
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <SlugGame slug={playSlug} onGoHome={() => { window.location.href = '/'; }} />
+          <AuthProvider>
+            <SlugAndAuthWrapper slug={playSlug} onGoHome={() => { window.location.href = '/'; }} />
+          </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     );
@@ -312,7 +337,7 @@ function App(): React.JSX.Element {
       return <HomePage onSelectMode={handleSelectMode} onGoLists={handleGoLists} />;
     }
     if (currentView === "lists") {
-      return <ListsPage onGoHome={handleGoHome} />;
+      return <ListsPage onGoHome={handleGoHome} onAuthRequired={() => setShowAuthModal(true)} />;
     }
     return (
       <Game
@@ -329,6 +354,7 @@ function App(): React.JSX.Element {
         <AuthProvider>
           {renderView()}
           <InstallPrompt />
+          <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

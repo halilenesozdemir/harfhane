@@ -15,7 +15,8 @@ const EPOCH = new Date('2026-01-01T00:00:00Z');
 
 function toWordList(row: {
   id: number; slug: string; name: string; description: string | null;
-  word_length: number; is_public: number; has_daily: number; created_at: string; word_count?: number;
+  word_length: number; is_public: number; has_daily: number; owner_user_id?: number | null;
+  created_at: string; word_count?: number; like_count?: number; comment_count?: number;
 }): WordList {
   return {
     id: row.id,
@@ -25,8 +26,11 @@ function toWordList(row: {
     wordLength: row.word_length,
     isPublic: row.is_public === 1,
     hasDaily: row.has_daily === 1,
+    ownerUserId: row.owner_user_id ?? null,
     createdAt: row.created_at,
     wordCount: row.word_count ?? 0,
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
   };
 }
 
@@ -54,7 +58,7 @@ export async function getRandomWordFromList(
   return {
     word: {
       word: word.word,
-      meaning: word.meaning,
+      meaning: word.meaning || null,
       context: word.context,
       category: word.category as 'isim' | 'sıfat' | 'fiil',
     },
@@ -82,7 +86,7 @@ export async function getDailyWordFromList(
   return {
     word: {
       word: word.word,
-      meaning: word.meaning,
+      meaning: word.meaning || null,
       context: word.context,
       category: word.category as 'isim' | 'sıfat' | 'fiil',
     },
