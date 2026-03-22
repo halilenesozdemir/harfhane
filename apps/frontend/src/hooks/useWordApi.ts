@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchDailyWord, fetchRandomWord, fetchRandomWordFromList, fetchListInfo, fetchPublicLists } from '../lib/api';
+import { fetchDailyWord, fetchRandomWord, fetchRandomWordFromList, fetchListInfo, fetchPublicLists, fetchDailyWordFromList } from '../lib/api';
 import type { WordListInfo } from '../lib/api';
 
 export function useDailyWord(length: number = 5) {
@@ -40,6 +40,17 @@ export function useSlugWord(slug: string | null, enabled: boolean) {
     queryFn: () => fetchRandomWordFromList(slug!),
     enabled: enabled && slug !== null,
     staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
+export function useSlugDailyWord(slug: string | null, date: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['word', 'slug-daily', slug, date],
+    queryFn: () => fetchDailyWordFromList(slug!, date),
+    enabled: enabled && slug !== null,
+    staleTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
     retry: false,
   });

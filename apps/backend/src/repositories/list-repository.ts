@@ -7,6 +7,7 @@ interface ListRow {
   description: string | null;
   word_length: number;
   is_public: number;
+  has_daily: number;
   created_at: string;
   word_count?: number;
 }
@@ -144,6 +145,53 @@ export async function slugExists(db: Env['DB'], slug: string): Promise<boolean> 
   const row = await db
     .prepare(`SELECT 1 FROM word_lists WHERE slug = ?`)
     .bind(slug)
+    .first();
+  return row !== null;
+}
+
+export async function countActiveWordsInList(db: Env['DB'], listId: number): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) as count FROM word_list_words wlw
+       JOIN words w ON w.id = wlw.word_id
+       WHERE wlw.list_id = ? AND w.is_active = 1`
+    )
+    .bind(listId)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+export async function findWordFromListAtOffset(
+  db: Env['DB'],
+  listId: number,
+  offset: number
+): Promise<WordRow | null> {
+  const row = await db
+    .prepare(
+      `SELECT w.id, w.word, w.meaning, w.context, w.category
+       FROM word_list_words wlw
+       JOIN words w ON w.id = wlw.word_id
+       WHERE wlw.list_id = ? AND w.is_active = 1
+       ORDER BY w.id ASC
+       LIMIT 1 OFFSET ?`
+    )
+    .bind(listId, offset)
+    .first<WordRow>();
+  return row ?? null;
+}
+
+export async function wordExistsInList(
+  db: Env['DB'],
+  listId: number,
+  word: string
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT 1 FROM word_list_words wlw
+       JOIN words w ON w.id = wlw.word_id
+       WHERE wlw.list_id = ? AND w.word = ? AND w.is_active = 1`
+    )
+    .bind(listId, word)
     .first();
   return row !== null;
 }

@@ -1,45 +1,78 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Home, RotateCcw } from 'lucide-react';
-import { useListInfo, useSlugWord } from '../hooks/useWordApi';
+import { useListInfo, useSlugWord, useSlugDailyWord } from '../hooks/useWordApi';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
   evaluateGuess,
   updateKeyboardStatus,
   checkGameStatus,
   normalizeWord,
+  getTimeUntilMidnight,
+  getTodayString,
 } from '../utils/gameLogic';
 import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
 import Toast from './Toast';
 import GameOverModal from './GameOverModal';
-import type { GameState, UnlimitedStats, WordEntry } from '../types';
+import type { GameState, UnlimitedStats, WordEntry, TimeCountdown } from '../types';
 
 interface SlugGameProps {
   slug: string;
   onGoHome: () => void;
 }
 
+interface DailyGameState {
+  date: string;
+  guesses: string[];
+  evaluations: Array<Array<'correct' | 'present' | 'absent' | null>>;
+  gameStatus: 'playing' | 'won' | 'lost';
+  keyboardStatus: Record<string, 'correct' | 'present' | 'absent' | null>;
+}
+
 export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.Element {
   const queryClient = useQueryClient();
+  const today = getTodayString();
+
   const { data: listData, isLoading: listLoading, isError: listError } = useListInfo(slug);
   const wordLength = listData?.list.wordLength ?? 5;
+  const hasDaily = listData?.list.hasDaily ?? false;
 
+  // Random mod: listeye has_daily yoksa
   const {
-    data: wordData,
-    isLoading: wordLoading,
-    isError: wordError,
+    data: randomWordData,
+    isLoading: randomLoading,
+    isError: randomError,
     refetch,
-  } = useSlugWord(slug, !listLoading && !listError);
+  } = useSlugWord(slug, !listLoading && !listError && !hasDaily);
+
+  // Günlük mod: listeye has_daily varsa
+  const {
+    data: dailyWordData,
+    isLoading: dailyLoading,
+    isError: dailyError,
+  } = useSlugDailyWord(slug, today, !listLoading && !listError && hasDaily);
+
+  const wordData = hasDaily ? dailyWordData : randomWordData;
+  const wordLoading = hasDaily ? dailyLoading : randomLoading;
+  const wordError = hasDaily ? dailyError : randomError;
+  const gameNumber = hasDaily ? (dailyWordData?.gameNumber ?? 0) : 0;
 
   const solution = wordData?.word.word ?? '';
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
 
+  // İstatistikler
   const [slugStats, setSlugStats] = useLocalStorage<UnlimitedStats>(`nurdle:slug:${slug}:stats`, {
     gamesPlayed: 0,
     gamesWon: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0],
   });
+
+  // Günlük mod: oyun durumunu tarihe göre sakla
+  const [dailyPersistedState, setDailyPersistedState] = useLocalStorage<DailyGameState | null>(
+    `nurdle:slug:${slug}:daily:${today}`,
+    null
+  );
 
   const [gameState, setGameState] = useState<GameState>({
     guesses: [],
@@ -52,10 +85,32 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
   const [shakeRow, setShakeRow] = useState(false);
   const [message, setMessage] = useState('');
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [countdown, setCountdown] = useState<TimeCountdown>(getTimeUntilMidnight());
 
-  // Yeni kelime gelince oyunu sıfırla
+  // Günlük mod countdown
   useEffect(() => {
-    if (solution) {
+    if (!hasDaily) return;
+    const timer = setInterval(() => setCountdown(getTimeUntilMidnight()), 1000);
+    return () => clearInterval(timer);
+  }, [hasDaily]);
+
+  // Yeni kelime gelince oyunu yükle / sıfırla
+  useEffect(() => {
+    if (!solution) return;
+
+    if (hasDaily && dailyPersistedState?.date === today) {
+      // Kaydedilmiş günlük oyun durumunu yükle
+      setGameState({
+        guesses: dailyPersistedState.guesses,
+        evaluations: dailyPersistedState.evaluations,
+        currentGuess: '',
+        gameStatus: dailyPersistedState.gameStatus,
+        keyboardStatus: dailyPersistedState.keyboardStatus,
+      });
+      if (dailyPersistedState.gameStatus !== 'playing') {
+        setTimeout(() => setShowGameOverModal(true), 300);
+      }
+    } else {
       setGameState({ guesses: [], evaluations: [], currentGuess: '', gameStatus: 'playing', keyboardStatus: {} });
       setIsRevealing(false);
       setShakeRow(false);
@@ -80,12 +135,12 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
   const addLetter = useCallback((letter: string) => {
     if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length >= wordLength) return;
     setGameState(prev => ({ ...prev, currentGuess: prev.currentGuess + normalizeWord(letter) }));
-  }, [gameState.gameStatus, gameState.currentGuess.length, wordLength, isRevealing]);
+  }, [gameState.gameStatus, gameState.currentGuess.length, wordLength]);
 
   const removeLetter = useCallback(() => {
     if (gameState.gameStatus !== 'playing' || gameState.currentGuess.length === 0) return;
     setGameState(prev => ({ ...prev, currentGuess: prev.currentGuess.slice(0, -1) }));
-  }, [gameState.gameStatus, gameState.currentGuess.length, isRevealing]);
+  }, [gameState.gameStatus, gameState.currentGuess.length]);
 
   const submitGuess = useCallback(() => {
     if (gameState.gameStatus !== 'playing' || isRevealing) return;
@@ -104,14 +159,14 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
     const newGameStatus = checkGameStatus(newGuesses, solution);
 
     setIsRevealing(true);
-    setGameState(prev => ({
-      ...prev,
+    const nextState: GameState = {
       guesses: newGuesses,
       evaluations: newEvaluations,
       currentGuess: '',
       gameStatus: newGameStatus,
       keyboardStatus: newKeyboardStatus,
-    }));
+    };
+    setGameState(nextState);
 
     setTimeout(() => {
       setIsRevealing(false);
@@ -126,13 +181,21 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
         });
       } else if (newGameStatus === 'lost') {
         showMessage(`Kelime: ${solution}`, 5000);
-        setSlugStats(prev => ({
-          ...prev,
-          gamesPlayed: prev.gamesPlayed + 1,
-        }));
+        setSlugStats(prev => ({ ...prev, gamesPlayed: prev.gamesPlayed + 1 }));
+      }
+
+      // Günlük mod: oyun durumunu kaydet
+      if (hasDaily && newGameStatus !== 'playing') {
+        setDailyPersistedState({
+          date: today,
+          guesses: newGuesses,
+          evaluations: newEvaluations,
+          gameStatus: newGameStatus,
+          keyboardStatus: newKeyboardStatus,
+        });
       }
     }, wordLength * 300 + 200);
-  }, [gameState, wordLength, isRevealing, solution, showMessage, setSlugStats]);
+  }, [gameState, wordLength, isRevealing, solution, showMessage, setSlugStats, hasDaily, today, setDailyPersistedState]);
 
   const startNewGame = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['word', 'slug', slug] });
@@ -155,7 +218,9 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
   if (isLoading) {
     return (
       <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="text-tile-filled text-lg font-bold tracking-widest animate-pulse">NURDLE</div>
+        <div className="text-tile-filled text-lg font-bold tracking-widest animate-pulse">
+          {listData?.list.name ?? 'Yükleniyor...'}
+        </div>
       </div>
     );
   }
@@ -181,12 +246,20 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
             <Home size={18} />
           </button>
           <div className="text-center">
-            <p className="font-bold tracking-widest text-text-primary text-sm">NURDLE</p>
-            <p className="text-xs text-text-secondary">{listData?.list.name}</p>
+            <p className="font-bold tracking-widest text-text-primary text-sm">{listData?.list.name ?? slug.toUpperCase()}</p>
+            {hasDaily && (
+              <p className="text-xs text-text-secondary">#{gameNumber}</p>
+            )}
           </div>
-          <button onClick={startNewGame} className="text-text-secondary hover:text-text-primary cursor-pointer">
-            <RotateCcw size={18} />
-          </button>
+          {hasDaily ? (
+            <div className="text-xs font-mono text-text-secondary w-[18px] text-center" title="Sonraki kelime">
+              {countdown.hours}:{countdown.minutes}:{countdown.seconds}
+            </div>
+          ) : (
+            <button onClick={startNewGame} className="text-text-secondary hover:text-text-primary cursor-pointer">
+              <RotateCcw size={18} />
+            </button>
+          )}
         </div>
       </header>
 
@@ -221,9 +294,9 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
         solutionEntry={solutionEntry}
         guesses={gameState.guesses}
         evaluations={gameState.evaluations}
-        gameNumber={0}
+        gameNumber={gameNumber}
         stats={slugStats}
-        isUnlimited={true}
+        isUnlimited={!hasDaily}
         onPlayAgain={() => { setShowGameOverModal(false); startNewGame(); }}
         onGoHome={onGoHome}
       />

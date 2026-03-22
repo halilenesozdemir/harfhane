@@ -3,6 +3,7 @@ import type {
   RandomWordResponse,
   ValidateWordResponse,
   ApiError,
+  WordList,
 } from '@nurdle/shared';
 
 const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
@@ -40,15 +41,7 @@ export async function validateWord(word: string): Promise<ValidateWordResponse> 
   });
 }
 
-export interface WordListInfo {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  wordLength: number;
-  isPublic: boolean;
-  wordCount: number;
-}
+export type WordListInfo = WordList;
 
 export function fetchPublicLists(): Promise<{ lists: WordListInfo[] }> {
   return request<{ lists: WordListInfo[] }>('/lists');
@@ -60,4 +53,15 @@ export function fetchListInfo(slug: string): Promise<{ list: WordListInfo }> {
 
 export function fetchRandomWordFromList(slug: string): Promise<RandomWordResponse> {
   return request<RandomWordResponse>(`/lists/${slug}/random`);
+}
+
+export function fetchDailyWordFromList(slug: string, date: string): Promise<DailyWordResponse> {
+  return request<DailyWordResponse>(`/lists/${slug}/daily?date=${date}`);
+}
+
+export function validateWordInList(slug: string, word: string): Promise<ValidateWordResponse> {
+  return request<ValidateWordResponse>(`/lists/${slug}/validate`, {
+    method: 'POST',
+    body: JSON.stringify({ word }),
+  });
 }

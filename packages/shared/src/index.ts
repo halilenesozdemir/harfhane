@@ -40,6 +40,7 @@ export interface WordList {
   description: string | null;
   wordLength: number;
   isPublic: boolean;
+  hasDaily: boolean;
   createdAt: string;
   wordCount?: number;
 }
