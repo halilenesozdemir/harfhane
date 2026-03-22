@@ -8,6 +8,10 @@ binding = "DB"
 database_name = "nurdle-db"
 database_id = "1fad4aa7-baa4-41ce-a0f4-976904b8d29b"
 
+[[routes]]
+pattern = "api.harfhane.app/*"
+zone_name = "harfhane.app"
+
 [dev]
 port = 8787
 local_protocol = "http"

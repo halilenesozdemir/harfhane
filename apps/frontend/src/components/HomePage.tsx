@@ -1,22 +1,19 @@
 import { useState } from "react";
-import { Calendar, Infinity, Trophy, Sun, Moon, ListTree, ArrowRight } from "lucide-react";
+import { Calendar, Infinity, Sun, Moon, ListTree, ArrowRight } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
-import { usePublicLists } from "../hooks/useWordApi";
 import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
-const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
+const NURDLE_VARIANTS = [
+  { slug: "nurdle-4", label: "4 Harf" },
+  { slug: "nurdle",   label: "5 Harf" },
+  { slug: "nurdle-6", label: "6 Harf" },
+];
+
+const HomePage = ({ onSelectMode, onGoLists }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
-  const [slugInput, setSlugInput] = useState("");
-  const { data: listsData } = usePublicLists();
-  const publicLists = listsData?.lists ?? [];
-
-  const handleSlugGo = () => {
-    const slug = slugInput.trim().toLowerCase();
-    if (slug) window.location.href = `/play/${slug}`;
-  };
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
@@ -39,6 +36,28 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       </div>
 
       <div className="w-full max-w-md space-y-4">
+        {/* Nurdle — Öne çıkan listeler */}
+        <div>
+          <p className="text-text-secondary text-sm text-center mb-2">Nurdle — Risale-i Nur</p>
+          <div className="flex gap-2">
+            {NURDLE_VARIANTS.map(v => (
+              <button
+                key={v.slug}
+                onClick={() => { window.location.href = `/play/${v.slug}`; }}
+                className="flex-1 py-3 rounded-xl bg-bg-secondary hover:bg-tile-empty border border-border text-text-primary font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 py-1">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-text-secondary/50 text-xs">veya</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
         {/* Kelime Uzunluğu */}
         <div>
           <p className="text-text-secondary text-sm text-center mb-2">Kelime uzunluğu</p>
@@ -72,7 +91,6 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
               <h2 className="text-xl font-bold mb-1">Günlük Oyun</h2>
               <p className="text-white/80 text-sm">Her gün yeni bir kelime. Herkes aynı kelimeyi çözer.</p>
             </div>
-            <Trophy size={24} className="text-white/60" />
           </div>
         </button>
 
@@ -92,54 +110,20 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
           </div>
         </button>
 
-        {/* Public Listeler */}
-        {publicLists.length > 0 && (
-          <div>
-            <p className="text-text-secondary text-sm text-center mb-2 flex items-center justify-center gap-1.5">
-              <ListTree size={14} /> Özel listeler
-            </p>
-            <div className="flex flex-col gap-2">
-              {publicLists.map((list) => (
-                <button
-                  key={list.slug}
-                  onClick={() => { window.location.href = `/play/${list.slug}`; }}
-                  className="w-full bg-bg-secondary hover:bg-tile-empty border border-border rounded-xl px-5 py-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer text-left flex items-center justify-between"
-                >
-                  <div>
-                    <p className="font-semibold text-text-primary">{list.name}</p>
-                    {list.description && (
-                      <p className="text-text-secondary text-xs mt-0.5">{list.description}</p>
-                    )}
-                    <p className="text-text-secondary text-xs mt-1">{list.wordLength} harf · {list.wordCount} kelime</p>
-                  </div>
-                  <ArrowRight size={18} className="text-text-secondary flex-shrink-0 ml-3" />
-                </button>
-              ))}
+        {/* Tüm listeler */}
+        <button
+          onClick={onGoLists}
+          className="w-full bg-bg-secondary hover:bg-tile-empty border border-border rounded-xl px-5 py-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <ListTree size={20} className="text-text-secondary" />
+            <div className="text-left">
+              <p className="font-semibold text-text-primary text-sm">Tüm listeler</p>
+              <p className="text-text-secondary text-xs">Herkese açık kelime listelerini keşfet</p>
             </div>
           </div>
-        )}
-
-        {/* Slug Giriş */}
-        <div>
-          <p className="text-text-secondary text-sm text-center mb-2">Liste kodu ile oyna</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="liste-kodu"
-              value={slugInput}
-              onChange={(e) => setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSlugGo(); }}
-              className="flex-1 px-4 py-3 rounded-xl border border-border bg-bg-secondary text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-tile-correct text-sm"
-            />
-            <button
-              onClick={handleSlugGo}
-              disabled={!slugInput.trim()}
-              className="px-4 py-3 rounded-xl bg-tile-correct text-white font-medium cursor-pointer hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-            >
-              <ArrowRight size={18} />
-            </button>
-          </div>
-        </div>
+          <ArrowRight size={18} className="text-text-secondary flex-shrink-0" />
+        </button>
       </div>
 
       {/* Alt Bilgi */}

@@ -17,6 +17,7 @@ import InstallPrompt from "./components/InstallPrompt";
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminPanel from "./components/admin/AdminPanel";
 import SlugGame from "./components/SlugGame";
+import ListsPage from "./components/ListsPage";
 import { useGameState } from "./hooks/useGameState";
 import type { GameMode, WordLength } from "./types";
 
@@ -215,7 +216,7 @@ function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
   );
 }
 
-type ViewType = "home" | "daily" | "unlimited" | "slug";
+type ViewType = "home" | "lists" | "daily" | "unlimited" | "slug";
 
 interface ActiveGame {
   mode: GameMode;
@@ -260,6 +261,7 @@ function AdminApp(): React.JSX.Element {
 function App(): React.JSX.Element {
   const pathname = window.location.pathname;
   const isAdmin = pathname.startsWith('/admin');
+  const isLists = pathname === '/lists';
   const slugMatch = pathname.match(/^\/play\/([a-z0-9-]+)$/);
   const playSlug = slugMatch?.[1] ?? null;
 
@@ -273,10 +275,26 @@ function App(): React.JSX.Element {
 
   const handleGoHome = (): void => {
     setCurrentView("home");
+    if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
+  };
+
+  const handleGoLists = (): void => {
+    setCurrentView("lists");
+    window.history.pushState({}, '', '/lists');
   };
 
   if (isAdmin) {
     return <AdminApp />;
+  }
+
+  if (isLists) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <ListsPage onGoHome={() => { window.location.href = '/'; }} />
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
   }
 
   if (playSlug) {
@@ -291,7 +309,10 @@ function App(): React.JSX.Element {
 
   const renderView = (): React.JSX.Element => {
     if (currentView === "home") {
-      return <HomePage onSelectMode={handleSelectMode} />;
+      return <HomePage onSelectMode={handleSelectMode} onGoLists={handleGoLists} />;
+    }
+    if (currentView === "lists") {
+      return <ListsPage onGoHome={handleGoHome} />;
     }
     return (
       <Game
