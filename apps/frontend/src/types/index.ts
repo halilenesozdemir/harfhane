@@ -4,7 +4,7 @@ export type { WordEntry, WordData } from '@nurdle/shared';
 // Game types
 export type GameStatus = 'playing' | 'won' | 'lost';
 export type GameMode = 'daily' | 'unlimited' | 'slug';
-export type WordLength = 4 | 5 | 6 | 7;
+export type WordLength = 4 | 5 | 6;
 export type TileStatus = 'correct' | 'present' | 'absent' | null;
 export type Theme = 'light' | 'dark' | 'system';
 

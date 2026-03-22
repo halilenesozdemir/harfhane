@@ -8,7 +8,7 @@ export const dailyWordQuerySchema = z.object({
     .optional(),
   length: z
     .string()
-    .regex(/^[4-7]$/, 'Length must be 4, 5, 6, or 7')
+    .regex(/^[4-6]$/, 'Length must be 4, 5, or 6')
     .transform(Number)
     .optional(),
 });
@@ -16,7 +16,7 @@ export const dailyWordQuerySchema = z.object({
 export const randomWordQuerySchema = z.object({
   length: z
     .string()
-    .regex(/^[4-7]$/, 'Length must be 4, 5, 6, or 7')
+    .regex(/^[4-6]$/, 'Length must be 4, 5, or 6')
     .transform(Number)
     .optional(),
 });

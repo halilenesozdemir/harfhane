@@ -38,7 +38,7 @@ export async function findDailyWord(
       `SELECT dw.word_id, dw.date, w.word, w.meaning, w.context, w.category
        FROM daily_words dw
        JOIN words w ON w.id = dw.word_id
-       WHERE dw.date = ? AND dw.length = ?
+       WHERE dw.date = ? AND length(w.word) = ?
        LIMIT 1`
     )
     .bind(date, length)
@@ -47,7 +47,11 @@ export async function findDailyWord(
   if (!row) return null;
 
   const countRow = await db
-    .prepare(`SELECT COUNT(*) as count FROM daily_words WHERE date <= ? AND length = ?`)
+    .prepare(
+      `SELECT COUNT(*) as count FROM daily_words dw
+       JOIN words w ON w.id = dw.word_id
+       WHERE dw.date <= ? AND length(w.word) = ?`
+    )
     .bind(date, length)
     .first<{ count: number }>();
 
@@ -65,7 +69,7 @@ export async function findRandomWord(db: Env['DB'], length = 5): Promise<WordEnt
     .prepare(
       `SELECT id, word, meaning, context, category
        FROM words
-       WHERE is_active = 1 AND length = ?
+       WHERE is_active = 1 AND length(word) = ?
        ORDER BY RANDOM()
        LIMIT 1`
     )

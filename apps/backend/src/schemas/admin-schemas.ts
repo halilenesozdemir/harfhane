@@ -52,7 +52,7 @@ export const createListSchema = z.object({
   slug: z.string().min(2).max(60).regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers and hyphens'),
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
-  word_length: z.number().int().min(4).max(7).default(5),
+  word_length: z.number().int().min(4).max(6).default(5),
   is_public: z.boolean().default(false),
 });
 

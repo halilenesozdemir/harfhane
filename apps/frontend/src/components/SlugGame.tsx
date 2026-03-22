@@ -200,7 +200,7 @@ export default function SlugGame({ slug, onGoHome }: SlugGameProps): React.JSX.E
           isRevealing={isRevealing}
           shakeRow={shakeRow}
           gameStatus={gameState.gameStatus}
-          wordLength={wordLength as 4 | 5 | 6 | 7}
+          wordLength={wordLength as 4 | 5 | 6}
         />
       </main>
 

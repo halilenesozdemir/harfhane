@@ -4,7 +4,7 @@ import { useThemeContext } from "../context/ThemeContext";
 import { usePublicLists } from "../hooks/useWordApi";
 import type { HomePageProps, WordLength } from "../types";
 
-const WORD_LENGTHS: WordLength[] = [4, 5, 6, 7];
+const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();

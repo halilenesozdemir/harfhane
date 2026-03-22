@@ -176,7 +176,7 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
                 onChange={e => setForm(f => ({ ...f, word_length: Number(e.target.value) }))}
                 className="flex-1 px-2 py-1.5 rounded border border-border bg-bg-primary text-text-primary cursor-pointer focus:outline-none"
               >
-                {[4, 5, 6, 7].map(l => <option key={l} value={l}>{l} harf</option>)}
+                {[4, 5, 6].map(l => <option key={l} value={l}>{l} harf</option>)}
               </select>
               <label className="flex items-center gap-1 cursor-pointer text-text-secondary">
                 <input
