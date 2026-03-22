@@ -1,252 +1,70 @@
-import { useState, useEffect, useCallback } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "./context/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
-import HomePage from "./components/HomePage";
-import Header from "./components/Header";
-import GameGrid from "./components/GameGrid";
-import Keyboard from "./components/Keyboard";
-import Toast from "./components/Toast";
-import HowToPlayModal from "./components/HowToPlayModal";
-import StatsModal from "./components/StatsModal";
-import GameOverModal from "./components/GameOverModal";
-import SettingsModal from "./components/SettingsModal";
-import AuthModal from "./components/AuthModal";
-import LeaderboardModal from "./components/LeaderboardModal";
-import InstallPrompt from "./components/InstallPrompt";
-import AdminLogin from "./components/admin/AdminLogin";
-import AdminPanel from "./components/admin/AdminPanel";
-import SlugGame from "./components/SlugGame";
-import ListsPage from "./components/ListsPage";
-import SplashScreen from "./components/SplashScreen";
-import { useGameState } from "./hooks/useGameState";
-import type { GameMode, WordLength } from "./types";
+import { lazy, Suspense, useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import AuthModal from './components/AuthModal';
+import InstallPrompt from './components/InstallPrompt';
+import SplashScreen from './components/SplashScreen';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminPanel from './components/admin/AdminPanel';
+import type { GameMode, WordLength } from './types';
+
+const GamePage = lazy(() => import('./components/GamePage'));
+const HomePage = lazy(() => import('./components/HomePage'));
+const ListsPage = lazy(() => import('./components/ListsPage'));
+const SlugGame = lazy(() => import('./components/SlugGame'));
 
 const queryClient = new QueryClient();
+const VALID_LENGTHS = [4, 5, 6] as const;
 
-interface GameProps {
-  mode: GameMode;
-  wordLength: WordLength;
-  onGoHome: () => void;
+function GameRoute({ mode }: { mode: GameMode }): React.JSX.Element {
+  const { length } = useParams<{ length?: string }>();
+  const navigate = useNavigate();
+  const parsed = Number(length);
+  const wordLength: WordLength = (VALID_LENGTHS as readonly number[]).includes(parsed)
+    ? (parsed as WordLength)
+    : 5;
+  return <GamePage mode={mode} wordLength={wordLength} onGoHome={() => navigate('/')} />;
 }
 
-function Game({ mode, wordLength, onGoHome }: GameProps): React.JSX.Element {
-  const {
-    guesses,
-    evaluations,
-    currentGuess,
-    gameStatus,
-    keyboardStatus,
-    solution,
-    solutionEntry,
-    gameNumber,
-    stats,
-    isRevealing,
-    isLoading,
-    isError,
-    shakeRow,
-    message,
-    hasSeenHelp,
-    isUnlimited,
-    addLetter,
-    removeLetter,
-    submitGuess,
-    setHasSeenHelp,
-    startNewGame,
-  } = useGameState(mode, wordLength);
-
-  // Modal states
-  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
-  const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
-  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const [showLeaderboardModal, setShowLeaderboardModal] = useState<boolean>(false);
-
-  // İlk girişte yardım modalını göster
-  useEffect(() => {
-    if (!hasSeenHelp) {
-      setShowHelpModal(true);
-      setHasSeenHelp(true);
-    }
-  }, [hasSeenHelp, setHasSeenHelp]);
-
-  // Oyun bittiğinde modal göster
-  useEffect(() => {
-    if (gameStatus === "won" || gameStatus === "lost") {
-      const timer = setTimeout(() => {
-        setShowGameOverModal(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [gameStatus]);
-
-  // Klavye tuşlarını handle et
-  const handleKeyPress = (key: string): void => {
-    if (key === "ENTER") {
-      submitGuess();
-    } else if (key === "BACKSPACE") {
-      removeLetter();
-    } else {
-      addLetter(key);
-    }
-  };
-
-  // Tekrar oyna (sınırsız mod)
-  const handlePlayAgain = (): void => {
-    setShowGameOverModal(false);
-    startNewGame();
-  };
-
-  // Ana sayfaya dön
-  const handleGoHome = (): void => {
-    setShowGameOverModal(false);
-    onGoHome();
-  };
-
-  // Mod etiketi
-  const modeLabel = isUnlimited ? "Sınırsız" : "Günlük";
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="text-tile-filled text-lg font-bold tracking-widest animate-pulse">
-          HARFHANE
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-text-primary text-xl font-semibold">
-          Bu kelime uzunluğu için henüz kelime eklenmedi.
-        </p>
-        <p className="text-text-secondary text-sm">
-          {wordLength} harflik kelimeler yakında geliyor.
-        </p>
-        <button
-          onClick={onGoHome}
-          className="mt-2 px-6 py-2 rounded bg-tile-correct text-white font-medium cursor-pointer hover:opacity-90"
-        >
-          Ana sayfaya dön
-        </button>
-      </div>
-    );
-  }
-
+function HomeRoute(): React.JSX.Element {
+  const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col">
-      {/* Header */}
-      <Header
-        onTitleClick={onGoHome}
-        onHelpClick={() => setShowHelpModal(true)}
-        onStatsClick={() => setShowStatsModal(true)}
-        onSettingsClick={() => setShowSettingsModal(true)}
-        onLeaderboardClick={() => setShowLeaderboardModal(true)}
-        onAuthClick={() => setShowAuthModal(true)}
-        modeLabel={modeLabel}
-      />
-
-      {/* Toast Mesajları */}
-      <Toast message={message} />
-
-      {/* Oyun Alanı */}
-      <main className="flex-1 flex flex-col items-center justify-center">
-        <GameGrid
-          guesses={guesses}
-          evaluations={evaluations}
-          currentGuess={currentGuess}
-          isRevealing={isRevealing}
-          shakeRow={shakeRow}
-          gameStatus={gameStatus}
-          wordLength={wordLength}
-        />
-      </main>
-
-      {/* Klavye */}
-      <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
-
-      {/* Modaller */}
-      <HowToPlayModal
-        isOpen={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
-      />
-
-      <StatsModal
-        isOpen={showStatsModal}
-        onClose={() => setShowStatsModal(false)}
-        stats={stats}
-        lastGuessCount={guesses.length}
-        gameStatus={gameStatus}
-        isUnlimited={isUnlimited}
-      />
-
-      <GameOverModal
-        isOpen={showGameOverModal}
-        onClose={() => setShowGameOverModal(false)}
-        gameStatus={gameStatus}
-        solution={solution}
-        solutionEntry={solutionEntry}
-        guesses={guesses}
-        evaluations={evaluations}
-        gameNumber={gameNumber}
-        stats={stats}
-        isUnlimited={isUnlimited}
-        onPlayAgain={handlePlayAgain}
-        onGoHome={handleGoHome}
-      />
-
-      <SettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
-
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
-
-      <LeaderboardModal
-        isOpen={showLeaderboardModal}
-        onClose={() => setShowLeaderboardModal(false)}
-      />
-    </div>
+    <HomePage
+      onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
+      onGoLists={() => navigate('/lists')}
+    />
   );
 }
 
-function ListsAndAuthWrapper({ onGoHome }: { onGoHome: () => void }): React.JSX.Element {
+function ListsRoute(): React.JSX.Element {
+  const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
   return (
     <>
-      <ListsPage onGoHome={onGoHome} onAuthRequired={() => setShowAuth(true)} />
+      <ListsPage onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>
   );
 }
 
-function SlugAndAuthWrapper({ slug, onGoHome }: { slug: string; onGoHome: () => void }): React.JSX.Element {
+function SlugRoute(): React.JSX.Element {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [showAuth, setShowAuth] = useState(false);
+  if (!slug) return <Navigate to="/" replace />;
   return (
     <>
-      <SlugGame slug={slug} onGoHome={onGoHome} onAuthRequired={() => setShowAuth(true)} />
+      <SlugGame slug={slug} onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>
   );
-}
-
-type ViewType = "home" | "lists" | "daily" | "unlimited" | "slug";
-
-interface ActiveGame {
-  mode: GameMode;
-  wordLength: WordLength;
 }
 
 function AdminApp(): React.JSX.Element {
   const [secret, setSecret] = useState<string | null>(
-    () => sessionStorage.getItem("nurdle-admin-secret")
+    () => sessionStorage.getItem('nurdle-admin-secret')
   );
   const [authError, setAuthError] = useState('');
 
@@ -261,7 +79,7 @@ function AdminApp(): React.JSX.Element {
         setAuthError('Geçersiz anahtar.');
         return;
       }
-      sessionStorage.setItem("nurdle-admin-secret", s);
+      sessionStorage.setItem('nurdle-admin-secret', s);
       setSecret(s);
     } catch {
       setAuthError('Bağlantı hatası.');
@@ -269,7 +87,7 @@ function AdminApp(): React.JSX.Element {
   };
 
   const handleLogout = (): void => {
-    sessionStorage.removeItem("nurdle-admin-secret");
+    sessionStorage.removeItem('nurdle-admin-secret');
     setSecret(null);
   };
 
@@ -279,90 +97,41 @@ function AdminApp(): React.JSX.Element {
   return <AdminPanel secret={secret} onLogout={handleLogout} />;
 }
 
-function App(): React.JSX.Element {
-  const pathname = window.location.pathname;
-  const isAdmin = pathname.startsWith('/admin');
-  const isLists = pathname === '/lists';
-  const slugMatch = pathname.match(/^\/play\/([a-z0-9-]+)$/);
-  const playSlug = slugMatch?.[1] ?? null;
+function AppRoutes(): React.JSX.Element {
+  return (
+    <>
+      <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
+        <Routes>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/lists" element={<ListsRoute />} />
+          <Route path="/play/:slug" element={<SlugRoute />} />
+          <Route path="/daily" element={<GameRoute mode="daily" />} />
+          <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
+          <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
+          <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+      <InstallPrompt />
+    </>
+  );
+}
 
+function App(): React.JSX.Element {
+  const isAdmin = window.location.pathname.startsWith('/admin');
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
-  const [currentView, setCurrentView] = useState<ViewType>("home");
-  const [activeGame, setActiveGame] = useState<ActiveGame>({ mode: "daily", wordLength: 5 });
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const handleSelectMode = (mode: GameMode, wordLength: WordLength): void => {
-    setActiveGame({ mode, wordLength });
-    setCurrentView(mode);
-  };
-
-  const handleGoHome = (): void => {
-    setCurrentView("home");
-    if (window.location.pathname !== '/') window.history.pushState({}, '', '/');
-  };
-
-  const handleGoLists = (): void => {
-    setCurrentView("lists");
-    window.history.pushState({}, '', '/lists');
-  };
-
-  if (isAdmin) {
-    return <AdminApp />;
-  }
-
-  if (!splashDone) {
-    return <SplashScreen onDone={handleSplashDone} />;
-  }
-
-  if (isLists) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <ListsAndAuthWrapper onGoHome={() => { window.location.href = '/'; }} />
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    );
-  }
-
-  if (playSlug) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <SlugAndAuthWrapper slug={playSlug} onGoHome={() => { window.location.href = '/'; }} />
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    );
-  }
-
-  const renderView = (): React.JSX.Element => {
-    if (currentView === "home") {
-      return <HomePage onSelectMode={handleSelectMode} onGoLists={handleGoLists} />;
-    }
-    if (currentView === "lists") {
-      return <ListsPage onGoHome={handleGoHome} onAuthRequired={() => setShowAuthModal(true)} />;
-    }
-    return (
-      <Game
-        mode={activeGame.mode}
-        wordLength={activeGame.wordLength}
-        onGoHome={handleGoHome}
-      />
-    );
-  };
+  if (isAdmin) return <AdminApp />;
+  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          {renderView()}
-          <InstallPrompt />
-          <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
