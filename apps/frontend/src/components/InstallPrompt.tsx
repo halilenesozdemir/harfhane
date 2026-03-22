@@ -71,13 +71,13 @@ const InstallPrompt = (): React.JSX.Element | null => {
       <div className="bg-bg-secondary border-2 border-correct rounded-lg shadow-xl p-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 bg-correct rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xl">N</span>
+            <span className="text-white font-bold text-xl">H</span>
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h3 className="text-text-primary font-bold mb-1">Ana Ekrana Ekle</h3>
             <p className="text-text-secondary text-sm mb-3">
-              Nurdle'ı telefonunuza yükleyin, offline oynayın!
+              Harfhane'yi telefonunuza yükleyin, offline oynayın!
             </p>
             
             <div className="flex gap-2">

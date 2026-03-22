@@ -37,11 +37,11 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps): React.JSX.Ele
     <Modal isOpen={isOpen} onClose={onClose} title="Nasıl Oynanır?">
       <div className="text-text-primary space-y-4">
         <p>
-          <strong>NURDLE</strong> kelimesini 6 denemede tahmin edin.
+          Gizli kelimeyi 6 denemede tahmin edin.
         </p>
-        
+
         <p className="text-text-secondary">
-          Her tahmin, Risale-i Nur külliyatından 5 harfli geçerli bir kelime olmalıdır.
+          Her tahmin, listeden geçerli bir kelime olmalıdır.
           Tahmini göndermek için Enter tuşuna basın.
         </p>
         
@@ -101,11 +101,7 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps): React.JSX.Ele
         <hr className="border-border-color" />
 
         <p className="text-sm text-text-secondary">
-          Her gün yeni bir <strong className="text-text-primary">NURDLE</strong> kelimesi gelir!
-        </p>
-        
-        <p className="text-sm text-text-secondary/70 italic">
-          Risale-i Nur külliyatından öğrenirken eğlenin.
+          Her gün yeni bir kelime gelir!
         </p>
       </div>
     </Modal>

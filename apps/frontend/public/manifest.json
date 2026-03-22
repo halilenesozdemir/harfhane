@@ -1,7 +1,7 @@
 {
-  "name": "Nurdle - Risale-i Nur Kelime Oyunu",
-  "short_name": "Nurdle",
-  "description": "Risale-i Nur külliyatından kelimelerle oynanan günlük kelime tahmin oyunu",
+  "name": "Harfhane - Kelime Oyunu Platformu",
+  "short_name": "Harfhane",
+  "description": "Kendi kelime listeni oluştur, oyna ve paylaş",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121213",
@@ -33,4 +33,3 @@
     }
   ]
 }
-

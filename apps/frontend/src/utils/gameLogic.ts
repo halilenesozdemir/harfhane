@@ -129,14 +129,14 @@ export const generateShareText = (
   
   const attemptText = isWon ? `${guesses.length}/6` : 'X/6';
   
-  let text = `Nurdle ${modeText} ${attemptText}\n\n`;
+  let text = `Harfhane ${modeText} ${attemptText}\n\n`;
   
   evaluations.forEach(evaluation => {
     const row = evaluation.map(status => (status ? emojiMap[status] : '⬜') || '⬜').join('');
     text += row + '\n';
   });
   
-  text += '\nhttps://nurdle.app';
+  text += '\nhttps://harfhane.app';
   
   return text;
 };

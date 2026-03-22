@@ -17,7 +17,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
             className="w-8 h-8 bg-correct rounded-md flex items-center justify-center hover:bg-correct/90 transition-colors cursor-pointer"
             aria-label="Ana Sayfa"
           >
-            <span className="text-white font-bold text-lg">N</span>
+            <span className="text-white font-bold text-lg">H</span>
           </button>
         </div>
         
@@ -28,7 +28,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
             className="hover:opacity-80 transition-opacity cursor-pointer"
           >
             <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-text-primary">
-              NURDLE
+              HARFHANE
             </h1>
           </button>
           {modeLabel && (

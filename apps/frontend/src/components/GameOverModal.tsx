@@ -122,7 +122,7 @@ const GameOverModal = ({
               {solutionEntry.context && (
                 <div>
                   <span className="text-sm text-text-secondary">
-                    Risale-i Nur'dan:
+                    Bağlam:
                   </span>
                   <p className="text-text-primary text-sm italic">
                     "{solutionEntry.context}"
@@ -168,13 +168,13 @@ const GameOverModal = ({
                   Yeni kelime hazır!
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Yeni Nurdle'ı oynamak için tıklayın
+                  Yeni kelimeyi oynamak için tıklayın
                 </p>
               </div>
             ) : (
               <>
                 <p className="text-sm text-text-secondary mb-2">
-                  Sonraki Nurdle
+                  Sonraki kelime
                 </p>
                 <p className="text-3xl font-mono font-bold text-text-primary">
                   {countdown.hours}:{countdown.minutes}:{countdown.seconds}
@@ -193,7 +193,7 @@ const GameOverModal = ({
               className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in cursor-pointer"
             >
               <RotateCcw size={20} />
-              Yeni Nurdle'ı Başlat
+              Yeni Oyunu Başlat
             </button>
           )}
 

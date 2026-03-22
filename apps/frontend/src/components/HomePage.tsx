@@ -32,10 +32,10 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       {/* Logo */}
       <div className="text-center mb-10">
         <div className="w-20 h-20 bg-correct rounded-xl flex items-center justify-center mx-auto mb-4">
-          <span className="text-white font-bold text-4xl">N</span>
+          <span className="text-white font-bold text-4xl">H</span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">NURDLE</h1>
-        <p className="text-text-secondary text-lg">Risale-i Nur Kelime Oyunu</p>
+        <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">HARFHANE</h1>
+        <p className="text-text-secondary text-lg">Kendi kelime oyununu oluştur ve oyna</p>
       </div>
 
       <div className="w-full max-w-md space-y-4">
@@ -69,7 +69,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
               <Calendar size={28} />
             </div>
             <div className="text-left flex-1">
-              <h2 className="text-xl font-bold mb-1">Günlük Nurdle</h2>
+              <h2 className="text-xl font-bold mb-1">Günlük Oyun</h2>
               <p className="text-white/80 text-sm">Her gün yeni bir kelime. Herkes aynı kelimeyi çözer.</p>
             </div>
             <Trophy size={24} className="text-white/60" />
@@ -144,8 +144,8 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
       {/* Alt Bilgi */}
       <div className="mt-10 text-center">
-        <p className="text-text-secondary text-sm">Risale-i Nur külliyatından kelimelerle</p>
-        <p className="text-text-secondary/60 text-xs mt-1">v2.0.0</p>
+        <p className="text-text-secondary text-sm">Kelime oyunu platformu</p>
+        <p className="text-text-secondary/60 text-xs mt-1">v3.0.0</p>
       </div>
     </div>
   );
