@@ -138,14 +138,15 @@ No parameter → single agent (Orchestrator handles directly or delegates to sin
 
 ## Mandatory Skills
 
-The following skills are **binding rules** for all coding tasks:
+The following skills are **binding rules** for all coding tasks. Skills live in `.claude/skills/` and are auto-triggered by Claude Code based on their descriptions.
 
-- **Clean Code** (`.github/skills/clean-code/SKILL.md`) — Applied to ALL code. No exceptions.
-- **Frontend Development** (`.github/skills/frontend-development/SKILL.md`) — Applied to all frontend tasks.
-- **Backend Development** (`.github/skills/backend-development/SKILL.md`) — Applied to all backend/API tasks.
-- **Commit Standards** (`.github/skills/commit-standards/SKILL.md`) — Applied to all commit messages.
-- **PR Standards** (`.github/skills/pr-standards/SKILL.md`) — Applied to all pull requests.
-- **Testing Standards** (`.github/skills/testing-standards/SKILL.md`) — Applied to all test code.
+- **Clean Code** (`.claude/skills/clean-code/SKILL.md`) — Applied to ALL code. No exceptions.
+- **Frontend Development** (`.claude/skills/frontend-development/SKILL.md`) — Applied to all frontend tasks.
+- **Backend Development** (`.claude/skills/backend-development/SKILL.md`) — Applied to all backend/API tasks.
+- **Commit Standards** (`.claude/skills/commit-standards/SKILL.md`) — Applied to all commit messages.
+- **PR Standards** (`.claude/skills/pr-standards/SKILL.md`) — Applied to all pull requests.
+- **Testing Standards** (`.claude/skills/testing-standards/SKILL.md`) — Applied to all test code.
+- **RIPER Workflow** (`.claude/skills/riper-workflow/SKILL.md`) — Applied to all non-trivial features and architectural decisions.
 
 ---
 

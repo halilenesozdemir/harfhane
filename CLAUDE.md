@@ -23,20 +23,62 @@
 nurdle/
 ├── apps/
 │   ├── frontend/     # React 19 + Vite + TypeScript
+│   │   └── CLAUDE.md # Frontend-specific context
 │   └── backend/      # Hono + Cloudflare Workers
+│       └── CLAUDE.md # Backend-specific context
 ├── packages/
 │   └── shared/       # Ortak TypeScript types
+├── .claude/
+│   ├── settings.json       # Permissions + hooks (project)
+│   ├── settings.local.json # Local overrides (gitignored)
+│   ├── skills/             # Auto-loaded Claude Code skills (L2)
+│   │   ├── clean-code/
+│   │   ├── code-review/
+│   │   ├── code-architecture/
+│   │   ├── analysis/
+│   │   ├── frontend-development/
+│   │   ├── backend-development/
+│   │   ├── implementation/
+│   │   ├── testing-standards/
+│   │   ├── commit-standards/
+│   │   └── pr-standards/
+│   └── agents/             # Callable subagents (L4)
+│       ├── orchestrator.md
+│       ├── principal-alpha.md
+│       ├── principal-beta.md
+│       ├── staff-engineer-alpha.md
+│       ├── staff-engineer-beta.md
+│       ├── mid-coder-alpha.md
+│       ├── mid-coder-beta.md
+│       ├── lead-analyst.md
+│       ├── analyst-alpha.md
+│       ├── analyst-beta.md
+│       └── analyst-gamma.md
 ├── .github/
-│   ├── agents/       # Agent system prompt dosyaları
-│   ├── instructions/ # Agent instruction dosyaları
 │   ├── memory/       # Session ve karar hafızası
 │   ├── metrics/      # Token ve performans takibi
-│   ├── skills/       # Skill dosyaları
 │   └── todo/         # Aktif plan takibi
 ├── AGENTS.md
 ├── CLAUDE.md
 └── package.json      # pnpm workspaces root
 ```
+
+---
+
+## 4-Katmanlı Zeka Mimarisi
+
+| Katman | Kaynak | Açıklama |
+| ------ | ------ | -------- |
+| **L1** | `CLAUDE.md` (hiyerarşik) | Kalıcı bağlam ve kurallar |
+| **L2** | `.claude/skills/*/SKILL.md` | Auto-triggered yetenekler |
+| **L3** | `.claude/settings.json` hooks | Otomasyon ve güvenlik kapıları |
+| **L4** | `.claude/agents/*.md` | İzole bağlamlı alt uzmanlar |
+
+**CLAUDE.md hiyerarşisi** (üstten alta okunur, alttaki ekleme yapar):
+1. `~/.claude/CLAUDE.md` — Global kullanıcı tercihleri
+2. `CLAUDE.md` — Proje kuralları (bu dosya)
+3. `apps/frontend/CLAUDE.md` — Frontend-spesifik context
+4. `apps/backend/CLAUDE.md` — Backend-spesifik context
 
 ---
 
@@ -676,9 +718,44 @@ Her kod çıktısında:
 
 ---
 
+## Slash Commands
+
+`.claude/commands/` içinde tanımlı. `/command` yazarak çağır.
+
+| Komut | Açıklama |
+|-------|----------|
+| `/commit` | Staged değişiklerden Conventional Commit üret |
+| `/review [dosya]` | Kod incelemesi — staged veya belirtilen dosya |
+| `/pr` | GitHub Pull Request oluştur |
+| `/test [pattern]` | Backend testlerini çalıştır ve özetle |
+| `/check` | Tam quality gate: typecheck + test + clean-code |
+| `/deploy [frontend\|backend\|both]` | Cloudflare deploy |
+| `/plan <feature>` | RIPER protokolüyle feature planı |
+
+---
+
+## MCP Servers (Önerilen Kurulum)
+
+MCP server'lar Claude'u dış araçlara bağlar. Manuel kurulum gerekir:
+
+```bash
+claude mcp add github -- npx -y @modelcontextprotocol/server-github
+claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /Users/halilenesozdemir/Desktop/dev/nurdle
+```
+
+| MCP | Amaç | Kurulum |
+|-----|------|---------|
+| `github` | PR/issue okuma, repo bilgisi | `@modelcontextprotocol/server-github` |
+| `filesystem` | Gelişmiş dosya işlemleri | `@modelcontextprotocol/server-filesystem` |
+| `playwright` | Browser test otomasyonu | `@playwright/mcp` |
+
+Kurulum sonrası `claude mcp list` ile doğrula.
+
+---
+
 ## Multi-Agent System
 
-`AGENTS.md` ile yönetilir. Kullanım: prompt sonuna `xN` ekle.
+Prompt sonuna `xN` ekle. Agent'lar `.claude/agents/*.md` içinde tanımlı.
 
 | Parametre | Ne zaman | Agent sayısı |
 |-----------|----------|-------------|
@@ -688,4 +765,8 @@ Her kod çıktısında:
 | `x7` | Büyük feature, backend+frontend+test | 7 agent |
 | `x10` | Major refactor, mimari değişiklik | 10 agent |
 
-Skills ve instructions dosyaları (`/.github/skills/`, `/.github/instructions/`) Claude Code'da otomatik yüklenmez — bu CLAUDE.md dosyası onların distile edilmiş versiyonunu içerir.
+**Agent dosyaları:** `.claude/agents/` — Claude Code tarafından otomatik yüklenir.
+**Skill dosyaları:** `.claude/skills/` — description'a göre otomatik tetiklenir.
+**Hooks:** `.claude/settings.json` — PostToolUse prettier çalıştırır.
+
+`.github/agents/` ve `.github/skills/` artık legacy — aktif değil.

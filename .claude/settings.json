@@ -1,0 +1,77 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(wrangler *)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch*)",
+      "Bash(git checkout *)",
+      "Bash(git pull*)",
+      "Bash(git push)",
+      "Bash(ls *)",
+      "Bash(mkdir -p *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(gh *)",
+      "Bash(npx prettier *)",
+      "Bash(cat *)",
+      "Bash(echo *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(curl * | bash)",
+      "Bash(wget * | sh)",
+      "Bash(chmod 777 *)",
+      "Read(**/.env*)",
+      "Read(**/.dev.vars*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "COMMAND=$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('command',''))\" 2>/dev/null || echo ''); if echo \"$COMMAND\" | grep -qE '^\\s*(rm\\s+-rf|sudo\\s|curl.+\\|\\s*bash|wget.+\\|\\s*sh|chmod\\s+777)'; then echo '[SAFETY] Dangerous command blocked'; exit 2; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; cd /Users/halilenesozdemir/Desktop/dev/nurdle; if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx|json|css|md)$ ]]; then npx prettier --write \"$FILE\" 2>/dev/null; fi; exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ \"$FILE\" =~ \\.(ts|tsx)$ ]] && [[ \"$FILE\" =~ apps/ ]]; then cd /Users/halilenesozdemir/Desktop/dev/nurdle && pnpm typecheck 2>&1 | tail -20; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostStopSession": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p /Users/halilenesozdemir/Desktop/dev/nurdle/.github/logs && echo \"[SESSION-END] $(date -u '+%Y-%m-%d %H:%M:%S UTC') branch=$(git -C /Users/halilenesozdemir/Desktop/dev/nurdle rev-parse --abbrev-ref HEAD 2>/dev/null)\" >> /Users/halilenesozdemir/Desktop/dev/nurdle/.github/logs/sessions.log 2>/dev/null; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
