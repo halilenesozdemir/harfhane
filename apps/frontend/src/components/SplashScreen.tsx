@@ -40,7 +40,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps): React.JSX.E
             </div>
           ))}
         </div>
-        <p className="text-text-secondary text-xs tracking-widest uppercase">Risale-i Nur</p>
+        <p className="text-text-secondary text-xs tracking-widest uppercase">Harfhane</p>
       </div>
     </div>
   );

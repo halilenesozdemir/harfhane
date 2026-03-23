@@ -52,32 +52,6 @@ export default function ListsPage({ onGoHome, onAuthRequired }: ListsPageProps):
       </header>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 space-y-6">
-        {/* Nurdle — öne çıkan */}
-        <div>
-          <p className="text-text-secondary text-sm mb-2">Nurdle — Risale-i Nur</p>
-          <div className="flex gap-2">
-            {([
-              { slug: "nurdle-4", label: "4 Harf" },
-              { slug: "nurdle",   label: "5 Harf" },
-              { slug: "nurdle-6", label: "6 Harf" },
-            ] as const).map(v => (
-              <button
-                key={v.slug}
-                onClick={() => { window.location.href = `/play/${v.slug}`; }}
-                className="flex-1 py-3 rounded-xl bg-bg-secondary hover:bg-tile-empty border border-border text-text-primary font-semibold text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-text-secondary/50 text-xs">diğer listeler</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
         {/* Liste kodu girişi */}
         <div>
           <p className="text-text-secondary text-sm mb-2">Liste koduyla doğrudan oyna</p>
