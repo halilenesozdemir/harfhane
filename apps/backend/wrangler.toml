@@ -12,6 +12,9 @@ database_id = "1fad4aa7-baa4-41ce-a0f4-976904b8d29b"
 pattern = "api.harfhane.app/*"
 zone_name = "harfhane.app"
 
+[vars]
+APP_URL = "https://harfhane.app"
+
 [dev]
 port = 8787
 local_protocol = "http"

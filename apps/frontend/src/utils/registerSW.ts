@@ -69,7 +69,7 @@ export const scheduleDailyReminder = async (): Promise<void> => {
     const delay = reminderTime.getTime() - now.getTime();
 
     setTimeout(async () => {
-      await registration.showNotification('Günlük Nurdle hazır!', {
+      await registration.showNotification('Günlük Harfhane hazır!', {
         body: "Bugünün kelimesini tahmin etmeye hazır mısın?",
         icon: '/nurdle-icon-192.png',
         badge: '/nurdle-icon-192.png',

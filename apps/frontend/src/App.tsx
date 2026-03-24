@@ -1,8 +1,8 @@
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthModal from './components/AuthModal';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
@@ -30,11 +30,21 @@ function GameRoute({ mode }: { mode: GameMode }): React.JSX.Element {
 
 function HomeRoute(): React.JSX.Element {
   const navigate = useNavigate();
+  const { googleAuthFailed } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+
+  useEffect(() => {
+    if (googleAuthFailed) setShowAuth(true);
+  }, [googleAuthFailed]);
+
   return (
-    <HomePage
-      onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
-      onGoLists={() => navigate('/lists')}
-    />
+    <>
+      <HomePage
+        onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
+        onGoLists={() => navigate('/lists')}
+      />
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+    </>
   );
 }
 

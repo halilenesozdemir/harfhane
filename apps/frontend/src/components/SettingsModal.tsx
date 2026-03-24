@@ -86,7 +86,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
         <div className="border-t border-border-color pt-4">
           <div className="flex gap-4 justify-center">
             <a
-              href="https://github.com/halilenesozdemir/nurdle"
+              href="https://github.com/halilenesozdemir/harfhane"
               target="_blank"
               rel="noopener noreferrer"
               className="text-text-secondary hover:text-text-primary transition-colors text-sm"

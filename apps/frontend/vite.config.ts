@@ -24,9 +24,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['nurdle-icon.svg', 'favicon.ico'],
       manifest: {
-        name: 'Nurdle - Risale-i Nur Kelime Oyunu',
-        short_name: 'Nurdle',
-        description: 'Risale-i Nur külliyatından kelimelerle oynanan günlük kelime tahmin oyunu',
+        name: 'Harfhane - Kelime Oyunu',
+        short_name: 'Harfhane',
+        description: 'Risale-i Nur külliyatından kelimelerle oynanan günlük kelime oyunu',
         theme_color: '#538d4e',
         background_color: '#121213',
         display: 'standalone',

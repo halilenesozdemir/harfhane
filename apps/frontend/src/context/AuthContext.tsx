@@ -1,16 +1,19 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as authApi from '../lib/auth-api';
+import { initiateGoogleLogin } from '../lib/auth-api';
 import type { AuthUser } from '../lib/auth-api';
 
-const TOKEN_KEY = 'nurdle:token';
+const TOKEN_KEY = 'harfhane:token';
 
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   isLoading: boolean;
+  googleAuthFailed: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
+  loginWithGoogle: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -19,8 +22,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState(true);
+  const [googleAuthFailed, setGoogleAuthFailed] = useState(false);
 
-  // Token varsa kullanıcıyı doğrula
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleToken = params.get('token');
+    const authError = params.get('auth_error');
+
+    if (googleToken) {
+      localStorage.setItem(TOKEN_KEY, googleToken);
+      setToken(googleToken);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    if (authError) {
+      setGoogleAuthFailed(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auth_error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
+
   useEffect(() => {
     if (!token) { setIsLoading(false); return; }
     authApi.getMe(token)
@@ -52,8 +76,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     setUser(null);
   }, []);
 
+  const loginWithGoogle = useCallback((): void => {
+    initiateGoogleLogin();
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, googleAuthFailed, login, register, logout, loginWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

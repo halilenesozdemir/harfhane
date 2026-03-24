@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 
+const SPLASH_TILES = ['H', 'A', 'R', 'F'] as const;
+const TILE_COLORS = ['bg-correct', 'bg-present', 'bg-correct', 'bg-present'] as const;
+
 interface SplashScreenProps {
   onDone: () => void;
 }
@@ -25,16 +28,12 @@ export default function SplashScreen({ onDone }: SplashScreenProps): React.JSX.E
           phase === 'in' ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
-        {/* Letter tiles */}
         <div className="flex gap-1.5">
-          {['N', 'U', 'R', 'D', 'L', 'E'].map((letter, i) => (
+          {SPLASH_TILES.map((letter, i) => (
             <div
               key={letter}
-              className="w-10 h-10 flex items-center justify-center rounded font-bold text-lg text-white animate-breathe"
-              style={{
-                backgroundColor: i < 2 ? 'var(--color-tile-correct, #538d4e)' : i < 4 ? 'var(--color-tile-present, #b59f3b)' : 'var(--color-tile-absent, #3a3a3c)',
-                animationDelay: `${i * 80}ms`,
-              }}
+              className={`w-10 h-10 flex items-center justify-center rounded font-bold text-lg text-white ${TILE_COLORS[i]} animate-breathe`}
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               {letter}
             </div>

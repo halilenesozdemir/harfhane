@@ -70,3 +70,8 @@ export interface LeaderboardRow {
 export function getLeaderboard(): Promise<{ leaderboard: LeaderboardRow[] }> {
   return request<{ leaderboard: LeaderboardRow[] }>('/results/leaderboard');
 }
+
+export function initiateGoogleLogin(): void {
+  const base = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
+  window.location.href = `${base}/auth/google`;
+}
