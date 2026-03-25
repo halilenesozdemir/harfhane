@@ -187,6 +187,46 @@ export async function adminRemoveDailyWord(
   return (result.meta.changes ?? 0) > 0;
 }
 
+export interface AdminStats {
+  words: { total: number; active: number; inactive: number };
+  daily: { today: string | null; scheduledNext30: number; unscheduledNext30: number };
+  users: { total: number };
+  games: { totalPlayed: number; playedToday: number };
+}
+
+export async function adminGetStats(db: Env['DB'], todayDate: string): Promise<AdminStats> {
+  const end = new Date(todayDate);
+  end.setDate(end.getDate() + 29);
+  const endDate = end.toISOString().slice(0, 10);
+
+  const results = await db.batch([
+    db.prepare('SELECT COUNT(*) as total, SUM(is_active) as active FROM words'),
+    db.prepare('SELECT w.word FROM daily_words dw JOIN words w ON w.id = dw.word_id WHERE dw.date = ? LIMIT 1').bind(todayDate),
+    db.prepare('SELECT COUNT(DISTINCT date) as count FROM daily_words WHERE date >= ? AND date <= ?').bind(todayDate, endDate),
+    db.prepare('SELECT COUNT(*) as total FROM users'),
+    db.prepare('SELECT COUNT(*) as total FROM game_results'),
+    db.prepare('SELECT COUNT(*) as total FROM game_results WHERE date = ?').bind(todayDate),
+  ]);
+
+  const wordRow = results[0]?.results[0] as { total: number; active: number } | undefined;
+  const todayWordRow = results[1]?.results[0] as { word: string } | undefined;
+  const scheduledRow = results[2]?.results[0] as { count: number } | undefined;
+  const userRow = results[3]?.results[0] as { total: number } | undefined;
+  const gamesRow = results[4]?.results[0] as { total: number } | undefined;
+  const todayGamesRow = results[5]?.results[0] as { total: number } | undefined;
+
+  const total = wordRow?.total ?? 0;
+  const active = wordRow?.active ?? 0;
+  const scheduled = scheduledRow?.count ?? 0;
+
+  return {
+    words: { total, active, inactive: total - active },
+    daily: { today: todayWordRow?.word ?? null, scheduledNext30: scheduled, unscheduledNext30: 30 - scheduled },
+    users: { total: userRow?.total ?? 0 },
+    games: { totalPlayed: gamesRow?.total ?? 0, playedToday: todayGamesRow?.total ?? 0 },
+  };
+}
+
 export async function adminBulkInsertWords(
   db: Env['DB'],
   words: { word: string; meaning: string; context: string; category: string }[]

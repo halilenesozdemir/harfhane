@@ -10,6 +10,7 @@ import {
   adminScheduleDailyWord,
   adminRemoveDailyWord,
   adminBulkInsertWords,
+  adminGetStats,
   type ListWordsOptions,
 } from '../repositories/admin-repository';
 
@@ -89,4 +90,8 @@ export async function importWords(
   words: { word: string; meaning: string; context: string; category: string }[]
 ) {
   return adminBulkInsertWords(db, words);
+}
+
+export async function getStats(db: Env['DB']) {
+  return adminGetStats(db, todayUTC());
 }

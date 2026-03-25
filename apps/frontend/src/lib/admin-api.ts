@@ -199,3 +199,16 @@ export function addWordToList(secret: string, slug: string, word_id: number): Pr
 export function removeWordFromList(secret: string, slug: string, wordId: number): Promise<{ success: boolean }> {
   return adminRequest(`/lists/${slug}/words/${wordId}`, secret, { method: 'DELETE' });
 }
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  words: { total: number; active: number; inactive: number };
+  daily: { today: string | null; scheduledNext30: number; unscheduledNext30: number };
+  users: { total: number };
+  games: { totalPlayed: number; playedToday: number };
+}
+
+export function getAdminStats(secret: string): Promise<AdminStats> {
+  return adminRequest<AdminStats>('/stats', secret);
+}

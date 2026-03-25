@@ -24,11 +24,19 @@ import {
   scheduleDailyWord,
   removeDailyWord,
   importWords,
+  getStats,
 } from '../services/admin-service';
 
 const admin = new Hono<{ Bindings: Env }>();
 
 admin.use('/*', adminAuth);
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+
+admin.get('/stats', async (c) => {
+  const stats = await getStats(c.env.DB);
+  return c.json({ data: stats });
+});
 
 // ── Words ────────────────────────────────────────────────────────────────────
 
