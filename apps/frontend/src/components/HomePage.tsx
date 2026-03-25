@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Calendar, Infinity, Sun, Moon, Flame, Trophy, BarChart2 } from "lucide-react";
+import { Calendar, Infinity, Sun, Moon, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
+import HowToPlayModal from "./HowToPlayModal";
+import AuthModal from "./AuthModal";
 import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
@@ -11,19 +13,30 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const { data: profileData } = useProfile(token);
 
   const stats = profileData?.stats;
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
-      <button
-        onClick={toggleTheme}
-        className="absolute top-4 right-4 p-3 hover:bg-tile-empty rounded-full transition-colors cursor-pointer"
-        aria-label={isDark ? "Açık temaya geç" : "Koyu temaya geç"}
-      >
-        {isDark ? <Sun size={24} className="text-text-primary" /> : <Moon size={24} className="text-text-primary" />}
-      </button>
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        <button
+          onClick={() => setShowHelp(true)}
+          className="p-2 hover:bg-tile-empty rounded-full transition-colors cursor-pointer"
+          aria-label="Nasıl Oynanır"
+        >
+          <HelpCircle size={22} className="text-text-secondary" />
+        </button>
+        <button
+          onClick={toggleTheme}
+          className="p-2 hover:bg-tile-empty rounded-full transition-colors cursor-pointer"
+          aria-label={isDark ? "Açık temaya geç" : "Koyu temaya geç"}
+        >
+          {isDark ? <Sun size={22} className="text-text-primary" /> : <Moon size={22} className="text-text-primary" />}
+        </button>
+      </div>
 
       <div className="text-center mb-8">
         <div className="w-20 h-20 bg-correct rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -116,9 +129,32 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         </button>
       </div>
 
-      <div className="mt-8 text-center">
+      {!user && (
+        <button
+          onClick={() => setShowAuth(true)}
+          className="w-full max-w-md mt-4 bg-bg-secondary hover:bg-tile-empty rounded-2xl p-4 transition-colors cursor-pointer text-left"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+              <LogIn size={15} className="text-correct" />
+              Giriş yaparak kazan
+            </span>
+            <span className="text-xs text-correct font-medium">Ücretsiz</span>
+          </div>
+          <div className="flex gap-4 text-xs text-text-secondary">
+            <span className="flex items-center gap-1"><TrendingUp size={12} className="text-correct" /> XP &amp; Seviye</span>
+            <span className="flex items-center gap-1"><Flame size={12} className="text-present" /> Seri takibi</span>
+            <span className="flex items-center gap-1"><Shield size={12} className="text-blue-400" /> Seri dondurma</span>
+          </div>
+        </button>
+      )}
+
+      <div className="mt-6 text-center">
         <p className="text-text-secondary/50 text-xs">v3.0.0</p>
       </div>
+
+      <HowToPlayModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 };
