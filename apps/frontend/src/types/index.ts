@@ -1,5 +1,12 @@
 import type { WordEntry, GameXPResult } from '@nurdle/shared';
-export type { WordEntry, WordData, GameXPResult, Badge, XPProfile } from '@nurdle/shared';
+export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile } from '@nurdle/shared';
+
+export interface SessionChallenge {
+  won: number;
+  target: number;
+  completed: boolean;
+  record: (didWin: boolean) => void;
+}
 
 // Game types
 export type GameStatus = 'playing' | 'won' | 'lost';
@@ -127,6 +134,7 @@ export interface GameOverModalProps {
   onGoHome: () => void;
   onAuthClick: () => void;
   xpResult?: GameXPResult | null;
+  sessionChallenge?: SessionChallenge;
 }
 
 export interface HomePageProps {

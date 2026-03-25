@@ -17,11 +17,13 @@ const BASE_XP_LOSE = 10;
 const STREAK_BONUS_3 = 25;
 const STREAK_BONUS_7 = 50;
 
-function calculateXP(won: boolean, guesses: number, streak: number): number {
+function calculateXPBreakdown(won: boolean, guesses: number, streak: number): {
+  total: number; base: number; guessBonus: number; streakBonus: number;
+} {
   const base = won ? BASE_XP_WIN : BASE_XP_LOSE;
   const guessBonus = won && guesses >= 1 && guesses <= 6 ? (GUESS_BONUS[guesses - 1] ?? 0) : 0;
   const streakBonus = streak >= 7 ? STREAK_BONUS_7 : streak >= 3 ? STREAK_BONUS_3 : 0;
-  return base + guessBonus + streakBonus;
+  return { total: base + guessBonus + streakBonus, base, guessBonus, streakBonus };
 }
 
 function checkEligibleBadges(params: {
@@ -35,7 +37,11 @@ function checkEligibleBadges(params: {
   const slugs: string[] = [];
   if (params.totalPlayed >= 1) slugs.push('first-step');
   if (params.won && params.guesses === 1) slugs.push('sharpshooter');
+  if (params.won && params.guesses <= 2) slugs.push('quick-mind');
+  if (params.currentStreak >= 3) slugs.push('streak-3');
   if (params.currentStreak >= 7) slugs.push('on-fire');
+  if (params.currentStreak >= 14) slugs.push('streak-14');
+  if (params.currentStreak >= 30) slugs.push('streak-30');
   if (params.totalPlayed >= 50) slugs.push('word-master');
   if (params.consecutiveWins >= 10) slugs.push('perfect-run');
   if (params.totalPlayed >= 100) slugs.push('lexicon');
@@ -57,7 +63,8 @@ export async function processGameXP(
 
   const prevTotalXP = currentXP?.total_xp ?? 0;
   const prevLevel = currentXP?.level ?? 1;
-  const earned = calculateXP(won, guesses, stats.currentStreak);
+  const xpBreakdown = calculateXPBreakdown(won, guesses, stats.currentStreak);
+  const earned = xpBreakdown.total;
   const newTotalXP = prevTotalXP + earned;
   const newLevel = levelFromXP(newTotalXP);
   const levelUp = newLevel > prevLevel;
@@ -82,5 +89,16 @@ export async function processGameXP(
 
   const newBadges = await getBadgesBySlugs(db, newSlugs);
 
-  return { earned, total: newTotalXP, level: newLevel, levelUp, newBadges };
+  return {
+    earned,
+    total: newTotalXP,
+    level: newLevel,
+    levelUp,
+    newBadges,
+    breakdown: {
+      base: xpBreakdown.base,
+      guessBonus: xpBreakdown.guessBonus,
+      streakBonus: xpBreakdown.streakBonus,
+    },
+  };
 }

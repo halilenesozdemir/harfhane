@@ -37,6 +37,7 @@ function GameOverModal({
   onGoHome,
   onAuthClick,
   xpResult,
+  sessionChallenge,
 }: GameOverModalProps): React.JSX.Element {
   const [countdown, setCountdown] = useState<TimeCountdown>(
     getTimeUntilMidnight()
@@ -167,6 +168,17 @@ function GameOverModal({
               </div>
               <span className="text-xs text-text-secondary">Toplam: {xpResult.total} XP</span>
             </div>
+            {(xpResult.breakdown.guessBonus > 0 || xpResult.breakdown.streakBonus > 0) && (
+              <div className="flex gap-3 text-xs text-text-secondary">
+                <span>+{xpResult.breakdown.base} baz</span>
+                {xpResult.breakdown.guessBonus > 0 && (
+                  <span className="text-correct">+{xpResult.breakdown.guessBonus} hız bonusu</span>
+                )}
+                {xpResult.breakdown.streakBonus > 0 && (
+                  <span className="text-present">+{xpResult.breakdown.streakBonus} seri bonusu</span>
+                )}
+              </div>
+            )}
             {xpResult.newBadges.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs text-text-secondary font-medium">Yeni rozet kazandın!</p>
@@ -175,6 +187,30 @@ function GameOverModal({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {isUnlimited && sessionChallenge && (
+          <div className="bg-bg-primary border border-border-color rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-text-primary">
+                {sessionChallenge.completed ? 'Oturum hedefi tamamlandı!' : 'Oturum hedefi'}
+              </span>
+              <span className="text-sm font-bold tabular-nums text-correct">
+                {sessionChallenge.won}/{sessionChallenge.target}
+              </span>
+            </div>
+            <div className="w-full bg-tile-empty rounded-full h-2">
+              <div
+                className="bg-correct rounded-full h-2 transition-all duration-500"
+                style={{ width: `${Math.min(sessionChallenge.won / sessionChallenge.target * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-text-secondary mt-1.5">
+              {sessionChallenge.completed
+                ? '5 oyun kazandın, harika performans!'
+                : `${sessionChallenge.target - sessionChallenge.won} oyun daha kazan`}
+            </p>
           </div>
         )}
 

@@ -112,12 +112,19 @@ export interface Badge {
   icon: string;
 }
 
+export interface XPBreakdown {
+  base: number;
+  guessBonus: number;
+  streakBonus: number;
+}
+
 export interface GameXPResult {
   earned: number;
   total: number;
   level: number;
   levelUp: boolean;
   newBadges: Badge[];
+  breakdown: XPBreakdown;
 }
 
 export interface XPProfile {

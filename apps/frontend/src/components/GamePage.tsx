@@ -12,6 +12,7 @@ import LeaderboardModal from './LeaderboardModal';
 import ProfileModal from './ProfileModal';
 import { useGameState } from '../hooks/useGameState';
 import { useAuth } from '../context/AuthContext';
+import { useSessionChallenge } from '../hooks/useSessionChallenge';
 import type { GameMode, WordLength } from '../types';
 
 interface GamePageProps {
@@ -47,6 +48,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
   } = useGameState(mode, wordLength);
 
   const { token } = useAuth();
+  const sessionChallenge = useSessionChallenge();
 
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
@@ -65,11 +67,12 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
 
   useEffect(() => {
     if (gameStatus === 'won' || gameStatus === 'lost') {
+      if (isUnlimited) sessionChallenge.record(gameStatus === 'won');
       const timer = setTimeout(() => setShowGameOverModal(true), 1500);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [gameStatus]);
+  }, [gameStatus, isUnlimited, sessionChallenge]);
 
   const handleKeyPress = (key: string): void => {
     if (key === 'ENTER') {
@@ -172,6 +175,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         onGoHome={handleGoHome}
         onAuthClick={() => setShowAuthModal(true)}
         xpResult={lastXPResult}
+        sessionChallenge={isUnlimited ? sessionChallenge : undefined}
       />
       <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
