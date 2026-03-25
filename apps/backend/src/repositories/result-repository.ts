@@ -1,4 +1,5 @@
 import type { Env } from '../types/env';
+import { getFrozenDates } from './freeze-repository';
 
 export interface ResultRow {
   id: number;
@@ -18,6 +19,8 @@ export interface LeaderboardRow {
   win_rate: number;
   current_streak: number;
   max_streak: number;
+  total_xp: number;
+  level: number;
 }
 
 export async function saveResult(
@@ -56,14 +59,21 @@ export async function getUserStats(db: Env['DB'], userId: number): Promise<{
     .bind(userId)
     .all<{ date: string; won: number; guesses: number; word_length: number }>();
 
+  const [frozenDates] = await Promise.all([getFrozenDates(db, userId)]);
+
   const results = rows.results ?? [];
   const totalPlayed = results.length;
   const totalWon = results.filter(r => r.won).length;
   const winRate = totalPlayed > 0 ? Math.round((totalWon / totalPlayed) * 100) : 0;
 
-  // Streak hesapla (tarih bazlı, herhangi bir uzunlukta kazanmak sayılır)
-  const wonDates = new Set(results.filter(r => r.won).map(r => r.date));
-  const allDates = [...new Set(results.map(r => r.date))].sort();
+  const wonDates = new Set([
+    ...results.filter(r => r.won).map(r => r.date),
+    ...frozenDates,
+  ]);
+  const allDates = [...new Set([
+    ...results.map(r => r.date),
+    ...frozenDates,
+  ])].sort();
 
   let currentStreak = 0;
   let maxStreak = 0;
@@ -97,7 +107,6 @@ export async function getUserStats(db: Env['DB'], userId: number): Promise<{
 }
 
 export async function getLeaderboard(db: Env['DB'], limit = 50): Promise<LeaderboardRow[]> {
-  // Temel istatistikler SQL'de hesapla
   const rows = await db
     .prepare(`
       SELECT
@@ -105,12 +114,15 @@ export async function getLeaderboard(db: Env['DB'], limit = 50): Promise<Leaderb
         u.username,
         SUM(gr.won) AS total_won,
         COUNT(*) AS total_played,
-        ROUND(SUM(gr.won) * 100.0 / COUNT(*), 1) AS win_rate
+        ROUND(SUM(gr.won) * 100.0 / COUNT(*), 1) AS win_rate,
+        COALESCE(xp.total_xp, 0) AS total_xp,
+        COALESCE(xp.level, 1) AS level
       FROM game_results gr
       JOIN users u ON u.id = gr.user_id
-      GROUP BY gr.user_id, u.username
-      HAVING total_played >= 3
-      ORDER BY total_won DESC, win_rate DESC
+      LEFT JOIN user_xp xp ON xp.user_id = gr.user_id
+      GROUP BY gr.user_id, u.username, xp.total_xp, xp.level
+      HAVING total_played >= 1
+      ORDER BY total_xp DESC, total_won DESC
       LIMIT ?
     `)
     .bind(limit)
@@ -118,7 +130,6 @@ export async function getLeaderboard(db: Env['DB'], limit = 50): Promise<Leaderb
 
   if (!rows.results?.length) return [];
 
-  // Streak'leri her kullanıcı için hesapla
   const result: LeaderboardRow[] = [];
   for (const row of rows.results) {
     const stats = await getUserStats(db, row.user_id);

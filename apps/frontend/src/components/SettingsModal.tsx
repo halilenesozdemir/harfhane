@@ -167,12 +167,9 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
               GitHub
             </a>
             <span className="text-text-secondary/40">•</span>
-            <a
-              href="#"
-              className="text-text-secondary hover:text-text-primary transition-colors text-sm"
-            >
+            <span className="text-text-secondary/40 text-sm cursor-default">
               Gizlilik
-            </a>
+            </span>
           </div>
         </div>
       </div>

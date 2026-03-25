@@ -8,24 +8,18 @@ import { registerSW } from 'virtual:pwa-register';
 export const registerServiceWorker = (): void => {
   const updateSW = registerSW({
     onNeedRefresh() {
-      // Yeni versiyon mevcut - kullanıcıya bildir
-      if (confirm('Yeni versiyon mevcut! Güncellemek ister misiniz?')) {
-        updateSW(true);
-      }
+      updateSW(true);
     },
     onOfflineReady() {
-      const event = new CustomEvent('sw-offline-ready');
-      window.dispatchEvent(event);
+      window.dispatchEvent(new CustomEvent('sw-offline-ready'));
     },
     onRegistered(registration: ServiceWorkerRegistration | undefined) {
       if (registration) {
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000);
+        setInterval(() => { registration.update(); }, 60 * 60 * 1000);
       }
     },
-    onRegisterError(error: unknown) {
-      console.error('Service Worker kayıt hatası:', error);
+    onRegisterError() {
+      window.dispatchEvent(new CustomEvent('sw-register-error'));
     },
   });
 };

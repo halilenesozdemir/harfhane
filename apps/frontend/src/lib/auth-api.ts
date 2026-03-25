@@ -121,3 +121,31 @@ export function patchEmailNotifications(token: string, enabled: boolean): Promis
     body: JSON.stringify({ enabled }),
   });
 }
+
+export interface ProfileStats {
+  totalPlayed: number;
+  totalWon: number;
+  winRate: number;
+  currentStreak: number;
+  maxStreak: number;
+  guessDistribution: number[];
+}
+
+export interface ProfileData {
+  stats: ProfileStats;
+  freezeTokens: number;
+  playedToday: boolean;
+}
+
+export function getProfileData(token: string): Promise<ProfileData> {
+  return request<ProfileData>('/profile/me', {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}
+
+export function applyStreakFreeze(token: string): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/profile/freeze', {
+    method: 'POST',
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}

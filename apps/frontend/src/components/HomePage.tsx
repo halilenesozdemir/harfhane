@@ -1,17 +1,22 @@
 import { useState } from "react";
-import { Calendar, Infinity, Sun, Moon } from "lucide-react";
+import { Calendar, Infinity, Sun, Moon, Flame, Trophy, BarChart2 } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { useProfile } from "../hooks/useProfile";
 import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
+  const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
+  const { data: profileData } = useProfile(token);
+
+  const stats = profileData?.stats;
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
-      {/* Tema Toggle */}
       <button
         onClick={toggleTheme}
         className="absolute top-4 right-4 p-3 hover:bg-tile-empty rounded-full transition-colors cursor-pointer"
@@ -20,17 +25,47 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         {isDark ? <Sun size={24} className="text-text-primary" /> : <Moon size={24} className="text-text-primary" />}
       </button>
 
-      {/* Logo */}
-      <div className="text-center mb-10">
-        <div className="w-20 h-20 bg-correct rounded-xl flex items-center justify-center mx-auto mb-4">
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-correct rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <span className="text-white font-bold text-4xl">H</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">HARFHANE</h1>
-        <p className="text-text-secondary text-lg">Kendi kelime oyununu oluştur ve oyna</p>
+        <p className="text-text-secondary text-base">Türkçe kelime oyunu</p>
       </div>
 
-      <div className="w-full max-w-md space-y-4">
-        {/* Kelime Uzunluğu */}
+      {user && stats && (
+        <div className="w-full max-w-md mb-6 bg-bg-secondary rounded-2xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 bg-correct rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">{user.username.charAt(0).toUpperCase()}</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">{user.username}</p>
+              <p className="text-xs text-text-secondary">
+                {profileData?.playedToday ? 'Bugün oynadın' : 'Bugün oynamadın'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            {stats.currentStreak > 0 && (
+              <div className="flex items-center gap-1">
+                <Flame size={16} className="text-present" />
+                <span className="font-bold text-text-primary">{stats.currentStreak}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
+              <Trophy size={16} className="text-correct" />
+              <span className="font-bold text-text-primary">{stats.totalWon}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <BarChart2 size={16} className="text-text-secondary" />
+              <span className="font-bold text-text-primary">{stats.winRate}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-md space-y-3">
         <div>
           <p className="text-text-secondary text-sm text-center mb-2">Kelime uzunluğu</p>
           <div className="flex gap-2 justify-center">
@@ -40,7 +75,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
                 onClick={() => setSelectedLength(len)}
                 className={`w-14 h-12 rounded-lg font-bold text-lg transition-all cursor-pointer ${
                   selectedLength === len
-                    ? "bg-correct text-white"
+                    ? "bg-correct text-white shadow-md"
                     : "bg-tile-empty text-text-primary hover:bg-tile-filled"
                 }`}
               >
@@ -50,44 +85,39 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
           </div>
         </div>
 
-        {/* Günlük Mod */}
         <button
           onClick={() => onSelectMode("daily", selectedLength)}
-          className="w-full bg-correct hover:bg-correct/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
-              <Calendar size={28} />
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+              <Calendar size={26} />
             </div>
-            <div className="text-left flex-1">
-              <h2 className="text-xl font-bold mb-1">Günlük Oyun</h2>
-              <p className="text-white/80 text-sm">Her gün yeni bir kelime. Herkes aynı kelimeyi çözer.</p>
+            <div className="text-left">
+              <h2 className="text-xl font-bold">Günlük Oyun</h2>
+              <p className="text-white/75 text-sm">Herkes aynı kelimeyi çözer. Serini koru.</p>
             </div>
           </div>
         </button>
 
-        {/* Sınırsız Mod */}
         <button
           onClick={() => onSelectMode("unlimited", selectedLength)}
-          className="w-full bg-present hover:bg-present/90 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          className="w-full bg-present hover:bg-present/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
-              <Infinity size={28} />
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+              <Infinity size={26} />
             </div>
-            <div className="text-left flex-1">
-              <h2 className="text-xl font-bold mb-1">Sınırsız Mod</h2>
-              <p className="text-white/80 text-sm">Dilediğin kadar oyna. Her seferinde yeni kelime.</p>
+            <div className="text-left">
+              <h2 className="text-xl font-bold">Sınırsız Mod</h2>
+              <p className="text-white/75 text-sm">Dilediğin kadar oyna. Her seferinde yeni kelime.</p>
             </div>
           </div>
         </button>
-
       </div>
 
-      {/* Alt Bilgi */}
-      <div className="mt-10 text-center">
-        <p className="text-text-secondary text-sm">Kelime oyunu platformu</p>
-        <p className="text-text-secondary/60 text-xs mt-1">v3.0.0</p>
+      <div className="mt-8 text-center">
+        <p className="text-text-secondary/50 text-xs">v3.0.0</p>
       </div>
     </div>
   );

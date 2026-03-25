@@ -13,6 +13,7 @@ import ProfileModal from './ProfileModal';
 import { useGameState } from '../hooks/useGameState';
 import { useAuth } from '../context/AuthContext';
 import { useSessionChallenge } from '../hooks/useSessionChallenge';
+import WinConfetti from './WinConfetti';
 import type { GameMode, WordLength } from '../types';
 
 interface GamePageProps {
@@ -127,6 +128,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
+      <WinConfetti active={gameStatus === 'won' && !showGameOverModal} />
       <Header
         onTitleClick={handleGoHome}
         onHelpClick={() => setShowHelpModal(true)}
