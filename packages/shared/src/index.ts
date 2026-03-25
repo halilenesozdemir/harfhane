@@ -20,6 +20,7 @@ export interface DailyWordResponse {
 
 export interface RandomWordResponse {
   word: WordEntry;
+  wordId: number;
 }
 
 export interface ValidateWordResponse {

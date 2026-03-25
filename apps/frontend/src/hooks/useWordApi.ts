@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchDailyWord, fetchRandomWord, fetchRandomWordFromList, fetchListInfo, fetchPublicLists, fetchDailyWordFromList } from '../lib/api';
+import { fetchDailyWord, fetchRandomWord, fetchWordById, fetchRandomWordFromList, fetchListInfo, fetchPublicLists, fetchDailyWordFromList } from '../lib/api';
 import type { WordListInfo } from '../lib/api';
 
 export function useDailyWord(length: number = 5) {
@@ -61,6 +61,17 @@ export function usePublicLists() {
     queryKey: ['lists', 'public'],
     queryFn: fetchPublicLists,
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
+export function useChallengeWord(wordId: number | null) {
+  return useQuery({
+    queryKey: ['word', 'challenge', wordId],
+    queryFn: () => fetchWordById(wordId!),
+    enabled: wordId !== null && wordId > 0,
+    staleTime: Infinity,
     refetchOnWindowFocus: false,
     retry: false,
   });

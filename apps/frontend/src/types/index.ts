@@ -135,6 +135,7 @@ export interface GameOverModalProps {
   onAuthClick: () => void;
   xpResult?: GameXPResult | null;
   sessionChallenge?: SessionChallenge;
+  challengeUrl?: string;
 }
 
 export interface HomePageProps {
@@ -172,6 +173,7 @@ export interface UseGameStateReturn {
   setHasSeenHelp: (value: boolean) => void;
   startNewGame: () => void;
   lastXPResult: GameXPResult | null;
+  wordId: number | null;
 }
 
 // PWA Types

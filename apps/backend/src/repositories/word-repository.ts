@@ -64,7 +64,10 @@ export async function findDailyWord(
   };
 }
 
-export async function findRandomWord(db: Env['DB'], length = 5): Promise<WordEntry | null> {
+export async function findRandomWord(
+  db: Env['DB'],
+  length = 5
+): Promise<{ entry: WordEntry; id: number } | null> {
   const row = await db
     .prepare(
       `SELECT id, word, meaning, context, category
@@ -76,7 +79,24 @@ export async function findRandomWord(db: Env['DB'], length = 5): Promise<WordEnt
     .bind(length)
     .first<WordRow>();
 
-  return row ? toWordEntry(row) : null;
+  return row ? { entry: toWordEntry(row), id: row.id } : null;
+}
+
+export async function findWordById(
+  db: Env['DB'],
+  wordId: number
+): Promise<{ entry: WordEntry; id: number } | null> {
+  const row = await db
+    .prepare(
+      `SELECT id, word, meaning, context, category
+       FROM words
+       WHERE id = ? AND is_active = 1
+       LIMIT 1`
+    )
+    .bind(wordId)
+    .first<WordRow>();
+
+  return row ? { entry: toWordEntry(row), id: row.id } : null;
 }
 
 export async function wordExists(db: Env['DB'], word: string): Promise<boolean> {

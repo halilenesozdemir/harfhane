@@ -4,6 +4,7 @@ import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
 import {
   findDailyWord,
   findRandomWord,
+  findWordById,
   wordExists,
 } from '../repositories/word-repository';
 
@@ -35,9 +36,18 @@ export async function getDailyWord(
 }
 
 export async function getRandomWord(db: Env['DB'], length = 5): Promise<RandomWordResponse> {
-  const word = await findRandomWord(db, length);
-  if (!word) throw NOT_FOUND('Word');
-  return { word };
+  const result = await findRandomWord(db, length);
+  if (!result) throw NOT_FOUND('Word');
+  return { word: result.entry, wordId: result.id };
+}
+
+export async function getWordById(
+  db: Env['DB'],
+  wordId: number
+): Promise<{ word: RandomWordResponse['word']; wordId: number }> {
+  const result = await findWordById(db, wordId);
+  if (!result) throw NOT_FOUND('Word');
+  return { word: result.entry, wordId: result.id };
 }
 
 export async function validateWord(

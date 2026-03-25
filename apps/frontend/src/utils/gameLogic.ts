@@ -119,25 +119,26 @@ export const generateShareText = (
   guesses: string[],
   evaluations: TileStatus[][],
   modeText: string | number,
-  isWon: boolean
+  isWon: boolean,
+  shareUrl = 'https://harfhane.app'
 ): string => {
   const emojiMap: Record<string, string> = {
     'correct': '🟩',
     'present': '🟨',
     'absent': '⬜',
   };
-  
+
   const attemptText = isWon ? `${guesses.length}/6` : 'X/6';
-  
+
   let text = `Harfhane ${modeText} ${attemptText}\n\n`;
-  
+
   evaluations.forEach(evaluation => {
     const row = evaluation.map(status => (status ? emojiMap[status] : '⬜') || '⬜').join('');
     text += row + '\n';
   });
-  
-  text += '\nhttps://harfhane.app';
-  
+
+  text += `\n${shareUrl}`;
+
   return text;
 };
 

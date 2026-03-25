@@ -14,6 +14,7 @@ const GamePage = lazy(() => import('./components/GamePage'));
 const HomePage = lazy(() => import('./components/HomePage'));
 const ListsPage = lazy(() => import('./components/ListsPage'));
 const SlugGame = lazy(() => import('./components/SlugGame'));
+const ChallengeGame = lazy(() => import('./components/ChallengeGame'));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -71,6 +72,14 @@ function SlugRoute(): React.JSX.Element {
   );
 }
 
+function ChallengeRoute(): React.JSX.Element {
+  const { wordId } = useParams<{ wordId: string }>();
+  const navigate = useNavigate();
+  const parsed = Number(wordId);
+  if (!Number.isInteger(parsed) || parsed <= 0) return <Navigate to="/" replace />;
+  return <ChallengeGame wordId={parsed} onGoHome={() => navigate('/')} />;
+}
+
 function AdminApp(): React.JSX.Element {
   const [secret, setSecret] = useState<string | null>(
     () => sessionStorage.getItem('nurdle-admin-secret')
@@ -114,6 +123,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/" element={<HomeRoute />} />
           <Route path="/lists" element={<ListsRoute />} />
           <Route path="/play/:slug" element={<SlugRoute />} />
+          <Route path="/c/:wordId" element={<ChallengeRoute />} />
           <Route path="/daily" element={<GameRoute mode="daily" />} />
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />

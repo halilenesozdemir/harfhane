@@ -41,12 +41,17 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     hasSeenHelp,
     isUnlimited,
     lastXPResult,
+    wordId,
     addLetter,
     removeLetter,
     submitGuess,
     setHasSeenHelp,
     startNewGame,
   } = useGameState(mode, wordLength);
+
+  const challengeUrl = isUnlimited && wordId
+    ? `https://harfhane.app/c/${wordId}`
+    : `https://harfhane.app/daily/${wordLength}`;
 
   const { token } = useAuth();
   const sessionChallenge = useSessionChallenge();
@@ -178,6 +183,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         onAuthClick={() => setShowAuthModal(true)}
         xpResult={lastXPResult}
         sessionChallenge={isUnlimited ? sessionChallenge : undefined}
+        challengeUrl={challengeUrl}
       />
       <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />

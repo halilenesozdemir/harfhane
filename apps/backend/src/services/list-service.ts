@@ -62,6 +62,7 @@ export async function getRandomWordFromList(
       context: word.context,
       category: word.category as 'isim' | 'sıfat' | 'fiil',
     },
+    wordId: word.id ?? 0,
   };
 }
 

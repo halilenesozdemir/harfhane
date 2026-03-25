@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { dailyWordQuerySchema, randomWordQuerySchema, validateWordBodySchema } from '../schemas/word-schemas';
-import { getDailyWord, getRandomWord, validateWord } from '../services/word-service';
+import { getDailyWord, getRandomWord, getWordById, validateWord } from '../services/word-service';
 
 const words = new Hono<{ Bindings: Env }>();
 
@@ -35,6 +35,15 @@ words.get(
     return c.json({ data: result });
   }
 );
+
+words.get('/challenge/:wordId', async (c) => {
+  const wordId = Number(c.req.param('wordId'));
+  if (!Number.isInteger(wordId) || wordId <= 0) {
+    return c.json({ error: { code: 'BAD_REQUEST', message: 'Geçersiz kelime ID' } }, 400);
+  }
+  const result = await getWordById(c.env.DB, wordId);
+  return c.json({ data: result });
+});
 
 words.post(
   '/validate',

@@ -38,6 +38,7 @@ function GameOverModal({
   onAuthClick,
   xpResult,
   sessionChallenge,
+  challengeUrl,
 }: GameOverModalProps): React.JSX.Element {
   const [countdown, setCountdown] = useState<TimeCountdown>(
     getTimeUntilMidnight()
@@ -49,7 +50,8 @@ function GameOverModal({
     guesses,
     evaluations,
     modeText,
-    gameStatus === "won"
+    gameStatus === "won",
+    challengeUrl
   );
   const { share, copied, failed } = useShare(shareText);
 

@@ -32,6 +32,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const solution = wordData?.word.word ?? '';
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
   const gameNumber = isUnlimited ? 0 : (dailyData?.gameNumber ?? 0);
+  const wordId = isUnlimited ? (randomData?.wordId ?? null) : null;
 
   const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token });
 
@@ -184,6 +185,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
     setHasSeenHelp,
     startNewGame,
     lastXPResult,
+    wordId,
   };
 };
 
