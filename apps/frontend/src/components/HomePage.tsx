@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Calendar, Infinity, Sun, Moon, ListTree, ArrowRight } from "lucide-react";
+import { Calendar, Infinity, Sun, Moon } from "lucide-react";
 import { useThemeContext } from "../context/ThemeContext";
 import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
-const HomePage = ({ onSelectMode, onGoLists }: HomePageProps): React.JSX.Element => {
+const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { isDark, toggleTheme } = useThemeContext();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
 
@@ -82,20 +82,6 @@ const HomePage = ({ onSelectMode, onGoLists }: HomePageProps): React.JSX.Element
           </div>
         </button>
 
-        {/* Tüm listeler */}
-        <button
-          onClick={onGoLists}
-          className="w-full bg-bg-secondary hover:bg-tile-empty border border-border rounded-xl px-5 py-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <ListTree size={20} className="text-text-secondary" />
-            <div className="text-left">
-              <p className="font-semibold text-text-primary text-sm">Tüm listeler</p>
-              <p className="text-text-secondary text-xs">Herkese açık kelime listelerini keşfet</p>
-            </div>
-          </div>
-          <ArrowRight size={18} className="text-text-secondary flex-shrink-0" />
-        </button>
       </div>
 
       {/* Alt Bilgi */}

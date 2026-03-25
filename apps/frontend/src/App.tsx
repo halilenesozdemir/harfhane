@@ -41,7 +41,6 @@ function HomeRoute(): React.JSX.Element {
     <>
       <HomePage
         onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
-        onGoLists={() => navigate('/lists')}
       />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>

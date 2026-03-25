@@ -131,7 +131,6 @@ export interface GameOverModalProps {
 
 export interface HomePageProps {
   onSelectMode: (mode: GameMode, wordLength: WordLength) => void;
-  onGoLists: () => void;
 }
 
 export interface GameProps {
