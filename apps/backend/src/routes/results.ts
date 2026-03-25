@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
+import type { GameXPResult } from '@nurdle/shared';
 import { requireAuth } from '../middleware/auth-middleware';
 import { saveResultSchema } from '../schemas/auth-schemas';
 import { saveResult, getUserStats, getLeaderboard } from '../repositories/result-repository';
+import { processGameXP } from '../services/gamification-service';
 
 type ResultEnv = { Bindings: Env; Variables: { userId: number } };
 
@@ -16,7 +18,14 @@ results.post('/', requireAuth, zValidator('json', saveResultSchema), async (c) =
 
   await saveResult(c.env.DB, userId, date, word_length, guesses, won);
 
-  return c.json({ data: { success: true } }, 201);
+  let xp: GameXPResult | null = null;
+  try {
+    xp = await processGameXP(c.env.DB, userId, won, guesses);
+  } catch {
+    // XP failure should not break the game result save
+  }
+
+  return c.json({ data: { success: true, xp } }, 201);
 });
 
 // Kişisel istatistikler (auth gerekli)

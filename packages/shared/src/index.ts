@@ -103,3 +103,26 @@ export interface ListCommentsResponse {
 export interface AddCommentResponse {
   comment: ListComment;
 }
+
+// Gamification
+export interface Badge {
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export interface GameXPResult {
+  earned: number;
+  total: number;
+  level: number;
+  levelUp: boolean;
+  newBadges: Badge[];
+}
+
+export interface XPProfile {
+  totalXP: number;
+  level: number;
+  nextLevelXP: number;
+  badges: Badge[];
+}
