@@ -47,34 +47,48 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       </div>
 
       {user && stats && (
-        <div className="w-full max-w-md mb-6 bg-bg-secondary rounded-2xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-correct rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">{user.username.charAt(0).toUpperCase()}</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-text-primary">{user.username}</p>
-              <p className="text-xs text-text-secondary">
-                {profileData?.playedToday ? 'Bugün oynadın' : 'Bugün oynamadın'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            {stats.currentStreak > 0 && (
-              <div className="flex items-center gap-1">
-                <Flame size={16} className="text-present" />
-                <span className="font-bold text-text-primary">{stats.currentStreak}</span>
+        <div className="w-full max-w-md mb-6 space-y-2">
+          <div className="bg-bg-secondary rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 bg-correct rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">{user.username.charAt(0).toUpperCase()}</span>
               </div>
-            )}
-            <div className="flex items-center gap-1">
-              <Trophy size={16} className="text-correct" />
-              <span className="font-bold text-text-primary">{stats.totalWon}</span>
+              <div>
+                <p className="text-sm font-semibold text-text-primary">{user.username}</p>
+                <p className="text-xs text-text-secondary">
+                  {stats.currentStreak > 0 ? `${stats.currentStreak} günlük seri` : 'Seri yok'}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <BarChart2 size={16} className="text-text-secondary" />
-              <span className="font-bold text-text-primary">{stats.winRate}%</span>
+            <div className="flex items-center gap-4 text-sm">
+              {stats.currentStreak > 0 && (
+                <div className="flex items-center gap-1">
+                  <Flame size={16} className="text-present" />
+                  <span className="font-bold text-text-primary">{stats.currentStreak}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Trophy size={16} className="text-correct" />
+                <span className="font-bold text-text-primary">{stats.totalWon}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <BarChart2 size={16} className="text-text-secondary" />
+                <span className="font-bold text-text-primary">{stats.winRate}%</span>
+              </div>
             </div>
           </div>
+
+          {!profileData?.playedToday && (
+            <button
+              onClick={() => onSelectMode("daily", 5)}
+              className="w-full bg-present/10 border border-present/40 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-present/15 transition-colors"
+            >
+              <span className="text-sm font-semibold text-present">Bugün oynamadın!</span>
+              <span className="text-xs text-present/70 font-medium">
+                {stats.currentStreak > 0 ? `${stats.currentStreak} günlük serini koru →` : 'Günlük oyunu oyna →'}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
