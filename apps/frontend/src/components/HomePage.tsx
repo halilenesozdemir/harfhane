@@ -79,27 +79,8 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       )}
 
       <div className="w-full max-w-md space-y-3">
-        <div>
-          <p className="text-text-secondary text-sm text-center mb-2">Kelime uzunluğu</p>
-          <div className="flex gap-2 justify-center">
-            {WORD_LENGTHS.map((len) => (
-              <button
-                key={len}
-                onClick={() => setSelectedLength(len)}
-                className={`w-14 h-12 rounded-lg font-bold text-lg transition-all cursor-pointer ${
-                  selectedLength === len
-                    ? "bg-correct text-white shadow-md"
-                    : "bg-tile-empty text-text-primary hover:bg-tile-filled"
-                }`}
-              >
-                {len}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <button
-          onClick={() => onSelectMode("daily", selectedLength)}
+          onClick={() => onSelectMode("daily", 5)}
           className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
@@ -108,25 +89,42 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
             </div>
             <div className="text-left">
               <h2 className="text-xl font-bold">Günlük Oyun</h2>
-              <p className="text-white/75 text-sm">Herkes aynı kelimeyi çözer. Serini koru.</p>
+              <p className="text-white/75 text-sm">5 harflik günün kelimesi. Herkes aynı kelimeyi çözer.</p>
             </div>
           </div>
         </button>
 
-        <button
-          onClick={() => onSelectMode("unlimited", selectedLength)}
-          className="w-full bg-present hover:bg-present/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-              <Infinity size={26} />
+        <div className="w-full bg-present/10 border border-present/30 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => onSelectMode("unlimited", selectedLength)}
+            className="w-full p-5 text-left cursor-pointer hover:bg-present/5 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-present/20 rounded-xl flex items-center justify-center shrink-0">
+                <Infinity size={26} className="text-present" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-text-primary">Sınırsız Mod</h2>
+                <p className="text-text-secondary text-sm">Dilediğin kadar oyna. Her seferinde yeni kelime.</p>
+              </div>
             </div>
-            <div className="text-left">
-              <h2 className="text-xl font-bold">Sınırsız Mod</h2>
-              <p className="text-white/75 text-sm">Dilediğin kadar oyna. Her seferinde yeni kelime.</p>
-            </div>
+          </button>
+          <div className="flex gap-2 px-5 pb-4">
+            {WORD_LENGTHS.map((len) => (
+              <button
+                key={len}
+                onClick={() => setSelectedLength(len)}
+                className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
+                  selectedLength === len
+                    ? "bg-present text-white shadow-sm"
+                    : "bg-tile-empty text-text-secondary hover:bg-tile-filled"
+                }`}
+              >
+                {len} harf
+              </button>
+            ))}
           </div>
-        </button>
+        </div>
       </div>
 
       {!user && (
