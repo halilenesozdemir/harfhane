@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from './Header';
 import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
@@ -71,8 +71,13 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     }
   }, [hasSeenHelp, setHasSeenHelp]);
 
+  const prevGameStatus = useRef(gameStatus);
+
   useEffect(() => {
-    if (gameStatus === 'won' || gameStatus === 'lost') {
+    const prev = prevGameStatus.current;
+    prevGameStatus.current = gameStatus;
+
+    if ((gameStatus === 'won' || gameStatus === 'lost') && prev === 'playing') {
       if (isUnlimited) sessionChallenge.record(gameStatus === 'won');
       const timer = setTimeout(() => setShowGameOverModal(true), 1500);
       return () => clearTimeout(timer);

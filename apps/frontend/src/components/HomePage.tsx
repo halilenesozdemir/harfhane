@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { Calendar, Infinity, Sun, Moon, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
-import { useThemeContext } from "../context/ThemeContext";
+import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import HowToPlayModal from "./HowToPlayModal";
 import AuthModal from "./AuthModal";
+import SettingsModal from "./SettingsModal";
 import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
-  const { isDark, toggleTheme } = useThemeContext();
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
   const [showHelp, setShowHelp] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { data: profileData } = useProfile(token);
 
   const stats = profileData?.stats;
@@ -30,11 +30,11 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
           <HelpCircle size={22} className="text-text-secondary" />
         </button>
         <button
-          onClick={toggleTheme}
+          onClick={() => setShowSettings(true)}
           className="p-2 hover:bg-tile-empty rounded-full transition-colors cursor-pointer"
-          aria-label={isDark ? "Açık temaya geç" : "Koyu temaya geç"}
+          aria-label="Ayarlar"
         >
-          {isDark ? <Sun size={22} className="text-text-primary" /> : <Moon size={22} className="text-text-primary" />}
+          <Settings size={22} className="text-text-secondary" />
         </button>
       </div>
 
@@ -167,6 +167,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
       <HowToPlayModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 };

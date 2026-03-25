@@ -1,11 +1,9 @@
-import { HelpCircle, BarChart2, Settings, Sun, Moon, Trophy, User, LogOut } from 'lucide-react';
-import { useThemeContext } from '../context/ThemeContext';
+import { HelpCircle, BarChart2, Settings, Trophy, User, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useXP } from '../hooks/useXP';
 import type { HeaderProps } from '../types';
 
 const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLeaderboardClick, onAuthClick, onProfileClick, modeLabel }: HeaderProps): React.JSX.Element => {
-  const { isDark, toggleTheme } = useThemeContext();
   const { user, token, logout } = useAuth();
   const { data: xpProfile } = useXP(token);
 
@@ -42,13 +40,6 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
         
         {/* Sağ - Butonlar */}
         <div className="flex items-center gap-0.5">
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
-            aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
-          >
-            {isDark ? <Sun size={18} className="text-text-primary" /> : <Moon size={18} className="text-text-primary" />}
-          </button>
           <button onClick={onLeaderboardClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Sıralama">
             <Trophy size={18} className="text-text-primary" />
           </button>
