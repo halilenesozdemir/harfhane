@@ -41,31 +41,31 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
         </div>
         
         {/* Sağ - Butonlar */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={toggleTheme}
-            className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
             aria-label={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
           >
-            {isDark ? <Sun size={22} className="text-text-primary" /> : <Moon size={22} className="text-text-primary" />}
+            {isDark ? <Sun size={18} className="text-text-primary" /> : <Moon size={18} className="text-text-primary" />}
           </button>
-          <button onClick={onLeaderboardClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Sıralama">
-            <Trophy size={22} className="text-text-primary" />
+          <button onClick={onLeaderboardClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Sıralama">
+            <Trophy size={18} className="text-text-primary" />
           </button>
-          <button onClick={onStatsClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="İstatistikler">
-            <BarChart2 size={22} className="text-text-primary" />
+          <button onClick={onStatsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="İstatistikler">
+            <BarChart2 size={18} className="text-text-primary" />
           </button>
-          <button onClick={onHelpClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Nasıl Oynanır">
-            <HelpCircle size={22} className="text-text-primary" />
+          <button onClick={onHelpClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Nasıl Oynanır">
+            <HelpCircle size={18} className="text-text-primary" />
           </button>
-          <button onClick={onSettingsClick} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Ayarlar">
-            <Settings size={22} className="text-text-primary" />
+          <button onClick={onSettingsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Ayarlar">
+            <Settings size={18} className="text-text-primary" />
           </button>
           {user ? (
-            <div className="flex items-center gap-1 ml-1 pl-1 border-l border-border-color">
+            <div className="flex items-center gap-0.5 ml-1 pl-1 border-l border-border-color">
               <button
                 onClick={onProfileClick}
-                className="flex items-center gap-1.5 p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
+                className="flex items-center gap-1 p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
                 aria-label="Profil"
               >
                 {xpProfile ? (
@@ -77,18 +77,18 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
                 )}
                 <span className="text-xs text-text-secondary hidden sm:block">{user.username}</span>
               </button>
-              <button onClick={logout} className="p-2 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Çıkış">
+              <button onClick={logout} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Çıkış">
                 <LogOut size={18} className="text-text-secondary" />
               </button>
             </div>
           ) : (
             <button
               onClick={onAuthClick}
-              className="flex items-center gap-1.5 ml-1 px-3 py-1.5 bg-correct hover:bg-correct/90 text-white text-sm font-bold rounded-md transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 ml-1 px-2 py-1.5 bg-correct hover:bg-correct/90 text-white text-sm font-bold rounded-md transition-colors cursor-pointer"
               aria-label="Giriş Yap"
             >
               <User size={16} />
-              <span>Giriş Yap</span>
+              <span className="hidden sm:block">Giriş Yap</span>
             </button>
           )}
         </div>

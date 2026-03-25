@@ -21,6 +21,13 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Sıralama">
+      {!isLoading && !isError && rows.length > 0 && (
+        <div className="flex items-center justify-end gap-4 px-3 mb-1 text-xs text-text-secondary">
+          <span className="flex items-center gap-1 w-14 justify-end"><TrendingUp size={11} /> XP</span>
+          <span className="flex items-center gap-1 w-9 justify-end"><Trophy size={11} /> Kazan</span>
+          <span className="flex items-center gap-1 w-9 justify-end"><Flame size={11} /> Seri</span>
+        </div>
+      )}
       {isLoading && (
         <p className="text-center text-text-secondary py-8 text-sm animate-pulse">Yükleniyor...</p>
       )}
@@ -37,32 +44,41 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
       )}
 
       {rows.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <div className="grid grid-cols-[2rem_1fr_auto_auto_auto] gap-2 px-3 py-1.5 text-xs text-text-secondary font-medium border-b border-border-color mb-1">
-            <span>#</span>
-            <span>Oyuncu</span>
-            <span className="flex items-center gap-1"><TrendingUp size={11} /> XP</span>
-            <span className="flex items-center gap-1"><Trophy size={11} /> Kazan</span>
-            <span className="flex items-center gap-1"><Flame size={11} /> Seri</span>
-          </div>
-
+        <div className="flex flex-col gap-1.5">
           {rows.map((row, i) => {
-            const medalColor = i === 0 ? 'text-yellow-500' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-amber-600' : 'text-text-secondary';
+            const rankColors = ['text-yellow-400', 'text-slate-400', 'text-amber-600'];
+            const rankColor = rankColors[i] ?? 'text-text-secondary';
+            const isTopThree = i < 3;
             return (
               <div
                 key={row.user_id}
-                className={`grid grid-cols-[2rem_1fr_auto_auto_auto] gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors ${i < 3 ? 'bg-bg-primary' : 'hover:bg-bg-primary'}`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${isTopThree ? 'bg-bg-primary border border-border-color' : 'hover:bg-bg-primary'}`}
               >
-                <span className={`font-bold text-xs ${medalColor}`}>{i + 1}.</span>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-correct text-white text-xs font-bold shrink-0">
+                <span className={`w-5 text-center font-bold text-sm shrink-0 ${rankColor}`}>{i + 1}</span>
+
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-correct text-white text-xs font-bold shrink-0">
                     {row.level}
                   </span>
-                  <span className="font-medium text-text-primary truncate">{row.username}</span>
+                  <span className={`font-semibold truncate ${isTopThree ? 'text-text-primary' : 'text-text-secondary'}`}>
+                    {row.username}
+                  </span>
                 </div>
-                <span className="text-correct font-bold tabular-nums">{row.total_xp}</span>
-                <span className="text-text-primary font-semibold tabular-nums">{row.total_won}</span>
-                <span className="text-tile-correct font-semibold tabular-nums">{row.current_streak}</span>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <TrendingUp size={12} className="text-correct" />
+                  <span className="text-correct font-bold tabular-nums text-sm w-10 text-right">{row.total_xp}</span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <Trophy size={12} className="text-present" />
+                  <span className="text-text-primary font-semibold tabular-nums text-sm w-6 text-right">{row.total_won}</span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <Flame size={12} className="text-red-400" />
+                  <span className="text-text-primary font-semibold tabular-nums text-sm w-6 text-right">{row.current_streak}</span>
+                </div>
               </div>
             );
           })}
