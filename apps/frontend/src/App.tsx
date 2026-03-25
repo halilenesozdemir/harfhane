@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthModal from './components/AuthModal';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
+import Toast from './components/Toast';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import type { GameMode, WordLength } from './types';
@@ -31,12 +32,23 @@ function GameRoute({ mode }: { mode: GameMode }): React.JSX.Element {
 
 function HomeRoute(): React.JSX.Element {
   const navigate = useNavigate();
-  const { googleAuthFailed } = useAuth();
+  const { googleAuthFailed, justLoggedIn, clearJustLoggedIn, user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
 
   useEffect(() => {
     if (googleAuthFailed) setShowAuth(true);
   }, [googleAuthFailed]);
+
+  useEffect(() => {
+    if (!justLoggedIn || !user) return;
+    setWelcomeMessage(`Hoş geldin, ${user.username}!`);
+    const timer = setTimeout(() => {
+      setWelcomeMessage('');
+      clearJustLoggedIn();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [justLoggedIn, user, clearJustLoggedIn]);
 
   return (
     <>
@@ -44,6 +56,7 @@ function HomeRoute(): React.JSX.Element {
         onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
       />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      <Toast message={welcomeMessage} />
     </>
   );
 }
@@ -78,6 +91,52 @@ function ChallengeRoute(): React.JSX.Element {
   const parsed = Number(wordId);
   if (!Number.isInteger(parsed) || parsed <= 0) return <Navigate to="/" replace />;
   return <ChallengeGame wordId={parsed} onGoHome={() => navigate('/')} />;
+}
+
+function AppRoutes(): React.JSX.Element {
+  return (
+    <>
+      <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
+        <Routes>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/lists" element={<ListsRoute />} />
+          <Route path="/play/:slug" element={<SlugRoute />} />
+          <Route path="/c/:wordId" element={<ChallengeRoute />} />
+          <Route path="/daily" element={<GameRoute mode="daily" />} />
+          <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
+          <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
+          <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+      <InstallPrompt />
+    </>
+  );
+}
+
+function AppShell(): React.JSX.Element {
+  const { isLoading, isAuthCallback } = useAuth();
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+
+  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
+
+  if (isAuthCallback && isLoading) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 bg-correct rounded-xl flex items-center justify-center shadow-lg">
+          <span className="text-white font-bold text-3xl">H</span>
+        </div>
+        <p className="text-text-secondary text-sm tracking-wide">Giriş yapılıyor...</p>
+      </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
 }
 
 function AdminApp(): React.JSX.Element {
@@ -115,42 +174,16 @@ function AdminApp(): React.JSX.Element {
   return <AdminPanel secret={secret} onLogout={handleLogout} />;
 }
 
-function AppRoutes(): React.JSX.Element {
-  return (
-    <>
-      <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
-        <Routes>
-          <Route path="/" element={<HomeRoute />} />
-          <Route path="/lists" element={<ListsRoute />} />
-          <Route path="/play/:slug" element={<SlugRoute />} />
-          <Route path="/c/:wordId" element={<ChallengeRoute />} />
-          <Route path="/daily" element={<GameRoute mode="daily" />} />
-          <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
-          <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
-          <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-      <InstallPrompt />
-    </>
-  );
-}
-
 function App(): React.JSX.Element {
   const isAdmin = window.location.pathname.startsWith('/admin');
-  const [splashDone, setSplashDone] = useState(false);
-  const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
   if (isAdmin) return <AdminApp />;
-  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <AppShell />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

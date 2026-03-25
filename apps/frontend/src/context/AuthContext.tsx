@@ -9,7 +9,10 @@ interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   isLoading: boolean;
+  isAuthCallback: boolean;
   googleAuthFailed: boolean;
+  justLoggedIn: boolean;
+  clearJustLoggedIn: () => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
@@ -23,6 +26,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState(true);
   const [googleAuthFailed, setGoogleAuthFailed] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const [isAuthCallback] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('token') || params.has('auth_error');
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -32,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     if (googleToken) {
       localStorage.setItem(TOKEN_KEY, googleToken);
       setToken(googleToken);
+      setJustLoggedIn(true);
       const url = new URL(window.location.href);
       url.searchParams.delete('token');
       window.history.replaceState({}, '', url.toString());
@@ -55,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       })
       .finally(() => setIsLoading(false));
   }, [token]);
+
+  const clearJustLoggedIn = useCallback((): void => setJustLoggedIn(false), []);
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
     const res = await authApi.login(email, password);
@@ -81,7 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, googleAuthFailed, login, register, logout, loginWithGoogle }}>
+    <AuthContext.Provider value={{
+      user, token, isLoading, isAuthCallback,
+      googleAuthFailed, justLoggedIn, clearJustLoggedIn,
+      login, register, logout, loginWithGoogle,
+    }}>
       {children}
     </AuthContext.Provider>
   );
