@@ -262,7 +262,13 @@ function GameOverModal({
           )}
 
           {gameStatus !== "playing" && (
-            <SharePreview evaluations={evaluations} />
+            <SharePreview
+              evaluations={evaluations}
+              gameNumber={gameNumber}
+              guessCount={guesses.length}
+              isWon={gameStatus === "won"}
+              challengeUrl={challengeUrl}
+            />
           )}
 
           <button
