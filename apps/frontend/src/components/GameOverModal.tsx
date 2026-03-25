@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Share2, Check, RotateCcw, Home, X } from "lucide-react";
+import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
+import { BadgeItem } from "./XPBar";
 import { getTimeUntilMidnight, generateShareText } from "../utils/gameLogic";
 import { useShare } from "../hooks/useShare";
-import type { GameOverModalProps, TimeCountdown } from "../types";
+import type { GameOverModalProps, TimeCountdown, Badge } from "../types";
 
 interface StatBoxProps {
   value: number;
@@ -31,8 +32,11 @@ function GameOverModal({
   gameNumber,
   stats,
   isUnlimited,
+  isAuthenticated,
   onPlayAgain,
   onGoHome,
+  onAuthClick,
+  xpResult,
 }: GameOverModalProps): React.JSX.Element {
   const [countdown, setCountdown] = useState<TimeCountdown>(
     getTimeUntilMidnight()
@@ -75,6 +79,12 @@ function GameOverModal({
     stats.gamesPlayed > 0
       ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100)
       : 0;
+
+  const avgGuesses = stats.gamesWon > 0
+    ? Math.round(
+        stats.guessDistribution.reduce((sum, count, idx) => sum + count * (idx + 1), 0) / stats.gamesWon * 10
+      ) / 10
+    : 0;
 
   return (
     <Modal
@@ -138,13 +148,35 @@ function GameOverModal({
           {isUnlimited && (
             <>
               <StatBox value={stats.gamesWon} label="Kazanılan" />
-              <StatBox
-                value={stats.gamesPlayed - stats.gamesWon}
-                label="Kaybedilen"
-              />
+              <StatBox value={avgGuesses} label="Ort. Deneme" />
             </>
           )}
         </div>
+
+        {!isUnlimited && xpResult && (
+          <div className="bg-bg-primary border border-border-color rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-text-primary font-semibold text-sm">
+                <TrendingUp size={16} className="text-correct" />
+                <span>+{xpResult.earned} XP</span>
+                {xpResult.levelUp && (
+                  <span className="text-xs px-2 py-0.5 bg-correct text-white rounded-full">
+                    Seviye {xpResult.level}!
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-text-secondary">Toplam: {xpResult.total} XP</span>
+            </div>
+            {xpResult.newBadges.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-text-secondary font-medium">Yeni rozet kazandın!</p>
+                {xpResult.newBadges.map((badge: Badge) => (
+                  <BadgeItem key={badge.slug} badge={badge} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {!isUnlimited && (
           <div className="text-center">
@@ -168,6 +200,16 @@ function GameOverModal({
               </>
             )}
           </div>
+        )}
+
+        {!isAuthenticated && (
+          <button
+            onClick={onAuthClick}
+            className="w-full py-3 px-4 rounded-md font-bold bg-present/10 hover:bg-present/20 text-present border border-present/40 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+          >
+            <LogIn size={20} />
+            Giriş yap — serini ve istatistiklerini kaydet
+          </button>
         )}
 
         <div className="space-y-3">

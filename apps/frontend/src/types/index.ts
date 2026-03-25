@@ -1,5 +1,5 @@
-import type { WordEntry } from '@nurdle/shared';
-export type { WordEntry, WordData } from '@nurdle/shared';
+import type { WordEntry, GameXPResult } from '@nurdle/shared';
+export type { WordEntry, WordData, GameXPResult, Badge, XPProfile } from '@nurdle/shared';
 
 // Game types
 export type GameStatus = 'playing' | 'won' | 'lost';
@@ -61,6 +61,7 @@ export interface HeaderProps {
   onSettingsClick: () => void;
   onLeaderboardClick: () => void;
   onAuthClick: () => void;
+  onProfileClick?: () => void;
   modeLabel?: string;
 }
 
@@ -121,8 +122,11 @@ export interface GameOverModalProps {
   gameNumber: number | string;
   stats: DailyStats | UnlimitedStats;
   isUnlimited: boolean;
+  isAuthenticated: boolean;
   onPlayAgain: () => void;
   onGoHome: () => void;
+  onAuthClick: () => void;
+  xpResult?: GameXPResult | null;
 }
 
 export interface HomePageProps {
@@ -134,6 +138,33 @@ export interface GameProps {
   mode: GameMode;
   wordLength: WordLength;
   onGoHome: () => void;
+}
+
+export interface UseGameStateReturn {
+  guesses: string[];
+  evaluations: TileStatus[][];
+  currentGuess: string;
+  gameStatus: 'playing' | 'won' | 'lost';
+  keyboardStatus: Record<string, TileStatus>;
+  solution: string;
+  solutionEntry: WordEntry | null;
+  gameNumber: number | string;
+  stats: DailyStats | UnlimitedStats;
+  isRevealing: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  shakeRow: boolean;
+  message: string;
+  hasSeenHelp: boolean;
+  mode: GameMode;
+  wordLength: WordLength;
+  isUnlimited: boolean;
+  addLetter: (letter: string) => void;
+  removeLetter: () => void;
+  submitGuess: () => void;
+  setHasSeenHelp: (value: boolean) => void;
+  startNewGame: () => void;
+  lastXPResult: GameXPResult | null;
 }
 
 // PWA Types

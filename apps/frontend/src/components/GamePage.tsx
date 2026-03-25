@@ -9,7 +9,9 @@ import GameOverModal from './GameOverModal';
 import SettingsModal from './SettingsModal';
 import AuthModal from './AuthModal';
 import LeaderboardModal from './LeaderboardModal';
+import ProfileModal from './ProfileModal';
 import { useGameState } from '../hooks/useGameState';
+import { useAuth } from '../context/AuthContext';
 import type { GameMode, WordLength } from '../types';
 
 interface GamePageProps {
@@ -36,6 +38,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     message,
     hasSeenHelp,
     isUnlimited,
+    lastXPResult,
     addLetter,
     removeLetter,
     submitGuess,
@@ -43,12 +46,15 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     startNewGame,
   } = useGameState(mode, wordLength);
 
+  const { token } = useAuth();
+
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
   const [showLeaderboardModal, setShowLeaderboardModal] = useState<boolean>(false);
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (!hasSeenHelp) {
@@ -125,6 +131,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         onSettingsClick={() => setShowSettingsModal(true)}
         onLeaderboardClick={() => setShowLeaderboardModal(true)}
         onAuthClick={() => setShowAuthModal(true)}
+        onProfileClick={() => setShowProfileModal(true)}
         modeLabel={modeLabel}
       />
       <Toast message={message} />
@@ -160,12 +167,16 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         gameNumber={gameNumber}
         stats={stats}
         isUnlimited={isUnlimited}
+        isAuthenticated={!!token}
         onPlayAgain={handlePlayAgain}
         onGoHome={handleGoHome}
+        onAuthClick={() => setShowAuthModal(true)}
+        xpResult={lastXPResult}
       />
       <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <LeaderboardModal isOpen={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} />
+      <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
     </div>
   );
 }
