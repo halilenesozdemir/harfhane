@@ -1,0 +1,79 @@
+import { writeFileSync } from 'fs';
+import { execSync } from 'child_process';
+
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#121213"/>
+      <stop offset="100%" style="stop-color:#1a1a1b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Left tile grid decoration -->
+  <g opacity="0.15">
+    <rect x="60" y="200" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="144" y="200" width="72" height="72" rx="8" fill="#b59f3b"/>
+    <rect x="228" y="200" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="312" y="200" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="396" y="200" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="60" y="284" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="144" y="284" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="228" y="284" width="72" height="72" rx="8" fill="#b59f3b"/>
+    <rect x="312" y="284" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="396" y="284" width="72" height="72" rx="8" fill="#538d4e"/>
+  </g>
+
+  <!-- Logo box -->
+  <rect x="540" y="80" width="64" height="64" rx="12" fill="#538d4e"/>
+  <text x="572" y="126" font-family="Georgia, serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">H</text>
+
+  <!-- Main title -->
+  <text x="600" y="240" font-family="Georgia, serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="6">HARFHANE</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="310" font-family="Arial, sans-serif" font-size="28" fill="#818384" text-anchor="middle">Türkçe Kelime Oyunu Platformu</text>
+
+  <!-- Divider -->
+  <line x1="460" y1="345" x2="740" y2="345" stroke="#538d4e" stroke-width="2" opacity="0.6"/>
+
+  <!-- Features row -->
+  <text x="600" y="400" font-family="Arial, sans-serif" font-size="22" fill="#538d4e" text-anchor="middle">Günlük Bulmaca • Özel Listeler • Sınırsız Mod</text>
+
+  <!-- URL -->
+  <text x="600" y="550" font-family="Arial, sans-serif" font-size="20" fill="#538d4e" text-anchor="middle" opacity="0.8">harfhane.app</text>
+
+  <!-- Right tile grid decoration (mirrored) -->
+  <g opacity="0.15">
+    <rect x="668" y="200" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="752" y="200" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="836" y="200" width="72" height="72" rx="8" fill="#b59f3b"/>
+    <rect x="920" y="200" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="1004" y="200" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="668" y="284" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="752" y="284" width="72" height="72" rx="8" fill="#3a3a3c"/>
+    <rect x="836" y="284" width="72" height="72" rx="8" fill="#538d4e"/>
+    <rect x="920" y="284" width="72" height="72" rx="8" fill="#b59f3b"/>
+    <rect x="1004" y="284" width="72" height="72" rx="8" fill="#3a3a3c"/>
+  </g>
+</svg>`;
+
+const svgPath = 'apps/frontend/public/og-image.svg';
+const pngPath = 'apps/frontend/public/og-image.png';
+
+writeFileSync(svgPath, svg);
+console.log(`SVG yazıldı: ${svgPath}`);
+
+// sharp ile SVG → PNG
+try {
+  execSync(
+    `npx --yes sharp-cli --input ${svgPath} --output ${pngPath} resize 1200 630`,
+    { stdio: 'pipe' }
+  );
+  console.log(`PNG oluşturuldu: ${pngPath}`);
+} catch (e) {
+  console.log('sharp-cli dönüşümü başarısız, SVG kullanılacak:', e.message?.slice(0, 100));
+  console.log('Meta tagları .svg olarak güncelle.');
+}

@@ -255,7 +255,13 @@ export async function wordExistsInList(
   listId: number,
   word: string
 ): Promise<boolean> {
-  const row = await db
+  const tdkRow = await db
+    .prepare(`SELECT 1 FROM tdk_words WHERE word = ? LIMIT 1`)
+    .bind(word)
+    .first();
+  if (tdkRow) return true;
+
+  const listRow = await db
     .prepare(
       `SELECT 1 FROM word_list_words wlw
        JOIN words w ON w.id = wlw.word_id
@@ -263,5 +269,5 @@ export async function wordExistsInList(
     )
     .bind(listId, word)
     .first();
-  return row !== null;
+  return listRow !== null;
 }

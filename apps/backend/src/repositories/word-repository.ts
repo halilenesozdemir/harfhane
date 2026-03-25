@@ -80,10 +80,10 @@ export async function findRandomWord(db: Env['DB'], length = 5): Promise<WordEnt
 }
 
 export async function wordExists(db: Env['DB'], word: string): Promise<boolean> {
+  const normalized = normalizeWord(word);
   const row = await db
-    .prepare(`SELECT 1 FROM words WHERE word = ? AND is_active = 1 LIMIT 1`)
-    .bind(normalizeWord(word))
+    .prepare(`SELECT 1 FROM tdk_words WHERE word = ? LIMIT 1`)
+    .bind(normalized)
     .first();
-
   return row !== null;
 }
