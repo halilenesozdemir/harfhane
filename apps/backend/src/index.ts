@@ -7,6 +7,13 @@ import { admin } from './routes/admin';
 import { lists } from './routes/lists';
 import { auth } from './routes/auth';
 import { results } from './routes/results';
+import { gamification } from './routes/gamification';
+import { push } from './routes/push';
+import { notifications } from './routes/notifications';
+import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
+import { sendPushNotification } from './utils/web-push';
+import { getUsersForEmailReminder } from './repositories/notification-repository';
+import { sendReminderEmail } from './utils/resend';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -37,6 +44,9 @@ app.route('/api/lists', lists);
 app.route('/api/admin', admin);
 app.route('/api/auth', auth);
 app.route('/api/results', results);
+app.route('/api/xp', gamification);
+app.route('/api/push', push);
+app.route('/api/notifications', notifications);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {
@@ -49,5 +59,25 @@ app.notFound((c) => {
   return c.json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+
+  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+    const today = new Date().toISOString().split('T')[0]!;
+
+    const [subscriptions, emailTargets] = await Promise.all([
+      getSubscriptionsForUsersWithoutTodayPlay(env.DB, today),
+      getUsersForEmailReminder(env.DB, today),
+    ]);
+
+    await Promise.allSettled([
+      ...subscriptions.map((sub) =>
+        sendPushNotification(sub, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY, env.VAPID_SUBJECT)
+      ),
+      ...emailTargets.map((target) =>
+        sendReminderEmail(env.RESEND_API_KEY, target.email, target.username)
+      ),
+    ]);
+  },
+};
 

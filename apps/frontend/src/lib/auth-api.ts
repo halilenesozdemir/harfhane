@@ -46,14 +46,22 @@ export function getMe(token: string): Promise<AuthUser> {
   return request<AuthUser>('/auth/me', { headers: { ...authHeader(token), 'Content-Type': 'application/json' } });
 }
 
+import type { GameXPResult } from '@nurdle/shared';
+
 export function saveResult(
   token: string,
   data: { date: string; word_length: number; guesses: number; won: boolean }
-): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>('/results', {
+): Promise<{ success: boolean; xp: GameXPResult | null }> {
+  return request<{ success: boolean; xp: GameXPResult | null }>('/results', {
     method: 'POST',
     headers: { ...authHeader(token), 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+  });
+}
+
+export function getXPProfile(token: string): Promise<import('@nurdle/shared').XPProfile> {
+  return request<import('@nurdle/shared').XPProfile>('/xp/me', {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
   });
 }
 
@@ -65,6 +73,8 @@ export interface LeaderboardRow {
   win_rate: number;
   current_streak: number;
   max_streak: number;
+  total_xp: number;
+  level: number;
 }
 
 export function getLeaderboard(): Promise<{ leaderboard: LeaderboardRow[] }> {
@@ -74,4 +84,40 @@ export function getLeaderboard(): Promise<{ leaderboard: LeaderboardRow[] }> {
 export function initiateGoogleLogin(): void {
   const base = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
   window.location.href = `${base}/auth/google`;
+}
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export function subscribePush(token: string, payload: PushSubscriptionPayload): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function unsubscribePush(token: string, endpoint: string): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/push/unsubscribe', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+    body: JSON.stringify({ endpoint }),
+  });
+}
+
+export function getEmailNotifications(token: string): Promise<{ enabled: boolean }> {
+  return request<{ enabled: boolean }>('/notifications/email', {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}
+
+export function patchEmailNotifications(token: string, enabled: boolean): Promise<{ enabled: boolean }> {
+  return request<{ enabled: boolean }>('/notifications/email', {
+    method: 'PATCH',
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  });
 }
