@@ -34,7 +34,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const gameNumber = isUnlimited ? 0 : (dailyData?.gameNumber ?? 0);
   const wordId = isUnlimited ? (randomData?.wordId ?? null) : null;
 
-  const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token });
+  const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token, wordId });
 
   const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`nurdle:game:${todayString}:${wordLength}`, {
     guesses: [],

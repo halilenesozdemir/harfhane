@@ -12,12 +12,29 @@ import { push } from './routes/push';
 import { notifications } from './routes/notifications';
 import { profile } from './routes/profile';
 import { tournament } from './routes/tournament';
+import { duels } from './routes/duels';
 import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
 import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
 import { sendPushNotification } from './utils/web-push';
 import { getUsersForEmailReminder } from './repositories/notification-repository';
 import { sendReminderEmail } from './utils/resend';
+import { findDailyWord } from './repositories/word-repository';
+
+const CATEGORY_LABELS: Record<string, string> = {
+  isim: 'isim',
+  sıfat: 'sıfat',
+  fiil: 'fiil',
+};
+
+function buildHint(meaning: string | null, category: string): string {
+  const text = meaning ?? '';
+  const wordParts = text.split(' ');
+  const snippet = wordParts.slice(0, 4).join(' ');
+  const suffix = wordParts.length > 4 ? '..."' : '"';
+  const label = CATEGORY_LABELS[category] ?? category;
+  return `${label} — "${snippet}${suffix}`;
+}
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -57,6 +74,7 @@ app.route('/api/push', push);
 app.route('/api/notifications', notifications);
 app.route('/api/profile', profile);
 app.route('/api/tournament', tournament);
+app.route('/api/duels', duels);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {
@@ -75,14 +93,19 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
     const today = new Date().toISOString().split('T')[0]!;
 
-    const [subscriptions, emailTargets] = await Promise.all([
+    const [subscriptions, emailTargets, dailyWord] = await Promise.all([
       getSubscriptionsForUsersWithoutTodayPlay(env.DB, today),
       getUsersForEmailReminder(env.DB, today),
+      findDailyWord(env.DB, today, 5),
     ]);
 
+    const hint = dailyWord
+      ? buildHint(dailyWord.meaning, dailyWord.category)
+      : 'Risale-i Nur külliyatından bir kelime';
+
     const pushPayload = {
-      title: 'Harfhane',
-      body: 'Bugünkü kelimeyi henüz çözmedin! Seriyi kırmadan oyna.',
+      title: 'Harfhane — Günlük Kelime',
+      body: `Seriyi koru! İpucu: ${hint}`,
       url: '/daily/5',
     };
 

@@ -52,6 +52,8 @@ export async function applySchema(db: D1Database): Promise<void> {
     word_length INTEGER NOT NULL,
     guesses INTEGER NOT NULL,
     won INTEGER NOT NULL DEFAULT 0,
+    mode TEXT NOT NULL DEFAULT 'daily',
+    word_id INTEGER REFERENCES words(id),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(user_id, date, word_length)
   )`).run();

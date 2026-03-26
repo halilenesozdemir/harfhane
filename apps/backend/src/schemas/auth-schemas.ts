@@ -20,6 +20,8 @@ export const saveResultSchema = z.object({
   word_length: z.number().int().min(4).max(7),
   guesses: z.number().int().min(0).max(6),
   won: z.boolean(),
+  mode: z.enum(['daily', 'unlimited']).optional(),
+  word_id: z.number().int().positive().optional(),
 });
 
 export const forgotPasswordSchema = z.object({

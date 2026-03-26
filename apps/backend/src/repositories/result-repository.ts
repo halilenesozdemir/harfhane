@@ -29,12 +29,25 @@ export async function saveResult(
   date: string,
   wordLength: number,
   guesses: number,
-  won: boolean
+  won: boolean,
+  mode: 'daily' | 'unlimited' = 'daily',
+  wordId?: number
 ): Promise<void> {
+  if (mode === 'unlimited') {
+    await db
+      .prepare(`
+        INSERT INTO game_results (user_id, date, word_length, guesses, won, mode, word_id)
+        VALUES (?, ?, ?, ?, ?, 'unlimited', ?)
+      `)
+      .bind(userId, date, wordLength, guesses, won ? 1 : 0, wordId ?? null)
+      .run();
+    return;
+  }
+
   await db
     .prepare(`
-      INSERT INTO game_results (user_id, date, word_length, guesses, won)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO game_results (user_id, date, word_length, guesses, won, mode)
+      VALUES (?, ?, ?, ?, ?, 'daily')
       ON CONFLICT(user_id, date, word_length) DO NOTHING
     `)
     .bind(userId, date, wordLength, guesses, won ? 1 : 0)
@@ -104,6 +117,58 @@ export async function getUserStats(db: Env['DB'], userId: number): Promise<{
   }
 
   return { totalPlayed, totalWon, winRate, currentStreak, maxStreak, guessDistribution };
+}
+
+export interface UnlimitedPersonalStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  guessDistribution: number[];
+  avgGuesses: number;
+  bestStreak: number;
+}
+
+export async function getUnlimitedStats(
+  db: Env['DB'],
+  userId: number
+): Promise<UnlimitedPersonalStats> {
+  const rows = await db
+    .prepare(`
+      SELECT won, guesses
+      FROM game_results
+      WHERE user_id = ? AND mode = 'unlimited'
+      ORDER BY id ASC
+    `)
+    .bind(userId)
+    .all<{ won: number; guesses: number }>();
+
+  const results = rows.results ?? [];
+  const gamesPlayed = results.length;
+  const wonResults = results.filter(r => r.won === 1);
+  const gamesWon = wonResults.length;
+
+  const guessDistribution = [0, 0, 0, 0, 0, 0];
+  for (const r of wonResults) {
+    if (r.guesses >= 1 && r.guesses <= 6) {
+      guessDistribution[r.guesses - 1]! += 1;
+    }
+  }
+
+  const avgGuesses = gamesWon > 0
+    ? Math.round((wonResults.reduce((sum, r) => sum + r.guesses, 0) / gamesWon) * 10) / 10
+    : 0;
+
+  let bestStreak = 0;
+  let streak = 0;
+  for (const r of results) {
+    if (r.won === 1) {
+      streak++;
+      if (streak > bestStreak) bestStreak = streak;
+    } else {
+      streak = 0;
+    }
+  }
+
+  return { gamesPlayed, gamesWon, guessDistribution, avgGuesses, bestStreak };
 }
 
 export type LeaderboardPeriod = 'all' | 'week' | 'month';

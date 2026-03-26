@@ -9,6 +9,7 @@ interface UseGameStatsOptions {
   isUnlimited: boolean;
   wordLength: WordLength;
   token: string | null;
+  wordId?: number | null;
 }
 
 interface UseGameStatsReturn {
@@ -17,7 +18,7 @@ interface UseGameStatsReturn {
   lastXPResult: GameXPResult | null;
 }
 
-export function useGameStats({ isUnlimited, wordLength, token }: UseGameStatsOptions): UseGameStatsReturn {
+export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGameStatsOptions): UseGameStatsReturn {
   const [stats, setStats] = useLocalStorage<DailyStats>(`nurdle:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
@@ -46,6 +47,21 @@ export function useGameStats({ isUnlimited, wordLength, token }: UseGameStatsOpt
         }
         return { gamesPlayed: prev.gamesPlayed + 1, gamesWon: prev.gamesWon + (won ? 1 : 0), guessDistribution: newDistribution };
       });
+      if (token) {
+        void saveResult(token, {
+          date: getTodayString(),
+          word_length: wordLength,
+          guesses: won ? guessCount : 0,
+          won,
+          mode: 'unlimited',
+          word_id: wordId ?? undefined,
+        }).then(result => {
+          if (result.xp) {
+            setLastXPResult(result.xp);
+            void queryClient.invalidateQueries({ queryKey: ['xp', 'profile'] });
+          }
+        }).catch((_: unknown) => undefined);
+      }
       return;
     }
 

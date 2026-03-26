@@ -1,19 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Home } from 'lucide-react';
 import { useChallengeWord } from '../hooks/useWordApi';
-import { validateWord } from '../lib/api';
+import { validateWord, registerDuelResult, fetchDuel } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
 import Toast from './Toast';
 import GameOverModal from './GameOverModal';
 import WinConfetti from './WinConfetti';
+import DuelResultBanner from './DuelResultBanner';
 import {
   evaluateGuess,
   updateKeyboardStatus,
   checkGameStatus,
   normalizeWord,
 } from '../utils/gameLogic';
-import type { GameState, TileStatus, UnlimitedStats, WordLength } from '../types';
+import type { GameState, TileStatus, UnlimitedStats, WordLength, DuelPublic } from '../types';
 
 const WIN_MESSAGES = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'] as const;
 const EMPTY_STATS: UnlimitedStats = { gamesPlayed: 0, gamesWon: 0, guessDistribution: [0, 0, 0, 0, 0, 0] };
@@ -22,6 +25,8 @@ const EMPTY_STATE: GameState = {
   gameStatus: 'playing', keyboardStatus: {},
 };
 
+const DUEL_POLL_INTERVAL = 3000;
+
 interface ChallengeGameProps {
   wordId: number;
   onGoHome: () => void;
@@ -29,15 +34,39 @@ interface ChallengeGameProps {
 
 export default function ChallengeGame({ wordId, onGoHome }: ChallengeGameProps): React.JSX.Element {
   const { data, isLoading, isError } = useChallengeWord(wordId);
+  const { token } = useAuth();
   const [gameState, setGameState] = useState<GameState>(EMPTY_STATE);
   const [isRevealing, setIsRevealing] = useState(false);
   const [shakeRow, setShakeRow] = useState(false);
   const [message, setMessage] = useState('');
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [duelRegistered, setDuelRegistered] = useState(false);
   const isSubmittingRef = useRef(false);
 
   const solution = data?.word.word ?? '';
   const wordLength = (solution.length || 5) as WordLength;
+  const gameFinished = gameState.gameStatus !== 'playing';
+
+  const { data: duelData } = useQuery<{ duel: DuelPublic }>({
+    queryKey: ['duel', wordId],
+    queryFn: () => fetchDuel(token!, wordId),
+    enabled: !!token && duelRegistered,
+    refetchInterval: (query) => {
+      const duel = query.state.data?.duel;
+      if (!duel || duel.opponentFinished) return false;
+      return DUEL_POLL_INTERVAL;
+    },
+  });
+
+  useEffect(() => {
+    if (!token || !gameFinished || duelRegistered) return;
+
+    const won = gameState.gameStatus === 'won';
+    const guesses = gameState.guesses.length;
+    registerDuelResult(token, wordId, guesses, won)
+      .then(() => setDuelRegistered(true))
+      .catch(() => setDuelRegistered(true));
+  }, [token, gameFinished, gameState.gameStatus, gameState.guesses.length, wordId, duelRegistered]);
 
   const showMessage = useCallback((msg: string, duration = 2000): void => {
     setMessage(msg);
@@ -171,6 +200,7 @@ export default function ChallengeGame({ wordId, onGoHome }: ChallengeGameProps):
           gameStatus={gameState.gameStatus}
           wordLength={wordLength}
         />
+        {duelData && <DuelResultBanner duel={duelData.duel} />}
       </main>
 
       <Keyboard onKeyPress={handleKeyPress} keyboardStatus={gameState.keyboardStatus} />

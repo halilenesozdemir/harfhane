@@ -135,3 +135,22 @@ export interface XPProfile {
   nextLevelXP: number;
   badges: Badge[];
 }
+
+export interface UnlimitedPersonalStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  guessDistribution: number[];
+  avgGuesses: number;
+  bestStreak: number;
+}
+
+export interface DuelPublic {
+  id: number;
+  wordId: number;
+  myRole: 'challenger' | 'opponent';
+  myGuesses: number;
+  myWon: boolean;
+  opponentGuesses: number | null;
+  opponentWon: boolean | null;
+  opponentFinished: boolean;
+}

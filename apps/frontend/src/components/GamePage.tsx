@@ -14,6 +14,7 @@ import { useGameState } from '../hooks/useGameState';
 import { useGameModals } from '../hooks/useGameModals';
 import { useAuth } from '../context/AuthContext';
 import { useSessionChallenge } from '../hooks/useSessionChallenge';
+import { useHint } from '../hooks/useHint';
 import WinConfetti from './WinConfetti';
 import type { GameMode, WordLength } from '../types';
 
@@ -34,6 +35,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
 
   const { token } = useAuth();
   const sessionChallenge = useSessionChallenge();
+  const { hintText, hintUsed, revealHint } = useHint(solutionEntry, wordLength, isUnlimited);
 
   const modals = useGameModals({
     gameStatus,
@@ -113,7 +115,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         modeLabel={modeLabel}
       />
       <Toast message={message} />
-      <main className="flex-1 flex flex-col items-center justify-center">
+      <main className="flex-1 flex flex-col items-center justify-center gap-3">
         <GameGrid
           guesses={guesses}
           evaluations={evaluations}
@@ -123,6 +125,21 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
           gameStatus={gameStatus}
           wordLength={wordLength}
         />
+        {!isUnlimited && gameStatus === 'playing' && (
+          hintText ? (
+            <div className="text-xs text-text-secondary bg-bg-secondary border border-border-color rounded-full px-4 py-1.5">
+              {hintText}
+            </div>
+          ) : (
+            <button
+              onClick={revealHint}
+              disabled={hintUsed}
+              className="text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {hintUsed ? 'İpucu kullanıldı' : 'İpucu göster'}
+            </button>
+          )
+        )}
       </main>
       <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
       <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />

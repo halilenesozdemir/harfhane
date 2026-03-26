@@ -57,7 +57,7 @@ import type { GameXPResult } from '@nurdle/shared';
 
 export function saveResult(
   token: string,
-  data: { date: string; word_length: number; guesses: number; won: boolean }
+  data: { date: string; word_length: number; guesses: number; won: boolean; mode?: 'daily' | 'unlimited'; word_id?: number }
 ): Promise<{ success: boolean; xp: GameXPResult | null }> {
   return request<{ success: boolean; xp: GameXPResult | null }>('/results', {
     method: 'POST',

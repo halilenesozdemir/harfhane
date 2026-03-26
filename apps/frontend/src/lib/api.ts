@@ -14,6 +14,8 @@ import type {
   ListLikeResponse,
   ListCommentsResponse,
   AddCommentResponse,
+  UnlimitedPersonalStats,
+  DuelPublic,
 } from '@nurdle/shared';
 
 const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
@@ -125,4 +127,25 @@ export function addComment(token: string, slug: string, content: string): Promis
 
 export function deleteComment(token: string, slug: string, commentId: number): Promise<{ success: boolean }> {
   return request<{ success: boolean }>(`/lists/${slug}/comments/${commentId}`, { method: 'DELETE' }, token);
+}
+
+export function fetchUnlimitedStats(token: string): Promise<{ stats: UnlimitedPersonalStats }> {
+  return request<{ stats: UnlimitedPersonalStats }>('/results/me/unlimited', undefined, token);
+}
+
+export function registerDuelResult(
+  token: string,
+  wordId: number,
+  guesses: number,
+  won: boolean
+): Promise<{ duel: DuelPublic }> {
+  return request<{ duel: DuelPublic }>(
+    '/duels',
+    { method: 'POST', body: JSON.stringify({ word_id: wordId, guesses, won }) },
+    token
+  );
+}
+
+export function fetchDuel(token: string, wordId: number): Promise<{ duel: DuelPublic }> {
+  return request<{ duel: DuelPublic }>(`/duels/${wordId}`, undefined, token);
 }

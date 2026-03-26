@@ -1,5 +1,5 @@
 import type { WordEntry, GameXPResult } from '@nurdle/shared';
-export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile } from '@nurdle/shared';
+export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile, UnlimitedPersonalStats, DuelPublic } from '@nurdle/shared';
 
 export interface SessionChallenge {
   won: number;
