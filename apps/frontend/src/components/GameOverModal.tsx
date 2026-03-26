@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, Swords, ShieldCheck } from "lucide-react";
+import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, Swords, ShieldCheck, MessageSquare } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
 import { BadgeItem } from "./XPBar";
@@ -318,6 +318,16 @@ function GameOverModal({
               <RotateCcw size={20} />
               Tekrar Oyna
             </button>
+          )}
+
+          {!isUnlimited && (
+            <a
+              href="/discuss"
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-tile-empty hover:bg-tile-filled text-text-primary flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+            >
+              <MessageSquare size={20} />
+              Yorumlar
+            </a>
           )}
 
           <button

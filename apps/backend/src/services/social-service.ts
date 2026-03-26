@@ -11,8 +11,10 @@ import {
   getUserLikeStatus,
 } from '../repositories/social-repository';
 import { findListBySlug } from '../repositories/list-repository';
+import { isDailyDiscussionSlug, upsertDiscussionList } from '../repositories/discussion-repository';
 
 async function requireList(db: Env['DB'], slug: string): Promise<number> {
+  if (isDailyDiscussionSlug(slug)) return upsertDiscussionList(db, slug);
   const row = await findListBySlug(db, slug);
   if (!row) throw NOT_FOUND('Word list');
   return row.id;

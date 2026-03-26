@@ -18,6 +18,7 @@ const ListsPage = lazy(() => import('./components/ListsPage'));
 const SlugGame = lazy(() => import('./components/SlugGame'));
 const ChallengeGame = lazy(() => import('./components/ChallengeGame'));
 const TournamentPage = lazy(() => import('./components/TournamentPage'));
+const DailyDiscussPage = lazy(() => import('./components/DailyDiscussPage'));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -98,6 +99,11 @@ function TournamentRoute(): React.JSX.Element {
   return <TournamentPage onGoHome={() => navigate('/')} />;
 }
 
+function DiscussRoute(): React.JSX.Element {
+  const navigate = useNavigate();
+  return <DailyDiscussPage onGoHome={() => navigate('/')} />;
+}
+
 function ChallengeRoute(): React.JSX.Element {
   const { wordId } = useParams<{ wordId: string }>();
   const navigate = useNavigate();
@@ -120,6 +126,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
           <Route path="/tournament" element={<TournamentRoute />} />
+          <Route path="/discuss" element={<DiscussRoute />} />
           <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
