@@ -27,6 +27,8 @@ import {
   importWords,
   getStats,
   autoFillDailySchedule,
+  getWordStats,
+  getUsers,
 } from '../services/admin-service';
 
 const admin = new Hono<{ Bindings: Env }>();
@@ -38,6 +40,17 @@ admin.use('/*', adminAuth);
 admin.get('/stats', async (c) => {
   const stats = await getStats(c.env.DB);
   return c.json({ data: stats });
+});
+
+admin.get('/users', async (c) => {
+  const users = await getUsers(c.env.DB);
+  return c.json({ data: users });
+});
+
+admin.get('/word-stats', async (c) => {
+  const sort = c.req.query('sort') === 'win_rate' ? 'win_rate' : 'played';
+  const rows = await getWordStats(c.env.DB, sort);
+  return c.json({ data: rows });
 });
 
 // ── Words ────────────────────────────────────────────────────────────────────

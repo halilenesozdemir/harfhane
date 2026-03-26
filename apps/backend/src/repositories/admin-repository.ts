@@ -227,6 +227,47 @@ export async function adminGetStats(db: Env['DB'], todayDate: string): Promise<A
   };
 }
 
+export interface WordStatRow {
+  word: string;
+  meaning: string;
+  total_played: number;
+  total_won: number;
+  win_rate: number;
+  avg_guesses: number | null;
+}
+
+export async function adminGetWordStats(
+  db: Env['DB'],
+  sort: 'played' | 'win_rate',
+  limit = 20
+): Promise<WordStatRow[]> {
+  const orderBy = sort === 'win_rate'
+    ? 'win_rate DESC, total_played DESC'
+    : 'total_played DESC';
+
+  const rows = await db
+    .prepare(
+      `SELECT
+         w.word,
+         w.meaning,
+         COUNT(*) AS total_played,
+         SUM(gr.won) AS total_won,
+         ROUND(SUM(gr.won) * 100.0 / COUNT(*), 1) AS win_rate,
+         ROUND(AVG(CASE WHEN gr.won = 1 THEN gr.guesses END), 1) AS avg_guesses
+       FROM game_results gr
+       JOIN daily_words dw ON dw.date = gr.date AND dw.length = gr.word_length
+       JOIN words w ON w.id = dw.word_id
+       GROUP BY w.id, w.word, w.meaning
+       HAVING total_played >= 1
+       ORDER BY ${orderBy}
+       LIMIT ?`
+    )
+    .bind(limit)
+    .all<WordStatRow>();
+
+  return rows.results ?? [];
+}
+
 export async function adminBulkInsertWords(
   db: Env['DB'],
   words: { word: string; meaning: string; context: string; category: string }[]
@@ -245,6 +286,34 @@ export async function adminBulkInsertWords(
     else skipped++;
   }
   return { inserted, skipped };
+}
+
+export interface AdminUserRow {
+  id: number;
+  username: string;
+  email: string;
+  created_at: string;
+  total_played: number;
+  total_won: number;
+  last_played: string | null;
+}
+
+export async function adminGetUsers(db: Env['DB']): Promise<AdminUserRow[]> {
+  const rows = await db
+    .prepare(
+      `SELECT
+         u.id, u.username, u.email, u.created_at,
+         COUNT(gr.id) as total_played,
+         SUM(COALESCE(gr.won, 0)) as total_won,
+         MAX(gr.date) as last_played
+       FROM users u
+       LEFT JOIN game_results gr ON gr.user_id = u.id
+       GROUP BY u.id
+       ORDER BY u.created_at DESC
+       LIMIT 100`
+    )
+    .all<AdminUserRow>();
+  return rows.results ?? [];
 }
 
 function generateDatesInRange(from: string, to: string): string[] {
