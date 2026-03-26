@@ -126,6 +126,7 @@ export interface GameXPResult {
   levelUp: boolean;
   newBadges: Badge[];
   breakdown: XPBreakdown;
+  freezeTokenEarned: boolean;
 }
 
 export interface XPProfile {

@@ -16,6 +16,10 @@ export async function getFreezeTokens(db: Env['DB'], userId: number): Promise<nu
   return row?.freeze_tokens ?? 0;
 }
 
+export async function awardFreezeToken(db: Env['DB'], userId: number): Promise<void> {
+  await db.prepare('UPDATE users SET freeze_tokens = freeze_tokens + 1 WHERE id = ?').bind(userId).run();
+}
+
 export async function applyFreeze(db: Env['DB'], userId: number, date: string): Promise<boolean> {
   const tokens = await getFreezeTokens(db, userId);
   if (tokens <= 0) return false;

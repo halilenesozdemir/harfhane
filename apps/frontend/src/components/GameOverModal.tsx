@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, Swords } from "lucide-react";
+import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, Swords, ShieldCheck } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
 import { BadgeItem } from "./XPBar";
@@ -182,6 +182,12 @@ function GameOverModal({
                 )}
               </div>
             )}
+            {xpResult.freezeTokenEarned && (
+              <div className="flex items-center gap-2 text-xs text-blue-400 font-medium">
+                <ShieldCheck size={14} />
+                <span>Seri dondurma tokeni kazandın!</span>
+              </div>
+            )}
             {xpResult.newBadges.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs text-text-secondary font-medium">Yeni rozet kazandın!</p>
@@ -294,7 +300,7 @@ function GameOverModal({
             )}
           </button>
 
-          {isUnlimited && challengeUrl && (
+          {challengeUrl && (
             <button
               onClick={copyChallenge}
               className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present/10 hover:bg-present/20 text-present border border-present/40 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"

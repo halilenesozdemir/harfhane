@@ -10,6 +10,9 @@ import {
   levelFromXP,
 } from '../repositories/gamification-repository';
 import { getUserStats } from '../repositories/result-repository';
+import { awardFreezeToken } from '../repositories/freeze-repository';
+
+const FREEZE_TOKEN_MILESTONE = 5;
 
 const GUESS_BONUS = [100, 75, 50, 25, 10, 5] as const;
 const BASE_XP_WIN = 50;
@@ -89,12 +92,18 @@ export async function processGameXP(
 
   const newBadges = await getBadgesBySlugs(db, newSlugs);
 
+  const freezeTokenEarned = stats.totalPlayed % FREEZE_TOKEN_MILESTONE === 0;
+  if (freezeTokenEarned) {
+    await awardFreezeToken(db, userId);
+  }
+
   return {
     earned,
     total: newTotalXP,
     level: newLevel,
     levelUp,
     newBadges,
+    freezeTokenEarned,
     breakdown: {
       base: xpBreakdown.base,
       guessBonus: xpBreakdown.guessBonus,
