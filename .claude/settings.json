@@ -19,7 +19,8 @@
       "Bash(gh *)",
       "Bash(npx prettier *)",
       "Bash(cat *)",
-      "Bash(echo *)"
+      "Bash(echo *)",
+      "Read(apps/backend/.dev.vars)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -27,8 +28,7 @@
       "Bash(curl * | bash)",
       "Bash(wget * | sh)",
       "Bash(chmod 777 *)",
-      "Read(**/.env*)",
-      "Read(**/.dev.vars*)"
+      "Read(**/.env*)"
     ]
   },
   "hooks": {

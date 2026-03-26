@@ -11,7 +11,6 @@ type ResultEnv = { Bindings: Env; Variables: { userId: number } };
 
 export const results = new Hono<ResultEnv>();
 
-// Oyun sonucu kaydet (auth gerekli)
 results.post('/', requireAuth, zValidator('json', saveResultSchema), async (c) => {
   const userId = c.get('userId');
   const { date, word_length, guesses, won } = c.req.valid('json');
@@ -22,13 +21,12 @@ results.post('/', requireAuth, zValidator('json', saveResultSchema), async (c) =
   try {
     xp = await processGameXP(c.env.DB, userId, won, guesses);
   } catch {
-    // XP failure should not break the game result save
+    xp = null;
   }
 
   return c.json({ data: { success: true, xp } }, 201);
 });
 
-// Kişisel istatistikler (auth gerekli)
 results.get('/me', requireAuth, async (c) => {
   const userId = c.get('userId');
   const stats = await getUserStats(c.env.DB, userId);
@@ -37,7 +35,6 @@ results.get('/me', requireAuth, async (c) => {
 
 const VALID_PERIODS = new Set<LeaderboardPeriod>(['all', 'week', 'month']);
 
-// Leaderboard (public)
 results.get('/leaderboard', async (c) => {
   const raw = c.req.query('period') ?? 'all';
   const period: LeaderboardPeriod = VALID_PERIODS.has(raw as LeaderboardPeriod)
