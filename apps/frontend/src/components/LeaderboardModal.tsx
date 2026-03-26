@@ -1,17 +1,27 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Trophy, Flame, TrendingUp } from 'lucide-react';
 import Modal from './Modal';
 import { getLeaderboard } from '../lib/auth-api';
+import type { LeaderboardPeriod } from '../lib/auth-api';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const PERIOD_LABELS: Record<LeaderboardPeriod, string> = {
+  all: 'Tüm Zamanlar',
+  week: 'Bu Hafta',
+  month: 'Bu Ay',
+};
+
 export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps): React.JSX.Element {
+  const [period, setPeriod] = useState<LeaderboardPeriod>('all');
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: () => getLeaderboard('all'),
+    queryKey: ['leaderboard', period],
+    queryFn: () => getLeaderboard(period),
     enabled: isOpen,
     staleTime: 1000 * 60 * 2,
     retry: false,
@@ -21,6 +31,22 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Sıralama">
+      <div className="flex gap-1 mb-4 bg-bg-primary rounded-xl p-1">
+        {(Object.keys(PERIOD_LABELS) as LeaderboardPeriod[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              period === p
+                ? 'bg-correct text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            {PERIOD_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
       {!isLoading && !isError && rows.length > 0 && (
         <div className="flex items-center justify-end gap-4 px-3 mb-1 text-xs text-text-secondary">
           <span className="flex items-center gap-1 w-14 justify-end"><TrendingUp size={11} /> XP</span>
