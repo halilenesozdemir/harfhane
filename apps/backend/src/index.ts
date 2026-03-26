@@ -80,9 +80,15 @@ export default {
       getUsersForEmailReminder(env.DB, today),
     ]);
 
+    const pushPayload = {
+      title: 'Harfhane',
+      body: 'Bugünkü kelimeyi henüz çözmedin! Seriyi kırmadan oyna.',
+      url: '/daily/5',
+    };
+
     await Promise.allSettled([
       ...subscriptions.map((sub) =>
-        sendPushNotification(sub, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY, env.VAPID_SUBJECT)
+        sendPushNotification(sub, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY, env.VAPID_SUBJECT, pushPayload)
       ),
       ...emailTargets.map((target) =>
         sendReminderEmail(env.RESEND_API_KEY, target.email, target.username)
