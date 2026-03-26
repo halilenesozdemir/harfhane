@@ -1,11 +1,11 @@
-import { Sun, Moon, Monitor, Check, Bell, BellOff, Mail, MailX } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, Bell, BellOff, Mail, MailX, Trash2 } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useThemeContext } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
-import { getEmailNotifications, patchEmailNotifications } from '../lib/auth-api';
+import { getEmailNotifications, patchEmailNotifications, deleteAccount } from '../lib/auth-api';
 import type { Theme } from '../types';
 
 interface ThemeOptionProps {
@@ -39,15 +39,28 @@ interface SettingsModalProps {
 
 const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Element => {
   const { theme, setTheme, resolvedTheme } = useThemeContext();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const { state, isSubscribed, isLoading, subscribe, unsubscribe } = useNotifications(token);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'loading'>('idle');
 
   useEffect(() => {
     if (!token) return;
     getEmailNotifications(token).then(({ enabled }) => setEmailEnabled(enabled)).catch(() => undefined);
   }, [token]);
+
+  async function handleDeleteAccount(): Promise<void> {
+    if (!token) return;
+    setDeleteStep('loading');
+    try {
+      await deleteAccount(token);
+      logout();
+      onClose();
+    } catch {
+      setDeleteStep('confirm');
+    }
+  }
 
   async function handleEmailToggle(): Promise<void> {
     if (!token) return;
@@ -66,8 +79,13 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
     { icon: Monitor, label: 'Sistem Ayarı', value: 'system' },
   ];
 
+  function handleClose(): void {
+    setDeleteStep('idle');
+    onClose();
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Ayarlar">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Ayarlar">
       <div className="space-y-6">
         {/* Tema Seçimi */}
         <div>
@@ -154,6 +172,45 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
             </p>
           </div>
         </div>
+
+        {token && (
+          <div className="border-t border-border-color pt-4">
+            <h3 className="text-lg font-bold text-text-primary mb-3">Hesap</h3>
+            {deleteStep === 'idle' && (
+              <button
+                onClick={() => setDeleteStep('confirm')}
+                className="flex items-center gap-3 w-full p-3 rounded-lg bg-bg-secondary text-tile-absent hover:bg-tile-absent/10 transition-all cursor-pointer"
+              >
+                <Trash2 size={20} />
+                <span className="flex-1 text-left font-medium">Hesabı Sil</span>
+              </button>
+            )}
+            {deleteStep === 'confirm' && (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-text-secondary">
+                  Hesabın ve tüm verilerin kalıcı olarak silinecek. Bu işlem geri alınamaz.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => void handleDeleteAccount()}
+                    className="flex-1 py-2 rounded-lg bg-tile-absent text-white text-sm font-semibold cursor-pointer hover:opacity-90"
+                  >
+                    Evet, sil
+                  </button>
+                  <button
+                    onClick={() => setDeleteStep('idle')}
+                    className="flex-1 py-2 rounded-lg bg-bg-secondary text-text-primary text-sm font-semibold cursor-pointer hover:bg-tile-empty"
+                  >
+                    Vazgeç
+                  </button>
+                </div>
+              </div>
+            )}
+            {deleteStep === 'loading' && (
+              <p className="text-sm text-text-secondary text-center py-2">Hesap siliniyor...</p>
+            )}
+          </div>
+        )}
 
         {/* Linkler */}
         <div className="border-t border-border-color pt-4">
