@@ -3,6 +3,23 @@ import * as authApi from '../lib/auth-api';
 import { initiateGoogleLogin } from '../lib/auth-api';
 import type { AuthUser } from '../lib/auth-api';
 
+const REFRESH_THRESHOLD_SECONDS = 7 * 24 * 60 * 60;
+
+function getTokenExp(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: number };
+    return payload.exp ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpiringSoon(token: string): boolean {
+  const exp = getTokenExp(token);
+  if (!exp) return false;
+  return exp - Math.floor(Date.now() / 1000) < REFRESH_THRESHOLD_SECONDS;
+}
+
 const TOKEN_KEY = 'harfhane:token';
 
 interface AuthContextValue {
@@ -56,13 +73,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   useEffect(() => {
     if (!token) { setIsLoading(false); return; }
-    authApi.getMe(token)
-      .then(setUser)
-      .catch(() => {
+
+    const resolveUser = async (): Promise<void> => {
+      try {
+        if (isTokenExpiringSoon(token)) {
+          const refreshed = await authApi.refreshToken(token);
+          localStorage.setItem(TOKEN_KEY, refreshed.token);
+          setToken(refreshed.token);
+          setUser(refreshed.user);
+        } else {
+          const user = await authApi.getMe(token);
+          setUser(user);
+        }
+      } catch {
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);
-      })
-      .finally(() => setIsLoading(false));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void resolveUser();
   }, [token]);
 
   const clearJustLoggedIn = useCallback((): void => setJustLoggedIn(false), []);

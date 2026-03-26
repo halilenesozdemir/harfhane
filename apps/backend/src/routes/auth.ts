@@ -218,6 +218,21 @@ auth.post('/reset-password', zValidator('json', resetPasswordSchema), async (c) 
   return c.json({ data: { success: true } });
 });
 
+auth.post('/refresh', requireAuth, async (c) => {
+  const userId = c.get('userId');
+  const user = await findUserById(c.env.DB, userId);
+  if (!user) throw UNAUTHORIZED();
+
+  const token = await signJwt(
+    { sub: user.id, exp: Math.floor(Date.now() / 1000) + JWT_EXPIRES_IN },
+    c.env.JWT_SECRET
+  );
+
+  return c.json({
+    data: { token, user: { id: user.id, email: user.email, username: user.username } },
+  });
+});
+
 auth.delete('/account', requireAuth, async (c) => {
   const userId = c.get('userId');
   await deleteUser(c.env.DB, userId);

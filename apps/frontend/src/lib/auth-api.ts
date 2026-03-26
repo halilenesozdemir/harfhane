@@ -42,6 +42,13 @@ export function login(email: string, password: string): Promise<AuthResponse> {
   });
 }
 
+export function refreshToken(token: string): Promise<AuthResponse> {
+  return request<AuthResponse>('/auth/refresh', {
+    method: 'POST',
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}
+
 export function getMe(token: string): Promise<AuthUser> {
   return request<AuthUser>('/auth/me', { headers: { ...authHeader(token), 'Content-Type': 'application/json' } });
 }
@@ -115,6 +122,10 @@ export interface PushSubscriptionPayload {
   auth: string;
 }
 
+export function getVapidPublicKey(): Promise<{ key: string }> {
+  return request<{ key: string }>('/push/vapid-public-key');
+}
+
 export function subscribePush(token: string, payload: PushSubscriptionPayload): Promise<{ success: boolean }> {
   return request<{ success: boolean }>('/push/subscribe', {
     method: 'POST',
@@ -171,4 +182,61 @@ export function applyStreakFreeze(token: string): Promise<{ success: boolean }> 
     method: 'POST',
     headers: { ...authHeader(token), 'Content-Type': 'application/json' },
   });
+}
+
+export interface TournamentWord {
+  id: number;
+  word: string;
+  length: number;
+  meaning?: string;
+}
+
+export interface TournamentStats {
+  total_score: number;
+  games_played: number;
+  games_won: number;
+  best_score: number;
+}
+
+export interface TournamentResult {
+  score: number;
+  total_score: number;
+}
+
+export interface TournamentLeaderboardRow {
+  user_id: number;
+  username: string;
+  total_score: number;
+  games_played: number;
+  games_won: number;
+  avg_guesses: number;
+}
+
+export function getTournamentWord(
+  token: string
+): Promise<{ word: TournamentWord; stats: TournamentStats }> {
+  return request<{ word: TournamentWord; stats: TournamentStats }>('/tournament/word', {
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}
+
+export function saveTournamentResult(
+  token: string,
+  data: { word_id: number; word_length: number; guesses: number; won: boolean }
+): Promise<TournamentResult> {
+  return request<TournamentResult>('/tournament/result', {
+    method: 'POST',
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export type TournamentLeaderboardPeriod = 'all' | 'week' | 'month';
+
+export function getTournamentLeaderboard(
+  period: TournamentLeaderboardPeriod = 'all'
+): Promise<{ leaderboard: TournamentLeaderboardRow[] }> {
+  return request<{ leaderboard: TournamentLeaderboardRow[] }>(
+    `/tournament/leaderboard?period=${period}`
+  );
 }
