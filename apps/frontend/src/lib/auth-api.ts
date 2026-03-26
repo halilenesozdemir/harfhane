@@ -83,6 +83,13 @@ export function getLeaderboard(period: LeaderboardPeriod = 'all'): Promise<{ lea
   return request<{ leaderboard: LeaderboardRow[] }>(`/results/leaderboard?period=${period}`);
 }
 
+export function deleteAccount(token: string): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/auth/account', {
+    method: 'DELETE',
+    headers: { ...authHeader(token), 'Content-Type': 'application/json' },
+  });
+}
+
 export function forgotPassword(email: string): Promise<{ sent: boolean }> {
   return request<{ sent: boolean }>('/auth/forgot-password', {
     method: 'POST',

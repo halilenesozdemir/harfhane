@@ -11,10 +11,13 @@ import {
   createPasswordResetToken,
   findValidPasswordResetToken,
   consumePasswordResetToken,
+  deleteUser,
 } from '../repositories/user-repository';
 import { hashPassword, verifyPassword, signJwt, verifyJwt } from '../utils/auth';
 import { CONFLICT, UNAUTHORIZED } from '../errors/api-error';
 import { sendPasswordResetEmail } from '../utils/email';
+import { rateLimiter } from '../middleware/rate-limiter';
+import { requireAuth } from '../middleware/auth-middleware';
 
 const RESET_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
 
@@ -78,6 +81,10 @@ async function fetchGoogleUserInfo(accessToken: string): Promise<GoogleUserInfo 
 }
 
 export const auth = new Hono<AuthEnv>();
+
+auth.use('/register', rateLimiter);
+auth.use('/login', rateLimiter);
+auth.use('/forgot-password', rateLimiter);
 
 auth.post('/register', zValidator('json', registerSchema), async (c) => {
   const { email, username, password } = c.req.valid('json');
@@ -208,5 +215,11 @@ auth.post('/reset-password', zValidator('json', resetPasswordSchema), async (c) 
   const passwordHash = await hashPassword(password);
   await consumePasswordResetToken(c.env.DB, resetToken.id, resetToken.user_id, passwordHash);
 
+  return c.json({ data: { success: true } });
+});
+
+auth.delete('/account', requireAuth, async (c) => {
+  const userId = c.get('userId');
+  await deleteUser(c.env.DB, userId);
   return c.json({ data: { success: true } });
 });

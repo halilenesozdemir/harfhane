@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
@@ -9,6 +9,8 @@ import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
+const ONBOARDING_KEY = 'nurdle:onboarding-done';
+
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
@@ -16,6 +18,12 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { data: profileData } = useProfile(token);
+
+  useEffect(() => {
+    if (!localStorage.getItem(ONBOARDING_KEY)) {
+      setShowHelp(true);
+    }
+  }, []);
 
   const stats = profileData?.stats;
 
@@ -165,7 +173,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         <p className="text-text-secondary/50 text-xs">v3.0.0</p>
       </div>
 
-      <HowToPlayModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+      <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(ONBOARDING_KEY, '1'); setShowHelp(false); }} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>

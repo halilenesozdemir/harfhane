@@ -79,6 +79,10 @@ export interface ResetTokenRow {
   expires_at: string;
 }
 
+export async function deleteUser(db: Env['DB'], userId: number): Promise<void> {
+  await db.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+}
+
 export async function createPasswordResetToken(
   db: Env['DB'],
   userId: number,

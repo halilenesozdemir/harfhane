@@ -1,9 +1,11 @@
-import { Star, Target, Flame, BookOpen, Trophy, Library, Crown, Zap, Brain, Medal, Snowflake } from 'lucide-react';
+import { useState } from 'react';
+import { Star, Target, Flame, BookOpen, Trophy, Library, Crown, Zap, Brain, Medal, Snowflake, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import XPBar from './XPBar';
 import { useXP } from '../hooks/useXP';
 import { useProfile, useStreakFreeze } from '../hooks/useProfile';
 import { useAuth } from '../context/AuthContext';
+import { deleteAccount } from '../lib/auth-api';
 import type { Badge } from '../types';
 
 const BADGE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -52,10 +54,24 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps): React.JSX.Element {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
   const { data: xpProfile, isLoading: xpLoading } = useXP(token);
   const { data: profileData, isLoading: profileLoading } = useProfile(token);
   const { mutate: freeze, isPending: freezing } = useStreakFreeze(token);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async (): Promise<void> => {
+    if (!token) return;
+    if (!confirm('Hesabınız kalıcı olarak silinecek. Bu işlem geri alınamaz. Emin misiniz?')) return;
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(token);
+      logout();
+      onClose();
+    } catch {
+      setDeletingAccount(false);
+    }
+  };
 
   const earnedSlugs = new Set((xpProfile?.badges ?? []).map((b: Badge) => b.slug));
   const stats = profileData?.stats;
@@ -115,6 +131,15 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps): Re
             ))}
           </div>
         </div>
+
+        <button
+          onClick={() => void handleDeleteAccount()}
+          disabled={deletingAccount}
+          className="flex items-center gap-2 text-xs text-tile-absent hover:text-red-400 cursor-pointer transition-colors disabled:opacity-40 mx-auto"
+        >
+          <Trash2 size={12} />
+          {deletingAccount ? 'Siliniyor...' : 'Hesabı kalıcı olarak sil'}
+        </button>
       </div>
     </Modal>
   );
