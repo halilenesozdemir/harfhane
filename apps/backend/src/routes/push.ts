@@ -28,3 +28,7 @@ push.delete('/unsubscribe', requireAuth, zValidator('json', z.object({ endpoint:
   await deleteSubscription(c.env.DB, userId, endpoint);
   return c.json({ data: { success: true } });
 });
+
+push.get('/vapid-public-key', (c) => {
+  return c.json({ data: { key: c.env.VAPID_PUBLIC_KEY } });
+});
