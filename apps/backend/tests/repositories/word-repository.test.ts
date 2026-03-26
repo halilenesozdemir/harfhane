@@ -34,8 +34,8 @@ describe('findRandomWord', () => {
   it('returns an active word', async () => {
     const result = await findRandomWord(env.DB);
     expect(result).not.toBeNull();
-    expect(result!.word).toBeDefined();
-    expect(['isim', 'sıfat', 'fiil']).toContain(result!.category);
+    expect(result!.entry.word).toBeDefined();
+    expect(['isim', 'sıfat', 'fiil']).toContain(result!.entry.category);
   });
 });
 

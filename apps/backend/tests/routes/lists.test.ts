@@ -52,11 +52,11 @@ describe('POST /api/lists/:slug/validate', () => {
     expect(body.data.isValid).toBe(true);
   });
 
-  it('returns isValid false for word not in list', async () => {
+  it('returns isValid false for word not in list or tdk', async () => {
     const res = await SELF.fetch('http://example.com/api/lists/test-list/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ word: 'kalem' }),
+      body: JSON.stringify({ word: 'YOKTUR' }),
     });
     expect(res.status).toBe(200);
     const body = await res.json() as { data: { isValid: boolean } };

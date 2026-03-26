@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { subscribePush, unsubscribePush } from '../lib/auth-api';
-
-const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) ?? '';
+import { subscribePush, unsubscribePush, getVapidPublicKey } from '../lib/auth-api';
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -38,17 +36,18 @@ export function useNotifications(token: string | null): UseNotificationsReturn {
   }, []);
 
   const subscribe = useCallback(async (): Promise<void> => {
-    if (!token || !VAPID_PUBLIC_KEY) return;
+    if (!token) return;
     setIsLoading(true);
     try {
       const permission = await Notification.requestPermission();
       setState(permission as NotificationState);
       if (permission !== 'granted') return;
 
+      const { key } = await getVapidPublicKey();
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(key),
       });
 
       const json = sub.toJSON();
