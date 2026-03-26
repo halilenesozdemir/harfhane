@@ -100,7 +100,7 @@ export async function getStats(db: Env['DB']) {
 }
 
 export async function autoFillDailySchedule(db: Env['DB'], days: number) {
-  const from = offsetDate(1);
+  const from = offsetDate(0);
   const to = offsetDate(days);
   return adminAutoFillSchedule(db, from, to);
 }

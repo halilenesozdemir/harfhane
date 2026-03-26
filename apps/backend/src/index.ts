@@ -12,6 +12,8 @@ import { push } from './routes/push';
 import { notifications } from './routes/notifications';
 import { profile } from './routes/profile';
 import { tournament } from './routes/tournament';
+import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
+import { securityHeaders } from './middleware/security-headers';
 import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
 import { sendPushNotification } from './utils/web-push';
 import { getUsersForEmailReminder } from './repositories/notification-repository';
@@ -40,6 +42,10 @@ app.use(
     credentials: true,
   })
 );
+app.use('/api/*', securityHeaders);
+app.use('/api/auth/*', rateLimiter);
+app.use('/api/words/*', gameRateLimiter);
+app.use('/api/tournament/*', gameRateLimiter);
 
 app.route('/api/words', words);
 app.route('/api/lists', lists);
