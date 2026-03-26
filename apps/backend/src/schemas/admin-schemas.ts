@@ -78,3 +78,7 @@ export const listDailyQuerySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
 });
+
+export const autoFillSchema = z.object({
+  days: z.number().int().min(1).max(365).default(30),
+});

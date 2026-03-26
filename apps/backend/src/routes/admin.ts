@@ -13,6 +13,7 @@ import {
   createListSchema,
   updateListSchema,
   listWordActionSchema,
+  autoFillSchema,
 } from '../schemas/admin-schemas';
 import {
   listWords,
@@ -25,6 +26,7 @@ import {
   removeDailyWord,
   importWords,
   getStats,
+  autoFillDailySchedule,
 } from '../services/admin-service';
 
 const admin = new Hono<{ Bindings: Env }>();
@@ -133,6 +135,19 @@ admin.delete('/daily/:id', async (c) => {
   await removeDailyWord(c.env.DB, id);
   return c.json({ data: { success: true } });
 });
+
+admin.post(
+  '/daily/auto-fill',
+  zValidator('json', autoFillSchema, (r, c) => {
+    if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
+    return;
+  }),
+  async (c) => {
+    const { days } = c.req.valid('json');
+    const result = await autoFillDailySchedule(c.env.DB, days);
+    return c.json({ data: result });
+  }
+);
 
 // ── Import ────────────────────────────────────────────────────────────────────
 

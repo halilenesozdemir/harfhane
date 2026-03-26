@@ -11,7 +11,7 @@ interface LeaderboardModalProps {
 export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps): React.JSX.Element {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['leaderboard'],
-    queryFn: getLeaderboard,
+    queryFn: () => getLeaderboard('all'),
     enabled: isOpen,
     staleTime: 1000 * 60 * 2,
     retry: false,

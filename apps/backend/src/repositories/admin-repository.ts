@@ -246,3 +246,57 @@ export async function adminBulkInsertWords(
   }
   return { inserted, skipped };
 }
+
+function generateDatesInRange(from: string, to: string): string[] {
+  const dates: string[] = [];
+  const cursor = new Date(from);
+  const end = new Date(to);
+  while (cursor <= end) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j] as T, copy[i] as T];
+  }
+  return copy;
+}
+
+export async function adminAutoFillSchedule(
+  db: Env['DB'],
+  from: string,
+  to: string
+): Promise<{ scheduled: number; skipped: number }> {
+  const [existingResult, activeResult] = await db.batch([
+    db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = 5').bind(from, to),
+    db.prepare('SELECT id FROM words WHERE is_active = 1 AND length = 5'),
+  ]);
+
+  const scheduledDates = new Set(
+    ((existingResult?.results ?? []) as { date: string }[]).map((r) => r.date)
+  );
+  const activeIds = ((activeResult?.results ?? []) as { id: number }[]).map((r) => r.id);
+
+  const unscheduledDates = generateDatesInRange(from, to).filter((d) => !scheduledDates.has(d));
+  if (unscheduledDates.length === 0 || activeIds.length === 0) {
+    return { scheduled: 0, skipped: scheduledDates.size };
+  }
+
+  const pool = shuffleArray(activeIds);
+  const statements = unscheduledDates.map((date, i) => {
+    const wordId = pool[i % pool.length] as number;
+    return db
+      .prepare('INSERT OR IGNORE INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordId, date);
+  });
+
+  const insertResults = await db.batch(statements);
+  const scheduled = insertResults.filter((r) => (r.meta.changes ?? 0) > 0).length;
+
+  return { scheduled, skipped: scheduledDates.size };
+}

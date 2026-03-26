@@ -1,10 +1,28 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
-import { registerSchema, loginSchema } from '../schemas/auth-schemas';
-import { findUserByEmail, findUserByUsername, createUser, findUserById, upsertGoogleUser } from '../repositories/user-repository';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from '../schemas/auth-schemas';
+import {
+  findUserByEmail,
+  findUserByUsername,
+  createUser,
+  findUserById,
+  upsertGoogleUser,
+  createPasswordResetToken,
+  findValidPasswordResetToken,
+  consumePasswordResetToken,
+} from '../repositories/user-repository';
 import { hashPassword, verifyPassword, signJwt, verifyJwt } from '../utils/auth';
 import { CONFLICT, UNAUTHORIZED } from '../errors/api-error';
+import { sendPasswordResetEmail } from '../utils/email';
+
+const RESET_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
+
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 const JWT_EXPIRES_IN = 60 * 60 * 24 * 30;
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -158,4 +176,37 @@ auth.get('/me', async (c) => {
   return c.json({
     data: { id: user.id, email: user.email, username: user.username },
   });
+});
+
+auth.post('/forgot-password', zValidator('json', forgotPasswordSchema), async (c) => {
+  const { email } = c.req.valid('json');
+
+  const user = await findUserByEmail(c.env.DB, email);
+  if (!user || user.password_hash === 'GOOGLE_AUTH') {
+    return c.json({ data: { sent: true } });
+  }
+
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRES_MS).toISOString();
+  await createPasswordResetToken(c.env.DB, user.id, token, expiresAt);
+
+  const resetUrl = `${c.env.APP_URL}/sifre-sifirla?token=${token}`;
+  await sendPasswordResetEmail(c.env.RESEND_API_KEY, email, resetUrl);
+
+  return c.json({ data: { sent: true } });
+});
+
+auth.post('/reset-password', zValidator('json', resetPasswordSchema), async (c) => {
+  const { token, password } = c.req.valid('json');
+  const now = new Date().toISOString();
+
+  const resetToken = await findValidPasswordResetToken(c.env.DB, token, now);
+  if (!resetToken) {
+    return c.json({ error: { code: 'INVALID_TOKEN', message: 'Geçersiz veya süresi dolmuş bağlantı' } }, 400);
+  }
+
+  const passwordHash = await hashPassword(password);
+  await consumePasswordResetToken(c.env.DB, resetToken.id, resetToken.user_id, passwordHash);
+
+  return c.json({ data: { success: true } });
 });

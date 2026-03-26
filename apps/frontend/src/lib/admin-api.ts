@@ -212,3 +212,13 @@ export interface AdminStats {
 export function getAdminStats(secret: string): Promise<AdminStats> {
   return adminRequest<AdminStats>('/stats', secret);
 }
+
+export function autoFillSchedule(
+  secret: string,
+  days = 30
+): Promise<{ scheduled: number; skipped: number }> {
+  return adminRequest<{ scheduled: number; skipped: number }>('/daily/auto-fill', secret, {
+    method: 'POST',
+    body: JSON.stringify({ days }),
+  });
+}

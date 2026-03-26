@@ -83,6 +83,20 @@ export function getLeaderboard(period: LeaderboardPeriod = 'all'): Promise<{ lea
   return request<{ leaderboard: LeaderboardRow[] }>(`/results/leaderboard?period=${period}`);
 }
 
+export function forgotPassword(email: string): Promise<{ sent: boolean }> {
+  return request<{ sent: boolean }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(token: string, password: string): Promise<{ success: boolean }> {
+  return request<{ success: boolean }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+}
+
 export function initiateGoogleLogin(): void {
   const base = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
   window.location.href = `${base}/auth/google`;

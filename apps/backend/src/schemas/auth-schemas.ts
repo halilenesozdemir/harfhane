@@ -21,3 +21,12 @@ export const saveResultSchema = z.object({
   guesses: z.number().int().min(0).max(6),
   won: z.boolean(),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Geçerli bir e-posta adresi girin'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8, 'Şifre en az 8 karakter olmalı'),
+});

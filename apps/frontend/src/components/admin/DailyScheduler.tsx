@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Plus, Search, Pencil, X } from 'lucide-react';
+import { Trash2, Plus, Search, Pencil, X, Wand2 } from 'lucide-react';
 import * as api from '../../lib/admin-api';
 import type { AdminDailyEntry, AdminWord } from '../../lib/admin-api';
 
@@ -30,6 +30,8 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
   const [scheduleDate, setScheduleDate] = useState(todayStr());
   const [scheduling, setScheduling] = useState(false);
   const [replacingEntry, setReplacingEntry] = useState<AdminDailyEntry | null>(null);
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [autoFillResult, setAutoFillResult] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
   const loadSchedule = useCallback(async () => {
@@ -110,6 +112,22 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
     }
   };
 
+  const handleAutoFill = async (): Promise<void> => {
+    if (!confirm('Sonraki 30 günün boş tarihleri rastgele kelimelerle doldurulsun mu?')) return;
+    setAutoFilling(true);
+    setAutoFillResult('');
+    setError('');
+    try {
+      const result = await api.autoFillSchedule(secret, 30);
+      setAutoFillResult(`${result.scheduled} gün programlandı, ${result.skipped} gün zaten doluydu.`);
+      await loadSchedule();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Otomatik doldurulamadı');
+    } finally {
+      setAutoFilling(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Schedule a word */}
@@ -171,6 +189,19 @@ export default function DailyScheduler({ secret }: DailySchedulerProps): React.J
             Seçili: <span className="font-mono font-bold">{selectedWord.word}</span> — {selectedWord.meaning}
           </p>
         )}
+      </div>
+
+      {/* Auto-fill */}
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => void handleAutoFill()}
+          disabled={autoFilling}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary text-sm font-medium cursor-pointer hover:bg-bg-primary disabled:opacity-40 transition-colors"
+        >
+          <Wand2 size={15} />
+          {autoFilling ? 'Dolduruluyor...' : 'Otomatik Doldur (30 gün)'}
+        </button>
+        {autoFillResult && <span className="text-sm text-green-400">{autoFillResult}</span>}
       </div>
 
       {/* Date range filter */}

@@ -9,6 +9,7 @@ import SplashScreen from './components/SplashScreen';
 import Toast from './components/Toast';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import type { GameMode, WordLength } from './types';
 
 const GamePage = lazy(() => import('./components/GamePage'));
@@ -106,6 +107,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
+          <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

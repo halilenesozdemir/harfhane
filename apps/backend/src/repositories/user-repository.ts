@@ -71,3 +71,46 @@ export async function upsertGoogleUser(
 
   return createGoogleUser(db, googleId, email, username);
 }
+
+export interface ResetTokenRow {
+  id: number;
+  user_id: number;
+  token: string;
+  expires_at: string;
+}
+
+export async function createPasswordResetToken(
+  db: Env['DB'],
+  userId: number,
+  token: string,
+  expiresAt: string
+): Promise<void> {
+  await db.prepare('DELETE FROM password_reset_tokens WHERE user_id = ?').bind(userId).run();
+  await db
+    .prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)')
+    .bind(userId, token, expiresAt)
+    .run();
+}
+
+export function findValidPasswordResetToken(
+  db: Env['DB'],
+  token: string,
+  nowIso: string
+): Promise<ResetTokenRow | null> {
+  return db
+    .prepare('SELECT * FROM password_reset_tokens WHERE token = ? AND expires_at > ?')
+    .bind(token, nowIso)
+    .first<ResetTokenRow>();
+}
+
+export async function consumePasswordResetToken(
+  db: Env['DB'],
+  tokenId: number,
+  userId: number,
+  passwordHash: string
+): Promise<void> {
+  await db.batch([
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(passwordHash, userId),
+    db.prepare('DELETE FROM password_reset_tokens WHERE id = ?').bind(tokenId),
+  ]);
+}

@@ -11,6 +11,7 @@ import {
   adminRemoveDailyWord,
   adminBulkInsertWords,
   adminGetStats,
+  adminAutoFillSchedule,
   type ListWordsOptions,
 } from '../repositories/admin-repository';
 
@@ -94,4 +95,10 @@ export async function importWords(
 
 export async function getStats(db: Env['DB']) {
   return adminGetStats(db, todayUTC());
+}
+
+export async function autoFillDailySchedule(db: Env['DB'], days: number) {
+  const from = offsetDate(1);
+  const to = offsetDate(days);
+  return adminAutoFillSchedule(db, from, to);
 }
