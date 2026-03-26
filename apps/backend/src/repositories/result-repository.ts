@@ -106,38 +106,54 @@ export async function getUserStats(db: Env['DB'], userId: number): Promise<{
   return { totalPlayed, totalWon, winRate, currentStreak, maxStreak, guessDistribution };
 }
 
-export async function getLeaderboard(db: Env['DB'], limit = 50): Promise<LeaderboardRow[]> {
-  const rows = await db
-    .prepare(`
-      SELECT
-        gr.user_id,
-        u.username,
-        SUM(gr.won) AS total_won,
-        COUNT(*) AS total_played,
-        ROUND(SUM(gr.won) * 100.0 / COUNT(*), 1) AS win_rate,
-        COALESCE(xp.total_xp, 0) AS total_xp,
-        COALESCE(xp.level, 1) AS level
-      FROM game_results gr
-      JOIN users u ON u.id = gr.user_id
-      LEFT JOIN user_xp xp ON xp.user_id = gr.user_id
-      GROUP BY gr.user_id, u.username, xp.total_xp, xp.level
-      HAVING total_played >= 1
-      ORDER BY total_xp DESC, total_won DESC
-      LIMIT ?
-    `)
-    .bind(limit)
-    .all<Omit<LeaderboardRow, 'current_streak' | 'max_streak'>>();
+export type LeaderboardPeriod = 'all' | 'week' | 'month';
+
+function periodStartDate(period: LeaderboardPeriod): string | null {
+  if (period === 'all') return null;
+  const d = new Date();
+  d.setDate(d.getDate() - (period === 'week' ? 7 : 30));
+  return d.toISOString().slice(0, 10);
+}
+
+export async function getLeaderboard(
+  db: Env['DB'],
+  period: LeaderboardPeriod = 'all',
+  limit = 50
+): Promise<LeaderboardRow[]> {
+  const fromDate = periodStartDate(period);
+  const dateFilter = fromDate ? 'AND gr.date >= ?' : '';
+  const orderBy = period === 'all'
+    ? 'ORDER BY total_xp DESC, total_won DESC'
+    : 'ORDER BY total_won DESC, win_rate DESC';
+
+  const query = db.prepare(`
+    SELECT
+      gr.user_id,
+      u.username,
+      SUM(gr.won) AS total_won,
+      COUNT(*) AS total_played,
+      ROUND(SUM(gr.won) * 100.0 / COUNT(*), 1) AS win_rate,
+      COALESCE(xp.total_xp, 0) AS total_xp,
+      COALESCE(xp.level, 1) AS level
+    FROM game_results gr
+    JOIN users u ON u.id = gr.user_id
+    LEFT JOIN user_xp xp ON xp.user_id = gr.user_id
+    WHERE 1=1 ${dateFilter}
+    GROUP BY gr.user_id, u.username, xp.total_xp, xp.level
+    HAVING total_played >= 1
+    ${orderBy}
+    LIMIT ?
+  `);
+
+  const bound = fromDate ? query.bind(fromDate, limit) : query.bind(limit);
+  const rows = await bound.all<Omit<LeaderboardRow, 'current_streak' | 'max_streak'>>();
 
   if (!rows.results?.length) return [];
 
   const result: LeaderboardRow[] = [];
   for (const row of rows.results) {
     const stats = await getUserStats(db, row.user_id);
-    result.push({
-      ...row,
-      current_streak: stats.currentStreak,
-      max_streak: stats.maxStreak,
-    });
+    result.push({ ...row, current_streak: stats.currentStreak, max_streak: stats.maxStreak });
   }
 
   return result;

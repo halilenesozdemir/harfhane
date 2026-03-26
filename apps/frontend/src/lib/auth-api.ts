@@ -77,8 +77,10 @@ export interface LeaderboardRow {
   level: number;
 }
 
-export function getLeaderboard(): Promise<{ leaderboard: LeaderboardRow[] }> {
-  return request<{ leaderboard: LeaderboardRow[] }>('/results/leaderboard');
+export type LeaderboardPeriod = 'all' | 'week' | 'month';
+
+export function getLeaderboard(period: LeaderboardPeriod = 'all'): Promise<{ leaderboard: LeaderboardRow[] }> {
+  return request<{ leaderboard: LeaderboardRow[] }>(`/results/leaderboard?period=${period}`);
 }
 
 export function initiateGoogleLogin(): void {

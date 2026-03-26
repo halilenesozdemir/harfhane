@@ -63,7 +63,7 @@
         ]
       }
     ],
-    "PostStopSession": [
+    "SessionEnd": [
       {
         "hooks": [
           {

@@ -4,7 +4,7 @@ import type { Env } from '../types/env';
 import type { GameXPResult } from '@nurdle/shared';
 import { requireAuth } from '../middleware/auth-middleware';
 import { saveResultSchema } from '../schemas/auth-schemas';
-import { saveResult, getUserStats, getLeaderboard } from '../repositories/result-repository';
+import { saveResult, getUserStats, getLeaderboard, type LeaderboardPeriod } from '../repositories/result-repository';
 import { processGameXP } from '../services/gamification-service';
 
 type ResultEnv = { Bindings: Env; Variables: { userId: number } };
@@ -35,8 +35,14 @@ results.get('/me', requireAuth, async (c) => {
   return c.json({ data: stats });
 });
 
+const VALID_PERIODS = new Set<LeaderboardPeriod>(['all', 'week', 'month']);
+
 // Leaderboard (public)
 results.get('/leaderboard', async (c) => {
-  const rows = await getLeaderboard(c.env.DB);
+  const raw = c.req.query('period') ?? 'all';
+  const period: LeaderboardPeriod = VALID_PERIODS.has(raw as LeaderboardPeriod)
+    ? (raw as LeaderboardPeriod)
+    : 'all';
+  const rows = await getLeaderboard(c.env.DB, period);
   return c.json({ data: { leaderboard: rows } });
 });
