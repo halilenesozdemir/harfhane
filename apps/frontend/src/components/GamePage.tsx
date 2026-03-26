@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Header from './Header';
 import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
@@ -11,6 +11,7 @@ import AuthModal from './AuthModal';
 import LeaderboardModal from './LeaderboardModal';
 import ProfileModal from './ProfileModal';
 import { useGameState } from '../hooks/useGameState';
+import { useGameModals } from '../hooks/useGameModals';
 import { useAuth } from '../context/AuthContext';
 import { useSessionChallenge } from '../hooks/useSessionChallenge';
 import WinConfetti from './WinConfetti';
@@ -24,84 +25,46 @@ interface GamePageProps {
 
 export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps): React.JSX.Element {
   const {
-    guesses,
-    evaluations,
-    currentGuess,
-    gameStatus,
-    keyboardStatus,
-    solution,
-    solutionEntry,
-    gameNumber,
-    stats,
-    isRevealing,
-    isLoading,
-    isError,
-    shakeRow,
-    message,
-    hasSeenHelp,
-    isUnlimited,
-    lastXPResult,
-    wordId,
-    addLetter,
-    removeLetter,
-    submitGuess,
-    setHasSeenHelp,
-    startNewGame,
+    guesses, evaluations, currentGuess, gameStatus, keyboardStatus,
+    solution, solutionEntry, gameNumber, stats, isRevealing,
+    isLoading, isError, shakeRow, message, hasSeenHelp,
+    isUnlimited, lastXPResult, wordId,
+    addLetter, removeLetter, submitGuess, setHasSeenHelp, startNewGame,
   } = useGameState(mode, wordLength);
+
+  const { token } = useAuth();
+  const sessionChallenge = useSessionChallenge();
+
+  const modals = useGameModals({
+    gameStatus,
+    isUnlimited,
+    onGameEnd: (won) => sessionChallenge.record(won),
+  });
+
+  useEffect(() => {
+    if (!hasSeenHelp) {
+      modals.openHelp();
+      setHasSeenHelp(true);
+    }
+  }, [hasSeenHelp, setHasSeenHelp]);
 
   const challengeUrl = isUnlimited && wordId
     ? `https://harfhane.app/c/${wordId}`
     : `https://harfhane.app/daily/${wordLength}`;
 
-  const { token } = useAuth();
-  const sessionChallenge = useSessionChallenge();
-
-  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
-  const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
-  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const [showLeaderboardModal, setShowLeaderboardModal] = useState<boolean>(false);
-  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!hasSeenHelp) {
-      setShowHelpModal(true);
-      setHasSeenHelp(true);
-    }
-  }, [hasSeenHelp, setHasSeenHelp]);
-
-  const prevGameStatus = useRef(gameStatus);
-
-  useEffect(() => {
-    const prev = prevGameStatus.current;
-    prevGameStatus.current = gameStatus;
-
-    if ((gameStatus === 'won' || gameStatus === 'lost') && prev === 'playing') {
-      if (isUnlimited) sessionChallenge.record(gameStatus === 'won');
-      const timer = setTimeout(() => setShowGameOverModal(true), 1500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [gameStatus, isUnlimited, sessionChallenge]);
-
   const handleKeyPress = (key: string): void => {
-    if (key === 'ENTER') {
-      submitGuess();
-    } else if (key === 'BACKSPACE') {
-      removeLetter();
-    } else {
-      addLetter(key);
-    }
+    if (key === 'ENTER') submitGuess();
+    else if (key === 'BACKSPACE') removeLetter();
+    else addLetter(key);
   };
 
   const handlePlayAgain = (): void => {
-    setShowGameOverModal(false);
+    modals.closeGameOver();
     startNewGame();
   };
 
   const handleGoHome = (): void => {
-    setShowGameOverModal(false);
+    modals.closeGameOver();
     onGoHome();
   };
 
@@ -138,15 +101,15 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col">
-      <WinConfetti active={gameStatus === 'won' && !showGameOverModal} />
+      <WinConfetti active={gameStatus === 'won' && !modals.showGameOver} />
       <Header
         onTitleClick={handleGoHome}
-        onHelpClick={() => setShowHelpModal(true)}
-        onStatsClick={() => setShowStatsModal(true)}
-        onSettingsClick={() => setShowSettingsModal(true)}
-        onLeaderboardClick={() => setShowLeaderboardModal(true)}
-        onAuthClick={() => setShowAuthModal(true)}
-        onProfileClick={() => setShowProfileModal(true)}
+        onHelpClick={modals.openHelp}
+        onStatsClick={modals.openStats}
+        onSettingsClick={modals.openSettings}
+        onLeaderboardClick={modals.openLeaderboard}
+        onAuthClick={modals.openAuth}
+        onProfileClick={modals.openProfile}
         modeLabel={modeLabel}
       />
       <Toast message={message} />
@@ -162,18 +125,18 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         />
       </main>
       <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
-      <HowToPlayModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
+      <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />
       <StatsModal
-        isOpen={showStatsModal}
-        onClose={() => setShowStatsModal(false)}
+        isOpen={modals.showStats}
+        onClose={modals.closeStats}
         stats={stats}
         lastGuessCount={guesses.length}
         gameStatus={gameStatus}
         isUnlimited={isUnlimited}
       />
       <GameOverModal
-        isOpen={showGameOverModal}
-        onClose={() => setShowGameOverModal(false)}
+        isOpen={modals.showGameOver}
+        onClose={modals.closeGameOver}
         gameStatus={gameStatus}
         solution={solution}
         solutionEntry={solutionEntry}
@@ -185,15 +148,15 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
         isAuthenticated={!!token}
         onPlayAgain={handlePlayAgain}
         onGoHome={handleGoHome}
-        onAuthClick={() => setShowAuthModal(true)}
+        onAuthClick={modals.openAuth}
         xpResult={lastXPResult}
         sessionChallenge={isUnlimited ? sessionChallenge : undefined}
         challengeUrl={challengeUrl}
       />
-      <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <LeaderboardModal isOpen={showLeaderboardModal} onClose={() => setShowLeaderboardModal(false)} />
-      <ProfileModal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} />
+      <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />
+      <AuthModal isOpen={modals.showAuth} onClose={modals.closeAuth} />
+      <LeaderboardModal isOpen={modals.showLeaderboard} onClose={modals.closeLeaderboard} />
+      <ProfileModal isOpen={modals.showProfile} onClose={modals.closeProfile} />
     </div>
   );
 }

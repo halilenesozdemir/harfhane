@@ -10,7 +10,7 @@ export interface SessionChallenge {
 
 // Game types
 export type GameStatus = 'playing' | 'won' | 'lost';
-export type GameMode = 'daily' | 'unlimited' | 'slug';
+export type GameMode = 'daily' | 'unlimited' | 'slug' | 'tournament';
 export type WordLength = 4 | 5 | 6;
 export type TileStatus = 'correct' | 'present' | 'absent' | null;
 export type Theme = 'light' | 'dark' | 'system';

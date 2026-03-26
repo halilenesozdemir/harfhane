@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
+import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield, Award } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import HowToPlayModal from "./HowToPlayModal";
@@ -101,6 +101,23 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       )}
 
       <div className="w-full max-w-md space-y-3">
+        {user && (
+          <button
+            onClick={() => onSelectMode("tournament", 5)}
+            className="w-full bg-amber-500 hover:bg-amber-500/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                <Award size={26} />
+              </div>
+              <div className="text-left">
+                <h2 className="text-xl font-bold">Yarışma</h2>
+                <p className="text-white/75 text-sm">Rastgele kelimeler, puan topla, sıralamada yüksel.</p>
+              </div>
+            </div>
+          </button>
+        )}
+
         <button
           onClick={() => onSelectMode("daily", 5)}
           className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"

@@ -111,7 +111,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
                   >
                     {isSubscribed ? <Bell size={20} /> : <BellOff size={20} />}
                     <span className="flex-1 text-left font-medium">
-                      {isLoading ? 'Bekle...' : isSubscribed ? 'Tarayıcı bildirimi açık' : 'Tarayıcı bildirimi kapat'}
+                      {isLoading ? 'Bekle...' : isSubscribed ? 'Tarayıcı bildirimi açık' : 'Tarayıcı bildirimi kapalı'}
                     </span>
                     {isSubscribed && <Check size={18} />}
                   </button>
