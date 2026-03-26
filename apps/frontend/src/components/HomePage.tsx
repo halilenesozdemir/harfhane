@@ -9,7 +9,7 @@ import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
-const ONBOARDING_KEY = 'nurdle:onboarding-done';
+const HAS_SEEN_HELP_KEY = 'nurdle:has-seen-help';
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();
@@ -20,7 +20,8 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { data: profileData } = useProfile(token);
 
   useEffect(() => {
-    if (!localStorage.getItem(ONBOARDING_KEY)) {
+    const seen = localStorage.getItem(HAS_SEEN_HELP_KEY);
+    if (!seen || seen === 'false') {
       setShowHelp(true);
     }
   }, []);
@@ -190,7 +191,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         <p className="text-text-secondary/50 text-xs">v3.0.0</p>
       </div>
 
-      <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(ONBOARDING_KEY, '1'); setShowHelp(false); }} />
+      <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(HAS_SEEN_HELP_KEY, JSON.stringify(true)); setShowHelp(false); }} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
