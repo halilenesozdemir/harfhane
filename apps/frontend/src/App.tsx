@@ -17,6 +17,7 @@ const HomePage = lazy(() => import('./components/HomePage'));
 const ListsPage = lazy(() => import('./components/ListsPage'));
 const SlugGame = lazy(() => import('./components/SlugGame'));
 const ChallengeGame = lazy(() => import('./components/ChallengeGame'));
+const TournamentPage = lazy(() => import('./components/TournamentPage'));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -54,7 +55,13 @@ function HomeRoute(): React.JSX.Element {
   return (
     <>
       <HomePage
-        onSelectMode={(mode: GameMode, length: WordLength) => navigate(`/${mode}/${length}`)}
+        onSelectMode={(mode: GameMode, length: WordLength) => {
+          if (mode === 'tournament') {
+            navigate('/tournament');
+            return;
+          }
+          navigate(`/${mode}/${length}`);
+        }}
       />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <Toast message={welcomeMessage} />
@@ -86,6 +93,11 @@ function SlugRoute(): React.JSX.Element {
   );
 }
 
+function TournamentRoute(): React.JSX.Element {
+  const navigate = useNavigate();
+  return <TournamentPage onGoHome={() => navigate('/')} />;
+}
+
 function ChallengeRoute(): React.JSX.Element {
   const { wordId } = useParams<{ wordId: string }>();
   const navigate = useNavigate();
@@ -107,6 +119,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
+          <Route path="/tournament" element={<TournamentRoute />} />
           <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -11,6 +11,7 @@ import { gamification } from './routes/gamification';
 import { push } from './routes/push';
 import { notifications } from './routes/notifications';
 import { profile } from './routes/profile';
+import { tournament } from './routes/tournament';
 import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
 import { sendPushNotification } from './utils/web-push';
 import { getUsersForEmailReminder } from './repositories/notification-repository';
@@ -49,6 +50,7 @@ app.route('/api/xp', gamification);
 app.route('/api/push', push);
 app.route('/api/notifications', notifications);
 app.route('/api/profile', profile);
+app.route('/api/tournament', tournament);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {
