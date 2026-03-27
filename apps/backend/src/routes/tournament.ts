@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import type { Env } from '../types/env';
 import { requireAuth } from '../middleware/auth-middleware';
+import { gameRateLimiter } from '../middleware/rate-limiter';
 import {
   getTournamentWord,
   saveTournamentResult,
@@ -51,6 +52,8 @@ tournament.get('/word', requireAuth, async (c) => {
     },
   });
 });
+
+tournament.use('/result', gameRateLimiter);
 
 tournament.post(
   '/result',

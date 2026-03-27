@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import type { GameXPResult } from '@harfhane/shared';
 import { requireAuth } from '../middleware/auth-middleware';
+import { gameRateLimiter } from '../middleware/rate-limiter';
 import { saveResultSchema } from '../schemas/auth-schemas';
 import { saveResult, getUserStats, getUnlimitedStats, getLeaderboard, type LeaderboardPeriod } from '../repositories/result-repository';
 import { processGameXP } from '../services/gamification-service';
@@ -10,6 +11,8 @@ import { processGameXP } from '../services/gamification-service';
 type ResultEnv = { Bindings: Env; Variables: { userId: number } };
 
 export const results = new Hono<ResultEnv>();
+
+results.use('/', gameRateLimiter);
 
 results.post('/', requireAuth, zValidator('json', saveResultSchema), async (c) => {
   const userId = c.get('userId');

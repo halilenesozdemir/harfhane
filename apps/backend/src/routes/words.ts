@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { dailyWordQuerySchema, randomWordQuerySchema, validateWordBodySchema } from '../schemas/word-schemas';
 import { getDailyWord, getRandomWord, getWordById, validateWord } from '../services/word-service';
+import { gameRateLimiter } from '../middleware/rate-limiter';
 
 const words = new Hono<{ Bindings: Env }>();
 
@@ -44,6 +45,8 @@ words.get('/challenge/:wordId', async (c) => {
   const result = await getWordById(c.env.DB, wordId);
   return c.json({ data: result });
 });
+
+words.use('/validate', gameRateLimiter);
 
 words.post(
   '/validate',
