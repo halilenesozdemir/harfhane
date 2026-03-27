@@ -148,3 +148,94 @@ describe('DELETE /api/auth/account', () => {
     expect(check).toBeNull();
   });
 });
+
+describe('POST /api/auth/forgot-password', () => {
+  it('should create reset token in DB for valid email', async () => {
+    await env.DB.prepare('DELETE FROM password_reset_tokens WHERE user_id = ?').bind(loginUserId).run();
+
+    await SELF.fetch('http://example.com/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'login@test.com' }),
+    });
+
+    const token = await env.DB
+      .prepare('SELECT id FROM password_reset_tokens WHERE user_id = ?')
+      .bind(loginUserId)
+      .first();
+    expect(token).toBeTruthy();
+  });
+
+  it('should return 200 with sent:true for non-existent email', async () => {
+    const res = await SELF.fetch('http://example.com/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'nobody@test.com' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { sent: boolean } };
+    expect(body.data.sent).toBe(true);
+  });
+
+  it('should return 400 for invalid email format', async () => {
+    const res = await SELF.fetch('http://example.com/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'not-an-email' }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /api/auth/reset-password', () => {
+  it('should return 400 for invalid token', async () => {
+    const res = await SELF.fetch('http://example.com/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: 'invalidtoken', password: 'newpassword123' }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: { code: string } };
+    expect(body.error.code).toBe('INVALID_TOKEN');
+  });
+
+  it('should return 200 and update password for valid token', async () => {
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const validToken = 'a'.repeat(64);
+    await env.DB
+      .prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)')
+      .bind(loginUserId, validToken, expiresAt)
+      .run();
+
+    const res = await SELF.fetch('http://example.com/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: validToken, password: 'newpassword123' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { success: boolean } };
+    expect(body.data.success).toBe(true);
+
+    const tokenCheck = await env.DB
+      .prepare('SELECT id FROM password_reset_tokens WHERE token = ?')
+      .bind(validToken)
+      .first();
+    expect(tokenCheck).toBeNull();
+  });
+
+  it('should return 400 for expired token', async () => {
+    const expiredAt = new Date(Date.now() - 1000).toISOString();
+    const expiredToken = 'b'.repeat(64);
+    await env.DB
+      .prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)')
+      .bind(loginUserId, expiredToken, expiredAt)
+      .run();
+
+    const res = await SELF.fetch('http://example.com/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: expiredToken, password: 'newpassword123' }),
+    });
+    expect(res.status).toBe(400);
+  });
+});

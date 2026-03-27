@@ -8,6 +8,7 @@ import { NOT_FOUND } from '../errors/api-error';
 import {
   upsertDuel,
   recordOpponentResult,
+  getDuel,
   getDuelForUser,
   type DuelRow,
 } from '../repositories/duel-repository';
@@ -55,7 +56,7 @@ duels.post('/', requireAuth, zValidator('json', registerDuelSchema), async (c) =
   const userId = c.get('userId');
   const { word_id, guesses, won } = c.req.valid('json');
 
-  const existing = await getDuelForUser(c.env.DB, word_id, userId);
+  const existing = await getDuel(c.env.DB, word_id);
 
   if (existing && existing.challenger_id !== userId) {
     await recordOpponentResult(c.env.DB, word_id, userId, guesses, won);
