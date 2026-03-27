@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import type { Env } from '../types/env';
-import type { DuelPublic } from '@nurdle/shared';
+import type { DuelPublic } from '@harfhane/shared';
 import { requireAuth } from '../middleware/auth-middleware';
 import { NOT_FOUND } from '../errors/api-error';
 import {

@@ -1,4 +1,4 @@
-import type { WordEntry } from '@nurdle/shared';
+import type { WordEntry } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
 

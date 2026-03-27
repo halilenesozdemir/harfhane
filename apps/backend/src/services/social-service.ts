@@ -1,4 +1,4 @@
-import type { ListLikeResponse, ListComment, ListCommentsResponse, AddCommentResponse } from '@nurdle/shared';
+import type { ListLikeResponse, ListComment, ListCommentsResponse, AddCommentResponse } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, FORBIDDEN } from '../errors/api-error';
 import {

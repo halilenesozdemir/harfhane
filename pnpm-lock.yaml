@@ -10,7 +10,7 @@ importers:
 
   apps/backend:
     dependencies:
-      '@nurdle/shared':
+      '@harfhane/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       hono:
@@ -41,7 +41,7 @@ importers:
 
   apps/frontend:
     dependencies:
-      '@nurdle/shared':
+      '@harfhane/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@tanstack/react-query':

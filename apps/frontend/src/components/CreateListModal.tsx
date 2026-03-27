@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCreateList, useAddWords } from '../hooks/useUserLists';
-import type { AddWordsResult } from '@nurdle/shared';
+import type { AddWordsResult } from '@harfhane/shared';
 
 interface CreateListModalProps {
   isOpen: boolean;

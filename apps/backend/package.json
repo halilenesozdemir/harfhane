@@ -1,5 +1,5 @@
 {
-  "name": "@nurdle/backend",
+  "name": "@harfhane/backend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -14,7 +14,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply nurdle-db --remote"
   },
   "dependencies": {
-    "@nurdle/shared": "workspace:*",
+    "@harfhane/shared": "workspace:*",
     "hono": "^4.7.0",
     "zod": "^3.25.0"
   },

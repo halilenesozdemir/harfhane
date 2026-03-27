@@ -1,5 +1,5 @@
 import type { Env } from '../types/env';
-import type { Badge, XPProfile } from '@nurdle/shared';
+import type { Badge, XPProfile } from '@harfhane/shared';
 
 export interface UserXPRow {
   user_id: number;

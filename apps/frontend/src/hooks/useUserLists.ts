@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateListInput, AddWordsInput, UpdateListInput } from '@nurdle/shared';
+import type { CreateListInput, AddWordsInput, UpdateListInput } from '@harfhane/shared';
 import { fetchMyLists, createList, updateList, deleteList, addWordsToList } from '../lib/api';
 
 export function useMyLists(token: string | null) {

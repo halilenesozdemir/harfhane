@@ -1,4 +1,4 @@
-import type { WordList } from '@nurdle/shared';
+import type { WordList } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { ApiError, NOT_FOUND } from '../errors/api-error';
 import {

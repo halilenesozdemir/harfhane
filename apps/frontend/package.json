@@ -1,5 +1,5 @@
 {
-  "name": "@nurdle/frontend",
+  "name": "@harfhane/frontend",
   "private": true,
   "version": "2.2.0",
   "type": "module",
@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@nurdle/shared": "workspace:*",
+    "@harfhane/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.16",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",

@@ -1,16 +1,16 @@
 {
-  "name": "nurdle",
+  "name": "harfhane",
   "private": true,
   "version": "3.0.0",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"@nurdle/*\" run dev",
-    "dev:frontend": "pnpm --filter @nurdle/frontend run dev",
-    "dev:backend": "pnpm --filter @nurdle/backend run dev",
-    "build": "pnpm --filter @nurdle/shared run build && pnpm --parallel --filter \"@nurdle/frontend\" --filter \"@nurdle/backend\" run build",
+    "dev": "pnpm --parallel --filter \"@harfhane/*\" run dev",
+    "dev:frontend": "pnpm --filter @harfhane/frontend run dev",
+    "dev:backend": "pnpm --filter @harfhane/backend run dev",
+    "build": "pnpm --filter @harfhane/shared run build && pnpm --parallel --filter \"@harfhane/frontend\" --filter \"@harfhane/backend\" run build",
     "typecheck": "pnpm --recursive run typecheck",
     "lint": "pnpm --recursive run lint",
-    "test": "pnpm --filter @nurdle/backend run test"
+    "test": "pnpm --filter @harfhane/backend run test"
   }
 }

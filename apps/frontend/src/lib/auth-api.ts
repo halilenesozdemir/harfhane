@@ -53,7 +53,7 @@ export function getMe(token: string): Promise<AuthUser> {
   return request<AuthUser>('/auth/me', { headers: { ...authHeader(token), 'Content-Type': 'application/json' } });
 }
 
-import type { GameXPResult } from '@nurdle/shared';
+import type { GameXPResult } from '@harfhane/shared';
 
 export function saveResult(
   token: string,
@@ -66,8 +66,8 @@ export function saveResult(
   });
 }
 
-export function getXPProfile(token: string): Promise<import('@nurdle/shared').XPProfile> {
-  return request<import('@nurdle/shared').XPProfile>('/xp/me', {
+export function getXPProfile(token: string): Promise<import('@harfhane/shared').XPProfile> {
+  return request<import('@harfhane/shared').XPProfile>('/xp/me', {
     headers: { ...authHeader(token), 'Content-Type': 'application/json' },
   });
 }

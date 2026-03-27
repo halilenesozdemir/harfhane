@@ -3,7 +3,7 @@ import { ArrowRight, ArrowLeft, Search, Plus, Heart, MessageCircle } from "lucid
 import { usePublicLists } from "../hooks/useWordApi";
 import { useAuth } from "../context/AuthContext";
 import CreateListModal from "./CreateListModal";
-import type { WordList } from "@nurdle/shared";
+import type { WordList } from "@harfhane/shared";
 
 interface ListsPageProps {
   onGoHome: () => void;

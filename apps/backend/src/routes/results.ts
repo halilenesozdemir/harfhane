@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
-import type { GameXPResult } from '@nurdle/shared';
+import type { GameXPResult } from '@harfhane/shared';
 import { requireAuth } from '../middleware/auth-middleware';
 import { saveResultSchema } from '../schemas/auth-schemas';
 import { saveResult, getUserStats, getUnlimitedStats, getLeaderboard, type LeaderboardPeriod } from '../repositories/result-repository';

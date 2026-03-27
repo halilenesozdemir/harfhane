@@ -1,4 +1,4 @@
-import type { WordList, WordListResponse, WordListsResponse, AddWordsResult, UpdateListInput } from '@nurdle/shared';
+import type { WordList, WordListResponse, WordListsResponse, AddWordsResult, UpdateListInput } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, FORBIDDEN, CONFLICT } from '../errors/api-error';
 import { normalizeWord } from '../utils/normalize';

@@ -1,4 +1,4 @@
-import type { DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@nurdle/shared';
+import type { DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
 import {

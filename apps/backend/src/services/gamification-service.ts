@@ -1,5 +1,5 @@
 import type { Env } from '../types/env';
-import type { GameXPResult } from '@nurdle/shared';
+import type { GameXPResult } from '@harfhane/shared';
 import {
   getUserXP,
   upsertUserXP,
