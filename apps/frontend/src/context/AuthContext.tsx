@@ -45,11 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const [googleAuthFailed, setGoogleAuthFailed] = useState(false);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [isAuthCallback] = useState(() => {
+    if (window.location.pathname !== '/') return false;
     const params = new URLSearchParams(window.location.search);
     return params.has('token') || params.has('auth_error');
   });
 
   useEffect(() => {
+    if (window.location.pathname !== '/') return;
     const params = new URLSearchParams(window.location.search);
     const googleToken = params.get('token');
     const authError = params.get('auth_error');
