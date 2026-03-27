@@ -21,6 +21,7 @@ function isTokenExpiringSoon(token: string): boolean {
 }
 
 const TOKEN_KEY = 'harfhane:token';
+const REFRESH_CHECK_INTERVAL_MS = 10 * 60 * 1000;
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -96,6 +97,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     };
 
     void resolveUser();
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const silentRefresh = async (): Promise<void> => {
+      if (!isTokenExpiringSoon(token)) return;
+      try {
+        const refreshed = await authApi.refreshToken(token);
+        localStorage.setItem(TOKEN_KEY, refreshed.token);
+        setToken(refreshed.token);
+        setUser(refreshed.user);
+      } catch {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+      }
+    };
+
+    const interval = setInterval(() => void silentRefresh(), REFRESH_CHECK_INTERVAL_MS);
+    const handleVisibility = (): void => {
+      if (document.visibilityState === 'visible') void silentRefresh();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [token]);
 
   const clearJustLoggedIn = useCallback((): void => setJustLoggedIn(false), []);
