@@ -86,6 +86,7 @@ body {
 .tile-flip-delay-2 { animation-delay: 0.2s; }
 .tile-flip-delay-3 { animation-delay: 0.3s; }
 .tile-flip-delay-4 { animation-delay: 0.4s; }
+.tile-flip-delay-5 { animation-delay: 0.5s; }
 
 @keyframes flip {
   0% { transform: rotateX(0deg); }

@@ -142,7 +142,7 @@ export function useTournamentGame(): TournamentGameReturn {
         showMessage(`Kelime: ${solution}`, 5000);
         void saveResult(false, newGuesses.length);
       }
-    }, wordLength * 300 + 200);
+    }, wordLength * 100 + 500);
   }, [solution, gameState, wordLength, showMessage, saveResult]);
 
   const submitGuess = useCallback((): void => {

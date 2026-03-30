@@ -164,7 +164,7 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
       if (hasDaily && newGameStatus !== 'playing') {
         setDailyPersistedState({ date: today, guesses: newGuesses, evaluations: newEvaluations, gameStatus: newGameStatus, keyboardStatus: newKeyboardStatus });
       }
-    }, wordLength * 300 + 200);
+    }, wordLength * 100 + 500);
   }, [solution, gameState.guesses, gameState.evaluations, gameState.keyboardStatus, wordLength, hasDaily, today, showMessage, setSlugStats, setDailyPersistedState]);
 
   const submitGuess = useCallback((): void => {

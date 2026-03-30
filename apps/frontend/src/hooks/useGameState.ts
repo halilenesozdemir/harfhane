@@ -116,7 +116,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
         showMessage(`Kelime: ${solution}`, 5000);
         updateStats(false, 0);
       }
-    }, wordLength * 300 + 200);
+    }, wordLength * 100 + 500);
   }, [solution, gameState.guesses, gameState.evaluations, gameState.keyboardStatus, wordLength, setGameState, showMessage, updateStats]);
 
   const submitGuess = useCallback((): void => {
