@@ -194,7 +194,7 @@ export default function WordsManager({ secret }: WordsManagerProps): React.JSX.E
               />
             </label>
             <label className="col-span-2 flex flex-col gap-1">
-              <span className="text-xs font-medium text-text-secondary">Risale-i Nur'dan alıntı <span className="font-normal opacity-60">(opsiyonel)</span></span>
+              <span className="text-xs font-medium text-text-secondary">Örnek cümle <span className="font-normal opacity-60">(opsiyonel)</span></span>
               <input
                 value={form.context}
                 onChange={(e) => setForm((f) => ({ ...f, context: e.target.value }))}

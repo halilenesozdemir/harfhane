@@ -1,6 +1,6 @@
 # Project Rules — Nurdle
 
-> Nurdle: Risale-i Nur külliyatındaki kelimelerle oynanan Türkçe Wordle oyunu.
+> Harfhane: TDK kelime havuzuyla oynanan Türkçe Wordle oyunu.
 > Bu dosya Claude Code ve tüm subagent'lar tarafından okunur ve tüm kurallar bağlayıcıdır.
 
 ---

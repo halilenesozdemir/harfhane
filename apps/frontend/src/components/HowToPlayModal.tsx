@@ -54,22 +54,20 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps): React.JSX.Ele
 
         <div>
           <p className="font-bold mb-2">Örnekler</p>
-          
-          {/* Örnek 1 - Doğru */}
+
           <div className="mb-4">
             <div className="flex gap-1 mb-2">
-              <ExampleTile letter="N" status="correct" />
-              <ExampleTile letter="U" />
-              <ExampleTile letter="R" />
-              <ExampleTile letter="L" />
-              <ExampleTile letter="U" />
+              <ExampleTile letter="S" status="correct" />
+              <ExampleTile letter="A" />
+              <ExampleTile letter="B" />
+              <ExampleTile letter="A" />
+              <ExampleTile letter="H" />
             </div>
             <p className="text-sm text-text-secondary">
-              <strong className="text-text-primary">N</strong> harfi kelimede var ve doğru yerde.
+              <strong className="text-text-primary">S</strong> harfi kelimede var ve doğru yerde.
             </p>
           </div>
 
-          {/* Örnek 2 - Yanlış pozisyon */}
           <div className="mb-4">
             <div className="flex gap-1 mb-2">
               <ExampleTile letter="S" />
@@ -83,7 +81,6 @@ const HowToPlayModal = ({ isOpen, onClose }: HowToPlayModalProps): React.JSX.Ele
             </p>
           </div>
 
-          {/* Örnek 3 - Yok */}
           <div className="mb-4">
             <div className="flex gap-1 mb-2">
               <ExampleTile letter="Ş" />

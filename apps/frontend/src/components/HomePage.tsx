@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield, Award } from "lucide-react";
+import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import HowToPlayModal from "./HowToPlayModal";
@@ -14,6 +14,7 @@ const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
+  const [selectedDailyLength, setSelectedDailyLength] = useState<WordLength>(5);
   const [showHelp, setShowHelp] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -89,7 +90,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
           {!profileData?.playedToday && (
             <button
-              onClick={() => onSelectMode("daily", 5)}
+              onClick={() => onSelectMode("daily", selectedDailyLength)}
               className="w-full bg-present/10 border border-present/40 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-present/15 transition-colors"
             >
               <span className="text-sm font-semibold text-present">Bugün oynamadın!</span>
@@ -102,37 +103,37 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       )}
 
       <div className="w-full max-w-md space-y-3">
-        {user && (
+        <div className="w-full bg-correct/10 border border-correct/30 rounded-2xl overflow-hidden">
           <button
-            onClick={() => onSelectMode("tournament", 5)}
-            className="w-full bg-amber-500 hover:bg-amber-500/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+            onClick={() => onSelectMode("daily", selectedDailyLength)}
+            className="w-full p-5 text-left cursor-pointer hover:bg-correct/5 transition-colors"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                <Award size={26} />
+              <div className="w-12 h-12 bg-correct/20 rounded-xl flex items-center justify-center shrink-0">
+                <Calendar size={26} className="text-correct" />
               </div>
-              <div className="text-left">
-                <h2 className="text-xl font-bold">Yarışma</h2>
-                <p className="text-white/75 text-sm">Rastgele kelimeler, puan topla, sıralamada yüksel.</p>
+              <div>
+                <h2 className="text-xl font-bold text-text-primary">Günlük Oyun</h2>
+                <p className="text-text-secondary text-sm">Günün kelimesi. Herkes aynı kelimeyi çözer.</p>
               </div>
             </div>
           </button>
-        )}
-
-        <button
-          onClick={() => onSelectMode("daily", 5)}
-          className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-              <Calendar size={26} />
-            </div>
-            <div className="text-left">
-              <h2 className="text-xl font-bold">Günlük Oyun</h2>
-              <p className="text-white/75 text-sm">5 harflik günün kelimesi. Herkes aynı kelimeyi çözer.</p>
-            </div>
+          <div className="flex gap-2 px-5 pb-4">
+            {WORD_LENGTHS.map((len) => (
+              <button
+                key={len}
+                onClick={() => setSelectedDailyLength(len)}
+                className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
+                  selectedDailyLength === len
+                    ? "bg-correct text-white shadow-sm"
+                    : "bg-tile-empty text-text-secondary hover:bg-tile-filled"
+                }`}
+              >
+                {len} harf
+              </button>
+            ))}
           </div>
-        </button>
+        </div>
 
         <div className="w-full bg-present/10 border border-present/30 rounded-2xl overflow-hidden">
           <button
@@ -186,10 +187,6 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
           </div>
         </button>
       )}
-
-      <div className="mt-6 text-center">
-        <p className="text-text-secondary/50 text-xs">v3.0.0</p>
-      </div>
 
       <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(HAS_SEEN_HELP_KEY, JSON.stringify(true)); setShowHelp(false); }} />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
