@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 import { registerServiceWorker } from './utils/registerSW'
+import { migrateLocalStorage, migrateSessionStorage } from './utils/migrateStorage'
 
-// Service Worker'ı kaydet (PWA)
+migrateLocalStorage();
+migrateSessionStorage();
 registerServiceWorker();
 
 const rootElement = document.getElementById('root');

@@ -36,7 +36,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
 
   const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token, wordId });
 
-  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`nurdle:game:${todayString}:${wordLength}`, {
+  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`harfhane:game:${todayString}:${wordLength}`, {
     guesses: [],
     evaluations: [],
     currentGuess: '',
@@ -55,7 +55,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const gameState = isUnlimited ? unlimitedGameState : dailyGameState;
   const setGameState = isUnlimited ? setUnlimitedGameState : setDailyGameState;
 
-  const [hasSeenHelp, setHasSeenHelp] = useLocalStorage<boolean>('nurdle:has-seen-help', false);
+  const [hasSeenHelp, setHasSeenHelp] = useLocalStorage<boolean>('harfhane:has-seen-help', false);
   const [isRevealing, setIsRevealing] = useState<boolean>(false);
   const [shakeRow, setShakeRow] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');

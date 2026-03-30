@@ -68,12 +68,12 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
   const solutionEntry: WordEntry | null = wordData?.word ?? null;
   const gameNumber = hasDaily ? (dailyWordData?.gameNumber ?? 0) : 0;
 
-  const [slugStats, setSlugStats] = useLocalStorage<UnlimitedStats>(`nurdle:slug:${slug}:stats`, {
+  const [slugStats, setSlugStats] = useLocalStorage<UnlimitedStats>(`harfhane:slug:${slug}:stats`, {
     gamesPlayed: 0, gamesWon: 0, guessDistribution: [0, 0, 0, 0, 0, 0],
   });
 
   const [dailyPersistedState, setDailyPersistedState] = useLocalStorage<PersistedDailyState | null>(
-    `nurdle:slug:${slug}:daily:${today}`, null
+    `harfhane:slug:${slug}:daily:${today}`, null
   );
 
   const [gameState, setGameState] = useState<GameState>(EMPTY_GAME_STATE);

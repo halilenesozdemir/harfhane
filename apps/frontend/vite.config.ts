@@ -22,7 +22,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['nurdle-icon.svg', 'favicon.ico'],
+      includeAssets: ['harfhane-icon.svg', 'favicon.ico'],
       manifest: {
         name: 'Harfhane - Kelime Oyunu',
         short_name: 'Harfhane',
@@ -35,13 +35,13 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/nurdle-icon.svg',
+            src: '/harfhane-icon.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: '/nurdle-icon.svg',
+            src: '/harfhane-icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'

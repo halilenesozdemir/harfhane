@@ -163,7 +163,7 @@ function AppShell(): React.JSX.Element {
 
 function AdminApp(): React.JSX.Element {
   const [secret, setSecret] = useState<string | null>(
-    () => sessionStorage.getItem('nurdle-admin-secret')
+    () => sessionStorage.getItem('harfhane-admin-secret')
   );
   const [authError, setAuthError] = useState('');
 
@@ -178,7 +178,7 @@ function AdminApp(): React.JSX.Element {
         setAuthError('Geçersiz anahtar.');
         return;
       }
-      sessionStorage.setItem('nurdle-admin-secret', s);
+      sessionStorage.setItem('harfhane-admin-secret', s);
       setSecret(s);
     } catch {
       setAuthError('Bağlantı hatası.');
@@ -186,7 +186,7 @@ function AdminApp(): React.JSX.Element {
   };
 
   const handleLogout = (): void => {
-    sessionStorage.removeItem('nurdle-admin-secret');
+    sessionStorage.removeItem('harfhane-admin-secret');
     setSecret(null);
   };
 

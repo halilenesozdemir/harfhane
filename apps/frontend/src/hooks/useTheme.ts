@@ -8,7 +8,7 @@ import type { Theme, ThemeContextValue } from '../types';
  */
 export const useTheme = (): ThemeContextValue => {
   // Stored preference: 'light' | 'dark' | 'system'
-  const [themePreference, setThemePreference] = useLocalStorage<Theme>('nurdle:theme', 'system');
+  const [themePreference, setThemePreference] = useLocalStorage<Theme>('harfhane:theme', 'system');
   
   // Track system preference
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {

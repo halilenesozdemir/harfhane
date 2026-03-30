@@ -19,7 +19,7 @@ const InstallPrompt = (): React.JSX.Element | null => {
     }
 
     // Kullanıcı daha önce dismiss ettiyse gösterme
-    const dismissed = localStorage.getItem('nurdle:install-prompt-dismissed');
+    const dismissed = localStorage.getItem('harfhane:install-prompt-dismissed');
     if (dismissed) {
       const dismissTime = parseInt(dismissed);
       const daysSinceDismiss = (Date.now() - dismissTime) / (1000 * 60 * 60 * 24);
@@ -59,7 +59,7 @@ const InstallPrompt = (): React.JSX.Element | null => {
 
   const handleDismiss = (): void => {
     setShowPrompt(false);
-    localStorage.setItem('nurdle:install-prompt-dismissed', Date.now().toString());
+    localStorage.setItem('harfhane:install-prompt-dismissed', Date.now().toString());
   };
 
   if (isInstalled || !showPrompt || !deferredPrompt) {

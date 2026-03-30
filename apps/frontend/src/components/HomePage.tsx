@@ -9,7 +9,7 @@ import type { HomePageProps, WordLength } from "../types";
 
 const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 
-const HAS_SEEN_HELP_KEY = 'nurdle:has-seen-help';
+const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();

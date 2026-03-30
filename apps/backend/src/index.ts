@@ -48,10 +48,10 @@ app.use(
         'http://localhost:4173',
         'https://harfhane.app',
         'https://www.harfhane.app',
-        'https://nurdle.pages.dev',
+        'https://harfhane.pages.dev',
       ];
       if (allowed.includes(origin)) return origin;
-      if (origin.endsWith('.nurdle.pages.dev')) return origin;
+      if (origin.endsWith('.harfhane.pages.dev')) return origin;
       return null;
     },
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],

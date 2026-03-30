@@ -19,7 +19,7 @@ interface UseGameStatsReturn {
 }
 
 export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGameStatsOptions): UseGameStatsReturn {
-  const [stats, setStats] = useLocalStorage<DailyStats>(`nurdle:stats:${wordLength}`, {
+  const [stats, setStats] = useLocalStorage<DailyStats>(`harfhane:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
     currentStreak: 0,
@@ -28,7 +28,7 @@ export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGame
     lastPlayedDate: null,
   });
 
-  const [unlimitedStats, setUnlimitedStats] = useLocalStorage<UnlimitedStats>(`nurdle:unlimited:stats:${wordLength}`, {
+  const [unlimitedStats, setUnlimitedStats] = useLocalStorage<UnlimitedStats>(`harfhane:unlimited:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0],

@@ -10,6 +10,9 @@ import SettingsModal from './SettingsModal';
 import AuthModal from './AuthModal';
 import LeaderboardModal from './LeaderboardModal';
 import ProfileModal from './ProfileModal';
+import GameLoadingScreen from './GameLoadingScreen';
+import GameErrorScreen from './GameErrorScreen';
+import GameHint from './GameHint';
 import { useGameState } from '../hooks/useGameState';
 import { useGameModals } from '../hooks/useGameModals';
 import { useAuth } from '../context/AuthContext';
@@ -70,34 +73,8 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     onGoHome();
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-        <div className="text-tile-filled text-lg font-bold tracking-widest animate-pulse">
-          HARFHANE
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-text-primary text-xl font-semibold">
-          Bu kelime uzunluğu için henüz kelime eklenmedi.
-        </p>
-        <p className="text-text-secondary text-sm">
-          {wordLength} harflik kelimeler yakında geliyor.
-        </p>
-        <button
-          onClick={onGoHome}
-          className="mt-2 px-6 py-2 rounded bg-tile-correct text-white font-medium cursor-pointer hover:opacity-90"
-        >
-          Ana sayfaya dön
-        </button>
-      </div>
-    );
-  }
+  if (isLoading) return <GameLoadingScreen />;
+  if (isError) return <GameErrorScreen wordLength={wordLength} onGoHome={onGoHome} />;
 
   const modeLabel = isUnlimited ? 'Sınırsız' : 'Günlük';
 
@@ -125,21 +102,13 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
           gameStatus={gameStatus}
           wordLength={wordLength}
         />
-        {!isUnlimited && gameStatus === 'playing' && (
-          hintText ? (
-            <div className="text-xs text-text-secondary bg-bg-secondary border border-border-color rounded-full px-4 py-1.5">
-              {hintText}
-            </div>
-          ) : (
-            <button
-              onClick={revealHint}
-              disabled={hintUsed}
-              className="text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {hintUsed ? 'İpucu kullanıldı' : 'İpucu göster'}
-            </button>
-          )
-        )}
+        <GameHint
+          hintText={hintText}
+          hintUsed={hintUsed}
+          gameStatus={gameStatus}
+          isUnlimited={isUnlimited}
+          onRevealHint={revealHint}
+        />
       </main>
       <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
       <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />

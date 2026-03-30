@@ -25,10 +25,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared
-        run: pnpm --filter @nurdle/shared run build
+        run: pnpm --filter @harfhane/shared run build
 
       - name: Build frontend
-        run: pnpm --filter @nurdle/frontend run build
+        run: pnpm --filter @harfhane/frontend run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
@@ -37,4 +37,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: fd32026d220617d20fb552d13fb82abd
-          command: pages deploy apps/frontend/dist --project-name nurdle --branch main
+          command: pages deploy apps/frontend/dist --project-name harfhane --branch main

@@ -65,8 +65,8 @@ export const scheduleDailyReminder = async (): Promise<void> => {
     setTimeout(async () => {
       await registration.showNotification('Günlük Harfhane hazır!', {
         body: "Bugünün kelimesini tahmin etmeye hazır mısın?",
-        icon: '/nurdle-icon-192.png',
-        badge: '/nurdle-icon-192.png',
+        icon: '/harfhane-icon-192.png',
+        badge: '/harfhane-icon-192.png',
         tag: 'daily-reminder',
         requireInteraction: false,
       });
