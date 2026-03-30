@@ -23,6 +23,17 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const { token, user } = useAuth();
   const userKey = user?.id ?? 'anon';
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const anonKey = `harfhane:game:anon:${todayString}:${wordLength}`;
+    const userGameKey = `harfhane:game:${user.id}:${todayString}:${wordLength}`;
+    const anonData = localStorage.getItem(anonKey);
+    if (anonData && !localStorage.getItem(userGameKey)) {
+      localStorage.setItem(userGameKey, anonData);
+      localStorage.removeItem(anonKey);
+    }
+  }, [user?.id, todayString, wordLength]);
+
   const { data: dailyData, isLoading: isDailyLoading, isError: isDailyError } = useDailyWord(wordLength);
   const { data: randomData, isLoading: isRandomLoading, isError: isRandomError, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
 
