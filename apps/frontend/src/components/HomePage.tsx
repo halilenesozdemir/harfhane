@@ -14,7 +14,6 @@ const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
-  const [selectedDailyLength, setSelectedDailyLength] = useState<WordLength>(5);
   const [showHelp, setShowHelp] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -90,7 +89,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
           {!profileData?.playedToday && (
             <button
-              onClick={() => onSelectMode("daily", selectedDailyLength)}
+              onClick={() => onSelectMode("daily", 5)}
               className="w-full bg-present/10 border border-present/40 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-present/15 transition-colors"
             >
               <span className="text-sm font-semibold text-present">Bugün oynamadın!</span>
@@ -103,37 +102,20 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       )}
 
       <div className="w-full max-w-md space-y-3">
-        <div className="w-full bg-correct/10 border border-correct/30 rounded-2xl overflow-hidden">
-          <button
-            onClick={() => onSelectMode("daily", selectedDailyLength)}
-            className="w-full p-5 text-left cursor-pointer hover:bg-correct/5 transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-correct/20 rounded-xl flex items-center justify-center shrink-0">
-                <Calendar size={26} className="text-correct" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-text-primary">Günlük Oyun</h2>
-                <p className="text-text-secondary text-sm">Günün kelimesi. Herkes aynı kelimeyi çözer.</p>
-              </div>
+        <button
+          onClick={() => onSelectMode("daily", 5)}
+          className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+              <Calendar size={26} />
             </div>
-          </button>
-          <div className="flex gap-2 px-5 pb-4">
-            {WORD_LENGTHS.map((len) => (
-              <button
-                key={len}
-                onClick={() => setSelectedDailyLength(len)}
-                className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
-                  selectedDailyLength === len
-                    ? "bg-correct text-white shadow-sm"
-                    : "bg-tile-empty text-text-secondary hover:bg-tile-filled"
-                }`}
-              >
-                {len} harf
-              </button>
-            ))}
+            <div className="text-left">
+              <h2 className="text-xl font-bold">Günlük Oyun</h2>
+              <p className="text-white/75 text-sm">Günün 5 harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
+            </div>
           </div>
-        </div>
+        </button>
 
         <div className="w-full bg-present/10 border border-present/30 rounded-2xl overflow-hidden">
           <button
