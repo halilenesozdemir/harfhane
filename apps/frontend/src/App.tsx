@@ -29,7 +29,6 @@ const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkE
 const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
 const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
 const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
-const DailyDiscussPage = lazy(() => import('./components/DailyDiscussPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -110,11 +109,6 @@ function TournamentRoute(): React.JSX.Element {
   return <TournamentPage onGoHome={() => navigate('/')} />;
 }
 
-function DiscussRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  return <DailyDiscussPage onGoHome={() => navigate('/')} />;
-}
-
 function AppRoutes(): React.JSX.Element {
   return (
     <>
@@ -129,7 +123,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
           <Route path="/tournament" element={<TournamentRoute />} />
-          <Route path="/discuss" element={<DiscussRoute />} />
+          <Route path="/discuss" element={<Navigate to="/" replace />} />
           <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
