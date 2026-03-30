@@ -53,9 +53,10 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     }
   }, [hasSeenHelp, setHasSeenHelp]);
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://harfhane.app';
   const challengeUrl = isUnlimited && wordId
-    ? `https://harfhane.app/c/${wordId}`
-    : `https://harfhane.app/daily/${wordLength}`;
+    ? `${origin}/c/${wordId}`
+    : `${origin}/daily/${wordLength}`;
 
   const handleKeyPress = (key: string): void => {
     if (key === 'ENTER') submitGuess();

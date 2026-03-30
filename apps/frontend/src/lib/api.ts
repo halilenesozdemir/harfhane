@@ -29,11 +29,16 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
     ...init,
   });
 
-  const json = (await res.json()) as { data: T } | ApiError;
+  let json: { data: T } | ApiError;
+  try {
+    json = (await res.json()) as { data: T } | ApiError;
+  } catch {
+    throw new Error(res.ok ? 'Geçersiz sunucu yanıtı' : `HTTP ${res.status}`);
+  }
 
   if (!res.ok) {
     const err = json as ApiError;
-    throw new Error(err.error?.message ?? 'API error');
+    throw new Error(err.error?.message ?? `HTTP ${res.status}`);
   }
 
   return (json as { data: T }).data;
@@ -85,8 +90,6 @@ export function validateWordInList(slug: string, word: string): Promise<Validate
   });
 }
 
-// --- User list management (auth required) ---
-
 export function fetchMyLists(token: string): Promise<WordListsResponse> {
   return request<WordListsResponse>('/lists/mine', undefined, token);
 }
@@ -106,8 +109,6 @@ export function deleteList(token: string, slug: string): Promise<{ success: bool
 export function addWordsToList(token: string, slug: string, input: AddWordsInput): Promise<AddWordsResult> {
   return request<AddWordsResult>(`/lists/${slug}/words`, { method: 'POST', body: JSON.stringify(input) }, token);
 }
-
-// --- Social (likes & comments) ---
 
 export function fetchListLikes(slug: string, token?: string): Promise<{ count: number; liked: boolean }> {
   return request<{ count: number; liked: boolean }>(`/lists/${slug}/likes`, undefined, token);
