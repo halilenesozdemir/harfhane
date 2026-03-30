@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, Swords, ShieldCheck, MessageSquare } from "lucide-react";
+import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, ShieldCheck, MessageSquare } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
 import { BadgeItem } from "./XPBar";
@@ -54,7 +54,6 @@ function GameOverModal({
     challengeUrl
   );
   const { share, copied, failed } = useShare(shareText);
-  const { share: copyChallenge, copied: challengeCopied } = useShare(challengeUrl ?? '');
 
   useEffect(() => {
     if (!isOpen || isUnlimited) return;
@@ -322,16 +321,6 @@ function GameOverModal({
               </>
             )}
           </button>
-
-          {challengeUrl && (
-            <button
-              onClick={copyChallenge}
-              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present/10 hover:bg-present/20 text-present border border-present/40 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
-            >
-              {challengeCopied ? <Check size={20} /> : <Swords size={20} />}
-              {challengeCopied ? 'Link kopyalandı!' : 'Arkadaşına meydan oku'}
-            </button>
-          )}
 
           {isUnlimited && (
             <button

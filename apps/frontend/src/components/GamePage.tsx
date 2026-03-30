@@ -32,7 +32,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     guesses, evaluations, currentGuess, gameStatus, keyboardStatus,
     solution, solutionEntry, gameNumber, stats, isRevealing,
     isLoading, isError, shakeRow, message, hasSeenHelp,
-    isUnlimited, lastXPResult, wordId,
+    isUnlimited, lastXPResult,
     addLetter, removeLetter, submitGuess, setHasSeenHelp, startNewGame,
   } = useGameState(mode, wordLength);
 
@@ -54,9 +54,7 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
   }, [hasSeenHelp, setHasSeenHelp]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://harfhane.app';
-  const challengeUrl = isUnlimited && wordId
-    ? `${origin}/c/${wordId}`
-    : `${origin}/daily/${wordLength}`;
+  const challengeUrl = `${origin}/daily/${wordLength}`;
 
   const handleKeyPress = (key: string): void => {
     if (key === 'ENTER') submitGuess();

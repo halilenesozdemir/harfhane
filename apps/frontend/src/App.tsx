@@ -28,7 +28,6 @@ const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkE
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
 const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
 const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
-const ChallengeGame = lazy(() => import('./components/ChallengeGame').catch(reloadOnChunkError));
 const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
 const DailyDiscussPage = lazy(() => import('./components/DailyDiscussPage').catch(reloadOnChunkError));
 
@@ -116,14 +115,6 @@ function DiscussRoute(): React.JSX.Element {
   return <DailyDiscussPage onGoHome={() => navigate('/')} />;
 }
 
-function ChallengeRoute(): React.JSX.Element {
-  const { wordId } = useParams<{ wordId: string }>();
-  const navigate = useNavigate();
-  const parsed = Number(wordId);
-  if (!Number.isInteger(parsed) || parsed <= 0) return <Navigate to="/" replace />;
-  return <ChallengeGame wordId={parsed} onGoHome={() => navigate('/')} />;
-}
-
 function AppRoutes(): React.JSX.Element {
   return (
     <>
@@ -132,7 +123,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/" element={<HomeRoute />} />
           <Route path="/lists" element={<ListsRoute />} />
           <Route path="/play/:slug" element={<SlugRoute />} />
-          <Route path="/c/:wordId" element={<ChallengeRoute />} />
+          <Route path="/c/:wordId" element={<Navigate to="/" replace />} />
           <Route path="/daily" element={<GameRoute mode="daily" />} />
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
