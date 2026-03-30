@@ -12,13 +12,25 @@ import AdminPanel from './components/admin/AdminPanel';
 import ResetPasswordPage from './components/ResetPasswordPage';
 import type { GameMode, WordLength } from './types';
 
-const GamePage = lazy(() => import('./components/GamePage'));
-const HomePage = lazy(() => import('./components/HomePage'));
-const ListsPage = lazy(() => import('./components/ListsPage'));
-const SlugGame = lazy(() => import('./components/SlugGame'));
-const ChallengeGame = lazy(() => import('./components/ChallengeGame'));
-const TournamentPage = lazy(() => import('./components/TournamentPage'));
-const DailyDiscussPage = lazy(() => import('./components/DailyDiscussPage'));
+const CHUNK_RELOAD_KEY = 'harfhane:chunk-reload';
+
+function reloadOnChunkError(): never {
+  const lastReload = sessionStorage.getItem(CHUNK_RELOAD_KEY);
+  const now = Date.now();
+  if (!lastReload || now - Number(lastReload) > 10_000) {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(now));
+    window.location.reload();
+  }
+  throw new Error('Chunk load failed');
+}
+
+const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
+const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
+const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
+const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
+const ChallengeGame = lazy(() => import('./components/ChallengeGame').catch(reloadOnChunkError));
+const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
+const DailyDiscussPage = lazy(() => import('./components/DailyDiscussPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
