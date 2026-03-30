@@ -1,6 +1,6 @@
 # Nurdle — Claude Code Kullanım Kılavuzu
 
-> Bu dosya, projedeki AI altyapısını günlük geliştirme sürecinde nasıl kullanacağını açıklar.
+> Bu dosya, Harfhane projesindeki AI altyapısını günlük geliştirme sürecinde nasıl kullanacağını açıklar.
 
 ---
 

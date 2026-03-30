@@ -4,128 +4,93 @@
 
 | Version | Supported          |
 |---------|--------------------|
-| 2.0.x   | ✅ Active          |
-| 1.0.x   | ✅ Security fixes  |
-| < 1.0   | ❌ Not supported   |
-
-## Security Model
-
-Nurdle is a **client-side only** application with no backend server.
-
-### Data Storage
-
-| Data Type | Storage | Sensitive |
-|-----------|---------|-----------|
-| Game state | localStorage | ❌ No |
-| Statistics | localStorage | ❌ No |
-| Theme preference | localStorage | ❌ No |
-| Word list | Static JSON (bundled) | ❌ No |
-
-- ✅ No user accounts or authentication
-- ✅ No server-side data collection
-- ✅ No cookies (only localStorage)
-- ✅ No third-party tracking
-- ✅ GDPR compliant by design
-
-### Known Limitations
-
-1. **Word List Visibility**: The word list is bundled in the client-side JavaScript and can be viewed by users. This is intentional and matches the original Wordle design.
-
-2. **localStorage Limitations**: Data stored in localStorage is accessible to any JavaScript running on the same origin. This is acceptable since no sensitive data is stored.
-
-3. **XSS Considerations**: While React provides built-in XSS protection, we follow additional best practices:
-   - No `dangerouslySetInnerHTML` usage
-   - No `eval()` or `new Function()` usage
-   - User input is never rendered as HTML
-
-## Security Best Practices
-
-### Code Standards
-
-```javascript
-// ✅ Good - Safe rendering
-<div>{userInput}</div>
-
-// ❌ Bad - Never do this
-<div dangerouslySetInnerHTML={{__html: userInput}} />
-```
-
-### Dependencies
-
-- Run `npm audit` regularly
-- Update dependencies monthly
-- Critical security patches within 48 hours
-- Use exact versions in production
-
-### Content Security Policy (Recommended)
-
-When deploying, add these headers:
-
-```
-Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Referrer-Policy: strict-origin-when-cross-origin
-```
-
-### Vercel/Netlify Configuration
-
-**vercel.json:**
-```json
-{
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" }
-      ]
-    }
-  ]
-}
-```
-
-## Reporting a Vulnerability
-
-If you discover a security vulnerability:
-
-1. **Do NOT** open a public GitHub issue
-2. Email: [security contact - add your email]
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
-
-### Response Timeline
-
-| Severity | Initial Response | Fix Target |
-|----------|------------------|------------|
-| Critical | 24 hours | 48 hours |
-| High | 48 hours | 1 week |
-| Medium | 1 week | 2 weeks |
-| Low | 2 weeks | Next release |
-
-## Security Checklist
-
-### Before Each Release
-
-- [ ] `npm audit` shows no critical/high vulnerabilities
-- [ ] No hardcoded secrets or API keys
-- [ ] All dependencies are up to date
-- [ ] Code review completed
-- [ ] No console.log statements in production
-
-### Deployment
-
-- [ ] HTTPS enforced
-- [ ] Security headers configured
-- [ ] Source maps disabled in production (optional)
+| 2.x.x   | Active             |
+| < 2.0   | Not supported      |
 
 ---
 
-**Last Updated:** January 2026  
-**Version:** 2.0.0
+## Security Model
 
+Harfhane, Cloudflare Workers üzerinde çalışan bir Hono backend + React frontend'den oluşur.
+
+### Authentication
+
+| Mekanizma | Detay |
+|-----------|-------|
+| JWT | `Authorization: Bearer <token>` header ile taşınır |
+| Google OAuth | ID token backend'de doğrulanır, kendi JWT'miz üretilir |
+| Token yenileme | Silent refresh — 14 dakikada bir + visibility change |
+| Session | `localStorage`'da token; sensitive veri yok |
+
+### Veri Depolama
+
+| Veri | Konum | Hassasiyet |
+|------|-------|------------|
+| JWT token | localStorage | Düşük (short-lived) |
+| Oyun durumu | localStorage | Hayır |
+| İstatistik | localStorage + D1 | Hayır |
+| Kullanıcı verisi | Cloudflare D1 | Evet — backend'de |
+| Push subscription | Cloudflare D1 | Evet — backend'de |
+
+### API Güvenliği
+
+- Rate limiting: auth endpointleri için `rateLimiter`, oyun endpointleri için `gameRateLimiter`
+- CORS: sadece `harfhane.app`, `localhost:5173`, `localhost:4173`, `*.nurdle.pages.dev`
+- Security headers: `securityHeaders` middleware — CSP, X-Frame-Options, HSTS
+- Input validation: tüm route'larda Zod schema
+- Admin routes: `X-Admin-Secret` header kontrolü
+
+### Content Security Policy
+
+Frontend için `public/_headers` (Cloudflare Pages):
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.harfhane.app https://accounts.google.com https://oauth2.googleapis.com; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'
+```
+
+Backend API için `src/middleware/security-headers.ts`.
+
+---
+
+## Known Limitations
+
+1. **Admin Secret**: `X-Admin-Secret` header ile korunan admin rotaları, header-based auth kullanır. Faz 3'te JWT tabanlı role sistemine geçilecek.
+2. **localStorage token**: XSS saldırısına karşı httpOnly cookie kadar güçlü değil. Token kısa ömürlüdür (15 dakika), refresh token D1'de saklanır.
+
+---
+
+## Security Best Practices
+
+### Geliştirici Kuralları
+
+- Secrets asla kaynak kodda — `.dev.vars` ve Cloudflare Secrets
+- `dangerouslySetInnerHTML` yasak
+- SQL sorgularında parameterized query — D1 `prepare().bind()` kullan
+- `console.*` production'da yasak
+
+### Bağımlılık Yönetimi
+
+```bash
+pnpm audit              # zafiyet taraması
+```
+
+- Kritik patch: 48 saat içinde
+- Bağımlılık güncellemesi: aylık
+
+---
+
+## Güvenlik Açığı Bildirimi
+
+GitHub'da public issue açma. Doğrudan iletişime geç.
+
+| Önem | İlk Yanıt | Hedef Fix |
+|------|-----------|-----------|
+| Critical | 24 saat | 48 saat |
+| High | 48 saat | 1 hafta |
+| Medium | 1 hafta | 2 hafta |
+| Low | 2 hafta | Sonraki release |
+
+---
+
+**Son Güncelleme:** Mart 2026
+**Versiyon:** 2.2.0

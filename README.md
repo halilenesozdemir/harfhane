@@ -1,55 +1,62 @@
+<h1 align="center">Harfhane</h1>
+
 <p align="center">
-  <img src="public/logo.svg" alt="Nurdle" width="100" />
+  Türkçe kelimelerle oynanan günlük kelime tahmin oyunu.
 </p>
 
-<h1 align="center">Nurdle</h1>
-
 <p align="center">
-  Risale-i Nur külliyatındaki kelimelerle oynanan Türkçe Wordle oyunu.
+  <a href="https://harfhane.app">harfhane.app</a>
 </p>
 
 ---
 
 ## Teknoloji
 
-| Katman     | Teknoloji                                                        |
-| ---------- | ---------------------------------------------------------------- |
-| Frontend   | React 19, TypeScript, Vite 7, Tailwind CSS 3, TanStack Query v5  |
-| Backend    | Hono, TypeScript, Cloudflare Workers *(Faz 1)*                  |
-| Veritabanı | Cloudflare D1 (SQLite) *(Faz 1)*                                |
-| Depolama   | Cloudflare R2 *(Faz 2)*                                         |
-| CI/CD      | GitHub Actions                                                   |
+| Katman     | Teknoloji                                                       |
+| ---------- | --------------------------------------------------------------- |
+| Frontend   | React 19, TypeScript 5, Vite 7, Tailwind CSS 3, TanStack Query |
+| Backend    | Hono, TypeScript, Cloudflare Workers                            |
+| Veritabanı | Cloudflare D1 (SQLite)                                          |
+| Depolama   | Cloudflare R2                                                   |
+| Auth       | JWT + Google OAuth                                              |
 
-## Proje Yapısı
+## Monorepo Yapısı
 
 ```
-nurdle/
+harfhane/
 ├── apps/
-│   ├── frontend/          # React 19 + Vite uygulaması (@nurdle/frontend)
-│   │   ├── src/
-│   │   │   ├── components/    # React bileşenleri
-│   │   │   ├── hooks/         # Custom hook'lar
-│   │   │   ├── context/       # React Context (ThemeProvider vb.)
-│   │   │   ├── data/          # words.json (Faz 1'de D1'e taşınacak)
-│   │   │   ├── types/         # TypeScript tipleri
-│   │   │   └── utils/         # Yardımcı fonksiyonlar
-│   │   └── public/            # Statik dosyalar, PWA manifest
-│   └── backend/           # Hono API (@nurdle/backend) — Faz 1
-│       ├── migrations/        # D1 migration dosyaları
+│   ├── frontend/          # React 19 + Vite (@harfhane/frontend)
+│   │   └── src/
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       ├── context/
+│   │       ├── types/
+│   │       └── utils/
+│   └── backend/           # Hono API (@harfhane/backend)
+│       ├── migrations/
 │       └── src/
-│           ├── routes/        # HTTP rotaları
-│           ├── services/      # İş mantığı
-│           ├── repositories/  # D1 veri erişim katmanı
-│           ├── schemas/       # Zod doğrulama şemaları
-│           └── types/         # TypeScript tipleri
+│           ├── routes/
+│           ├── services/
+│           ├── repositories/
+│           ├── schemas/
+│           ├── middleware/
+│           └── utils/
 └── packages/
-    └── shared/            # Ortak TypeScript tipleri (@nurdle/shared)
+    └── shared/            # Ortak TypeScript tipleri (@harfhane/shared)
 ```
 
-## Oyun Modları
+## Özellikler
 
-- **Günlük Mod** — Her gün yeni bir kelime; tüm oyuncular aynı kelimeyi çözer
-- **Sınırsız Mod** — Dilediğin kadar oyna, her seferinde rastgele kelime
+- **Günlük Mod** — Her gün yeni kelime; tüm oyuncular aynı kelimeyi çözer
+- **Sınırsız Mod** — Rastgele kelime, dilediğin kadar oyna
+- **Meydan Okuma** — Çözdüğün kelimeyi arkadaşına gönder
+- **Turnuva** — Katılımcılar arasında rekabetçi mod
+- **Düello** — Bire bir anlık rekabet
+- **XP & Rozet** — Oyun içi ilerleme sistemi
+- **Liderboard** — Günlük ve genel sıralamalar
+- **Push Bildirimleri** — Günlük kelime hatırlatması
+- **PWA** — Ana ekrana eklenebilir, offline çalışır
+- **Admin Paneli** — Kelime listesi yönetimi
 
 ## Gereksinimler
 
@@ -69,78 +76,62 @@ pnpm install
 pnpm dev
 
 # Ayrı ayrı
-pnpm dev:frontend    # localhost:5173
-pnpm dev:backend     # localhost:8787
+pnpm --filter @harfhane/frontend run dev    # localhost:5173
+pnpm --filter @harfhane/backend run dev     # localhost:8787
 ```
 
-Frontend geliştirme sunucusu `/api/` isteklerini otomatik olarak backend'e (8787) proxy'ler.
+Frontend `/api/` isteklerini otomatik olarak backend'e (8787) proxy'ler.
 
-## Build ve Typecheck
+## Build & Typecheck
 
 ```bash
 pnpm build
 pnpm typecheck
 ```
 
-## Veritabanı Migration
-
-```bash
-# Lokal
-pnpm --filter @nurdle/backend run db:migrate:local
-
-# Production
-pnpm --filter @nurdle/backend run db:migrate:remote
-```
-
-## Testler
+## Test
 
 ```bash
 # Backend testleri
-pnpm --filter @nurdle/backend run test
+pnpm --filter @harfhane/backend run test
 
-# Watch modunda
-pnpm --filter @nurdle/backend run test:watch
+# Watch modu
+pnpm --filter @harfhane/backend run test:watch
+```
+
+## Veritabanı
+
+```bash
+# Local migration
+pnpm --filter @harfhane/backend run db:migrate:local
+
+# Production migration
+pnpm --filter @harfhane/backend run db:migrate:remote
+
+# Local seed
+wrangler d1 execute nurdle-db --local --file=scripts/seed.sql
 ```
 
 ## Deploy
 
-`main` branch'e push üzerinden GitHub Actions ile otomatik deploy edilir.
+`main` branch'e push ile GitHub Actions üzerinden otomatik deploy.
 
-- **Frontend**: Cloudflare Pages
-- **Backend**: Cloudflare Workers (`api.nurdle.app`)
+| Değişen dizin        | Backend | Frontend |
+| -------------------- | ------- | -------- |
+| `apps/backend/**`    | Evet    |          |
+| `apps/frontend/**`   |         | Evet     |
+| `packages/shared/**` | Evet    | Evet     |
 
-### Hangi deploy tetiklenir?
-
-| Değişen dizin        | Backend deploy | Frontend deploy |
-| -------------------- | -------------- | --------------- |
-| `apps/backend/**`    | Evet           |                 |
-| `apps/frontend/**`   |                | Evet            |
-| `packages/shared/**` | Evet           | Evet            |
+- **Frontend**: Cloudflare Pages → `harfhane.app`
+- **Backend**: Cloudflare Workers → `api.harfhane.app`
 
 ### Gerekli GitHub Secrets
 
-- `CLOUDFLARE_API_TOKEN` — Scoped API Token (Workers Scripts Edit + Pages Edit)
-- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare hesap ID'si
+| Secret | Açıklama |
+|--------|----------|
+| `CLOUDFLARE_API_TOKEN` | Workers + Pages Edit yetkili token |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare hesap ID'si |
 
-## Agent Sistemi
+## Geliştirme Rehberi
 
-Bu proje Claude Code multi-agent sistemini kullanır. Prompt sonuna `xN` ekleyerek multi-agent modu aktifleştirilir:
-
-```
-x3  → 1 Principal + 1 Staff Engineer + 1 Analyst
-x5  → 1 Principal + 1 Staff Eng + 1 MidCoder + 1 Lead Analyst + 1 Analyst
-x7  → 1 Principal + 2 Staff Eng + 1 MidCoder + 1 Lead Analyst + 2 Analyst
-x10 → 2 Principal + 2 Staff Eng + 2 MidCoder + 1 Lead Analyst + 3 Analyst
-```
-
-Tam kural seti: `AGENTS.md`
-
-## Geliştirme Fazları
-
-| Faz   | Kapsam                                          | Durum      |
-| ----- | ----------------------------------------------- | ---------- |
-| Faz 1 | Monorepo + Hono Backend + D1 + words.json → DB  | Geliştirme |
-| Faz 2 | Custom kelime listeleri, admin paneli, R2        | Planlama   |
-| Faz 3 | Kullanıcı hesapları, leaderboard, ticari model  | Roadmap    |
-
-Detaylı roadmap: `products.md`
+Geliştirme süreci, slash komutları ve agent sistemi için: [USAGE.md](USAGE.md)

@@ -5,7 +5,7 @@
 ### 1. Development Ortamında Test
 
 ```bash
-npm run dev
+pnpm --filter @harfhane/frontend run dev
 ```
 
 **Tarayıcıda Kontrol:**
@@ -17,8 +17,8 @@ npm run dev
 ### 2. Production Build Test
 
 ```bash
-npm run build
-npm run preview
+pnpm --filter @harfhane/frontend run build
+pnpm --filter @harfhane/frontend run preview
 ```
 
 **Lighthouse Test:**
@@ -53,7 +53,7 @@ npm run preview
 
 **Kod değiştir:**
 1. Herhangi bir dosyayı düzenle
-2. `npm run build`
+2. `pnpm --filter @harfhane/frontend run build`
 3. Deploy et
 4. Kullanıcı açtığında "Yeni versiyon mevcut!" popup'ı
 
@@ -74,7 +74,7 @@ npm run preview
 - [x] ✅ Cache stratejisi (Workbox)
 - [x] ✅ Splash screen desteği
 - [x] ✅ Standalone mode
-- [ ] ⏳ Push notifications (gelecek)
+- [x] ✅ Push notifications (Web Push + VAPID)
 - [ ] ⏳ Background sync (gelecek)
 
 ## 📱 Cihaz Testleri
@@ -94,7 +94,7 @@ npm run preview
 - Add to home: ✅
 - Offline: ✅
 - Icon: ✅
-- Notification: ⏳ (v2.3)
+- Notification: ✅
 ```
 
 ### Desktop Chrome/Edge
@@ -142,13 +142,13 @@ npm run preview
 
 ```bash
 # Build
-npm run build
+pnpm --filter @harfhane/frontend run build
 
 # Test production build
-npm run preview
+pnpm --filter @harfhane/frontend run preview
 
-# Deploy (örnek: Vercel)
-vercel --prod
+# Deploy
+CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name nurdle
 ```
 
 **Post-Deploy Checklist:**
