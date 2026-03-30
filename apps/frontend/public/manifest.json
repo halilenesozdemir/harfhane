@@ -1,7 +1,7 @@
 {
-  "name": "Harfhane - Kelime Oyunu Platformu",
+  "name": "Harfhane - Türkçe Kelime Oyunu",
   "short_name": "Harfhane",
-  "description": "Kendi kelime listeni oluştur, oyna ve paylaş",
+  "description": "Her gün yeni bir Türkçe kelime bul. Günlük bulmaca ve sınırsız mod.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121213",
@@ -25,11 +25,5 @@
   "categories": ["games", "education"],
   "lang": "tr",
   "dir": "ltr",
-  "screenshots": [
-    {
-      "src": "/screenshot-1.png",
-      "sizes": "1170x2532",
-      "type": "image/png"
-    }
-  ]
+  "screenshots": []
 }
