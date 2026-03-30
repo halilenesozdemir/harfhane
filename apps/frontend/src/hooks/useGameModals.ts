@@ -45,19 +45,31 @@ export function useGameModals({ gameStatus, isUnlimited, onGameEnd }: UseGameMod
 
   const prevGameStatus = useRef(gameStatus);
   const onGameEndRef = useRef(onGameEnd);
+  const isFirstRender = useRef(true);
   useEffect(() => { onGameEndRef.current = onGameEnd; });
 
   useEffect(() => {
     const prev = prevGameStatus.current;
     prevGameStatus.current = gameStatus;
 
-    if ((gameStatus === 'won' || gameStatus === 'lost') && prev === 'playing') {
+    if (gameStatus !== 'won' && gameStatus !== 'lost') return undefined;
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      const timer = setTimeout(() => setShowGameOver(true), 500);
+      return () => clearTimeout(timer);
+    }
+
+    if (prev === 'playing') {
       if (isUnlimited) onGameEndRef.current(gameStatus === 'won');
       const timer = setTimeout(() => setShowGameOver(true), 1500);
       return () => clearTimeout(timer);
     }
+
     return undefined;
   }, [gameStatus, isUnlimited]);
+
+  useEffect(() => { isFirstRender.current = false; }, []);
 
   return {
     showHelp,

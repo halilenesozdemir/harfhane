@@ -20,7 +20,8 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const isUnlimited = mode === 'unlimited';
   const queryClient = useQueryClient();
   const todayString = getTodayString();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const userKey = user?.id ?? 'anon';
 
   const { data: dailyData, isLoading: isDailyLoading, isError: isDailyError } = useDailyWord(wordLength);
   const { data: randomData, isLoading: isRandomLoading, isError: isRandomError, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
@@ -36,7 +37,7 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
 
   const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token, wordId });
 
-  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`harfhane:game:${todayString}:${wordLength}`, {
+  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`harfhane:game:${userKey}:${todayString}:${wordLength}`, {
     guesses: [],
     evaluations: [],
     currentGuess: '',
