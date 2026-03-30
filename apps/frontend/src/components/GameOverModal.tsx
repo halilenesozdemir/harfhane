@@ -140,7 +140,7 @@ function GameOverModal({
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2 py-4 border-y border-border-color">
+        <div className="grid grid-cols-4 gap-2 py-4 border-t border-border-color">
           <StatBox value={stats.gamesPlayed} label="Oyun" />
           <StatBox value={winPercentage} label="Kazanma %" />
           {!isUnlimited && "currentStreak" in stats && (
@@ -155,6 +155,29 @@ function GameOverModal({
               <StatBox value={avgGuesses} label="Ort. Deneme" />
             </>
           )}
+        </div>
+
+        <div className="pb-4 border-b border-border-color space-y-1.5">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Tahmin Dağılımı</p>
+          {stats.guessDistribution.map((count, index) => {
+            const maxCount = Math.max(...stats.guessDistribution, 1);
+            const isCurrentGuess = gameStatus === "won" && guesses.length === index + 1;
+            return (
+              <div key={index} className="flex items-center gap-2">
+                <span className="text-xs font-bold text-text-secondary w-3 shrink-0">{index + 1}</span>
+                <div className="flex-1 h-5 bg-tile-empty rounded-sm overflow-hidden">
+                  <div
+                    className={`h-full rounded-sm flex items-center justify-end pr-1.5 transition-all duration-500 ${isCurrentGuess ? 'bg-correct' : 'bg-tile-filled'}`}
+                    style={{ width: count === 0 ? '0%' : `${Math.max((count / maxCount) * 100, 8)}%` }}
+                  >
+                    {count > 0 && (
+                      <span className="text-xs font-bold text-white leading-none">{count}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {!isUnlimited && xpResult && (
