@@ -37,4 +37,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: fd32026d220617d20fb552d13fb82abd
-          command: pages deploy apps/frontend/dist --project-name harfhane --branch main
+          workingDirectory: apps/backend
+          command: pages deploy ../frontend/dist --project-name harfhane --branch main
