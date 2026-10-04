@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Flame, Gamepad2, Percent } from 'lucide-react';
-import { getTodayString } from '../utils/gameLogic';
+import { getTodayString } from '@harfhane/shared';
 import type { DailyStats, GameMode, UnlimitedStats, WordLength } from '../types';
 
 const NAV_WIDTH_PX = 260;
