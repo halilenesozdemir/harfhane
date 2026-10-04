@@ -1,48 +1,33 @@
 import type { TileProps } from '../types';
 
-const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }: TileProps): React.JSX.Element => {
-  const getStatusClasses = (): string => {
-    if (!status) return '';
-    switch (status) {
-      case 'correct':
-        return 'bg-correct border-correct';
-      case 'present':
-        return 'bg-present border-present';
-      case 'absent':
-        return 'bg-absent border-absent';
-      default:
-        return '';
-    }
-  };
-
-  const getBorderClass = (): string => {
-    if (status) return '';
-    if (isFilled) return 'border-tile-filled';
-    return 'border-tile-empty';
-  };
-
-  // Text color: white on status colors, otherwise theme-based
-  const getTextClass = (): string => {
-    if (status) return 'text-white';
-    return 'text-text-primary';
-  };
-
-  return (
-    <div
-      className={`
-        w-14 h-14 md:w-16 md:h-16
-        flex items-center justify-center
-        text-2xl md:text-3xl font-bold uppercase
-        border-2 ${getBorderClass()} ${getStatusClasses()}
-        ${isRevealing ? `tile-flip tile-flip-delay-${revealDelay}` : ''}
-        ${isFilled && !status ? 'animate-pop' : ''}
-        select-none
-        ${getTextClass()}
-      `}
-    >
-      {letter}
-    </div>
-  );
+const STATUS_CLASSES: Record<string, string> = {
+  correct: 'bg-correct border-correct text-correct-fg shadow-depth-correct',
+  present: 'bg-present border-present text-present-fg shadow-depth-present',
+  absent: 'bg-absent border-absent text-absent-fg shadow-depth-absent',
 };
+
+const getStateClasses = (status: TileProps['status'], isFilled: boolean): string => {
+  if (status) return STATUS_CLASSES[status] ?? '';
+  if (isFilled) return 'bg-bg-secondary border-tile-filled text-text-primary shadow-depth-tile';
+  return 'bg-tile-empty-bg border-tile-empty text-text-primary';
+};
+
+const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }: TileProps): React.JSX.Element => (
+  <div
+    data-status={status ?? (isFilled ? 'filled' : 'empty')}
+    className={`
+      w-14 h-14 md:w-16 md:h-16
+      flex items-center justify-center
+      rounded-tile border-2
+      font-display text-3xl md:text-4xl font-extrabold uppercase leading-none
+      ${getStateClasses(status, Boolean(isFilled))}
+      ${isRevealing ? `tile-flip tile-flip-delay-${revealDelay}` : ''}
+      ${isFilled && !status ? 'animate-pop' : ''}
+      select-none
+    `}
+  >
+    {letter}
+  </div>
+);
 
 export default Tile;

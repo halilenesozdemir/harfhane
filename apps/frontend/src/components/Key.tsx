@@ -4,13 +4,13 @@ const Key = ({ keyValue, onClick, status, isWide = false }: KeyProps): React.JSX
   const getStatusClasses = (): string => {
     switch (status) {
       case 'correct':
-        return 'bg-correct text-white';
+        return 'bg-correct text-correct-fg shadow-depth-correct';
       case 'present':
-        return 'bg-present text-white';
+        return 'bg-present text-present-fg shadow-depth-present';
       case 'absent':
-        return 'bg-absent text-white';
+        return 'bg-absent text-absent-fg shadow-depth-absent';
       default:
-        return 'bg-key-bg text-text-primary';
+        return 'bg-key-bg text-key-fg shadow-depth-key';
     }
   };
 
@@ -27,13 +27,13 @@ const Key = ({ keyValue, onClick, status, isWide = false }: KeyProps): React.JSX
         ${isWide ? 'px-3 md:px-4 min-w-[65px] md:min-w-[75px]' : 'w-8 md:w-10'}
         h-14
         ${getStatusClasses()}
-        rounded-md
-        text-sm md:text-base font-semibold
+        rounded-key
+        font-body text-sm md:text-base font-extrabold
         flex items-center justify-center
-        transition-all duration-100
-        active:scale-95
+        transition-transform duration-100
+        active:translate-y-[2px] active:shadow-none
         select-none
-        hover:opacity-80
+        hover:brightness-95
         cursor-pointer
       `}
       aria-label={keyValue}
