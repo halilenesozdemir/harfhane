@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor, Check, Bell, BellOff, Mail, MailX, Trash2 } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, Bell, BellOff, Mail, MailX, Trash2, Contrast } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
@@ -38,7 +38,7 @@ interface SettingsModalProps {
 }
 
 const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Element => {
-  const { theme, setTheme, resolvedTheme } = useThemeContext();
+  const { theme, setTheme, resolvedTheme, isHighContrast, setHighContrast } = useThemeContext();
   const { token, logout } = useAuth();
   const { state, isSubscribed, isLoading, subscribe, unsubscribe } = useNotifications(token);
   const [emailEnabled, setEmailEnabled] = useState(true);
@@ -106,6 +106,21 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
               Şu an: {resolvedTheme === 'dark' ? 'Koyu' : 'Açık'} tema (sistem ayarına göre)
             </p>
           )}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isHighContrast}
+            onClick={() => setHighContrast(!isHighContrast)}
+            className={`mt-3 flex items-center gap-3 w-full p-3 rounded-lg transition-all cursor-pointer ${
+              isHighContrast
+                ? 'bg-correct text-correct-fg hover:bg-correct/90'
+                : 'bg-bg-secondary text-text-primary hover:bg-tile-empty'
+            }`}
+          >
+            <Contrast size={20} />
+            <span className="flex-1 text-left font-medium">Yüksek kontrast (renk körlüğü dostu)</span>
+            {isHighContrast && <Check size={18} />}
+          </button>
         </div>
 
         {token && (

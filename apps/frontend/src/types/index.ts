@@ -55,7 +55,9 @@ export interface ThemeContextValue {
   isDark: boolean;
   isLight: boolean;
   isSystem: boolean;
+  isHighContrast: boolean;
   setTheme: (theme: Theme) => void;
+  setHighContrast: (enabled: boolean) => void;
   toggleTheme: () => void;
   setSystemPreference: () => void;
 }

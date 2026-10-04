@@ -6,22 +6,19 @@ interface ExampleTileProps {
   status?: TileStatus;
 }
 
+const EXAMPLE_STATUS_CLASSES: Record<NonNullable<TileStatus>, string> = {
+  correct: 'bg-correct text-correct-fg shadow-depth-correct',
+  present: 'bg-present text-present-fg shadow-depth-present',
+  absent: 'bg-absent text-absent-fg shadow-depth-absent',
+};
+
 const ExampleTile = ({ letter, status }: ExampleTileProps): React.JSX.Element => {
-  const getStatusClasses = (): string => {
-    switch (status) {
-      case 'correct':
-        return 'bg-correct text-white';
-      case 'present':
-        return 'bg-present text-white';
-      case 'absent':
-        return 'bg-absent text-white';
-      default:
-        return 'border-2 border-tile-empty text-text-primary';
-    }
-  };
+  const stateClasses = status
+    ? EXAMPLE_STATUS_CLASSES[status]
+    : 'bg-tile-empty-bg border-2 border-tile-filled text-text-primary shadow-depth-tile';
 
   return (
-    <div className={`w-10 h-10 flex items-center justify-center text-lg font-bold ${getStatusClasses()}`}>
+    <div className={`w-10 h-10 rounded-key flex items-center justify-center font-display text-xl font-extrabold ${stateClasses}`}>
       {letter}
     </div>
   );
