@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, CalendarDays, Users, Gamepad2, AlertTriangle, CheckCircle } from 'lucide-react';
-import { getAdminStats, type AdminStats } from '../../lib/admin-api';
+import { getAdminStats, getScheduleHealth, type AdminStats, type ScheduleHealthEntry } from '../../lib/admin-api';
 
 interface DashboardProps {
   secret: string;
@@ -36,15 +36,48 @@ function StatCard({ label, value, sub, icon, accent = 'blue' }: StatCardProps): 
   );
 }
 
+function severityLabel(severity: ScheduleHealthEntry['severity']): string {
+  if (severity === 'critical') return 'Kritik';
+  if (severity === 'warning') return 'Uyarı';
+  return 'İyi';
+}
+
+function severityClasses(severity: ScheduleHealthEntry['severity']): string {
+  if (severity === 'critical') return 'bg-absent/10 text-absent';
+  if (severity === 'warning') return 'bg-present/10 text-present';
+  return 'bg-correct/10 text-correct';
+}
+
+function ScheduleHealthCard({ entry }: { entry: ScheduleHealthEntry }): React.JSX.Element {
+  return (
+    <div className="bg-bg-secondary border border-border-color rounded-xl p-4 flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-text-primary">{entry.length} harf</span>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${severityClasses(entry.severity)}`}>
+          {severityLabel(entry.severity)}
+        </span>
+      </div>
+      <p className="text-2xl font-bold text-text-primary tabular-nums">{entry.runwayDays} gün</p>
+      <p className="text-xs text-text-secondary">
+        Son tarih: {entry.lastScheduledDate ?? 'yok'} · Boşta stok: {entry.unscheduledStock}
+      </p>
+    </div>
+  );
+}
+
 export default function Dashboard({ secret }: DashboardProps): React.JSX.Element {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [scheduleHealth, setScheduleHealth] = useState<ScheduleHealthEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    getAdminStats(secret)
-      .then(setStats)
+    Promise.all([getAdminStats(secret), getScheduleHealth(secret)])
+      .then(([statsResult, healthResult]) => {
+        setStats(statsResult);
+        setScheduleHealth(healthResult);
+      })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Yüklenemedi'))
       .finally(() => setLoading(false));
   }, [secret]);
@@ -117,6 +150,15 @@ export default function Dashboard({ secret }: DashboardProps): React.JSX.Element
               Eksik günleri programlamayı unutma!
             </span>
           )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-text-primary">Takvim Sağlığı (Uzunluk Başına Runway)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {scheduleHealth.map((entry) => (
+            <ScheduleHealthCard key={entry.length} entry={entry} />
+          ))}
         </div>
       </div>
     </div>

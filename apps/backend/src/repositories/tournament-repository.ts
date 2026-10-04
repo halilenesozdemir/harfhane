@@ -1,4 +1,5 @@
 import type { Env } from '../types/env';
+import { ACTIVE_WORD_LENGTHS } from '../constants/schedule';
 
 export interface TournamentWordRow {
   id: number;
@@ -23,11 +24,9 @@ export interface TournamentUserStats {
   best_score: number;
 }
 
-const VALID_LENGTHS = [4, 5, 6] as const;
-
 export async function getTournamentWord(db: Env['DB']): Promise<TournamentWordRow | null> {
-  const lengthIndex = Math.floor(Math.random() * VALID_LENGTHS.length);
-  const wordLength = VALID_LENGTHS[lengthIndex]!;
+  const lengthIndex = Math.floor(Math.random() * ACTIVE_WORD_LENGTHS.length);
+  const wordLength = ACTIVE_WORD_LENGTHS[lengthIndex]!;
 
   const row = await db
     .prepare(
