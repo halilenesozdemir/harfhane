@@ -208,11 +208,11 @@ export async function findOrCreateWord(
 
   const result = await db
     .prepare(
-      `INSERT INTO words (word, meaning, context, category, is_active, source)
-       VALUES (?, ?, '', NULL, 1, 'user')
+      `INSERT INTO words (word, length, meaning, context, category, is_active, source, license)
+       VALUES (?, ?, ?, '', NULL, 1, 'user', 'user-submitted')
        RETURNING id`
     )
-    .bind(word, meaning ?? '')
+    .bind(word, wordLength, meaning ?? '')
     .first<{ id: number }>();
 
   if (!result) throw new Error(`Failed to insert word: ${word} (length ${wordLength})`);
@@ -256,7 +256,7 @@ export async function wordExistsInList(
   word: string
 ): Promise<boolean> {
   const tdkRow = await db
-    .prepare(`SELECT 1 FROM tdk_words WHERE word = ? LIMIT 1`)
+    .prepare(`SELECT 1 FROM valid_words WHERE word = ? LIMIT 1`)
     .bind(word)
     .first();
   if (tdkRow) return true;

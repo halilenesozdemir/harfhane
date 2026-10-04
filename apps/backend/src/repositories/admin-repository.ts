@@ -96,7 +96,9 @@ export async function adminCreateWord(
 ): Promise<number> {
   const result = await db
     .prepare(
-      'INSERT INTO words (word, meaning, context, category, length) VALUES (?, ?, ?, ?, ?)'
+      `INSERT INTO words
+        (word, meaning, context, category, length, source, license, status, family_safe, approved_at, is_active)
+       VALUES (?, ?, ?, ?, ?, 'admin', 'original', 'approved', 1, datetime('now'), 1)`
     )
     .bind(data.word, data.meaning, data.context, data.category, data.word.length)
     .run();
@@ -136,7 +138,14 @@ export async function adminSetWordActive(
   isActive: boolean
 ): Promise<boolean> {
   const result = await db
-    .prepare('UPDATE words SET is_active = ? WHERE id = ?')
+    .prepare(
+      `UPDATE words SET
+         is_active = ?1,
+         status = CASE WHEN ?1 = 1 THEN 'approved' ELSE status END,
+         family_safe = CASE WHEN ?1 = 1 THEN 1 ELSE family_safe END,
+         approved_at = CASE WHEN ?1 = 1 THEN COALESCE(approved_at, datetime('now')) ELSE approved_at END
+       WHERE id = ?2`
+    )
     .bind(isActive ? 1 : 0, id)
     .run();
   return (result.meta.changes ?? 0) > 0;

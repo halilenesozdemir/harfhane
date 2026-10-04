@@ -102,7 +102,7 @@ export async function findWordById(
 export async function wordExists(db: Env['DB'], word: string): Promise<boolean> {
   const normalized = normalizeWord(word);
   const row = await db
-    .prepare(`SELECT 1 FROM tdk_words WHERE word = ? LIMIT 1`)
+    .prepare(`SELECT 1 FROM valid_words WHERE word = ? LIMIT 1`)
     .bind(normalized)
     .first();
   return row !== null;

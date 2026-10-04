@@ -8,6 +8,12 @@ binding = "DB"
 database_name = "harfhane-db"
 database_id = "1fad4aa7-baa4-41ce-a0f4-976904b8d29b"
 
+[[d1_databases]]
+binding = "DB_NEXT"
+database_name = "harfhane"
+database_id = "58cbee2e-aa45-4b66-90c7-f5daa798f5e5"
+migrations_dir = "db/migrations"
+
 [[routes]]
 pattern = "api.harfhane.app/*"
 zone_name = "harfhane.app"
