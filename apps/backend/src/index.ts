@@ -20,6 +20,7 @@ import { sendPushNotification } from './utils/web-push';
 import { getUsersForEmailReminder } from './repositories/notification-repository';
 import { sendReminderEmail } from './utils/resend';
 import { findDailyWord } from './repositories/word-repository';
+import { checkScheduleHealthAndAlert } from './services/schedule-health-service';
 
 const CATEGORY_LABELS: Record<string, string> = {
   isim: 'isim',
@@ -116,6 +117,7 @@ export default {
       ...emailTargets.map((target) =>
         sendReminderEmail(env.RESEND_API_KEY, target.email, target.username)
       ),
+      checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL),
     ]);
   },
 };

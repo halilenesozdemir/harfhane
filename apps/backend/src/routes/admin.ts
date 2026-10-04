@@ -30,6 +30,7 @@ import {
   getWordStats,
   getUsers,
 } from '../services/admin-service';
+import { getScheduleHealth } from '../services/schedule-health-service';
 
 const admin = new Hono<{ Bindings: Env }>();
 
@@ -51,6 +52,11 @@ admin.get('/word-stats', async (c) => {
   const sort = c.req.query('sort') === 'win_rate' ? 'win_rate' : 'played';
   const rows = await getWordStats(c.env.DB, sort);
   return c.json({ data: rows });
+});
+
+admin.get('/schedule-health', async (c) => {
+  const health = await getScheduleHealth(c.env.DB);
+  return c.json({ data: health });
 });
 
 // ── Words ────────────────────────────────────────────────────────────────────
