@@ -10,8 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate:local": "wrangler d1 migrations apply harfhane-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply harfhane-db --remote"
+    "db:migrate:local": "wrangler d1 migrations apply harfhane --local",
+    "db:migrate:remote": "wrangler d1 migrations apply harfhane --remote",
+    "db:seed:remote": "wrangler d1 execute harfhane --remote --file db/seeds/badges.sql"
   },
   "dependencies": {
     "@harfhane/shared": "workspace:*",
