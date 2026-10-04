@@ -18,7 +18,25 @@
 | Storage    | Cloudflare R2                                               |
 | CI/CD      | GitHub Actions                                              |
 
-Full project documentation: `README.md`, `products.md`, `CLAUDE.md`
+Full project documentation: `README.md`, `CLAUDE.md`.
+Plans live in `docs/plans/`, decisions in `docs/decisions/`, deliberately deferred work in `docs/backlog.md`.
+
+---
+
+## Invariants
+
+Rules that must not be broken. Each has a reason; changing one needs an ADR in `docs/decisions/`.
+
+1. **Model proposes, code enforces.** A word reaches players only when `status = 'approved'` and `family_safe = 1`. The database enforces this with a CHECK and the `daily_words_require_active_word` trigger. Never drop or bypass them to make data fit. *Why:* AI-generated Turkish content can be wrong or unsuitable for families.
+2. **One schema source.** The schema lives only in `apps/backend/db/migrations/`. Tests apply those files through `readD1Migrations`; never hand-write tables in tests. *Why:* the old test schema drifted from production.
+3. **No TDK data.** Do not scrape or import from `sozluk.gov.tr`, and do not copy TDK definitions. Every word row records `source` and `license`. *Why:* TDK does not permit its word list to be extracted.
+4. **Production needs the owner.** Never write to, migrate or delete a remote D1 database without explicit owner approval in the current session. Backups go to `~/Backups/harfhane/`, never into the repo. *Why:* writes are irreversible, and backups contain personal data.
+5. **Theme = token set.** Components use `--hh-*` tokens through Tailwind classes (`bg-correct`, `text-correct-fg`, `shadow-depth-*`); no raw hex in components. *Why:* paid themes must work by swapping tokens only.
+6. **No "Wordle" in product names or titles.** Use "Türkçe kelime oyunu". *Why:* trademark risk.
+7. **Brand is Harfhane.** Links point to `harfhane.app`; the legacy name is never reintroduced.
+8. **No ads at launch.** Ads may only be rewarded, opt-in, filtered and behind a remote flag. *Why:* family-friendly product promise (`docs/decisions/2026-10-04-monetization-no-ads-at-launch.md`).
+9. **Deploy workflows list their own file** in `paths` and keep `workflow_dispatch`. *Why:* otherwise a CI-only fix never redeploys.
+10. **Daily content never runs out.** At least 90 days of approved daily words per active length; a schedule-health check warns before the runway ends. *Why:* the 5-letter schedule silently ran out on 2026-08-26.
 
 ---
 

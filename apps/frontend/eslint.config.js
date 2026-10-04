@@ -26,4 +26,13 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['public/push-handler.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
+  {
+    files: ['public/_worker.js'],
+    languageOptions: { globals: { ...globals.worker, HTMLRewriter: 'readonly' } },
+    rules: { 'no-empty': ['error', { allowEmptyCatch: true }] },
+  },
 ])

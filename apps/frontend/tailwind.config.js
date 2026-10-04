@@ -4,16 +4,20 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class', // Enable class-based dark mode
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Game colors (same in both themes)
-        correct: '#6aaa64',
-        present: '#c9b458',
-        absent: '#3a3a3c',
-        
-        // Dark theme colors
+        correct: 'rgb(var(--hh-correct-rgb) / <alpha-value>)',
+        present: 'rgb(var(--hh-present-rgb) / <alpha-value>)',
+        absent: 'rgb(var(--hh-absent-rgb) / <alpha-value>)',
+        brand: 'rgb(var(--hh-brand-rgb) / <alpha-value>)',
+        'brand-fg': 'var(--hh-brand-fg)',
+        'correct-fg': 'var(--hh-correct-fg)',
+        'present-fg': 'var(--hh-present-fg)',
+        'absent-fg': 'var(--hh-absent-fg)',
+        'key-fg': 'var(--hh-key-fg)',
+        'tile-empty-bg': 'var(--hh-tile-empty-bg)',
         'bg-primary': 'var(--bg-primary)',
         'bg-secondary': 'var(--bg-secondary)',
         'tile-empty': 'var(--tile-empty)',
@@ -22,6 +26,23 @@ export default {
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
         'border-color': 'var(--border-color)',
+      },
+      fontFamily: {
+        display: ['var(--hh-font-display)'],
+        body: ['var(--hh-font-body)'],
+      },
+      borderRadius: {
+        tile: 'var(--hh-radius-tile)',
+        key: 'var(--hh-radius-key)',
+      },
+      boxShadow: {
+        'depth-correct': '0 4px 0 var(--hh-correct-depth)',
+        'depth-present': '0 4px 0 var(--hh-present-depth)',
+        'depth-absent': '0 4px 0 var(--hh-absent-depth)',
+        'depth-tile': '0 3px 0 var(--hh-tile-empty-border)',
+        'depth-key': '0 3px 0 var(--hh-key-depth)',
+        'depth-surface': '0 4px 0 var(--hh-surface-depth)',
+        'depth-brand': '0 4px 0 var(--hh-brand-depth)',
       },
       animation: {
         'pop': 'pop 0.1s ease-in-out',

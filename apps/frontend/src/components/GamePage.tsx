@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import DesktopShell from './DesktopShell';
 import Header from './Header';
 import GameGrid from './GameGrid';
 import Keyboard from './Keyboard';
@@ -78,70 +79,72 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
   const modeLabel = isUnlimited ? 'Sınırsız' : 'Günlük';
 
   return (
-    <div className="min-h-screen bg-bg-primary flex flex-col">
-      <WinConfetti active={gameStatus === 'won' && !modals.showGameOver} />
-      <Header
-        onTitleClick={handleGoHome}
-        onHelpClick={modals.openHelp}
-        onStatsClick={modals.openStats}
-        onSettingsClick={modals.openSettings}
-        onLeaderboardClick={modals.openLeaderboard}
-        onAuthClick={modals.openAuth}
-        onProfileClick={modals.openProfile}
-        modeLabel={modeLabel}
-      />
-      <Toast message={message} />
-      <main className="flex-1 flex flex-col items-center justify-center gap-3">
-        <GameGrid
-          guesses={guesses}
-          evaluations={evaluations}
-          currentGuess={currentGuess}
-          isRevealing={isRevealing}
-          shakeRow={shakeRow}
-          gameStatus={gameStatus}
-          wordLength={wordLength}
+    <DesktopShell mode={mode} wordLength={wordLength} stats={stats} onGoHome={handleGoHome}>
+      <div className="min-h-screen bg-bg-primary flex flex-col lg:min-h-0">
+        <WinConfetti active={gameStatus === 'won' && !modals.showGameOver} />
+        <Header
+          onTitleClick={handleGoHome}
+          onHelpClick={modals.openHelp}
+          onStatsClick={modals.openStats}
+          onSettingsClick={modals.openSettings}
+          onLeaderboardClick={modals.openLeaderboard}
+          onAuthClick={modals.openAuth}
+          onProfileClick={modals.openProfile}
+          modeLabel={modeLabel}
         />
-        <GameHint
-          hintText={hintText}
-          hintUsed={hintUsed}
+        <Toast message={message} />
+        <main className="flex-1 flex flex-col items-center justify-center gap-3">
+          <GameGrid
+            guesses={guesses}
+            evaluations={evaluations}
+            currentGuess={currentGuess}
+            isRevealing={isRevealing}
+            shakeRow={shakeRow}
+            gameStatus={gameStatus}
+            wordLength={wordLength}
+          />
+          <GameHint
+            hintText={hintText}
+            hintUsed={hintUsed}
+            gameStatus={gameStatus}
+            isUnlimited={isUnlimited}
+            onRevealHint={revealHint}
+          />
+        </main>
+        <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
+        <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />
+        <StatsModal
+          isOpen={modals.showStats}
+          onClose={modals.closeStats}
+          stats={stats}
+          lastGuessCount={guesses.length}
           gameStatus={gameStatus}
           isUnlimited={isUnlimited}
-          onRevealHint={revealHint}
         />
-      </main>
-      <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
-      <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />
-      <StatsModal
-        isOpen={modals.showStats}
-        onClose={modals.closeStats}
-        stats={stats}
-        lastGuessCount={guesses.length}
-        gameStatus={gameStatus}
-        isUnlimited={isUnlimited}
-      />
-      <GameOverModal
-        isOpen={modals.showGameOver}
-        onClose={modals.closeGameOver}
-        gameStatus={gameStatus}
-        solution={solution}
-        solutionEntry={solutionEntry}
-        guesses={guesses}
-        evaluations={evaluations}
-        gameNumber={gameNumber}
-        stats={stats}
-        isUnlimited={isUnlimited}
-        isAuthenticated={!!token}
-        onPlayAgain={handlePlayAgain}
-        onGoHome={handleGoHome}
-        onAuthClick={modals.openAuth}
-        xpResult={lastXPResult}
-        sessionChallenge={isUnlimited ? sessionChallenge : undefined}
-        challengeUrl={challengeUrl}
-      />
-      <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />
-      <AuthModal isOpen={modals.showAuth} onClose={modals.closeAuth} />
-      <LeaderboardModal isOpen={modals.showLeaderboard} onClose={modals.closeLeaderboard} />
-      <ProfileModal isOpen={modals.showProfile} onClose={modals.closeProfile} />
-    </div>
+        <GameOverModal
+          isOpen={modals.showGameOver}
+          onClose={modals.closeGameOver}
+          gameStatus={gameStatus}
+          solution={solution}
+          solutionEntry={solutionEntry}
+          guesses={guesses}
+          evaluations={evaluations}
+          gameNumber={gameNumber}
+          stats={stats}
+          isUnlimited={isUnlimited}
+          isAuthenticated={!!token}
+          onPlayAgain={handlePlayAgain}
+          onGoHome={handleGoHome}
+          onAuthClick={modals.openAuth}
+          xpResult={lastXPResult}
+          sessionChallenge={isUnlimited ? sessionChallenge : undefined}
+          challengeUrl={challengeUrl}
+        />
+        <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />
+        <AuthModal isOpen={modals.showAuth} onClose={modals.closeAuth} />
+        <LeaderboardModal isOpen={modals.showLeaderboard} onClose={modals.closeLeaderboard} />
+        <ProfileModal isOpen={modals.showProfile} onClose={modals.closeProfile} />
+      </div>
+    </DesktopShell>
   );
 }

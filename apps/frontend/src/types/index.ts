@@ -1,5 +1,7 @@
 import type { WordEntry, GameXPResult } from '@harfhane/shared';
 export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile, UnlimitedPersonalStats, DuelPublic } from '@harfhane/shared';
+export type { TileStatus, TimeCountdown } from '@harfhane/shared';
+import type { TileStatus } from '@harfhane/shared';
 
 export interface SessionChallenge {
   won: number;
@@ -12,7 +14,6 @@ export interface SessionChallenge {
 export type GameStatus = 'playing' | 'won' | 'lost';
 export type GameMode = 'daily' | 'unlimited' | 'slug' | 'tournament';
 export type WordLength = 4 | 5 | 6;
-export type TileStatus = 'correct' | 'present' | 'absent' | null;
 export type Theme = 'light' | 'dark' | 'system';
 
 // Game state
@@ -40,13 +41,6 @@ export interface UnlimitedStats {
   guessDistribution: number[];
 }
 
-// Time countdown
-export interface TimeCountdown {
-  hours: string;
-  minutes: string;
-  seconds: string;
-}
-
 // Theme context
 export interface ThemeContextValue {
   theme: Theme;
@@ -55,7 +49,9 @@ export interface ThemeContextValue {
   isDark: boolean;
   isLight: boolean;
   isSystem: boolean;
+  isHighContrast: boolean;
   setTheme: (theme: Theme) => void;
+  setHighContrast: (enabled: boolean) => void;
   toggleTheme: () => void;
   setSystemPreference: () => void;
 }

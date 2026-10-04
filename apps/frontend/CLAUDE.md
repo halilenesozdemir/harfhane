@@ -29,7 +29,7 @@ React 19, Vite 7, TypeScript 5 (strict), Tailwind CSS 3, TanStack Query v5, Luci
 | `src/lib/admin-api.ts` | Admin-specific API calls |
 | `src/types/index.ts` | All frontend types + re-exports from `@harfhane/shared` |
 | `src/hooks/` | Custom hooks (`use*.ts` naming) |
-| `src/utils/gameLogic.ts` | Game logic + `normalizeChar` / `normalizeWord` for Turkish chars |
+| `packages/shared/src/game/` | Game logic + `normalizeChar` / `normalizeWord` for Turkish chars (shared with mobile) |
 | `src/context/AuthContext.tsx` | Auth state (token, user) |
 | `src/context/ThemeContext.tsx` | Theme state (light/dark/system) |
 | `vite.config.ts` | Proxy: `/api` → `http://localhost:8787` |
@@ -68,7 +68,7 @@ In dev, the Vite proxy in `vite.config.ts` routes `/api` → `localhost:8787` �
 
 ## Common Gotchas
 
-- **Turkish char normalization**: `"i".toUpperCase()` returns `"I"` (wrong). Always use `normalizeChar()` or `normalizeWord()` from `src/utils/gameLogic.ts` for any Turkish string uppercasing.
+- **Turkish char normalization**: `"i".toUpperCase()` returns `"I"` (wrong). Always use `normalizeChar()` or `normalizeWord()` from `@harfhane/shared` for any Turkish string uppercasing.
 - **Shared types**: Import via `src/types/index.ts` (which re-exports from `@harfhane/shared`), not directly from the package.
 - **PWA**: `vite-plugin-pwa` is configured in `vite.config.ts`. SW registration is handled in `src/utils/registerSW.ts`.
 - **Routing**: React Router v6 — routes defined in `src/App.tsx`.

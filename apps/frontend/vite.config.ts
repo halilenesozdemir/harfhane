@@ -55,7 +55,15 @@ export default defineConfig({
         importScripts: ['/push-handler.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//, /\.xml$/, /\.txt$/, /\.json$/],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /\.xml$/,
+          /\.txt$/,
+          /\.json$/,
+          /^\/\.well-known\//,
+          /^\/sitemap\.xml$/,
+          /^\/robots\.txt$/,
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

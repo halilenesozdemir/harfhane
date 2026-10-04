@@ -11,6 +11,8 @@
     "build": "pnpm --filter @harfhane/shared run build && pnpm --parallel --filter \"@harfhane/frontend\" --filter \"@harfhane/backend\" run build",
     "typecheck": "pnpm --recursive run typecheck",
     "lint": "pnpm --recursive run lint",
-    "test": "pnpm --filter @harfhane/backend run test"
+    "test": "pnpm --filter @harfhane/shared run test && pnpm --filter @harfhane/frontend run test && pnpm --filter @harfhane/backend run test",
+    "typecheck:test": "pnpm --filter @harfhane/backend run typecheck:test",
+    "check": "pnpm --filter @harfhane/shared run build && pnpm typecheck && pnpm typecheck:test && pnpm lint && pnpm test"
   }
 }

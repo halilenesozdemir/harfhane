@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import type { WordEntry, WordLength } from '../types';
-import { getTodayString } from '../utils/gameLogic';
+import { getTodayString } from '@harfhane/shared';
 
 interface UseHintReturn {
   hintText: string | null;

@@ -1,6 +1,11 @@
 import path from 'node:path';
 import { defineWorkersConfig, readD1Migrations } from '@cloudflare/vitest-pool-workers/config';
 
+const TEST_SECRETS = {
+  JWT_SECRET: 'local-test-secret-not-real-0123456789abcdef',
+  ADMIN_SECRET: 'local-test-admin-secret',
+};
+
 export default defineWorkersConfig(async () => {
   const migrations = await readD1Migrations(path.join(__dirname, 'db/migrations'));
 
@@ -9,7 +14,7 @@ export default defineWorkersConfig(async () => {
       poolOptions: {
         workers: {
           wrangler: { configPath: './wrangler.toml' },
-          miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+          miniflare: { bindings: { ...TEST_SECRETS, TEST_MIGRATIONS: migrations } },
         },
       },
     },

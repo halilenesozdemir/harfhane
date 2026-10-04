@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import type { Theme, ThemeContextValue } from '../types';
 
+const LIGHT_THEME_COLOR = '#fff4dc';
+const DARK_THEME_COLOR = '#1c1611';
+
 /**
  * Theme hook for managing light/dark/system theme
  * @returns {ThemeContextValue} theme state and controls
@@ -9,6 +12,7 @@ import type { Theme, ThemeContextValue } from '../types';
 export const useTheme = (): ThemeContextValue => {
   // Stored preference: 'light' | 'dark' | 'system'
   const [themePreference, setThemePreference] = useLocalStorage<Theme>('harfhane:theme', 'system');
+  const [isHighContrast, setHighContrast] = useLocalStorage<boolean>('harfhane:high-contrast', false);
   
   // Track system preference
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {
@@ -51,9 +55,13 @@ export const useTheme = (): ThemeContextValue => {
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#121213' : '#ffffff');
+      metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
     }
   }, [resolvedTheme]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('high-contrast', isHighContrast);
+  }, [isHighContrast]);
 
   // Theme setters
   const setTheme = useCallback((theme: Theme): void => {
@@ -82,11 +90,13 @@ export const useTheme = (): ThemeContextValue => {
     isDark: resolvedTheme === 'dark',
     isLight: resolvedTheme === 'light',
     isSystem: themePreference === 'system',
+    isHighContrast,
     
     // Actions
     setTheme,
     toggleTheme,
     setSystemPreference,
+    setHighContrast,
   };
 };
 

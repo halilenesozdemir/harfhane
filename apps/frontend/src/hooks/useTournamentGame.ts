@@ -12,7 +12,7 @@ import {
   updateKeyboardStatus,
   checkGameStatus,
   normalizeWord,
-} from '../utils/gameLogic';
+} from '@harfhane/shared';
 import type { GameState, TileStatus, WordLength } from '../types';
 
 const WIN_MESSAGES = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'] as const;

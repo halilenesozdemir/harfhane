@@ -14,35 +14,35 @@ describe('SharePreview', () => {
         ['present', 'present', 'present'],
       ]);
       const { container } = render(<SharePreview evaluations={evaluations} />);
-      const rows = container.querySelectorAll('.flex.gap-1:not(.flex-col)');
+      const rows = container.querySelectorAll('[data-testid="share-preview-row"]');
       expect(rows).toHaveLength(3);
     });
 
     it('should apply bg-correct class for correct tiles', () => {
       const evaluations = createEvaluations([['correct', 'absent', 'absent']]);
       const { container } = render(<SharePreview evaluations={evaluations} />);
-      const tiles = container.querySelectorAll('.w-5.h-5');
+      const tiles = container.querySelectorAll('[data-testid="share-preview-tile"]');
       expect(tiles[0]).toHaveClass('bg-correct');
     });
 
     it('should apply bg-present class for present tiles', () => {
       const evaluations = createEvaluations([['absent', 'present', 'absent']]);
       const { container } = render(<SharePreview evaluations={evaluations} />);
-      const tiles = container.querySelectorAll('.w-5.h-5');
+      const tiles = container.querySelectorAll('[data-testid="share-preview-tile"]');
       expect(tiles[1]).toHaveClass('bg-present');
     });
 
     it('should apply bg-absent class for absent tiles', () => {
       const evaluations = createEvaluations([['absent', 'absent', 'absent']]);
       const { container } = render(<SharePreview evaluations={evaluations} />);
-      const tiles = container.querySelectorAll('.w-5.h-5');
+      const tiles = container.querySelectorAll('[data-testid="share-preview-tile"]');
       expect(tiles[0]).toHaveClass('bg-absent');
     });
 
     it('should apply bg-absent class for null tiles', () => {
       const evaluations = createEvaluations([[null, null]]);
       const { container } = render(<SharePreview evaluations={evaluations} />);
-      const tiles = container.querySelectorAll('.w-5.h-5');
+      const tiles = container.querySelectorAll('[data-testid="share-preview-tile"]');
       expect(tiles[0]).toHaveClass('bg-absent');
     });
   });

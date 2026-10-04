@@ -213,6 +213,18 @@ export function getAdminStats(secret: string): Promise<AdminStats> {
   return adminRequest<AdminStats>('/stats', secret);
 }
 
+export interface ScheduleHealthEntry {
+  length: number;
+  runwayDays: number;
+  lastScheduledDate: string | null;
+  unscheduledStock: number;
+  severity: 'ok' | 'warning' | 'critical';
+}
+
+export function getScheduleHealth(secret: string): Promise<ScheduleHealthEntry[]> {
+  return adminRequest<ScheduleHealthEntry[]>('/schedule-health', secret);
+}
+
 export function autoFillSchedule(
   secret: string,
   days = 30

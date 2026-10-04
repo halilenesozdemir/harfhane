@@ -2,11 +2,6 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
-## Agent docs overlap
-`AGENTS.md` (generic multi-agent rules) and `CLAUDE.md` (772 lines) overlap. `AGENTS.md` still describes a delegation system that predates the owner's global model policy.
-- Harmless today: both are read, and the rules mostly agree.
-- Fix: make `AGENTS.md` the single project source (context, invariants, commands), have `CLAUDE.md` reference it, and drop the duplicated sections.
-
 ## Mobile auth
 Mobile needs native Google Sign-In and a backend endpoint that verifies mobile ID tokens. Part of the Android MVP plan.
 
@@ -23,12 +18,6 @@ The web app carries code from many experiments; removed features such as challen
 - Audit unused files, hooks, routes, API endpoints and migrations-only tables before moving game logic into `packages/shared`.
 - Plan web ↔ mobile routing: store links, deep links, "get the app" banner.
 
-## Token cost of agent docs
-`CLAUDE.md` (772 lines) and `AGENTS.md` (267 lines) load into every session.
-- Slim them to project-specific rules.
-- Keep generic rules in the owner's global config.
-- See "Agent docs overlap".
-
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
 
@@ -39,3 +28,13 @@ The web app carries code from many experiments; removed features such as challen
 
 ## Known bug fixed in passing
 `findOrCreateWord` inserted user words with `category = NULL` and no `length`. This violated `NOT NULL` and stored 6-letter words as length 5. The baseline schema and repository now handle both.
+
+## Legacy docs review (2026-10-04)
+- `products.md`: the 854-line PRD from the original product. It still describes the old word source and long-finished phases.
+  - Recommendation: replace with a short product brief that points to `docs/plans/`, or move it to `docs/archive/`.
+- `USAGE.md`: a Claude Code usage guide for the old multi-agent setup in `AGENTS.md`. It overlaps with the owner's global config.
+  - Recommendation: fold the still-valid parts into `AGENTS.md`, then archive.
+- `PWA_TEST.md`: still relevant while the web PWA ships. Keep.
+- `DEPLOYMENT.md`: update the database section at cutover (`harfhane` and `db/migrations`).
+- `SECURITY.md`: keep.
+- `LEGACY_TEST_GUIDE.md`: untracked and owned by the owner; not touched.
