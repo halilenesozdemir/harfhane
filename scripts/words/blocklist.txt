@@ -1,0 +1,19 @@
+# Family-safety blocklist (lowercase roots, prefix-matched).
+# Intentionally short and hand-curated. Do not expand without review.
+# Contents are not reproduced in reports or PR descriptions; only counts are.
+amcık
+göt
+sik
+yarrak
+piç
+orospu
+oruspu
+ibne
+yavşak
+bok
+siktir
+kahpe
+pezevenk
+gerizekalı
+dalyarak
+taşak
