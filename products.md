@@ -1,8 +1,8 @@
-# Nurdle - Product Requirements Document (PRD)
+# Harfhane - Product Requirements Document (PRD)
 
 ## 📋 Proje Özeti
 
-**Proje Adı:** Nurdle  
+**Proje Adı:** Harfhane  
 **Versiyon:** 2.0.0 (In Development)  
 **v1.0.0:** Tamamlandı ve yayında ✅  
 **Tarih:** 4 Ocak 2026  
@@ -10,7 +10,7 @@
 
 ### Proje Açıklaması
 
-Nurdle, popüler Wordle oyunundan esinlenerek Risale-i Nur külliyatındaki kelimelerle oynanan bir kelime tahmin oyunudur. Oyuncular, 6 deneme hakkı ile gizli bir kelimeyi tahmin etmeye çalışırlar. Her tahmin sonrası, harflerin doğru konumda olup olmadığı görsel geri bildirimlerle gösterilir.
+Harfhane, popüler Wordle oyunundan esinlenen Türkçe bir kelime tahmin oyunudur. Oyuncular, 6 deneme hakkı ile gizli bir kelimeyi tahmin etmeye çalışırlar. Her tahmin sonrası, harflerin doğru konumda olup olmadığı görsel geri bildirimlerle gösterilir.
 
 **Oyun Modları:**
 
@@ -58,13 +58,13 @@ Nurdle, popüler Wordle oyunundan esinlenerek Risale-i Nur külliyatındaki keli
 - [x] Bilgi butonu (Nasıl Oynanır)
 - [x] İstatistik butonu
 - [x] Ayarlar butonu
-- [x] Ana sayfaya dönüş (NURDLE yazısına tıklama)
+- [x] Ana sayfaya dönüş (HARFHANE yazısına tıklama)
 - [x] Mod etiketi gösterimi (Günlük / Sınırsız)
 
 #### 3.0 Ana Sayfa (HomePage)
 
 - [x] Mod seçim ekranı
-- [x] Günlük Nurdle butonu
+- [x] Günlük Harfhane butonu
 - [x] Sınırsız Mod butonu
 - [x] Logo ve başlık
 - [x] Modern kart tasarımı
@@ -152,7 +152,7 @@ Nurdle, popüler Wordle oyunundan esinlenerek Risale-i Nur külliyatındaki keli
 - [x] Sonuç formatı oluştur (emoji grid)
 
   ```
-  Nurdle 12 4/6
+  Harfhane 12 4/6
 
   ⬜🟨⬜⬜⬜
   🟩⬜⬜🟨⬜
@@ -233,7 +233,7 @@ Nurdle, popüler Wordle oyunundan esinlenerek Risale-i Nur külliyatındaki keli
 ## 📦 Proje Yapısı
 
 ```
-nurdle/
+harfhane/
 ├── public/
 │   └── favicon.ico
 ├── src/
@@ -426,7 +426,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 ### v2.1.1 - Günlük Kelime Yenilenme (4 Ocak 2026) ✅
 
 - ✅ **Geri Sayım**: Yeni gün tespiti
-- ✅ **Otomatik Yenileme**: "Yeni Nurdle'ı Başlat" butonu
+- ✅ **Otomatik Yenileme**: "Yeni Harfhane'ı Başlat" butonu
 - ✅ **UX İyileştirmesi**: Kullanıcı bilgilendirmesi
 
 ### v2.1.0 - Kelime Sistemi (4 Ocak 2026) ✅
@@ -455,7 +455,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 - [x] Light/Dark tema değiştirme toggle
 - [x] High contrast mod (CSS hazır, toggle eklenecek)
-- [x] Tema tercihi localStorage'da saklanır (`nurdle:theme`)
+- [x] Tema tercihi localStorage'da saklanır (`harfhane:theme`)
 - [x] Sistem teması algılama (prefers-color-scheme)
 - [x] useTheme hook (TypeScript)
 - [x] ThemeProvider context (TypeScript)
@@ -605,7 +605,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
 
 ### Faz 2 — Custom Kelime Listeleri & Admin Paneli
 
-**Hedef**: Kullanıcıların kendi kelime listelerini yükleyip özel Nurdle oyunları oluşturabilmesi; admin paneli ile kelime yönetimi.
+**Hedef**: Kullanıcıların kendi kelime listelerini yükleyip özel Harfhane oyunları oluşturabilmesi; admin paneli ile kelime yönetimi.
 
 **Stack**: Faz 1 + Cloudflare R2
 
@@ -632,12 +632,12 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
   - [ ] `GET /api/lists/:slug` — custom liste detayı
   - [ ] `GET /api/lists/:slug/play` — custom oyun başlatma
   - [ ] Frontend: `/play/:slug` route'u
-- [ ] Paylaşım: Custom Nurdle linki oluşturma ve kopyalama
+- [ ] Paylaşım: Custom Harfhane linki oluşturma ve kopyalama
 
 **Başarı Kriterleri**:
 - Admin panel üzerinden kelime yönetimi yapılabiliyor ✅
 - 4/5/6/7 harfli mod seçilebiliyor
-- Kullanıcı CSV yükleyip custom Nurdle oluşturabiliyor
+- Kullanıcı CSV yükleyip custom Harfhane oluşturabiliyor
 - Custom oyun linki paylaşılabiliyor
 
 ---
@@ -669,7 +669,7 @@ v1.0.0 başarıyla tamamlandı ve yayında. GitHub'a pushlandı.
   - [ ] Günlük / haftalık / tüm zamanlar sıralaması
   - [ ] Arkadaş davetiyesi (referral sistem)
 - [ ] Premium özellikler
-  - [ ] Özel domain Nurdle oluşturma
+  - [ ] Özel domain Harfhane oluşturma
   - [ ] Marka özelleştirme (logo, renk)
   - [ ] Gelişmiş istatistikler
   - [ ] Ödeme entegrasyonu (Stripe veya Paddle)

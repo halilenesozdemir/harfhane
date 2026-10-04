@@ -1,4 +1,4 @@
-# Architectural Decisions — Nurdle
+# Architectural Decisions — Harfhane
 
 > Log of key architectural and technical decisions. Add new entries at the top.
 
@@ -70,6 +70,6 @@
 
 **Decision**: Single monorepo with pnpm workspaces over separate repos.
 
-**Packages**: `@nurdle/frontend`, `@nurdle/backend`, `@nurdle/shared`
+**Packages**: `@harfhane/frontend`, `@harfhane/backend`, `@harfhane/shared`
 
 **Reason**: Shared TypeScript types between frontend and backend without publishing to npm. Single `pnpm typecheck` catches cross-package type errors.

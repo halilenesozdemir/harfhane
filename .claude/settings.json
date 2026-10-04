@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; cd /Users/halilenesozdemir/Desktop/dev/nurdle; if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx|json|css|md)$ ]]; then npx prettier --write \"$FILE\" 2>/dev/null; fi; exit 0"
+            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; cd $CLAUDE_PROJECT_DIR; if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx|json|css|md)$ ]]; then npx prettier --write \"$FILE\" 2>/dev/null; fi; exit 0"
           }
         ]
       },
@@ -58,7 +58,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ \"$FILE\" =~ \\.(ts|tsx)$ ]] && [[ \"$FILE\" =~ apps/ ]]; then cd /Users/halilenesozdemir/Desktop/dev/nurdle && pnpm typecheck 2>&1 | tail -20; fi; exit 0"
+            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ \"$FILE\" =~ \\.(ts|tsx)$ ]] && [[ \"$FILE\" =~ apps/ ]]; then cd $CLAUDE_PROJECT_DIR && pnpm typecheck 2>&1 | tail -20; fi; exit 0"
           }
         ]
       }
@@ -68,7 +68,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mkdir -p /Users/halilenesozdemir/Desktop/dev/nurdle/.github/logs && echo \"[SESSION-END] $(date -u '+%Y-%m-%d %H:%M:%S UTC') branch=$(git -C /Users/halilenesozdemir/Desktop/dev/nurdle rev-parse --abbrev-ref HEAD 2>/dev/null)\" >> /Users/halilenesozdemir/Desktop/dev/nurdle/.github/logs/sessions.log 2>/dev/null; exit 0"
+            "command": "mkdir -p $CLAUDE_PROJECT_DIR/.github/logs && echo \"[SESSION-END] $(date -u '+%Y-%m-%d %H:%M:%S UTC') branch=$(git -C $CLAUDE_PROJECT_DIR rev-parse --abbrev-ref HEAD 2>/dev/null)\" >> $CLAUDE_PROJECT_DIR/.github/logs/sessions.log 2>/dev/null; exit 0"
           }
         ]
       }

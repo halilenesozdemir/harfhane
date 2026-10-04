@@ -13,7 +13,7 @@ git status --short
 Ardından şunu sun:
 
 ```
-## Proje Durumu — Nurdle
+## Proje Durumu — Harfhane
 
 **Branch**: [branch adı]
 **Son 5 Commit**: [liste]

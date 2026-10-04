@@ -9,7 +9,7 @@ beforeAll(async () => {
 
 describe('GET /api/lists/:slug/daily', () => {
   it('returns 200 with deterministic daily word', async () => {
-    const res = await SELF.fetch('http://example.com/api/lists/nurdle/daily?date=2026-01-01');
+    const res = await SELF.fetch('http://example.com/api/lists/ornek-liste/daily?date=2026-01-01');
     expect(res.status).toBe(200);
     const body = await res.json() as { data: { word: { word: string }; gameNumber: number; date: string } };
     expect(body.data.word.word).toBeDefined();
@@ -18,15 +18,15 @@ describe('GET /api/lists/:slug/daily', () => {
   });
 
   it('returns same word for same date', async () => {
-    const res1 = await SELF.fetch('http://example.com/api/lists/nurdle/daily?date=2026-01-05');
-    const res2 = await SELF.fetch('http://example.com/api/lists/nurdle/daily?date=2026-01-05');
+    const res1 = await SELF.fetch('http://example.com/api/lists/ornek-liste/daily?date=2026-01-05');
+    const res2 = await SELF.fetch('http://example.com/api/lists/ornek-liste/daily?date=2026-01-05');
     const body1 = await res1.json() as { data: { word: { word: string } } };
     const body2 = await res2.json() as { data: { word: { word: string } } };
     expect(body1.data.word.word).toBe(body2.data.word.word);
   });
 
   it('returns 400 for invalid date format', async () => {
-    const res = await SELF.fetch('http://example.com/api/lists/nurdle/daily?date=notadate');
+    const res = await SELF.fetch('http://example.com/api/lists/ornek-liste/daily?date=notadate');
     expect(res.status).toBe(400);
     const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('BAD_REQUEST');

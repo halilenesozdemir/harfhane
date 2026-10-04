@@ -1,4 +1,4 @@
-# Project Rules — Nurdle
+# Project Rules — Harfhane
 
 > Harfhane: TDK kelime havuzuyla oynanan Türkçe Wordle oyunu.
 > Bu dosya Claude Code ve tüm subagent'lar tarafından okunur ve tüm kurallar bağlayıcıdır.
@@ -20,7 +20,7 @@
 ## Monorepo Structure
 
 ```
-nurdle/
+harfhane/
 ├── apps/
 │   ├── frontend/     # React 19 + Vite + TypeScript
 │   │   └── CLAUDE.md # Frontend-specific context
@@ -558,8 +558,8 @@ const createMockWord = (overrides = {}): AdminWord => ({
 
 - Frontend ile backend arasında paylaşılan tüm tipler burada.
 - Key types: `WordEntry`, `WordData`, `DailyWordResponse`, `ApiError`, `GameResult`
-- Frontend import: `@nurdle/shared`
-- Backend import: `@nurdle/shared`
+- Frontend import: `@harfhane/shared`
+- Backend import: `@harfhane/shared`
 
 ---
 
@@ -699,12 +699,12 @@ Her kod çıktısında:
 
 ### Frontend → Cloudflare Pages
 
-- Build: `VITE_API_URL=https://api.harfhane.app/api pnpm --filter @nurdle/frontend run build`
-- Deploy: `CLOUDFLARE_API_TOKEN=... pnpm --filter @nurdle/frontend exec wrangler pages deploy dist --project-name nurdle`
+- Build: `VITE_API_URL=https://api.harfhane.app/api pnpm --filter @harfhane/frontend run build`
+- Deploy: `CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name harfhane`
 
 ### Backend → Cloudflare Workers
 
-- Deploy: `CLOUDFLARE_API_TOKEN=... pnpm --filter @nurdle/backend run deploy`
+- Deploy: `CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/backend run deploy`
 - Entry: `apps/backend/src/index.ts`
 - Worker domain: `api.harfhane.app`
 
@@ -714,7 +714,7 @@ Her kod çıktısında:
 
 - **pnpm workspaces** — her zaman `pnpm` kullan, `npm` veya `yarn` asla.
 - Root workspace scripts: `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm test`
-- Filter: `pnpm --filter @nurdle/frontend run dev`
+- Filter: `pnpm --filter @harfhane/frontend run dev`
 
 ---
 
@@ -740,7 +740,7 @@ MCP server'lar Claude'u dış araçlara bağlar. Manuel kurulum gerekir:
 
 ```bash
 claude mcp add github -- npx -y @modelcontextprotocol/server-github
-claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /Users/halilenesozdemir/Desktop/dev/nurdle
+claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem $CLAUDE_PROJECT_DIR
 ```
 
 | MCP | Amaç | Kurulum |

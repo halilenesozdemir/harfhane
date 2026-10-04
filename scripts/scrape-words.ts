@@ -70,7 +70,7 @@ function hasEnoughVowels(word: string): boolean {
 async function fetchPage(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; NurdleBot/1.0; kelime arastirma)',
+      'User-Agent': 'Mozilla/5.0 (compatible; HarfhaneBot/1.0; kelime arastirma)',
       'Accept-Language': 'tr-TR,tr;q=0.9',
     },
   });

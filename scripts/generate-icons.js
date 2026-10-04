@@ -11,7 +11,7 @@ console.log('📱 Icon'lar için şu adımları takip edin:');
 console.log('');
 console.log('1. SVG icon hazırsa:');
 console.log('   - https://realfavicongenerator.net/ adresine gidin');
-console.log('   - nurdle-icon.svg dosyasını yükleyin');
+console.log('   - harfhane-icon.svg dosyasını yükleyin');
 console.log('   - 192x192 ve 512x512 PNG\'leri indirin');
 console.log('   - public/ klasörüne kopyalayın');
 console.log('');

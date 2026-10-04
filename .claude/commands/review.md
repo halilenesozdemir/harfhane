@@ -35,7 +35,7 @@ Critical: {n} | Major: {n} | Minor: {n}
 Karar: [Onayla / Revizyon iste]
 ```
 
-Nurdle-spesifik kontroller:
+Harfhane-spesifik kontroller:
 - Turkish characters doğru mu? (ç, ş, ğ, ı, ö, ü)
 - cursor-pointer var mı interactive elementlerde?
 - Emoji var mı UI'da? (yasak — Lucide icon kullan)

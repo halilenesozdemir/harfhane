@@ -30,7 +30,7 @@ function getArg(name: string): number | null {
 
 function query(sql: string): unknown[] {
   const result = execSync(
-    `wrangler d1 execute nurdle-db ${flag} --json --command "${sql.replace(/"/g, '\\"')}"`,
+    `wrangler d1 execute harfhane-db ${flag} --json --command "${sql.replace(/"/g, '\\"')}"`,
     { cwd: BACKEND_DIR }
   ).toString();
   const parsed = JSON.parse(result) as Array<{ results: unknown[] }>;
@@ -38,7 +38,7 @@ function query(sql: string): unknown[] {
 }
 
 function execSql(sqlPath: string): void {
-  execSync(`wrangler d1 execute nurdle-db ${flag} --file=${sqlPath}`, {
+  execSync(`wrangler d1 execute harfhane-db ${flag} --file=${sqlPath}`, {
     stdio: 'inherit',
     cwd: BACKEND_DIR,
   });

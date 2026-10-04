@@ -35,7 +35,7 @@ Harfhane, Cloudflare Workers üzerinde çalışan bir Hono backend + React front
 ### API Güvenliği
 
 - Rate limiting: auth endpointleri için `rateLimiter`, oyun endpointleri için `gameRateLimiter`
-- CORS: sadece `harfhane.app`, `localhost:5173`, `localhost:4173`, `*.nurdle.pages.dev`
+- CORS: sadece `harfhane.app`, `localhost:5173`, `localhost:4173`, `*.harfhane.pages.dev`
 - Security headers: `securityHeaders` middleware — CSP, X-Frame-Options, HSTS
 - Input validation: tüm route'larda Zod schema
 - Admin routes: `X-Admin-Secret` header kontrolü

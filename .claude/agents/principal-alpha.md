@@ -1,6 +1,6 @@
 ---
 name: principal-alpha
-description: Senior software architect for complex feature design, code review, and architectural decisions. Tier 1 agent with full codebase access. Handles frontend and backend architecture for the Nurdle monorepo.
+description: Senior software architect for complex feature design, code review, and architectural decisions. Tier 1 agent with full codebase access. Handles frontend and backend architecture for the Harfhane monorepo.
 model: opus
 ---
 

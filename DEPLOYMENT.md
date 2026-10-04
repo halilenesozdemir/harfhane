@@ -6,7 +6,7 @@
 | -------- | -------------------- | -------------------------- |
 | Frontend | Cloudflare Pages     | `harfhane.app`             |
 | Backend  | Cloudflare Workers   | `api.harfhane.app`         |
-| Veritabanı | Cloudflare D1      | `nurdle-db`                |
+| Veritabanı | Cloudflare D1      | `harfhane-db`                |
 
 GitHub Actions üzerinden `main` branch'e push ile otomatik tetiklenir.
 
@@ -27,7 +27,7 @@ CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/backend run deploy
 VITE_API_URL=https://api.harfhane.app/api pnpm --filter @harfhane/frontend run build
 
 # Deploy
-CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name nurdle
+CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name harfhane
 ```
 
 ---
@@ -62,10 +62,10 @@ Lokalde env var gerekmez — Vite proxy `/api` → `localhost:8787` yönlendirir
 
 ```bash
 # Lokal — geliştirme ortamı
-wrangler d1 migrations apply nurdle-db --local
+wrangler d1 migrations apply harfhane-db --local
 
 # Production — dikkatli uygula
-wrangler d1 migrations apply nurdle-db --remote
+wrangler d1 migrations apply harfhane-db --remote
 ```
 
 Migration dosyaları: `apps/backend/migrations/`

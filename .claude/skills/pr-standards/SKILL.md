@@ -58,7 +58,7 @@ allowed-tools: Read, Bash
 - [ ] Test coverage ≥80%.
 - [ ] All existing tests pass.
 
-### Nurdle-Specific
+### Harfhane-Specific
 
 - [ ] Responsive design verified (mobile + desktop).
 - [ ] Accessibility checked (keyboard nav, ARIA, contrast).

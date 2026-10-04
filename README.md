@@ -109,7 +109,7 @@ pnpm --filter @harfhane/backend run db:migrate:local
 pnpm --filter @harfhane/backend run db:migrate:remote
 
 # Local seed
-wrangler d1 execute nurdle-db --local --file=scripts/seed.sql
+wrangler d1 execute harfhane-db --local --file=scripts/seed.sql
 ```
 
 ## Deploy

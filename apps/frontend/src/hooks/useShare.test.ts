@@ -16,7 +16,7 @@ describe('useShare', () => {
 
   describe('when navigator.share is available', () => {
     it('should call navigator.share with the provided text', async () => {
-      const shareText = 'Nurdle 5/6\n\nhttps://harfhane.app';
+      const shareText = 'Harfhane 5/6\n\nhttps://harfhane.app';
       const shareMock = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'share', { value: shareMock, writable: true, configurable: true });
 
@@ -58,7 +58,7 @@ describe('useShare', () => {
     });
 
     it('should write to clipboard directly', async () => {
-      const shareText = 'Nurdle 3/6\n\nhttps://harfhane.app';
+      const shareText = 'Harfhane 3/6\n\nhttps://harfhane.app';
       const clipboardMock = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', { value: { writeText: clipboardMock }, writable: true, configurable: true });
 

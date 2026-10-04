@@ -43,7 +43,7 @@ Kurallar:
   - UI state (modal açık/kapalı) component seviyesinde.
   - Domain state (oyun) tek bir hook’ta.
 - `localStorage` erişimi **yalnızca** `useLocalStorage` üzerinden.
-- Key formatı (standart): `nurdle:<scope>:<id>` (örn. `nurdle:game:2026-01-04`).
+- Key formatı (standart): `harfhane:<scope>:<id>` (örn. `harfhane:game:2026-01-04`).
 
 ## 6) TailwindCSS 3 Kuralları
 
@@ -67,7 +67,7 @@ Kurallar:
 - `console.log` yok; sadece gerekli yerlerde `console.error`.
 - Fail-safe: state bozulmasın; invalid input güvenli şekilde reddedilsin.
 
-## 9) Türkçe Dil Kuralları (Nurdle’a Özel)
+## 9) Türkçe Dil Kuralları (Harfhane’a Özel)
 
 - Harf normalizasyonu tek merkezde (`normalizeWord/normalizeChar`).
 - Türkçe karakterleri (İ, I, ı, ş, ğ, ü, ö, ç) her yerde doğru ele al.

@@ -18,7 +18,7 @@ Used by Principal-level agents for:
 
 ## Architecture Patterns
 
-### Layered Architecture (Nurdle Backend)
+### Layered Architecture (Harfhane Backend)
 
 ```
 Routes (HTTP layer)

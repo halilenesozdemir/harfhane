@@ -26,7 +26,8 @@ export default defineConfig({
       manifest: {
         name: 'Harfhane - Kelime Oyunu',
         short_name: 'Harfhane',
-        description: 'Risale-i Nur külliyatından kelimelerle oynanan günlük kelime oyunu',
+        lang: 'tr',
+        description: 'Türkçe günlük kelime oyunu: günün kelimesini 6 denemede bul',
         theme_color: '#538d4e',
         background_color: '#121213',
         display: 'standalone',

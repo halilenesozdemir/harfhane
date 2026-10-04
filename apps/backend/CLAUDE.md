@@ -1,4 +1,4 @@
-# Backend — Nurdle API
+# Backend — Harfhane API
 
 Backend-specific context. Extends root CLAUDE.md.
 
@@ -7,11 +7,11 @@ Backend-specific context. Extends root CLAUDE.md.
 ## Quick Reference
 
 ```bash
-pnpm --filter @nurdle/backend run dev        # start local worker (port 8787)
-pnpm --filter @nurdle/backend run deploy     # deploy to Cloudflare Workers
-pnpm --filter @nurdle/backend run test       # run Vitest
-pnpm --filter @nurdle/backend run typecheck  # TypeScript check
-wrangler d1 execute nurdle-db --local --file=scripts/seed.sql  # seed local DB
+pnpm --filter @harfhane/backend run dev        # start local worker (port 8787)
+pnpm --filter @harfhane/backend run deploy     # deploy to Cloudflare Workers
+pnpm --filter @harfhane/backend run test       # run Vitest
+pnpm --filter @harfhane/backend run typecheck  # TypeScript check
+wrangler d1 execute harfhane-db --local --file=scripts/seed.sql  # seed local DB
 ```
 
 ---
@@ -96,7 +96,7 @@ HTTP status codes: 200, 201, 400, 401, 404, 409, 422, 500
 
 ## D1 Database
 
-- **Name:** `nurdle-db`
+- **Name:** `harfhane-db`
 - **ID:** `1fad4aa7-baa4-41ce-a0f4-976904b8d29b`
 - **Local state:** `.wrangler/state/v3/d1/`
 - `daily_words` has `UNIQUE(date, length)` — scheduling uses UPSERT: `ON CONFLICT(date, length) DO UPDATE SET word_id = excluded.word_id`

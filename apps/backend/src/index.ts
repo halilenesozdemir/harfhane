@@ -101,7 +101,7 @@ export default {
 
     const hint = dailyWord
       ? buildHint(dailyWord.meaning, dailyWord.category)
-      : 'Risale-i Nur külliyatından bir kelime';
+      : 'Bugünün kelimesi seni bekliyor';
 
     const pushPayload = {
       title: 'Harfhane — Günlük Kelime',

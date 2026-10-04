@@ -51,7 +51,7 @@ for (const [len, cnt] of Object.entries(byLength).sort())
   console.log(`  ${len} harf: ${cnt} kelime`);
 
 execSync(
-  `wrangler d1 execute nurdle-db ${flag} --file=${sqlPath}`,
+  `wrangler d1 execute harfhane-db ${flag} --file=${sqlPath}`,
   { stdio: 'inherit', cwd: join(__dirname, '../apps/backend') }
 );
 

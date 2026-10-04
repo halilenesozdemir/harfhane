@@ -19,16 +19,16 @@ Adımlar:
 
 ### Frontend Deploy
 ```
-pnpm --filter @nurdle/frontend run build
+pnpm --filter @harfhane/frontend run build
 ```
 Build başarılıysa:
 ```
-pnpm --filter @nurdle/frontend exec wrangler pages deploy dist --project-name nurdle
+pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name harfhane
 ```
 
 ### Backend Deploy
 ```
-pnpm --filter @nurdle/backend run deploy
+pnpm --filter @harfhane/backend run deploy
 ```
 
 4. Deploy sonucunu raporla:

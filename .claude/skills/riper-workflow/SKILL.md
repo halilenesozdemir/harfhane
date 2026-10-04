@@ -100,7 +100,7 @@ Implement sonrası:
 
 1. `/check` komutunu çalıştır (typecheck + test + clean-code).
 2. `.claude/skills/code-review/SKILL.md` checklist'ini uygula.
-3. Nurdle-spesifik kontroller:
+3. Harfhane-spesifik kontroller:
    - Turkish chars doğru mu?
    - cursor-pointer var mı?
    - normalizeWord() kullanılıyor mu?

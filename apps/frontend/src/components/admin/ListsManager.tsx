@@ -184,7 +184,7 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
         {showForm && (
           <div className="border border-border rounded-lg p-3 flex flex-col gap-2 bg-bg-secondary text-sm">
             <input
-              placeholder="slug (örn: risale-temel)"
+              placeholder="slug (örn: sehirler)"
               value={form.slug}
               onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
               className="w-full px-2 py-1.5 rounded border border-border bg-bg-primary text-text-primary focus:outline-none"

@@ -65,7 +65,7 @@ const insertDailyWords = data.dailyWords
 const sql = `${insertWords}\n${insertDailyWords}`;
 
 execSync(
-  `echo '${sql.replace(/'/g, "'\\''")}' | wrangler d1 execute nurdle-db ${flag} --command "$(cat -)"`,
+  `echo '${sql.replace(/'/g, "'\\''")}' | wrangler d1 execute harfhane-db ${flag} --command "$(cat -)"`,
   { stdio: 'inherit', cwd: join(__dirname, '../apps/backend') }
 );
 

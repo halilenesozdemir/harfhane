@@ -14,7 +14,7 @@ Hata varsa listele, devam etme — önce düzelt.
 
 ### 2. Backend Testleri
 ```
-pnpm --filter @nurdle/backend run test
+pnpm --filter @harfhane/backend run test
 ```
 Başarısız test varsa listele.
 
@@ -26,7 +26,7 @@ Başarısız test varsa listele.
 - Fonksiyon 20 satırı geçiyor mu?
 - Dosya 250 satırı geçiyor mu?
 
-### 4. Nurdle-Spesifik Kontroller
+### 4. Harfhane-Spesifik Kontroller
 - Turkish character'lar doğru mu?
 - normalizeWord() kullanılıyor mu (toUpperCase yerine)?
 - cursor-pointer interactive elementlerde var mı?
@@ -40,7 +40,7 @@ Başarısız test varsa listele.
 **TypeScript**: ✅ Temiz | ❌ {n} hata
 **Tests**: ✅ {n}/{n} geçti | ❌ {n} başarısız
 **Clean Code**: ✅ Temiz | ⚠️ {n} uyarı
-**Nurdle Rules**: ✅ Temiz | ❌ {n} ihlal
+**Harfhane Rules**: ✅ Temiz | ❌ {n} ihlal
 
 **Karar**: Commit'e hazır | Düzeltme gerekli
 ```

@@ -8,7 +8,7 @@
 
 ## Project Context
 
-**Nurdle** — Risale-i Nur külliyatındaki kelimelerle oynanan Türkçe Wordle oyunu.
+**Harfhane** — Türkçe günlük kelime oyunu: günlük ve sınırsız mod, düello, turnuva, XP ve rozet.
 
 | Layer      | Technology                                                  |
 | ---------- | ----------------------------------------------------------- |

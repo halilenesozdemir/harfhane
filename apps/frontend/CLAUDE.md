@@ -8,9 +8,9 @@ Frontend-specific context. Extends root CLAUDE.md.
 
 | Command | Description |
 | ------- | ----------- |
-| `pnpm --filter @nurdle/frontend run dev` | Start dev server (proxy to :8787) |
-| `pnpm --filter @nurdle/frontend run build` | Production build |
-| `pnpm --filter @nurdle/frontend run typecheck` | TypeScript check |
+| `pnpm --filter @harfhane/frontend run dev` | Start dev server (proxy to :8787) |
+| `pnpm --filter @harfhane/frontend run build` | Production build |
+| `pnpm --filter @harfhane/frontend run typecheck` | TypeScript check |
 
 ---
 
@@ -27,7 +27,7 @@ React 19, Vite 7, TypeScript 5 (strict), Tailwind CSS 3, TanStack Query v5, Luci
 | `src/lib/api.ts` | API client — uses `VITE_API_URL`, falls back to `/api` |
 | `src/lib/auth-api.ts` | Auth-specific API calls |
 | `src/lib/admin-api.ts` | Admin-specific API calls |
-| `src/types/index.ts` | All frontend types + re-exports from `@nurdle/shared` |
+| `src/types/index.ts` | All frontend types + re-exports from `@harfhane/shared` |
 | `src/hooks/` | Custom hooks (`use*.ts` naming) |
 | `src/utils/gameLogic.ts` | Game logic + `normalizeChar` / `normalizeWord` for Turkish chars |
 | `src/context/AuthContext.tsx` | Auth state (token, user) |
@@ -52,7 +52,7 @@ React 19, Vite 7, TypeScript 5 (strict), Tailwind CSS 3, TanStack Query v5, Luci
 - Declare components with `function` keyword, not `const` arrow functions.
 - Props interface must be named `ComponentNameProps`.
 - All types live in `src/types/index.ts` (frontend-local) or `packages/shared/src/` (shared with backend).
-- Import shared types via `src/types/index.ts`, not directly from `@nurdle/shared`.
+- Import shared types via `src/types/index.ts`, not directly from `@harfhane/shared`.
 
 ---
 
@@ -69,7 +69,7 @@ In dev, the Vite proxy in `vite.config.ts` routes `/api` → `localhost:8787` �
 ## Common Gotchas
 
 - **Turkish char normalization**: `"i".toUpperCase()` returns `"I"` (wrong). Always use `normalizeChar()` or `normalizeWord()` from `src/utils/gameLogic.ts` for any Turkish string uppercasing.
-- **Shared types**: Import via `src/types/index.ts` (which re-exports from `@nurdle/shared`), not directly from the package.
+- **Shared types**: Import via `src/types/index.ts` (which re-exports from `@harfhane/shared`), not directly from the package.
 - **PWA**: `vite-plugin-pwa` is configured in `vite.config.ts`. SW registration is handled in `src/utils/registerSW.ts`.
 - **Routing**: React Router v6 — routes defined in `src/App.tsx`.
 - **Admin routes**: Components under `src/components/admin/` — protected by auth check in `AuthContext`.

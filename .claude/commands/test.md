@@ -8,8 +8,8 @@ Argüman: $ARGUMENTS
 
 Adımlar:
 1. Hedefi belirle:
-   - Argüman varsa: `pnpm --filter @nurdle/backend run test -- $ARGUMENTS`
-   - Argüman yoksa: `pnpm --filter @nurdle/backend run test`
+   - Argüman varsa: `pnpm --filter @harfhane/backend run test -- $ARGUMENTS`
+   - Argüman yoksa: `pnpm --filter @harfhane/backend run test`
 2. Test sonuçlarını oku
 3. Özeti sun:
 

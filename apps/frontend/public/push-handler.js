@@ -17,8 +17,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: '/nurdle-icon.svg',
-      badge: '/nurdle-icon.svg',
+      icon: '/harfhane-icon.svg',
+      badge: '/harfhane-icon.svg',
       tag: 'daily-reminder',
       renotify: false,
       data: { url: payload.url },

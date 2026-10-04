@@ -10,7 +10,7 @@ pnpm --filter @harfhane/frontend run dev
 
 **Tarayıcıda Kontrol:**
 - ✅ Console'da "✅ Service Worker kaydedildi" mesajını görün
-- ✅ Application → Service Workers → "nurdle" aktif olmalı
+- ✅ Application → Service Workers → "harfhane" aktif olmalı
 - ✅ Application → Manifest → JSON görüntülenebilmeli
 - ✅ 3 saniye sonra "Ana Ekrana Ekle" banner'ı görünmeli
 
@@ -148,7 +148,7 @@ pnpm --filter @harfhane/frontend run build
 pnpm --filter @harfhane/frontend run preview
 
 # Deploy
-CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name nurdle
+CLOUDFLARE_API_TOKEN=... pnpm --filter @harfhane/frontend exec wrangler pages deploy dist --project-name harfhane
 ```
 
 **Post-Deploy Checklist:**

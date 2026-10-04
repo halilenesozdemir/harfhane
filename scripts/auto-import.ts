@@ -83,7 +83,7 @@ async function fetchTdk(word: string): Promise<{ meaning: string; category: stri
   try {
     const lower = toLower(word);
     const res = await fetch(`https://sozluk.gov.tr/gts?ara=${encodeURIComponent(lower)}`, {
-      headers: { 'User-Agent': 'NurdleBot/1.0' },
+      headers: { 'User-Agent': 'HarfhaneBot/1.0' },
     });
     const data = await res.json() as TdkResponse;
     if (!Array.isArray(data) || !data[0]?.anlamlarListe?.length) return null;
@@ -100,14 +100,14 @@ async function fetchTdk(word: string): Promise<{ meaning: string; category: stri
 
 function dbQuery(sql: string): unknown[] {
   const out = execSync(
-    `wrangler d1 execute nurdle-db ${flag} --json --command "${sql.replace(/"/g, '\\"')}"`,
+    `wrangler d1 execute harfhane-db ${flag} --json --command "${sql.replace(/"/g, '\\"')}"`,
     { cwd: BACKEND_DIR }
   ).toString();
   return (JSON.parse(out) as Array<{ results: unknown[] }>)[0]?.results ?? [];
 }
 
 function runFile(sqlPath: string): void {
-  execSync(`wrangler d1 execute nurdle-db ${flag} --file=${sqlPath}`, {
+  execSync(`wrangler d1 execute harfhane-db ${flag} --file=${sqlPath}`, {
     stdio: 'inherit', cwd: BACKEND_DIR,
   });
 }

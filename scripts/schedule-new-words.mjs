@@ -3,8 +3,8 @@ import { writeFileSync } from 'fs';
 
 function queryRemote(sql) {
   const out = execSync(
-    `wrangler d1 execute nurdle-db --remote --command="${sql.replace(/"/g, '\\"')}"`,
-    { cwd: '/Users/halilenesozdemir/Desktop/dev/nurdle/apps/backend', encoding: 'utf8' }
+    `wrangler d1 execute harfhane-db --remote --command="${sql.replace(/"/g, '\\"')}"`,
+    { cwd: '$CLAUDE_PROJECT_DIR/apps/backend', encoding: 'utf8' }
   );
   const json = JSON.parse(out.match(/\[[\s\S]*\]/)[0]);
   return json[0].results;
