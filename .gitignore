@@ -51,3 +51,6 @@ apps/frontend/dev-dist/
 apps/frontend/dist/
 scripts/scraped-words.json
 scripts/curated-words.json
+
+/dev-dist/
+.playwright-mcp/
