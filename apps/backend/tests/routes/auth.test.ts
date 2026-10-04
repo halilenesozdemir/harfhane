@@ -4,7 +4,6 @@ import { applySchema, seedTestData, createTestUser } from '../helpers/db';
 import { hashPassword } from '../../src/utils/auth';
 import { createTestToken } from '../helpers/auth';
 
-let existingUserId: number;
 let loginUserId: number;
 let loginToken: string;
 
@@ -12,8 +11,7 @@ beforeAll(async () => {
   await applySchema(env.DB);
   await seedTestData(env.DB);
 
-  const existing = await createTestUser(env.DB, 'existing', 'existing@test.com');
-  existingUserId = existing.id;
+  await createTestUser(env.DB, 'existing', 'existing@test.com');
 
   const passwordHash = await hashPassword('logintest123');
   const loginRow = await env.DB
