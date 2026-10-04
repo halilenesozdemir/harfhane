@@ -1,3 +1,5 @@
+export * from './game';
+
 export type WordCategory = 'isim' | 'sıfat' | 'fiil';
 
 export interface WordEntry {

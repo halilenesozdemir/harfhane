@@ -11,7 +11,7 @@ import {
   checkGameStatus,
   getTodayString,
   normalizeWord,
-} from '../utils/gameLogic';
+} from '@harfhane/shared';
 import type { GameMode, GameState, WordEntry, WordLength, UseGameStateReturn } from '../types';
 
 const WIN_MESSAGES = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'] as const;
