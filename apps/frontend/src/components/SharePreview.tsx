@@ -35,10 +35,11 @@ function SharePreview({ evaluations, gameNumber, guessCount, isWon, challengeUrl
       <div className="px-4 py-3 flex items-center gap-4">
         <div className="flex flex-col gap-0.5">
           {evaluations.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-0.5">
+            <div key={rowIndex} className="flex gap-0.5" data-testid="share-preview-row">
               {row.map((status, colIndex) => (
                 <div
                   key={colIndex}
+                  data-testid="share-preview-tile"
                   className={`w-4 h-4 rounded-sm ${getTileBg(status)}`}
                 />
               ))}
