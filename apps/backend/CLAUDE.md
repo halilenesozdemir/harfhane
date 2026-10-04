@@ -62,7 +62,7 @@ Supporting layers:
 | `src/schemas/word-schemas.ts` | Zod schemas for word routes |
 | `src/utils/normalize.ts` | Turkish uppercase normalization |
 | `src/errors/api-error.ts` | Typed error classes |
-| `migrations/0001_initial_schema.sql` | Base DB schema |
+| `db/migrations/0001_baseline.sql` | Current DB schema (source of truth) |
 | `tests/helpers/db.ts` | Shared test schema + seed |
 
 ---
@@ -72,7 +72,7 @@ Supporting layers:
 - NEVER call `.toUpperCase()` on Turkish text — use `normalizeWord()` from `src/utils/normalize.ts`. `"i".toUpperCase()` returns `"I"` (wrong), not `"İ"`.
 - NEVER access D1 directly in routes — always go through a repository.
 - D1 `exec()` does NOT support multi-statement SQL — use `db.prepare().run()` per statement.
-- All schema changes require a numbered migration file in `migrations/` (e.g., `0010_description.sql`).
+- All schema changes go in `db/migrations/0001_baseline.sql` (single baseline, see AGENTS.md Invariant 2 and `docs/plans/2026-10-04-001-infra-clean-database-plan.md`). The legacy `migrations/` folder (26 files, old `harfhane-db`) is pre-cutover history only — do not add to it.
 - Words are never deleted — set `is_active = 0`.
 - TDD mandatory: write the test first, then implement.
 - Test structure mirrors `src/`: `tests/repositories/`, `tests/services/`, `tests/routes/`.
@@ -96,8 +96,10 @@ HTTP status codes: 200, 201, 400, 401, 404, 409, 422, 500
 
 ## D1 Database
 
-- **Name:** `harfhane-db`
-- **ID:** `1fad4aa7-baa4-41ce-a0f4-976904b8d29b`
+Two bindings during the database migration (`docs/plans/2026-10-04-001-infra-clean-database-plan.md`):
+
+- **`DB` (live):** `harfhane-db`, id `1fad4aa7-baa4-41ce-a0f4-976904b8d29b` — legacy, 26-migration schema. Still serves production until cutover.
+- **`DB_NEXT` (new):** `harfhane`, id `58cbee2e-aa45-4b66-90c7-f5daa798f5e5`, `migrations_dir = db/migrations` — the target schema (single baseline). Tests run against this one.
 - **Local state:** `.wrangler/state/v3/d1/`
 - `daily_words` has `UNIQUE(date, length)` — scheduling uses UPSERT: `ON CONFLICT(date, length) DO UPDATE SET word_id = excluded.word_id`
 
