@@ -3,7 +3,7 @@ import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, ShieldCheck } fro
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
 import { BadgeItem } from "./XPBar";
-import { getTimeUntilMidnight, generateShareText } from "../utils/gameLogic";
+import { getTimeUntilMidnight, generateShareText } from "@harfhane/shared";
 import { useShare } from "../hooks/useShare";
 import type { GameOverModalProps, TimeCountdown, Badge } from "../types";
 

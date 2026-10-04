@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
 import { saveResult } from '../lib/auth-api';
-import { getTodayString } from '../utils/gameLogic';
+import { getTodayString } from '@harfhane/shared';
 import type { DailyStats, UnlimitedStats, WordLength, GameXPResult } from '../types';
 
 interface UseGameStatsOptions {

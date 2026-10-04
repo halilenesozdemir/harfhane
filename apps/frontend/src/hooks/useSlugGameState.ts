@@ -10,7 +10,7 @@ import {
   normalizeWord,
   getTimeUntilMidnight,
   getTodayString,
-} from '../utils/gameLogic';
+} from '@harfhane/shared';
 import type { GameState, UnlimitedStats, WordEntry, TimeCountdown, TileStatus, WordLength } from '../types';
 
 interface PersistedDailyState {

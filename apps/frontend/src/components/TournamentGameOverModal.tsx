@@ -1,6 +1,6 @@
 import { Share2, Check, RotateCcw, Home, X, Trophy } from 'lucide-react';
 import Modal from './Modal';
-import { generateShareText } from '../utils/gameLogic';
+import { generateShareText } from '@harfhane/shared';
 import { useShare } from '../hooks/useShare';
 import type { TileStatus } from '../types';
 
