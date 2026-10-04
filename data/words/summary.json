@@ -1,0 +1,25 @@
+{
+  "lengths": {
+    "4": {
+      "blocked_count": 5,
+      "candidate_count": 1695,
+      "valid_count": 5828
+    },
+    "5": {
+      "blocked_count": 11,
+      "candidate_count": 3027,
+      "valid_count": 9862
+    },
+    "6": {
+      "blocked_count": 6,
+      "candidate_count": 2726,
+      "valid_count": 12185
+    },
+    "7": {
+      "blocked_count": 4,
+      "candidate_count": 2623,
+      "valid_count": 11694
+    }
+  },
+  "source_commit": "7302eca5f3652fe7ae3d3ec06c44697c97342b4e"
+}
