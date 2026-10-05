@@ -4,16 +4,6 @@ import type {
   ValidateWordResponse,
   ApiError,
   WordEntry,
-  WordList,
-  WordListResponse,
-  WordListsResponse,
-  CreateListInput,
-  AddWordsInput,
-  AddWordsResult,
-  UpdateListInput,
-  ListLikeResponse,
-  ListCommentsResponse,
-  AddCommentResponse,
   UnlimitedPersonalStats,
   DuelPublic,
 } from '@harfhane/shared';
@@ -63,71 +53,6 @@ export function validateWord(word: string): Promise<ValidateWordResponse> {
     method: 'POST',
     body: JSON.stringify({ word }),
   });
-}
-
-export type WordListInfo = WordList;
-
-export function fetchPublicLists(): Promise<{ lists: WordListInfo[] }> {
-  return request<{ lists: WordListInfo[] }>('/lists');
-}
-
-export function fetchListInfo(slug: string): Promise<{ list: WordListInfo }> {
-  return request<{ list: WordListInfo }>(`/lists/${slug}`);
-}
-
-export function fetchRandomWordFromList(slug: string): Promise<RandomWordResponse> {
-  return request<RandomWordResponse>(`/lists/${slug}/random`);
-}
-
-export function fetchDailyWordFromList(slug: string, date: string): Promise<DailyWordResponse> {
-  return request<DailyWordResponse>(`/lists/${slug}/daily?date=${date}`);
-}
-
-export function validateWordInList(slug: string, word: string): Promise<ValidateWordResponse> {
-  return request<ValidateWordResponse>(`/lists/${slug}/validate`, {
-    method: 'POST',
-    body: JSON.stringify({ word }),
-  });
-}
-
-export function fetchMyLists(token: string): Promise<WordListsResponse> {
-  return request<WordListsResponse>('/lists/mine', undefined, token);
-}
-
-export function createList(token: string, input: CreateListInput): Promise<WordListResponse> {
-  return request<WordListResponse>('/lists', { method: 'POST', body: JSON.stringify(input) }, token);
-}
-
-export function updateList(token: string, slug: string, patch: UpdateListInput): Promise<WordListResponse> {
-  return request<WordListResponse>(`/lists/${slug}`, { method: 'PATCH', body: JSON.stringify(patch) }, token);
-}
-
-export function deleteList(token: string, slug: string): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>(`/lists/${slug}`, { method: 'DELETE' }, token);
-}
-
-export function addWordsToList(token: string, slug: string, input: AddWordsInput): Promise<AddWordsResult> {
-  return request<AddWordsResult>(`/lists/${slug}/words`, { method: 'POST', body: JSON.stringify(input) }, token);
-}
-
-export function fetchListLikes(slug: string, token?: string): Promise<{ count: number; liked: boolean }> {
-  return request<{ count: number; liked: boolean }>(`/lists/${slug}/likes`, undefined, token);
-}
-
-export function toggleLike(token: string, slug: string): Promise<ListLikeResponse> {
-  return request<ListLikeResponse>(`/lists/${slug}/like`, { method: 'POST' }, token);
-}
-
-export function fetchListComments(slug: string): Promise<ListCommentsResponse> {
-  return request<ListCommentsResponse>(`/lists/${slug}/comments`);
-}
-
-export function addComment(token: string, slug: string, content: string): Promise<AddCommentResponse> {
-  return request<AddCommentResponse>(`/lists/${slug}/comments`, { method: 'POST', body: JSON.stringify({ content }) }, token);
-}
-
-export function deleteComment(token: string, slug: string, commentId: number): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>(`/lists/${slug}/comments/${commentId}`, { method: 'DELETE' }, token);
 }
 
 export function fetchUnlimitedStats(token: string): Promise<{ stats: UnlimitedPersonalStats }> {

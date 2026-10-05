@@ -1,114 +1,23 @@
-# Backend — Harfhane API
+# Backend — apps/backend
 
-Backend-specific context. Extends root CLAUDE.md.
+Hono on Cloudflare Workers with D1. Tests run in the Workers runtime via `@cloudflare/vitest-pool-workers`. Local worker: `pnpm --filter @harfhane/backend run dev` (port 8787).
 
----
+## Rules
 
-## Quick Reference
+- Layering: `src/routes/` → `src/services/` → `src/repositories/`. Routes never touch D1. Input is validated at the route with Zod (`@hono/zod-validator`, schemas in `src/schemas/`). Tests mirror `src/` under `tests/`.
+- Responses: success `{ data: T }`, error `{ error: { code, message } }` through the `ApiError` classes in `src/errors/`; internal detail never reaches the client. Status codes: 200, 201, 400, 401, 404, 409, 422, 500.
+- Turkish casing: `normalizeWord()` from `src/utils/normalize.ts`.
+- D1 `exec()` does not run multi-statement SQL; use one `db.prepare(...).bind(...).run()` per statement.
+- Words are never deleted; set `is_active = 0`.
+- `daily_words` is `UNIQUE(date, length)`; schedule with `ON CONFLICT(date, length) DO UPDATE SET word_id = excluded.word_id`.
 
-```bash
-pnpm --filter @harfhane/backend run dev        # start local worker (port 8787)
-pnpm --filter @harfhane/backend run deploy     # deploy to Cloudflare Workers
-pnpm --filter @harfhane/backend run test       # run Vitest
-pnpm --filter @harfhane/backend run typecheck  # TypeScript check
-wrangler d1 execute harfhane-db --local --file=scripts/seed.sql  # seed local DB
-```
+## Schema and databases
 
----
+- Schema changes go in a new numbered file in `db/migrations/` (`0002_<topic>.sql`, …). `0001_baseline.sql` is applied to `harfhane`; never edit an applied migration. Tests load the folder through `vitest.config.ts` and `tests/helpers/db.ts`.
+- The legacy `migrations/` folder belongs to the old `harfhane-db` and is history only; do not add to it or delete it (cutover in `docs/plans/2026-10-04-001-infra-clean-database-plan.md`).
+- Bindings in `wrangler.toml`: `DB` = `harfhane-db` (legacy, still serves production until cutover); `DB_NEXT` = `harfhane` (target schema, `migrations_dir = db/migrations`).
 
-## Stack
+## Gotchas
 
-- **Hono** — TypeScript HTTP framework on Cloudflare Workers
-- **Cloudflare D1** (SQLite) — primary database
-- **Wrangler** — local dev and deployment
-- **Vitest** + `@cloudflare/vitest-pool-workers` — test runner with Workers environment
-
----
-
-## Architecture
-
-```
-Routes (src/routes/)       — HTTP layer only, no business logic
-  → Services (src/services/)   — business logic, orchestration
-    → Repositories (src/repositories/)  — D1 queries, no business logic
-```
-
-Supporting layers:
-- `src/schemas/` — Zod validation schemas, used at route boundary
-- `src/errors/` — typed error classes (`ApiError`)
-- `src/utils/` — pure utilities (normalize, etc.)
-- `src/middleware/` — Hono middleware
-- `src/types/` — backend-specific types
-
----
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `src/index.ts` | Hono app entry, route mounting |
-| `src/routes/words.ts` | Word API routes |
-| `src/routes/admin.ts` | Admin panel routes |
-| `src/routes/auth.ts` | Auth routes |
-| `src/routes/results.ts` | Game result routes |
-| `src/services/word-service.ts` | Word business logic |
-| `src/services/admin-service.ts` | Admin business logic |
-| `src/repositories/word-repository.ts` | D1 word queries |
-| `src/repositories/admin-repository.ts` | D1 admin queries |
-| `src/schemas/word-schemas.ts` | Zod schemas for word routes |
-| `src/utils/normalize.ts` | Turkish uppercase normalization |
-| `src/errors/api-error.ts` | Typed error classes |
-| `db/migrations/0001_baseline.sql` | Current DB schema (source of truth) |
-| `tests/helpers/db.ts` | Shared test schema + seed |
-
----
-
-## Critical Rules
-
-- NEVER call `.toUpperCase()` on Turkish text — use `normalizeWord()` from `src/utils/normalize.ts`. `"i".toUpperCase()` returns `"I"` (wrong), not `"İ"`.
-- NEVER access D1 directly in routes — always go through a repository.
-- D1 `exec()` does NOT support multi-statement SQL — use `db.prepare().run()` per statement.
-- Schema changes go in a new numbered file in `db/migrations/` (`0002_<topic>.sql`, …). `0001_baseline.sql` is already applied to the `harfhane` database; never edit an applied migration, because remote databases would never receive the change. Tests apply every file in order (AGENTS.md Invariant 2). The legacy `migrations/` folder (26 files, old `harfhane-db`) is pre-cutover history only — do not add to it.
-- Words are never deleted — set `is_active = 0`.
-- TDD mandatory: write the test first, then implement.
-- Test structure mirrors `src/`: `tests/repositories/`, `tests/services/`, `tests/routes/`.
-- `noImplicitReturns` is on — all code paths must have explicit `return`.
-
----
-
-## API Response Format
-
-```typescript
-// Success
-{ data: T }
-
-// Error
-{ error: { code: string; message: string } }
-```
-
-HTTP status codes: 200, 201, 400, 401, 404, 409, 422, 500
-
----
-
-## D1 Database
-
-Two bindings during the database migration (`docs/plans/2026-10-04-001-infra-clean-database-plan.md`):
-
-- **`DB` (live):** `harfhane-db`, id `1fad4aa7-baa4-41ce-a0f4-976904b8d29b` — legacy, 26-migration schema. Still serves production until cutover.
-- **`DB_NEXT` (new):** `harfhane`, id `58cbee2e-aa45-4b66-90c7-f5daa798f5e5`, `migrations_dir = db/migrations` — the target schema (single baseline). Tests run against this one.
-- **Local state:** `.wrangler/state/v3/d1/`
-- `daily_words` has `UNIQUE(date, length)` — scheduling uses UPSERT: `ON CONFLICT(date, length) DO UPDATE SET word_id = excluded.word_id`
-
----
-
-## Environment
-
-- Secrets in `.dev.vars` (gitignored) — use `CLOUDFLARE_API_TOKEN` for deploys
-- `wrangler.toml` — D1 binding config and Worker settings
-
----
-
-## Common Gotchas
-
-- Wrangler OAuth token expires in ~1h — always use `CLOUDFLARE_API_TOKEN` env var for deploys, not interactive login.
-- Turkcell Güvenli İnternet can block Cloudflare endpoints with ECONNRESET — disable "Aile Profili" or use a hotspot.
+- Secrets live in `.dev.vars` (gitignored). Deploy with the `CLOUDFLARE_API_TOKEN` env var; the interactive Wrangler OAuth token expires in about an hour.
+- Turkcell Güvenli İnternet can block Cloudflare endpoints with ECONNRESET; disable "Aile Profili" or use a hotspot.
