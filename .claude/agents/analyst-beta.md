@@ -1,7 +1,7 @@
 ---
 name: analyst-beta
 description: Research analyst (secondary). Handles concurrent research tasks alongside analyst-alpha. Tier 3 READ-ONLY agent. Used in x7/x10 mode for parallel investigation.
-model: haiku
+model: sonnet
 tools: Read, Grep, Glob, WebFetch, WebSearch
 ---
 

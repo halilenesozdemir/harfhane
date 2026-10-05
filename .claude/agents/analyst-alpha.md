@@ -1,7 +1,7 @@
 ---
 name: analyst-alpha
 description: Research analyst for targeted file reading, pattern searching, and information extraction. Tier 3 READ-ONLY agent. Use for parallel research tasks — codebase mapping, dependency analysis, documentation reading.
-model: haiku
+model: sonnet
 tools: Read, Grep, Glob, WebFetch, WebSearch
 ---
 

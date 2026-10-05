@@ -128,16 +128,16 @@ Tier 1 (Principal) output → Collected and presented by Orchestrator
 
 ## Agent Tiers & Models (Claude Code)
 
-> All agents run on Claude models. No third-party model integrations.
+Models follow the owner's global policy (`~/.claude/CLAUDE.md` → Orchestration): Opus for rare judgment-heavy work, Sonnet as the default sub-agent (coding, research, reviews), Haiku for mechanical work, Fable never as a sub-agent. Agent files set the model with an alias in their frontmatter (`model: opus | sonnet | haiku`), never a pinned version.
 
-| Tier                      | Claude Code Model | Role                                         | Cost   |
-| ------------------------- | ----------------- | -------------------------------------------- | ------ |
-| Orchestrator              | claude-opus-4-6   | Coordination, task distribution, PEP         | High   |
-| Tier 1 — Principal        | claude-opus-4-6   | Architecture, review, final authority        | High   |
-| Tier 1.5 — Staff Engineer | claude-sonnet-4-6 | All coding tasks, Staff Engineer review      | Medium |
-| Tier 2 — MidCoder         | claude-sonnet-4-6 | Simple coding, boilerplate, unit tests       | Medium |
-| Tier 2.5 — Lead Analyst   | claude-haiku-4-5  | Analyst output review, consolidation         | Low    |
-| Tier 3 — Analyst          | claude-haiku-4-5  | Analysis, documentation, research, read-only | Low    |
+| Tier                      | Model  | Role                                         |
+| ------------------------- | ------ | -------------------------------------------- |
+| Orchestrator              | opus   | Coordination, task distribution, PEP         |
+| Tier 1 — Principal        | opus   | Architecture, review, final authority        |
+| Tier 1.5 — Staff Engineer | sonnet | All coding tasks, Staff Engineer review      |
+| Tier 2 — MidCoder         | sonnet | Simple coding, boilerplate, unit tests       |
+| Tier 2.5 — Lead Analyst   | sonnet | Analyst output review, consolidation         |
+| Tier 3 — Analyst          | sonnet | Analysis, documentation, research, read-only |
 
 ### Delegation Parameter (xN)
 
@@ -184,24 +184,6 @@ The following skills are **binding rules** for all coding tasks. Skills live in 
 - **No Concurrent Edits**: Two agents never receive write ownership of the same file.
 - **Read Access**: Any agent can read any file.
 - **Conflict Resolution**: If an agent needs to modify a file it does not own, it reports the need in its task output. The Orchestrator reassigns ownership or merges the change request. The agent **never** edits the file directly.
-
----
-
-## Model Fallback Chain
-
-When a primary model is unavailable, the system automatically falls back:
-
-| Tier                      | Primary           | Fallback          |
-| ------------------------- | ----------------- | ----------------- |
-| Orchestrator              | claude-opus-4-6   | claude-opus-4-5   |
-| Tier 1 — Principal        | claude-opus-4-6   | claude-opus-4-5   |
-| Tier 1.5 — Staff Engineer | claude-sonnet-4-6 | claude-sonnet-4-5 |
-| Tier 2 — MidCoder         | claude-sonnet-4-6 | claude-sonnet-4-5 |
-| Tier 2.5 — Lead Analyst   | claude-haiku-4-5  | claude-sonnet-4-6 |
-| Tier 3 — Analyst          | claude-haiku-4-5  | claude-sonnet-4-6 |
-
-- Fallback does not change tier permissions or tool access.
-- Agents must report fallback activation in their task report.
 
 ---
 
