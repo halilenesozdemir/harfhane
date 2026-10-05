@@ -1,18 +1,13 @@
-import { HelpCircle, BarChart2, Settings, Trophy, User, LogOut } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useXP } from '../hooks/useXP';
+import { HelpCircle, BarChart2, Settings } from 'lucide-react';
 import type { HeaderProps } from '../types';
 
-const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLeaderboardClick, onAuthClick, onProfileClick, modeLabel }: HeaderProps): React.JSX.Element => {
-  const { user, token, logout } = useAuth();
-  const { data: xpProfile } = useXP(token);
-
+const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }: HeaderProps): React.JSX.Element => {
   return (
     <header className="w-full border-b border-border-color py-3 px-4 bg-bg-primary">
       <div className="max-w-lg mx-auto flex items-center justify-between">
         {/* Sol - Logo */}
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={onTitleClick}
             className="w-8 h-8 bg-correct rounded-md flex items-center justify-center hover:bg-correct/90 transition-colors cursor-pointer"
             aria-label="Ana Sayfa"
@@ -20,10 +15,10 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
             <span className="text-white font-bold text-lg">H</span>
           </button>
         </div>
-        
+
         {/* Orta - Başlık */}
         <div className="text-center">
-          <button 
+          <button
             onClick={onTitleClick}
             className="hover:opacity-80 transition-opacity cursor-pointer"
           >
@@ -37,12 +32,9 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
             </span>
           )}
         </div>
-        
+
         {/* Sağ - Butonlar */}
         <div className="flex items-center gap-0.5">
-          <button onClick={onLeaderboardClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Sıralama">
-            <Trophy size={18} className="text-text-primary" />
-          </button>
           <button onClick={onStatsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="İstatistikler">
             <BarChart2 size={18} className="text-text-primary" />
           </button>
@@ -52,36 +44,6 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, onLe
           <button onClick={onSettingsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Ayarlar">
             <Settings size={18} className="text-text-primary" />
           </button>
-          {user ? (
-            <div className="flex items-center gap-0.5 ml-1 pl-1 border-l border-border-color">
-              <button
-                onClick={onProfileClick}
-                className="flex items-center gap-1 p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
-                aria-label="Profil"
-              >
-                {xpProfile ? (
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-correct text-white text-xs font-bold">
-                    {xpProfile.level}
-                  </span>
-                ) : (
-                  <User size={18} className="text-text-primary" />
-                )}
-                <span className="text-xs text-text-secondary hidden sm:block">{user.username}</span>
-              </button>
-              <button onClick={logout} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Çıkış">
-                <LogOut size={18} className="text-text-secondary" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onAuthClick}
-              className="flex items-center gap-1.5 ml-1 px-2 py-1.5 bg-correct hover:bg-correct/90 text-white text-sm font-bold rounded-md transition-colors cursor-pointer"
-              aria-label="Giriş Yap"
-            >
-              <User size={16} />
-              <span className="hidden sm:block">Giriş Yap</span>
-            </button>
-          )}
         </div>
       </div>
     </header>
