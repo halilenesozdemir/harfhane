@@ -1,16 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { evaluateGuess, normalizeWord } from '@harfhane/shared';
-import { getThemeColors } from './src/theme';
+import { deviceStore } from './src/game/device-store';
+import { ThemeProvider, useTheme } from './src/ThemeProvider';
 
 const PREVIEW_ANSWER = 'HARFH';
 const PREVIEW_GUESS = 'harfi';
 const TITLE_SIZE = 32;
 const SECTION_GAP = 12;
 
-export default function App() {
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const colors = getThemeColors({ scheme, isHighContrast: false });
+function PreviewScreen() {
+  const { colors, scheme } = useTheme();
   const evaluation = evaluateGuess(normalizeWord(PREVIEW_GUESS), PREVIEW_ANSWER);
 
   return (
@@ -19,6 +19,14 @@ export default function App() {
       <Text style={{ color: colors.textMuted }}>{evaluation.join(' ')}</Text>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider store={deviceStore}>
+      <PreviewScreen />
+    </ThemeProvider>
   );
 }
 
