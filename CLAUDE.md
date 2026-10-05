@@ -69,7 +69,7 @@ Per-app commands and gotchas: `apps/backend/CLAUDE.md`, `apps/frontend/CLAUDE.md
 ## Backend Rules (Hono + D1)
 
 - **Layering is mandatory**: `Routes (src/routes/) → Services (src/services/) → Repositories (src/repositories/)`. Routes never touch D1 directly.
-- **Schema source**: `apps/backend/db/migrations/0001_baseline.sql` only (AGENTS.md Invariant 2). Tests apply it through `readD1Migrations` / `applyD1Migrations` (`apps/backend/vitest.config.ts`, `apps/backend/tests/helpers/db.ts`) — never hand-write schema in tests.
+- **Schema source**: `apps/backend/db/migrations/` only (AGENTS.md Invariant 2). `0001_baseline.sql` is applied; changes go in new numbered files, never into an applied one. Tests apply it through `readD1Migrations` / `applyD1Migrations` (`apps/backend/vitest.config.ts`, `apps/backend/tests/helpers/db.ts`) — never hand-write schema in tests.
 - **Validation**: all input validated at the route boundary with Zod (`@hono/zod-validator`), schemas under `src/schemas/`.
 - **Errors**: typed `ApiError` classes (`src/errors/`); internal error detail never reaches the client.
 - **API shape**: success `{ data: T }`, error `{ error: { code, message } }`; status codes limited to 200/201/400/401/404/409/422/500.

@@ -25,7 +25,7 @@ Research: `docs/research/2026-10-05-mobile-auth-push-analytics.md`. Status is `d
 
 ## Key technical decisions
 - KTD1. ID tokens verified on the Worker with `jose` against Google's JWKS; `iss`, `aud`, `exp` checked. No Node-only Google libraries.
-- KTD2. Expo push service rather than direct FCM at this scale; tokens in an `expo_push_tokens` table in the baseline migration.
+- KTD2. Expo push service rather than direct FCM at this scale; tokens in an `expo_push_tokens` table added by a new numbered migration; `0001_baseline.sql` is already applied and is never edited.
 - KTD3. Play counter: a daily aggregate row per mode and length, incremented by an unauthenticated endpoint. Cloudflare Web Analytics for page views is an owner toggle.
 - KTD4. *(assumption)* The privacy page is a static route on the web app; the text is drafted by an agent and approved by the owner before it is linked.
 
