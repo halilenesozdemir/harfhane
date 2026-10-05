@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, Check, AlertCircle, X, Info } from 'lucide-react';
+import { normalizeWord } from '@harfhane/shared';
 import * as api from '../../lib/admin-api';
 
 interface ImportWordsProps {
@@ -27,7 +28,7 @@ function parseCSV(text: string): PreviewRow[] {
     if (!word) errors.push('kelime boş');
     if (!meaning) errors.push('anlam boş');
     if (!VALID_CATEGORIES.includes(category)) errors.push(`geçersiz kategori`);
-    return { word: word.toUpperCase(), meaning, context, category, error: errors.join(', ') || undefined };
+    return { word: normalizeWord(word), meaning, context, category, error: errors.join(', ') || undefined };
   });
 }
 
@@ -44,7 +45,7 @@ function parseJSON(text: string): PreviewRow[] {
     if (!word) errors.push('kelime boş');
     if (!meaning) errors.push('anlam boş');
     if (!VALID_CATEGORIES.includes(category)) errors.push('geçersiz kategori');
-    return { word: word.toUpperCase(), meaning, context, category, error: errors.join(', ') || undefined };
+    return { word: normalizeWord(word), meaning, context, category, error: errors.join(', ') || undefined };
   });
 }
 
