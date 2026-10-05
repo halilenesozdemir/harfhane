@@ -41,6 +41,7 @@ Decisions marked *(assumption)* were made without the owner and are open to chan
 ## Units
 - U1. Scaffold `apps/mobile` (SDK 57, TypeScript), wire scripts into the root gate, prove AE1 and AE2. (R1, R2)
 - U2. NativeWind v4 with a Tailwind config generated from `@harfhane/ui-tokens`; light/dark/high-contrast switch. (R2, R4)
+  - Blocked on an owner choice (2026-10-05): NativeWind v4 bundles on SDK 57 but runtime styles are unverified without a device; see `docs/research/2026-10-05-nativewind-spike.md`. U5–U7 wait on this.
 - U3. Async storage hook and the mobile game-state hook, reusing the web's state shape; Vitest coverage including AE3 at hook level. (R3)
 - U4. API client for daily word, random word and validate, reading `EXPO_PUBLIC_API_URL`; tests against mocked `fetch`. (R3)
 - U5. Tile, row, grid and keyboard components (Turkish layout from the web keyboard) with jest-expo tests. (R2, R4)
