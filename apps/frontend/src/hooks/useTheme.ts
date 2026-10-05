@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { themes } from '@harfhane/ui-tokens';
 import { useLocalStorage } from './useLocalStorage';
 import type { Theme, ThemeContextValue } from '../types';
 
-const LIGHT_THEME_COLOR = '#fff4dc';
-const DARK_THEME_COLOR = '#1c1611';
+const LIGHT_THEME_COLOR = themes.light.themeColor;
+const DARK_THEME_COLOR = themes.dark.themeColor;
 
 /**
  * Theme hook for managing light/dark/system theme
