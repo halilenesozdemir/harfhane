@@ -4,14 +4,12 @@ import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
 import { admin } from './routes/admin';
-import { lists } from './routes/lists';
 import { auth } from './routes/auth';
 import { results } from './routes/results';
 import { gamification } from './routes/gamification';
 import { push } from './routes/push';
 import { notifications } from './routes/notifications';
 import { profile } from './routes/profile';
-import { tournament } from './routes/tournament';
 import { duels } from './routes/duels';
 import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
@@ -63,10 +61,8 @@ app.use(
 app.use('/api/*', securityHeaders);
 app.use('/api/auth/*', rateLimiter);
 app.use('/api/words/*', gameRateLimiter);
-app.use('/api/tournament/*', gameRateLimiter);
 
 app.route('/api/words', words);
-app.route('/api/lists', lists);
 app.route('/api/admin', admin);
 app.route('/api/auth', auth);
 app.route('/api/results', results);
@@ -74,7 +70,6 @@ app.route('/api/xp', gamification);
 app.route('/api/push', push);
 app.route('/api/notifications', notifications);
 app.route('/api/profile', profile);
-app.route('/api/tournament', tournament);
 app.route('/api/duels', duels);
 
 app.onError((err, c) => {

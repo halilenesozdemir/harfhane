@@ -30,6 +30,14 @@ The web app carries code from many experiments; removed features such as challen
 ## Known bug fixed in passing
 `findOrCreateWord` inserted user words with `category = NULL` and no `length`. This violated `NOT NULL` and stored 6-letter words as length 5. The baseline schema and repository now handle both.
 
+## UTC-date usage outside the Turkey-day fix (2026-10-05)
+Fixing `getTodayString`/`getTimeUntilMidnight`/`getGameNumber` in `packages/shared/src/game/time.ts` (branch `fix/turkey-day-boundary`) surfaced other backend code still keying "today" off the plain UTC date instead of the Turkey calendar day, now that clients save game results under the Turkey date (`useGameStats.ts`):
+- `apps/backend/src/routes/profile.ts` (`:13`, `:36`) — `/me` and `/freeze` can disagree with a just-played result between 21:00–24:00 UTC (`playedToday` false right after a win; a freeze token usable when it shouldn't be).
+- `apps/backend/src/index.ts:95` — the scheduled reminder picks the daily word / target users by UTC day.
+- `apps/backend/src/services/admin-service.ts:22` and `apps/backend/src/services/schedule-health-service.ts:19` — same UTC-day pattern.
+- `apps/backend/src/routes/lists.ts:98` already uses `Europe/Istanbul` correctly — a model for the fix.
+- Fix: route these through the now-shared `getTodayString()` (or equivalent Turkey-aware helper) in a follow-up unit; add a backend test asserting `getDailyWord()`'s no-args path matches `getTodayString()` at the 21:00 UTC boundary.
+
 ## Legacy docs review (2026-10-04)
 - `products.md`: the 854-line PRD from the original product. It still describes the old word source and long-finished phases.
   - Recommendation: replace with a short product brief that points to `docs/plans/`, or move it to `docs/archive/`.
@@ -55,35 +63,27 @@ wiring navigation, per the unit's scope boundary.
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
 ## Player-facing word queries only exclude `source = 'user'`, not the full approved/family-safe filter
-`findRandomWord`, `findWordById` and `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`)
-now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
+`findRandomWord`, `findWordById`, `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`) and
+`autoFillLength` (`admin-repository.ts`) now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
 mode, the challenge/duel endpoint, or the daily word (Invariant 1). This is a legacy-schema-compatible
 patch only: production still runs on `harfhane-db` (binding `DB`), which has a `source` column but no
 `status`/`family_safe` columns, so the full `status = 'approved' AND family_safe = 1` filter used by the
 `0001_baseline.sql` schema can't be applied there yet.
 - At the DB cutover (`docs/plans/2026-10-04-001-infra-clean-database-plan.md`, plan 001), replace
-  `source != 'user'` in these three queries with `status = 'approved' AND family_safe = 1` to match the
+  `source != 'user'` in these four queries with `status = 'approved' AND family_safe = 1` to match the
   baseline schema's own invariant (`words_require_active_word` / the `is_active` CHECK already encode this
   for new rows, but the read queries didn't, which was the bug this entry's fix closed for the legacy DB).
 - Guess-validation (`wordExists`) was intentionally left untouched — it must keep accepting `source = 'user'`
   words so custom-list words remain guessable.
 
-## Same unmoderated-user-word bug exists outside word-repository.ts (Invariant 1)
-Found during fresh review of the `fix/random-word-pool` unit (which fixed `findRandomWord`,
-`findWordById` and `findDailyWord` in `apps/backend/src/repositories/word-repository.ts` — see the
-entry above). Two more player-facing paths have the identical gap and were left out of that unit
-because its stated scope was limited to `word-repository.ts`:
-- `apps/backend/src/repositories/tournament-repository.ts:27-43`, `getTournamentWord` — selects a
-  random active word for the tournament mode with `WHERE is_active = 1 AND length = ? AND LENGTH(word) = ?`,
-  no `source != 'user'` exclusion. An unmoderated custom-list word can be served as a tournament answer.
-- `apps/backend/src/repositories/admin-repository.ts:373-399`, `autoFillLength` — builds its
-  auto-schedule candidate pool from `SELECT id FROM words WHERE is_active = 1 AND length = ?` and
-  `INSERT OR IGNORE INTO daily_words` directly, bypassing `findDailyWord`'s guard. On the legacy
-  production DB (no `status`/`family_safe` columns, no `daily_words_require_active_word` trigger)
-  nothing stops an unmoderated `source='user'` word from being auto-scheduled as a daily word — this
-  is more severe than a read-path leak since it writes the word into `daily_words`.
-- Apply the same `source != 'user'` exclusion to both queries in a follow-up unit before considering
-  Invariant 1 closed for custom word lists.
+## Frontend style cleanup
+Seen while removing the tournament feature (2026-10-05); not fixed there to keep that diff scoped.
+- Arrow-function components that should be `function` declarations per `apps/frontend/CLAUDE.md`:
+  `apps/frontend/src/components/Keyboard.tsx:11`, `apps/frontend/src/components/HomePage.tsx:14`,
+  `apps/frontend/src/components/Header.tsx:6`, and any other remaining arrow-function components found
+  when this is picked up.
+- Leftover/stale comments: `apps/frontend/src/components/Keyboard.tsx:4`,
+  `apps/frontend/src/components/Header.tsx:13,24,41`, `apps/frontend/src/context/ThemeContext.tsx:11-13,24-26`.
 
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
