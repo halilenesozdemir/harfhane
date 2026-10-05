@@ -1,3 +1,4 @@
+import './global.css';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { evaluateGuess, normalizeWord } from '@harfhane/shared';
@@ -15,7 +16,9 @@ export default function App() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Harfhane</Text>
+      <View className="bg-correct p-4" testID="nativewind-probe">
+        <Text style={[styles.title, { color: colors.text }]}>Harfhane</Text>
+      </View>
       <Text style={{ color: colors.textMuted }}>{evaluation.join(' ')}</Text>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </View>
