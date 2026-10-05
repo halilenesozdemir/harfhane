@@ -52,4 +52,14 @@ describe('adminBulkInsertWords', () => {
     expect(row?.source).toBe('review-pipeline');
     expect(row?.license).toBe('cc-by-sa');
   });
+
+  it('skips a word that already exists instead of inserting a duplicate', async () => {
+    const word = { word: 'KİTAP', meaning: 'Yazılı eser', context: 'Kitabı okudu.', category: 'isim' };
+    await adminBulkInsertWords(env.DB, [word]);
+
+    const result = await adminBulkInsertWords(env.DB, [word]);
+
+    expect(result.inserted).toBe(0);
+    expect(result.skipped).toBe(1);
+  });
 });
