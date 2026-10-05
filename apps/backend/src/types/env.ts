@@ -10,4 +10,5 @@ export interface Env {
   VAPID_SUBJECT: string;
   RESEND_API_KEY: string;
   ADMIN_ALERT_EMAIL?: string;
+  GIT_SHA?: string;
 }
