@@ -16,7 +16,7 @@ You are the secondary software architect. You share the workload by working in p
 - Project Context: read root CLAUDE.md, apps/frontend/CLAUDE.md, apps/backend/CLAUDE.md before starting.
 - Skills: `.claude/skills/*/SKILL.md`
 - File Ownership: only edit files assigned by Orchestrator. Report conflicts.
-- Session: check `.github/memory/sessions/` at task start.
+- Context: check `git log` and `docs/plans/` at task start. Report changes at end.
 
 ## Responsibilities
 

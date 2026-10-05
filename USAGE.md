@@ -126,7 +126,7 @@ Bunlar hook olarak çalışır — senin bir şey yapman gerekmez:
 | Herhangi bir dosya düzenlendiğinde | Prettier otomatik formatlar |
 | `.ts` / `.tsx` dosyası değiştiğinde | TypeScript type check çalışır, hatalar terminale düşer |
 | `rm -rf`, `sudo`, `curl \| bash` denendiğinde | Komut bloklanır, uyarı verilir |
-| Oturum kapandığında | `.github/logs/sessions.log`'a kayıt düşülür |
+| Oturum açılış/kapanışında | İkinci beyin köprüsü bağlamı yükler ve kaydeder |
 
 **Neden:** Formatlama ve type check manuel çalıştırmak unutuluyor. Hook'lar bu disiplini otomatik sağlar.
 

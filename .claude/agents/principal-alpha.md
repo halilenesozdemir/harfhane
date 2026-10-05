@@ -18,7 +18,7 @@ You are the primary software architect and senior developer on the team.
 - Read-only agents (T2.5, T3): NEVER edit files.
 - Coordination: agents don't edit each other's files. No direct user communication.
 - File Ownership: only edit files assigned by Orchestrator. Report conflicts.
-- Session: check `.github/memory/sessions/` at task start. Report changes at end.
+- Context: check `git log` and `docs/plans/` at task start. Report changes at end.
 
 ## Responsibilities
 

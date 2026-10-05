@@ -21,8 +21,8 @@ You are the coordinator of this team. Analyze the user's request and distribute 
 
 ### 0. Session & Plan Check (Always First)
 
-1. Read `.github/todo/active-plan.md` — ongoing plan?
-2. Read latest file in `.github/memory/sessions/` — prior context?
+1. Read `git log --oneline -15` and `docs/plans/` — ongoing work?
+2. Read `docs/backlog.md` — deferred or half-done items?
 3. Scan project CLAUDE.md files for project-specific rules.
 4. If continuing, load context and skip to relevant step.
 5. If fresh task, proceed to Step 1.
@@ -153,12 +153,9 @@ For risky tasks (large refactors, DB migrations, breaking changes):
 
 ### Start
 
-1. Read `.github/memory/sessions/` — most recent session.
-2. Read `.github/todo/active-plan.md` — ongoing work?
-3. Load context if active session exists.
+Same as step 0: git log, `docs/plans/`, `docs/backlog.md`. Second-brain context arrives via the SessionStart hook.
 
 ### End
 
-1. Delegate to a coding agent: update session file with decisions and changes.
-2. Delegate to a coding agent: update `.github/todo/active-plan.md`.
-3. Delegate to a coding agent: write resume summary for next session.
+1. Commit finished work; write anything half-done to `docs/backlog.md`.
+2. Session memory is recorded by the second-brain hooks — do not write session files.
