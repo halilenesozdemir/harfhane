@@ -15,7 +15,7 @@ const HOOK_RULES_FIXED_IN_PLAN_003_U2 = {
 }
 
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', 'packages/ui-tokens/generated/', 'scripts/']),
+  globalIgnores(['**/dist/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', '**/.expo/', 'packages/ui-tokens/generated/', 'scripts/']),
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/**/*.ts'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
@@ -32,6 +32,10 @@ export default defineConfig([
       ...HOOK_RULES_FIXED_IN_PLAN_003_U2,
       'react-refresh/only-export-components': ['error', { allowConstantExport: true, allowExportNames: CONTEXT_HOOKS }],
     },
+  },
+  {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat.recommended],
   },
   {
     files: [`${FRONTEND}/**/*.{js,jsx}`],

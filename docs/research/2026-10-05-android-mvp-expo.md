@@ -10,6 +10,8 @@ Scope: Track A (`docs/decisions/2026-10-04-parallel-tracks.md`) — Expo Android
 
 ## 1. Expo SDK / React / monorepo
 
+> Correction (2026-10-05, Plan 004 U1): npm `expo@latest` is 57.0.26 (React Native 0.86.3, React 19.2.3). The SDK 55 claim below is outdated; the NativeWind section's "v5 targets SDK 57" needs re-checking against SDK 57 before Plan 004 U2.
+
 Latest **stable** SDK as of 2026-10 is **SDK 55** (released 2026-02-25): React Native 0.83, React 19.2 ([Expo SDK 55 changelog](https://expo.dev/changelog/sdk-55)). SDK 56 is in beta ([Medium write-up](https://medium.com/@onix_react/whats-new-in-expo-sdk-56-63f704fc8426)) — not production-ready, skip it for MVP. SDK 54 (React Native 0.81, React 19.1) is the prior stable and the last release with Legacy Architecture support; SDK 55+ is New-Architecture-only.
 
 `apps/frontend/package.json:21-22` pins `react@^19.2.0` / `react-dom@^19.2.0` — **SDK 55's React 19.2 matches exactly**. Use SDK 55 for `apps/mobile`, not 54.

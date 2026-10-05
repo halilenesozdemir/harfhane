@@ -27,7 +27,7 @@ Research: `docs/research/2026-10-05-android-mvp-expo.md`.
 
 ## Key technical decisions
 Decisions marked *(assumption)* were made without the owner and are open to change.
-- KTD1. Expo SDK 55 (React Native 0.83, React 19.2 — same React as the web). SDK 56 is beta.
+- KTD1. Expo SDK 57 (React Native 0.86, React 19.2). The research note said SDK 55; npm `expo@latest` was 57.0.26 on 2026-10-05, so the scaffold uses 57.
 - KTD2. NativeWind v4 on Tailwind 3, react-native-reusables for dialogs and sheets (Plan 002 KTD1, KTD2). NativeWind v5 is RC only.
 - KTD3. Tests: Vitest for pure logic (hooks, API client, storage), jest-expo + React Native Testing Library for rendered components. `apps/mobile` runs both from its `test` script.
 - KTD4. Storage: AsyncStorage behind a small async storage hook; web keys and JSON shapes are kept so a future export or sync is straightforward.
@@ -39,7 +39,7 @@ Decisions marked *(assumption)* were made without the owner and are open to chan
 - Out of scope: purchases (Plan 005), sign-in and push (Plan 007), iOS, web parity for leaderboard/profile/duels.
 
 ## Units
-- U1. Scaffold `apps/mobile` (SDK 55, TypeScript), wire scripts into the root gate, prove AE1 and AE2. (R1, R2)
+- U1. Scaffold `apps/mobile` (SDK 57, TypeScript), wire scripts into the root gate, prove AE1 and AE2. (R1, R2)
 - U2. NativeWind v4 with a Tailwind config generated from `@harfhane/ui-tokens`; light/dark/high-contrast switch. (R2, R4)
 - U3. Async storage hook and the mobile game-state hook, reusing the web's state shape; Vitest coverage including AE3 at hook level. (R3)
 - U4. API client for daily word, random word and validate, reading `EXPO_PUBLIC_API_URL`; tests against mocked `fetch`. (R3)
