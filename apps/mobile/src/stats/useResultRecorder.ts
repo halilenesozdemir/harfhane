@@ -26,13 +26,14 @@ interface RecordResultOptions {
   readonly wordLength: WordLength;
   readonly won: boolean;
   readonly guessCount: number;
+  readonly dailyDate: string | null;
   readonly today: () => string;
 }
 
-async function recordResult({ store, mode, wordLength, won, guessCount, today }: RecordResultOptions): Promise<void> {
+async function recordResult({ store, mode, wordLength, won, guessCount, dailyDate, today }: RecordResultOptions): Promise<void> {
   if (mode === 'daily') {
     const stats = await loadDailyStats(store, wordLength);
-    await saveDailyStats(store, wordLength, recordDailyResult(stats, won, guessCount, today()));
+    await saveDailyStats(store, wordLength, recordDailyResult(stats, won, guessCount, dailyDate ?? today()));
     return;
   }
   const stats = await loadUnlimitedStats(store, wordLength);
@@ -53,7 +54,7 @@ function enqueueRecordResult(options: RecordResultOptions): void {
 }
 
 export function useResultRecorder({ store, mode, wordLength, session, today = getTodayString }: UseResultRecorderOptions): void {
-  const { phase, game } = session;
+  const { phase, game, dailyDate } = session;
   const previousPhaseRef = useRef(phase);
   const previousStatusRef = useRef(game.gameStatus);
 
@@ -61,9 +62,17 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
     const wasReadyPlaying = previousPhaseRef.current === 'ready' && previousStatusRef.current === 'playing';
     const isNowFinished = phase === 'ready' && game.gameStatus !== 'playing';
     if (wasReadyPlaying && isNowFinished) {
-      enqueueRecordResult({ store, mode, wordLength, won: game.gameStatus === 'won', guessCount: game.guesses.length, today });
+      enqueueRecordResult({
+        store,
+        mode,
+        wordLength,
+        won: game.gameStatus === 'won',
+        guessCount: game.guesses.length,
+        dailyDate,
+        today,
+      });
     }
     previousPhaseRef.current = phase;
     previousStatusRef.current = game.gameStatus;
-  }, [phase, game.gameStatus, game.guesses.length, store, mode, wordLength, today]);
+  }, [phase, game.gameStatus, game.guesses.length, store, mode, wordLength, dailyDate, today]);
 }
