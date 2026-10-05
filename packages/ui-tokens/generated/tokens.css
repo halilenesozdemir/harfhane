@@ -1,0 +1,88 @@
+/* Generated from packages/ui-tokens/tokens.json by `pnpm --filter @harfhane/ui-tokens run build`. Do not edit. */
+
+:root,
+.light {
+  --hh-bg: #fff4dc;
+  --hh-surface: #ffffff;
+  --hh-surface-border: #ead6ae;
+  --hh-surface-depth: #e8d3a8;
+  --hh-text: #3b2a1a;
+  --hh-text-muted: #6b5233;
+  --hh-brand-rgb: 194 65 12;
+  --hh-brand-fg: #ffffff;
+  --hh-brand-depth: #8a2d07;
+  --hh-key-bg: #ffffff;
+  --hh-key-fg: #3b2a1a;
+  --hh-key-depth: #e2cfa6;
+  --hh-tile-empty-bg: #fffbf1;
+  --hh-tile-empty-border: #eadbb8;
+  --hh-tile-filled-border: #c9a86a;
+  --hh-correct-rgb: 31 138 91;
+  --hh-correct-fg: #ffffff;
+  --hh-correct-depth: #156b45;
+  --hh-correct-text: #15704a;
+  --hh-present-rgb: 242 181 68;
+  --hh-present-fg: #3b2a1a;
+  --hh-present-depth: #c98c1f;
+  --hh-present-text: #8a5a06;
+  --hh-absent-rgb: 122 122 122;
+  --hh-absent-fg: #ffffff;
+  --hh-absent-depth: #5c5c5c;
+  --hh-theme-color: #fff4dc;
+}
+
+.dark {
+  --hh-bg: #1c1611;
+  --hh-surface: #2a2119;
+  --hh-surface-border: #3e3226;
+  --hh-surface-depth: #120e0a;
+  --hh-text: #fff4dc;
+  --hh-text-muted: #cbb896;
+  --hh-brand-rgb: 232 98 42;
+  --hh-brand-fg: #1c1611;
+  --hh-brand-depth: #a8431a;
+  --hh-key-bg: #3a2e23;
+  --hh-key-fg: #fff4dc;
+  --hh-key-depth: #15100c;
+  --hh-tile-empty-bg: #241c15;
+  --hh-tile-empty-border: #3e3226;
+  --hh-tile-filled-border: #8a7350;
+  --hh-correct-rgb: 31 138 91;
+  --hh-correct-fg: #ffffff;
+  --hh-correct-depth: #0f5a39;
+  --hh-correct-text: #4fc58c;
+  --hh-present-rgb: 224 169 62;
+  --hh-present-fg: #2b1d0e;
+  --hh-present-depth: #a87a22;
+  --hh-present-text: #f2c46a;
+  --hh-absent-rgb: 90 81 72;
+  --hh-absent-fg: #ffffff;
+  --hh-absent-depth: #3d3630;
+  --hh-theme-color: #1c1611;
+}
+
+.high-contrast {
+  --hh-correct-rgb: 245 121 58;
+  --hh-correct-fg: #1a1a1a;
+  --hh-correct-depth: #b8531f;
+  --hh-correct-text: #c2410c;
+  --hh-present-rgb: 133 192 249;
+  --hh-present-fg: #0b1b2b;
+  --hh-present-depth: #4f8fcf;
+  --hh-present-text: #1d5fa3;
+}
+
+.dark.high-contrast {
+  --hh-correct-text: #f5793a;
+  --hh-present-text: #85c0f9;
+}
+
+:root {
+  --hh-font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+  --hh-font-body: 'Nunito', system-ui, sans-serif;
+  --hh-radius-tile: 14px;
+  --hh-radius-key: 10px;
+  --hh-motion-fast: 100ms;
+  --hh-motion-base: 220ms;
+  --hh-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
