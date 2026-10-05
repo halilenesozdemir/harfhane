@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
+import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { DailyStats, UnlimitedStats } from '../stats/stats';
 
 export interface StatsScreenProps {
@@ -10,6 +11,11 @@ export interface StatsScreenProps {
 
 const PERCENT_MULTIPLIER = 100;
 const MIN_BAR_WIDTH_PERCENT = 8;
+const STAT_VALUE_FONT_SIZE = 26;
+const BAR_HEIGHT = 24;
+const BAR_MIN_WIDTH = 28;
+const BAR_NUMBER_WIDTH = 16;
+const BAR_RADIUS = 4;
 
 function winPercentage(stats: DailyStats | UnlimitedStats): number {
   if (stats.gamesPlayed === 0) return 0;
@@ -110,11 +116,11 @@ function DistributionBar({ count, guessNumber, maxDistribution }: DistributionBa
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    gap: 16,
+    padding: SPACING.xl,
+    gap: SPACING.lg,
   },
   title: {
-    fontSize: 20,
+    fontSize: FONT_SIZE.title,
     fontWeight: '800',
   },
   statsRow: {
@@ -126,58 +132,58 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 26,
+    fontSize: STAT_VALUE_FONT_SIZE,
     fontWeight: '800',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: FONT_SIZE.caption,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.caption,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   distribution: {
-    gap: 6,
+    gap: SPACING.sm,
   },
   barRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
   barNumber: {
-    width: 16,
+    width: BAR_NUMBER_WIDTH,
     textAlign: 'right',
-    fontSize: 13,
+    fontSize: FONT_SIZE.caption,
   },
   barTrack: {
     flex: 1,
-    height: 24,
+    height: BAR_HEIGHT,
   },
   barFill: {
-    minWidth: 28,
-    height: 24,
-    borderRadius: 4,
+    minWidth: BAR_MIN_WIDTH,
+    height: BAR_HEIGHT,
+    borderRadius: BAR_RADIUS,
     alignItems: 'flex-end',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
   barCount: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.caption,
     fontWeight: '700',
   },
   emptyText: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.caption,
     textAlign: 'center',
   },
   closeButton: {
     marginTop: 'auto',
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
   },
   closeLabel: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
   },
 });

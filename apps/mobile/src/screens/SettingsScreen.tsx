@@ -1,5 +1,7 @@
+import { useCallback } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
+import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { ThemePreference } from '../theme';
 
 export interface SettingsScreenProps {
@@ -29,9 +31,10 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
         {THEME_OPTIONS.map((option) => (
           <ThemeSegment
             key={option.value}
+            value={option.value}
             label={option.label}
             isActive={preference === option.value}
-            onPress={() => setPreference(option.value)}
+            onSelect={setPreference}
           />
         ))}
       </View>
@@ -59,19 +62,22 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
 }
 
 interface ThemeSegmentProps {
+  readonly value: ThemePreference;
   readonly label: string;
   readonly isActive: boolean;
-  readonly onPress: () => void;
+  readonly onSelect: (value: ThemePreference) => void;
 }
 
-function ThemeSegment({ label, isActive, onPress }: ThemeSegmentProps) {
+function ThemeSegment({ value, label, isActive, onSelect }: ThemeSegmentProps) {
   const { colors } = useTheme();
+  const handlePress = useCallback(() => onSelect(value), [onSelect, value]);
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
-      onPress={onPress}
+      onPress={handlePress}
       style={[styles.segment, { backgroundColor: isActive ? colors.brand : colors.surface }]}
     >
       <Text style={[styles.segmentLabel, { color: isActive ? colors.brandFg : colors.text }]}>{label}</Text>
@@ -82,52 +88,52 @@ function ThemeSegment({ label, isActive, onPress }: ThemeSegmentProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    gap: 16,
+    padding: SPACING.xl,
+    gap: SPACING.lg,
   },
   title: {
-    fontSize: 22,
+    fontSize: FONT_SIZE.title,
     fontWeight: '800',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
   },
   segmentedControl: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
   },
   segment: {
     flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
   },
   segmentLabel: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.body,
     fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: RADIUS.md,
+    padding: SPACING.lg,
   },
   rowLabel: {
     flex: 1,
-    fontSize: 14,
+    fontSize: FONT_SIZE.body,
     fontWeight: '600',
-    marginRight: 12,
+    marginRight: SPACING.md,
   },
   closeButton: {
     marginTop: 'auto',
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
   },
   closeLabel: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
   },
 });

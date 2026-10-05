@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
+import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { ThemeColors } from '../theme';
 
 export interface HowToPlayScreenProps {
@@ -122,61 +123,63 @@ export function HowToPlayScreen({ onClose }: HowToPlayScreenProps) {
 }
 
 const TILE_SIZE = 40;
+const TILE_BORDER_WIDTH = 2;
+const PARAGRAPH_LINE_HEIGHT = 20;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
-    padding: 20,
-    gap: 12,
+    padding: SPACING.xl,
+    gap: SPACING.md,
   },
   title: {
-    fontSize: 22,
+    fontSize: FONT_SIZE.title,
     fontWeight: '800',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   paragraph: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: FONT_SIZE.body,
+    lineHeight: PARAGRAPH_LINE_HEIGHT,
   },
   exampleBlock: {
-    gap: 6,
+    gap: SPACING.sm,
   },
   tileRow: {
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
   },
   tile: {
     width: TILE_SIZE,
     height: TILE_SIZE,
-    borderRadius: 8,
-    borderWidth: 2,
+    borderRadius: RADIUS.sm,
+    borderWidth: TILE_BORDER_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tileLetter: {
-    fontSize: 18,
+    fontSize: FONT_SIZE.title,
     fontWeight: '800',
   },
   exampleText: {
-    fontSize: 13,
+    fontSize: FONT_SIZE.caption,
   },
   exampleHighlight: {
     fontWeight: '800',
   },
   closeButton: {
-    margin: 20,
-    borderRadius: 14,
-    paddingVertical: 14,
+    margin: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
     alignItems: 'center',
   },
   closeLabel: {
-    fontSize: 16,
+    fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
   },
 });
