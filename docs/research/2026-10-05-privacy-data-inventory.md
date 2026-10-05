@@ -10,7 +10,7 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
 
 | Table | Personal data | Evidence |
 | --- | --- | --- |
-| `users` | email, username, password hash (bcrypt-style), `google_id`, `email_notifications` flag, `freeze_tokens`, `created_at` | `apps/backend/db/migrations/0001_baseline.sql:50-59` |
+| `users` | email, username, password hash (PBKDF2-SHA256, 100k iterations, per-user salt; `apps/backend/src/utils/auth.ts:70-80`), `google_id`, `email_notifications` flag, `freeze_tokens`, `created_at` | `apps/backend/db/migrations/0001_baseline.sql:50-59` |
 | `password_reset_tokens` | random token, `user_id`, expiry | `0001_baseline.sql:153-160` |
 | `push_subscriptions` | Web Push `endpoint` URL (identifies browser/push service), `p256dh`/`auth` keys, `user_id` | `0001_baseline.sql:137-145` |
 | `game_results` | `user_id`, play date, word length, guesses, win flag, mode | `0001_baseline.sql:99-112` |
@@ -25,7 +25,7 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
 ## 2. Backend — collection and processing
 
 ### Auth (`apps/backend/src/routes/auth.ts`)
-- **Register** (`auth.ts:89-114`): email, username, password → bcrypt hash stored, never the raw password.
+- **Register** (`auth.ts:89-114`): email, username, password → PBKDF2-SHA256 hash stored, never the raw password.
 - **Login** (`auth.ts:116-136`): verifies password, issues JWT (30-day expiry, `JWT_EXPIRES_IN` = `auth.ts:30`).
 - **Google OAuth** (`auth.ts:138-171`): redirects to Google; on callback, exchanges `code` for an access token
   (`exchangeGoogleCode`, `auth.ts:49-69`), then calls Google's userinfo endpoint (`fetchGoogleUserInfo`,
@@ -125,9 +125,7 @@ a third party by this code.
 ## 4. Mobile (`apps/mobile`)
 - `apps/mobile/src/game/device-store.ts:1-4` wires `AsyncStorage` (on-device key/value store) as the
   mobile app's storage backend for game state, via the same `KeyValueStore` interface as other game-storage
-  code. No network/API calls were found in `apps/mobile` at this commit — the mobile app appears to be
-  local-only gameplay so far, matching the "mobile game logic" scope noted in recent commits
-  (`4786f74`, `1a86bce`, `8235250`).
+  code. Correction (2026-10-05): `apps/mobile/src/lib/api.ts` (merged in #14) calls `GET /api/words/daily`, `GET /api/words/random` and `POST /api/words/validate` (the guess) without account data.
 
 ## 5. Hosting / infrastructure
 - Backend: Cloudflare Workers + D1 (`apps/backend/wrangler.toml` / deploy workflow references), confirmed by

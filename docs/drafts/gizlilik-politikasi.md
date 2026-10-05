@@ -27,7 +27,7 @@ Aşağıdaki tablo, kod tabanında doğrulanmış veri kategorilerini listeler.
 
 ### 2.1 Hesap oluştururken verdiğiniz veriler
 - E-posta adresi, kullanıcı adı, şifre (şifre düz metin olarak hiçbir zaman saklanmaz; yalnızca
-  bcrypt benzeri bir özet/hash saklanır).
+  PBKDF2-SHA256 ile, kullanıcıya özel tuzla (salt) üretilmiş bir özet saklanır).
 - Google ile giriş yaparsanız: Google'ın bize ilettiği Google kimliği (`google_id`), e-posta ve ad/
   kullanıcı adı. Google'dan aldığımız erişim jetonlarını (access/id token) kendimiz saklamayız.
 
@@ -47,12 +47,13 @@ Aşağıdaki tablo, kod tabanında doğrulanmış veri kategorilerini listeler.
 ### 2.4 Cihazda (tarayıcıda) tutulan veriler
 Tarayıcınızın `localStorage`'ında, sunucuya gönderilmeyen şu bilgiler tutulur: oturum jetonunuz
 (JWT), devam eden/tamamlanan günlük oyun durumu, "nasıl oynanır" ipucunu görüp görmediğiniz,
-uygulamayı ana ekrana ekleme isteğini kapatıp kapatmadığınız gibi arayüz tercihleri. Bu veriler
-cihazınızda kalır, bizim sunucularımıza iletilmez.
+uygulamayı ana ekrana ekleme isteğini kapatıp kapatmadığınız gibi arayüz tercihleri. Oturum
+jetonu, giriş gerektiren isteklerde kimliğinizi doğrulamak için sunucumuza gönderilir; diğer
+veriler cihazınızda kalır.
 
-Mobil uygulamada (Harfhane mobile) şu an için oyun durumu yalnızca cihaz üzerindeki yerel
-depolamada (AsyncStorage) tutulur; inceleme tarihinde mobil uygulamanın sunucuya veri gönderen bir
-ağ isteği bulunmamıştır. [SAHİP KONTROL ETMELİ: mobil uygulama ileride sunucuya bağlanırsa bu
+Mobil uygulamada (geliştirme aşamasında) oyun durumu cihaz üzerindeki yerel depolamada
+(AsyncStorage) tutulur. Uygulama, günün kelimesini almak ve tahmininizin geçerli bir kelime olup
+olmadığını kontrol etmek için sunucumuza istek gönderir; bu isteklerde hesap bilgisi gönderilmez. [SAHİP KONTROL ETMELİ: mobil uygulama ileride sunucuya bağlanırsa bu
 bölüm güncellenmelidir.]
 
 ### 2.5 Teknik/güvenlik amaçlı veriler
