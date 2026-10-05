@@ -39,6 +39,19 @@ async function recordResult({ store, mode, wordLength, won, guessCount, today }:
   await saveUnlimitedStats(store, wordLength, recordUnlimitedResult(stats, won, guessCount));
 }
 
+const pendingWrites = new Map<string, Promise<void>>();
+
+function recordQueueKey(mode: GameMode, wordLength: WordLength): string {
+  return `${mode}:${wordLength}`;
+}
+
+function enqueueRecordResult(options: RecordResultOptions): void {
+  const key = recordQueueKey(options.mode, options.wordLength);
+  const previous = pendingWrites.get(key) ?? Promise.resolve();
+  const next = previous.then(() => recordResult(options));
+  pendingWrites.set(key, next.catch(() => undefined));
+}
+
 export function useResultRecorder({ store, mode, wordLength, session, today = getTodayString }: UseResultRecorderOptions): void {
   const { phase, game } = session;
   const previousPhaseRef = useRef(phase);
@@ -48,7 +61,7 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
     const wasReadyPlaying = previousPhaseRef.current === 'ready' && previousStatusRef.current === 'playing';
     const isNowFinished = phase === 'ready' && game.gameStatus !== 'playing';
     if (wasReadyPlaying && isNowFinished) {
-      void recordResult({ store, mode, wordLength, won: game.gameStatus === 'won', guessCount: game.guesses.length, today });
+      enqueueRecordResult({ store, mode, wordLength, won: game.gameStatus === 'won', guessCount: game.guesses.length, today });
     }
     previousPhaseRef.current = phase;
     previousStatusRef.current = game.gameStatus;

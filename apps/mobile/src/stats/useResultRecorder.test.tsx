@@ -80,4 +80,22 @@ describe('useResultRecorder', () => {
     expect(stats.gamesPlayed).toBe(2);
     expect(stats.gamesWon).toBe(1);
   });
+
+  it('should not lose a write when a second round finishes before the first write settles', async () => {
+    const store: KeyValueStore = createMemoryStore();
+    const { rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing') } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await rerender({ session: buildSession('loading', 'playing') });
+    await rerender({ session: buildSession('ready', 'playing') });
+    await rerender({ session: buildSession('ready', 'lost', ['A', 'B', 'C', 'D', 'E', 'F']) });
+    await flushPendingWrites();
+
+    const stats = await loadUnlimitedStats(store, 5);
+    expect(stats.gamesPlayed).toBe(2);
+    expect(stats.gamesWon).toBe(1);
+  });
 });
