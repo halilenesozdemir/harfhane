@@ -3,6 +3,7 @@ import { GameGrid } from '../components/GameGrid';
 import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
 import { useGame } from '../game/useGame';
+import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { GameDependencies } from '../game/useGame';
 import type { GameMode, GameSession } from '../game/game-session';
 import type { ThemeColors } from '../theme';
@@ -14,13 +15,13 @@ export interface GameScreenProps extends GameDependencies {
 }
 
 const MODE_TITLES: Record<GameMode, string> = { daily: 'Günlük', unlimited: 'Sınırsız' };
-const TITLE_SIZE = 20;
-const MESSAGE_SIZE = 16;
+const TITLE_SIZE = FONT_SIZE.title;
+const MESSAGE_SIZE = FONT_SIZE.bodyLarge;
 const MESSAGE_HEIGHT = 28;
-const SCREEN_PADDING = 12;
-const SECTION_GAP = 12;
-const BUTTON_PADDING = 12;
-const BUTTON_RADIUS = 12;
+const SCREEN_PADDING = SPACING.md;
+const SECTION_GAP = SPACING.md;
+const BUTTON_PADDING = SPACING.md;
+const BUTTON_RADIUS = RADIUS.md;
 
 interface ActionButtonProps {
   readonly label: string;
