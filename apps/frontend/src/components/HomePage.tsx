@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Infinity, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
+import { Calendar, Infinity as InfinityIcon, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import HowToPlayModal from "./HowToPlayModal";
@@ -124,7 +124,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-present/20 rounded-xl flex items-center justify-center shrink-0">
-                <Infinity size={26} className="text-present" />
+                <InfinityIcon size={26} className="text-present" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-text-primary">Sınırsız Mod</h2>
