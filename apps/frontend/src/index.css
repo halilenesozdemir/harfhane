@@ -1,4 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap');
+@import '@fontsource/baloo-2/latin-600.css';
+@import '@fontsource/baloo-2/latin-ext-600.css';
+@import '@fontsource/baloo-2/latin-700.css';
+@import '@fontsource/baloo-2/latin-ext-700.css';
+@import '@fontsource/baloo-2/latin-800.css';
+@import '@fontsource/baloo-2/latin-ext-800.css';
+@import '@fontsource/nunito/latin-500.css';
+@import '@fontsource/nunito/latin-ext-500.css';
+@import '@fontsource/nunito/latin-600.css';
+@import '@fontsource/nunito/latin-ext-600.css';
+@import '@fontsource/nunito/latin-700.css';
+@import '@fontsource/nunito/latin-ext-700.css';
+@import '@fontsource/nunito/latin-800.css';
+@import '@fontsource/nunito/latin-ext-800.css';
 
 @import '@harfhane/ui-tokens/tokens.css';
 
