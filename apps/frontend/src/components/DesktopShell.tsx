@@ -111,7 +111,6 @@ function ModeNav({
         <WordLengthRow mode="unlimited" activeMode={mode} activeWordLength={wordLength} onNavigate={goToGame} />
       </div>
 
-      <NavLink label="Listeler" isActive={false} onClick={() => navigate('/lists')} />
     </nav>
   );
 }

@@ -4,7 +4,6 @@ import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
 import { admin } from './routes/admin';
-import { lists } from './routes/lists';
 import { auth } from './routes/auth';
 import { results } from './routes/results';
 import { gamification } from './routes/gamification';
@@ -64,7 +63,6 @@ app.use('/api/auth/*', rateLimiter);
 app.use('/api/words/*', gameRateLimiter);
 
 app.route('/api/words', words);
-app.route('/api/lists', lists);
 app.route('/api/admin', admin);
 app.route('/api/auth', auth);
 app.route('/api/results', results);

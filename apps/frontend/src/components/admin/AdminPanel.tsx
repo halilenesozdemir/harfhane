@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { LayoutDashboard, LayoutList, CalendarDays, Upload, LogOut, ListTree, BarChart2, Users } from 'lucide-react';
+import { LayoutDashboard, LayoutList, CalendarDays, Upload, LogOut, BarChart2, Users } from 'lucide-react';
 import Dashboard from './Dashboard';
 import WordsManager from './WordsManager';
 import DailyScheduler from './DailyScheduler';
 import ImportWords from './ImportWords';
-import ListsManager from './ListsManager';
 import WordStats from './WordStats';
 import UserList from './UserList';
 
@@ -13,7 +12,7 @@ interface AdminPanelProps {
   onLogout: () => void;
 }
 
-type Tab = 'overview' | 'words' | 'daily' | 'stats' | 'users' | 'import' | 'lists';
+type Tab = 'overview' | 'words' | 'daily' | 'stats' | 'users' | 'import';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Genel Bakış', icon: <LayoutDashboard size={16} /> },
@@ -22,7 +21,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'stats', label: 'İstatistikler', icon: <BarChart2 size={16} /> },
   { id: 'users', label: 'Kullanıcılar', icon: <Users size={16} /> },
   { id: 'import', label: 'İçe Aktar', icon: <Upload size={16} /> },
-  { id: 'lists', label: 'Listeler', icon: <ListTree size={16} /> },
 ];
 
 export default function AdminPanel({ secret, onLogout }: AdminPanelProps): React.JSX.Element {
@@ -68,7 +66,6 @@ export default function AdminPanel({ secret, onLogout }: AdminPanelProps): React
         {tab === 'stats' && <WordStats secret={secret} />}
         {tab === 'users' && <UserList secret={secret} />}
         {tab === 'import' && <ImportWords secret={secret} />}
-        {tab === 'lists' && <ListsManager secret={secret} />}
       </div>
     </div>
   );
