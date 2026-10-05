@@ -72,7 +72,7 @@ Supporting layers:
 - NEVER call `.toUpperCase()` on Turkish text — use `normalizeWord()` from `src/utils/normalize.ts`. `"i".toUpperCase()` returns `"I"` (wrong), not `"İ"`.
 - NEVER access D1 directly in routes — always go through a repository.
 - D1 `exec()` does NOT support multi-statement SQL — use `db.prepare().run()` per statement.
-- All schema changes go in `db/migrations/0001_baseline.sql` (single baseline, see AGENTS.md Invariant 2 and `docs/plans/2026-10-04-001-infra-clean-database-plan.md`). The legacy `migrations/` folder (26 files, old `harfhane-db`) is pre-cutover history only — do not add to it.
+- Schema changes go in a new numbered file in `db/migrations/` (`0002_<topic>.sql`, …). `0001_baseline.sql` is already applied to the `harfhane` database; never edit an applied migration, because remote databases would never receive the change. Tests apply every file in order (AGENTS.md Invariant 2). The legacy `migrations/` folder (26 files, old `harfhane-db`) is pre-cutover history only — do not add to it.
 - Words are never deleted — set `is_active = 0`.
 - TDD mandatory: write the test first, then implement.
 - Test structure mirrors `src/`: `tests/repositories/`, `tests/services/`, `tests/routes/`.

@@ -40,7 +40,7 @@ Web auth is a hand-rolled JWT system on Web Crypto, no external auth library.
 
 ## 5. Proposed plan units
 
-- **U1** — Add `expo_push_tokens` table + migration in `db/migrations/0001_baseline.sql` per Invariant 2 (single baseline); test via `applySchema`/`seedTestData`. Testable locally with `pnpm --filter @harfhane/backend run db:migrate:local`.
+- **U1** — Add `expo_push_tokens` table in a new numbered migration under `db/migrations/` (correction 2026-10-05: `0001_baseline.sql` is already applied to the new database and must not be edited); test via `applySchema`/`seedTestData`. Testable locally with `pnpm --filter @harfhane/backend run db:migrate:local`.
 - **U2** — `POST /push/expo/subscribe`, `DELETE /push/expo/unsubscribe` routes + repository functions, mirroring `apps/backend/src/routes/push.ts` and `push-repository.ts`. TDD: `tests/routes/push.test.ts`, `tests/repositories/push-repository.test.ts`.
 - **U3** — Extend `scheduled()` (`apps/backend/src/index.ts`) to also send Expo pushes to the same anti-join set; add a small Expo-send utility under `src/utils/expo-push.ts` (batched POST + receipt check, token pruning on `DeviceNotRegistered`). Testable with a mocked `fetch` in Vitest.
 - **U4** — `POST /api/auth/google/mobile` route: JWKS verify via `jose`, reuse `upsertGoogleUser`/`signJwt`. New Zod schema in `src/schemas/auth-schemas.ts`. Testable locally by minting a self-signed token against a mock JWKS in tests (no real Google call needed for unit tests).

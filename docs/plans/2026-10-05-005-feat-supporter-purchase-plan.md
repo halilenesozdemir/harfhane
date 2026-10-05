@@ -25,7 +25,7 @@ Research: `docs/research/2026-10-05-supporter-purchase.md`. Status is `draft` un
 
 ## Key technical decisions
 - KTD1. RevenueCat webhooks, not direct Play Developer API calls — no service-account JWT flow to build (ADR: free under $2.5k monthly revenue).
-- KTD2. `entitlements` table in the baseline migration (Invariant 2): `user_id`, `product`, `source`, unique `transaction_id` for idempotency, `granted_at`, nullable `revoked_at` (never deleted).
+- KTD2. `entitlements` table in a new numbered migration (`db/migrations/0002_…`), never by editing `0001_baseline.sql`, which is already applied to the new database (Invariant 2): `user_id`, `product`, `source`, unique `transaction_id` for idempotency, `granted_at`, nullable `revoked_at` (never deleted).
 - KTD3. *(assumption)* Buying requires an account (Plan 007 sign-in), so restore works through the account. Guest purchases with later merge are not built.
 
 ## Open questions for the owner
