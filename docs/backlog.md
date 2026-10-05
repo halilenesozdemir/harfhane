@@ -52,13 +52,6 @@ button pops the stack.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
-## Mobile — edge-to-edge safe area insets
-On Android 15+ (edge-to-edge is mandatory from SDK 35), content can render under the system status
-and navigation bars. `GameScreen`'s "‹ Geri" header and the on-screen keyboard are not inset-aware, so
-they can end up under the system bars on edge-to-edge devices. Fixing this needs a dependency
-decision (`react-native-safe-area-context` is the standard approach) that the owner has not made yet —
-do not add it without that sign-off. Revisit when the owner decides on the dependency.
-
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
 2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
