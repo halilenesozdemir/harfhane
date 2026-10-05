@@ -34,6 +34,8 @@ export const importWordsSchema = z.object({
         meaning: z.string().min(1).max(500),
         context: z.string().max(500).default(''),
         category: categorySchema,
+        source: z.string().min(1).max(100).optional(),
+        license: z.string().min(1).max(100).optional(),
       })
     )
     .min(1)

@@ -277,14 +277,38 @@ export async function adminGetWordStats(
   return rows.results ?? [];
 }
 
+const DEFAULT_IMPORT_SOURCE = 'admin';
+const DEFAULT_IMPORT_LICENSE = 'owner-curated';
+
+export interface BulkImportWord {
+  word: string;
+  meaning: string;
+  context: string;
+  category: string;
+  source?: string;
+  license?: string;
+}
+
 export async function adminBulkInsertWords(
   db: Env['DB'],
-  words: { word: string; meaning: string; context: string; category: string }[]
+  words: BulkImportWord[]
 ): Promise<{ inserted: number; skipped: number }> {
   const statements = words.map((w) =>
     db
-      .prepare('INSERT OR IGNORE INTO words (word, meaning, context, category) VALUES (?, ?, ?, ?)')
-      .bind(w.word, w.meaning, w.context, w.category)
+      .prepare(
+        `INSERT OR IGNORE INTO words
+          (word, meaning, context, category, length, source, license, status, family_safe, approved_at, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', 1, datetime('now'), 1)`
+      )
+      .bind(
+        w.word,
+        w.meaning,
+        w.context,
+        w.category,
+        w.word.length,
+        w.source ?? DEFAULT_IMPORT_SOURCE,
+        w.license ?? DEFAULT_IMPORT_LICENSE
+      )
   );
 
   const results = await db.batch(statements);
