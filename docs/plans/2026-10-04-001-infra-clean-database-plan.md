@@ -21,7 +21,7 @@ Players get a daily puzzle that never runs out, and every word in it is approved
 - R4. Only approved, family-safe, active words can be scheduled as daily words; a trigger enforces this.
 - R5. User-submitted list words keep working, but they can never become daily words.
 - R6. Answer words and the guess list come from open-license sources. No TDK data is used.
-- R7. Before cutover, at least 90 days of approved daily words are scheduled for every active length.
+- R7. **Owner decision, 2026-10-05: cutover is per word length, not all-or-nothing.** A length cuts over once it has 90+ days of approved, family-safe schedule; 5 letters goes first. Lengths without 90+ days stay hidden in clients until stocked. Active lengths become data-driven (a config endpoint is tracked in `docs/backlog.md`), replacing the fixed `ACTIVE_WORD_LENGTHS` list.
 
 ## Acceptance examples
 - AE1 (R3). Given a draft word, when `is_active` is set to 1 without approval, then the insert or update fails.
@@ -49,8 +49,8 @@ Players get a daily puzzle that never runs out, and every word in it is approved
   2. A family-safety blocklist and classifier filter them.
   3. Definitions are original and written by a model, then cross-checked.
   4. Admin approval follows.
-- U3. Seed `valid_words` and approved answer words into `harfhane`, then schedule 90+ days.
-- U4. **Cutover.** Point binding `DB` at `harfhane`, set `migrations_dir`, remove `DB_NEXT`, deploy, then verify `/api/words/daily` per length.
+- U3. Seed `valid_words` and approved answer words into `harfhane`, then schedule 90+ days per length, starting with 5 letters.
+- U4. **Cutover, per length (R7).** Point binding `DB` at `harfhane`, set `migrations_dir`, remove `DB_NEXT`, deploy, then verify `/api/words/daily` for each length that has 90+ stocked days; lengths without stock stay hidden in clients until Plan 006's cron tops them up.
 - U5. Migrate the 12 legacy users only if wanted. The owner decides; no active users since 2026-07-01.
 - U6. **Retire `harfhane-db`.** Delete it after one stable week, with explicit owner approval. Deletion is irreversible.
 
