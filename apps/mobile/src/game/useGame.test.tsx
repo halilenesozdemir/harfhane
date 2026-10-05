@@ -64,6 +64,34 @@ describe('useGame', () => {
     await waitFor(() => expect(result.current.session.message).toBe('Bağlantı hatası, tekrar dene'));
   });
 
+  it('should validate once when submit is tapped twice quickly', async () => {
+    const api = createApi();
+    const store = createMemoryStore();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    await act(async () => {
+      'KALAY'.split('').forEach((letter) => result.current.onLetter(letter));
+    });
+    await act(async () => {
+      result.current.onSubmit();
+      result.current.onSubmit();
+    });
+    expect(api.validateWord).toHaveBeenCalledTimes(1);
+  });
+
+  it('should keep saving to the day the word was loaded for after midnight', async () => {
+    let day = '2026-10-05';
+    const clock = () => day;
+    const api = createApi();
+    const store = createMemoryStore();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today: clock }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    day = '2026-10-06';
+    await typeAndSubmit(result, 'KALAY');
+    await waitFor(async () => expect(JSON.parse((await store.getItem(DAILY_KEY)) ?? '{}').guesses).toEqual(['KALAY']));
+    expect(await store.getItem('harfhane:game:anon:2026-10-06:5')).toBeNull();
+  });
+
   it('should report an error when the word cannot be loaded', async () => {
     const api = createApi({ fetchDailyWord: jest.fn().mockRejectedValue(new Error('down')) });
     const store = createMemoryStore();

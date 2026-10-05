@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { getTodayString, normalizeWord } from '@harfhane/shared';
 import type { ApiClient } from '../lib/api';
 import { createInitialState, dailyGameKey } from './game-state';
@@ -31,11 +31,12 @@ const MESSAGE_DURATION_MS = 2000;
 async function loadSession({ mode, wordLength, api, store, today = getTodayString }: UseGameOptions): Promise<SessionAction> {
   if (mode === 'unlimited') {
     const random = await api.fetchRandomWord(wordLength);
-    return { type: 'loaded', solution: normalizeWord(random.word.word), wordId: random.wordId, game: createInitialState() };
+    return { type: 'loaded', solution: normalizeWord(random.word.word), wordId: random.wordId, game: createInitialState(), storageKey: null };
   }
+  const storageKey = dailyGameKey(today(), wordLength);
   const daily = await api.fetchDailyWord(wordLength);
-  const game = await loadGameState(store, dailyGameKey(today(), wordLength));
-  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game };
+  const game = await loadGameState(store, storageKey);
+  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey };
 }
 
 function useSessionLoader(options: UseGameOptions, dispatch: (action: SessionAction) => void, round: number) {
@@ -52,12 +53,12 @@ function useSessionLoader(options: UseGameOptions, dispatch: (action: SessionAct
   }, [mode, wordLength, api, store, today, dispatch, round]);
 }
 
-function useDailyPersistence(options: UseGameOptions, session: GameSession) {
-  const { mode, wordLength, store, today = getTodayString } = options;
+function useDailyPersistence(store: KeyValueStore, session: GameSession) {
+  const { storageKey, game } = session;
   useEffect(() => {
-    if (mode !== 'daily' || session.phase !== 'ready') return;
-    void saveGameState(store, dailyGameKey(today(), wordLength), session.game);
-  }, [mode, wordLength, store, today, session.phase, session.game]);
+    if (storageKey === null) return;
+    void saveGameState(store, storageKey, game);
+  }, [store, storageKey, game]);
 }
 
 function useMessageTimeout(session: GameSession, dispatch: (action: SessionAction) => void) {
@@ -71,13 +72,20 @@ function useMessageTimeout(session: GameSession, dispatch: (action: SessionActio
 
 function useSubmit(options: UseGameOptions, session: GameSession, dispatch: (action: SessionAction) => void) {
   const { api } = options;
+  const isInFlight = useRef(false);
   return useCallback(() => {
-    const blocker = submitBlocker(session);
+    const blocker = isInFlight.current ? '' : submitBlocker(session);
     if (blocker !== null) return void (blocker && dispatch({ type: 'message', message: blocker }));
+    const word = session.game.currentGuess;
+    isInFlight.current = true;
+    dispatch({ type: 'submitted' });
     api
-      .validateWord(session.game.currentGuess)
-      .then(({ isValid }) => dispatch(isValid ? { type: 'guess' } : { type: 'message', message: INVALID_WORD_MESSAGE }))
-      .catch(() => dispatch({ type: 'message', message: CONNECTION_ERROR_MESSAGE }));
+      .validateWord(word)
+      .then(({ isValid }) => dispatch(isValid ? { type: 'guess', word } : { type: 'rejected', message: INVALID_WORD_MESSAGE }))
+      .catch(() => dispatch({ type: 'rejected', message: CONNECTION_ERROR_MESSAGE }))
+      .finally(() => {
+        isInFlight.current = false;
+      });
   }, [api, session, dispatch]);
 }
 
@@ -85,7 +93,7 @@ export function useGame(options: UseGameOptions): UseGameResult {
   const [session, dispatch] = useReducer(reduceSession, undefined, createSession);
   const [round, setRound] = useState(0);
   useSessionLoader(options, dispatch, round);
-  useDailyPersistence(options, session);
+  useDailyPersistence(options.store, session);
   useMessageTimeout(session, dispatch);
   const onSubmit = useSubmit(options, session, dispatch);
   const onLetter = useCallback((letter: string) => dispatch({ type: 'letter', letter }), []);
