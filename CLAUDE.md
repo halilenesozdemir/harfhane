@@ -62,7 +62,7 @@ harfhane/
 
 Per-app commands and gotchas: `apps/backend/CLAUDE.md`, `apps/frontend/CLAUDE.md`.
 
-**Commit gate**: `.githooks/pre-commit` runs typecheck + lint + test whenever code is staged; `pnpm install` enables it via `prepare`. A red gate means fix the code, never `git commit --no-verify`.
+**Commit gate**: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests (the CI steps except the frontend build) whenever code is staged; `pnpm install` enables it via `prepare`. A red gate means fix the code, never `git commit --no-verify`.
 
 ---
 

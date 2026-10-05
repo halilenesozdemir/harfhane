@@ -1,13 +1,14 @@
 #!/bin/sh
 set -e
 
-CODE_PATTERN='^(apps|packages)/.*\.(ts|tsx|js|jsx|json|css|sql)$|^[^/]+\.(js|mjs|cjs|ts|json|yaml)$'
+CODE_PATTERN='^\.githooks/|^(apps|packages)/.*\.(ts|tsx|js|jsx|json|css|sql)$|^[^/]+\.(js|mjs|cjs|ts|json|yaml)$'
 
 if ! git diff --cached --name-only --diff-filter=ACMR | grep -qE "$CODE_PATTERN"; then
   exit 0
 fi
 
-echo "[commit-gate] typecheck + lint + test"
+echo "[commit-gate] typecheck + test typecheck + lint + test"
 pnpm typecheck
+pnpm typecheck:test
 pnpm lint
 pnpm test
