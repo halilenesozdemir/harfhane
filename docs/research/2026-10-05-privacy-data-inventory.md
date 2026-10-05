@@ -15,7 +15,7 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
 | `push_subscriptions` | Web Push `endpoint` URL (identifies browser/push service), `p256dh`/`auth` keys, `user_id` | `0001_baseline.sql:137-145` |
 | `game_results` | `user_id`, play date, word length, guesses, win flag, mode | `0001_baseline.sql:99-112` |
 | `tournament_results` | `user_id`, word, guesses, score, timestamp — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:162-173` |
-| `duels` | `challenger_id`, `opponent_id`, guesses/won per side — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:175-186` |
+| `duels` | `challenger_id`, `opponent_id`, guesses/won per side — **UI removed 2026-10-05; `POST /api/duels` is still mounted and can still write rows (`apps/backend/src/index.ts:13,73`); table pending drop once the route is retired** | `0001_baseline.sql:175-186` |
 | `user_xp`, `user_badges` | `user_id`, XP total, level, earned badges | `0001_baseline.sql:122-135` |
 | `streak_freezes` | `user_id`, date | `0001_baseline.sql:147-151` |
 | `word_lists`, `word_list_words` | `owner_user_id` (nullable), list content (not personal) — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:62-80` |
@@ -44,8 +44,9 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
     `password_reset_tokens`.
   - Correction (2026-10-05): an earlier version of this document claimed `duels` rows where the user is
     `opponent_id` are anonymized (opponent_id set to NULL) rather than deleted, and that owned `word_lists`
-    are orphaned rather than deleted. That is no longer accurate — `deleteUser` deletes both duel sides and
-    the user's lists outright. There is no "not deleted / anonymized" exception left.
+    are orphaned rather than deleted. That was incorrect — `deleteUser` already deleted both duel sides and
+    the user's lists outright at the time this document was written. There is no "not deleted / anonymized"
+    exception.
 
 ### Results / gamification (`apps/backend/src/routes/results.ts`, `src/services/gamification-service.ts`)
 Stores per-user game outcomes (date, word length, guesses, win/lose, mode) tied to `user_id`; feeds XP/level

@@ -101,7 +101,7 @@ Play Console minimum 2, önerilen 4-8 telefon ekran görüntüsü ister. Öneril
 4. Sınırsız mod — oyun içi ekran.
 5. Tema seçimi — açık/koyu/yüksek kontrast karşılaştırması (tek görselde ikiye bölünmüş veya
    galeri halinde ayrı ayrı).
-6. [SAHİP: lansımda aktifse] Profil/XP/rozet ekranı.
+6. [SAHİP: lansmanda aktifse] Profil/XP/rozet ekranı.
 
 Ayrıca gerekli:
 - **Uygulama simgesi** (512x512 PNG, yüksek çözünürlük) — bu birimde üretilen

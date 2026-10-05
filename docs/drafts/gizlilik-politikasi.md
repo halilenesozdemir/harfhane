@@ -33,8 +33,13 @@ Aşağıdaki tablo, kod tabanında doğrulanmış veri kategorilerini listeler.
 
 ### 2.2 Oyun verileriniz
 - Oynadığınız gün, kelime uzunluğu, tahmin sayısı, kazandınız mı kaybettiniz mi, oyun modu (günlük/
-  süresiz).
+  sınırsız).
 - XP, seviye, rozetler, seri dondurma hakları (freeze tokens).
+- [SAHİP KONTROL ETMELİ: `/api/duels` ucu kod tabanında halen aktif ve hesabınıza bağlı düello
+  kayıtları yazabiliyor; bu uç kapatılana/kaldırılana kadar bu veri kategorisi de geçerlidir ve
+  politikaya eklenmelidir. Daha önceki sürümlerde oluşturulmuş düello, turnuva ve liste kayıtları,
+  ilgili tablolar kaldırılana kadar veritabanında durur; hesabınızı sildiğinizde bunlar da silinir
+  (bkz. Bölüm 7).]
 
 ### 2.3 Bildirim tercihleri ve push bildirimleri
 - E-posta bildirim tercihiniz (açık/kapalı).
@@ -125,8 +130,7 @@ erişim kısıtları) varsa eklenmeli.]
 
 Ayarlar bölümünden hesabınızı sildiğinizde, hesabınızla ve oluşturduğunuz her şeyle ilişkili
 veriler **kalıcı olarak silinir**: oyun sonuçlarınız, push bildirim abonelikleriniz, şifre
-sıfırlama kayıtlarınız, seri dondurma kayıtlarınız, XP/seviye bilgisi ve rozetleriniz. Silinmeyen
-veya anonimleştirilen bir istisna yoktur.
+sıfırlama kayıtlarınız, seri dondurma kayıtlarınız, XP/seviye bilgisi ve rozetleriniz.
 
 Hesap silme talebini uygulama içindeki [SAHİP KONTROL ETMELİ: ayarlar menüsü adı/yolu] üzerinden ya
 da [İLETİŞİM E-POSTASI] adresine yazarak iletebilirsiniz.
