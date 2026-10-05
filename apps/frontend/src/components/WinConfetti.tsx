@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const COLORS = ['#6aaa64', '#c9b458', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa'];
+const COLORS = ['correct', 'present', 'brand', 'absent'].map((name) => `rgb(var(--hh-${name}-rgb))`);
 const PARTICLE_COUNT = 40;
 
 interface Particle {

@@ -29,6 +29,12 @@ describe('WinConfetti', () => {
     expect(particleCount(container)).toBeGreaterThan(0);
   });
 
+  it('should color particles with theme tokens when confetti shows', () => {
+    const { container } = render(<WinConfetti active />);
+    const particle = container.querySelector<HTMLElement>('.animate-confetti-fall');
+    expect(particle?.getAttribute('style')).toMatch(/background-color: rgb\(var\(--hh-(correct|present|brand|absent)-rgb\)\)/);
+  });
+
   it('should clear confetti when the animation time has passed', () => {
     const { container } = render(<WinConfetti active />);
     act(() => {
