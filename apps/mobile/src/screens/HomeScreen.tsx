@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { CONTENT_MAX_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
@@ -7,20 +7,21 @@ import type { WordLength } from '../stats/stats';
 export type HomeScreenMode = 'daily' | 'unlimited';
 
 export interface HomeScreenProps {
+  readonly selectedLength: WordLength;
+  readonly onSelectLength: (length: WordLength) => void;
   readonly onStart: (mode: HomeScreenMode, length: WordLength) => void;
   readonly onOpenHowToPlay: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenStats: (length: WordLength) => void;
 }
 
-const DEFAULT_WORD_LENGTH: WordLength = 5;
+export const DEFAULT_WORD_LENGTH: WordLength = 5;
 const UNLIMITED_LENGTHS: readonly WordLength[] = [4, 5, 6];
 const TITLE_LETTER_SPACING = 2;
 const LENGTH_OPTION_HEIGHT = 36;
 
-export function HomeScreen({ onStart, onOpenHowToPlay, onOpenSettings, onOpenStats }: HomeScreenProps) {
+export function HomeScreen({ selectedLength, onSelectLength, onStart, onOpenHowToPlay, onOpenSettings, onOpenStats }: HomeScreenProps) {
   const { colors } = useTheme();
-  const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
 
   const handleStartDaily = useCallback(() => onStart('daily', selectedLength), [onStart, selectedLength]);
   const handleStartUnlimited = useCallback(() => onStart('unlimited', selectedLength), [onStart, selectedLength]);
@@ -56,7 +57,7 @@ export function HomeScreen({ onStart, onOpenHowToPlay, onOpenSettings, onOpenSta
         </Pressable>
         <View style={styles.lengthRow}>
           {UNLIMITED_LENGTHS.map((length) => (
-            <LengthOption key={length} length={length} isSelected={selectedLength === length} onSelect={setSelectedLength} />
+            <LengthOption key={length} length={length} isSelected={selectedLength === length} onSelect={onSelectLength} />
           ))}
         </View>
       </View>
