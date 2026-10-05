@@ -11,5 +11,5 @@ Draft PR'da durursun. Merge, deploy, remote D1 yazma ve ayar dosyası değişikl
 3. **Önce kanıtı.** Değişiklik mevcut davranışı korumalıysa, önce ölçülebilir bir çıktıyı script ile al (build edilmiş CSS, API yanıtı, test çıktısı).
 4. **Uygula.** Önce birimin davranışını tanımlayan test, sonra kod. Üretilen dosya varsa kaynakla kaymayı yakalayan test ekle.
 5. **Kapı.** Commit kapısı yeşil olmalı. Aynı hata iki kez → yaklaşımı değiştir; üçüncü deneme yok: dur, sebebi `docs/backlog.md`'ye yaz, raporla. "Sonra" çıktısını "önce" ile karşılaştır, farkı açıkla ya da düzelt.
-6. **İnceleme.** `reviewer` agent'ına taban ref'i, worktree'yi ve plan birimini ver. Bulguyu kendin doğrula; gerçekse düzelt ve kapıdan tekrar geç.
-7. **Teslim.** Push, draft PR (Summary: plan + birim; Verification: önce/sonra, kapı, test sayısı; Not covered). Yarım kalan her şey `docs/backlog.md`'ye. Rapor: PR linki, kanıt, doğrulanmayanlar.
+6. **Teslim.** Push, draft PR (Summary: plan + birim; Verification: önce/sonra, kapı, test sayısı; Not covered). Yarım kalan her şey `docs/backlog.md`'ye. Rapor: PR linki, kanıt, doğrulanmayanlar.
+7. **İnceleme ana döngüde.** Üreten kendi hakemini çağırmaz: ana döngü draft PR'ı `reviewer` agent'ına verir, bulguları doğrular ve düzeltmeyi aynı birime geri gönderir.
