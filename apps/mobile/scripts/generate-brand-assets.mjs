@@ -12,6 +12,16 @@ const FAVICON_SIZE = 196;
 const FULL_BLEED_GLYPH_BOX = 640;
 const ADAPTIVE_SAFE_ZONE_GLYPH_BOX = 640;
 const SPLASH_GLYPH_BOX = 480;
+const GLYPH_STROKE_RATIO = 0.22;
+const GLYPH_CORNER_RATIO = 0.18;
+
+function readColorToken(theme, key, themeName) {
+  const value = theme[key];
+  if (!value) {
+    throw new Error(`packages/ui-tokens/tokens.json is missing themes.${themeName}.${key}`);
+  }
+  return value;
+}
 
 function readTokens() {
   const raw = readFileSync(TOKENS_PATH, "utf-8");
@@ -21,8 +31,8 @@ function readTokens() {
 function hGlyphPath(boxSize) {
   const center = CANVAS_SIZE / 2;
   const half = boxSize / 2;
-  const strokeWidth = boxSize * 0.22;
-  const cornerRadius = strokeWidth * 0.18;
+  const strokeWidth = boxSize * GLYPH_STROKE_RATIO;
+  const cornerRadius = strokeWidth * GLYPH_CORNER_RATIO;
   const left = center - half;
   const right = center + half;
   const top = center - half;
@@ -62,11 +72,10 @@ async function main() {
   const light = tokens.themes.light;
   const dark = tokens.themes.dark;
 
-  const brandColor = `rgb(${light["brand-rgb"]})`;
-  const brandColorDark = `rgb(${dark["brand-rgb"]})`;
-  const lightBg = light.bg;
-  const darkBg = dark.bg;
-  const cream = light.bg;
+  const brandColor = `rgb(${readColorToken(light, "brand-rgb", "light")})`;
+  const brandColorDark = `rgb(${readColorToken(dark, "brand-rgb", "dark")})`;
+  const lightBg = readColorToken(light, "bg", "light");
+  const darkBg = readColorToken(dark, "bg", "dark");
 
   const iconSvg = buildSvg({
     backgroundFill: brandColor,
@@ -119,7 +128,7 @@ async function main() {
   await renderPng(splashDarkSvg, join(ASSETS_DIR, "splash-icon-dark.png"));
 
   process.stdout.write(
-    `Generated brand assets using brand=${brandColor} lightBg=${lightBg} darkBg=${darkBg} cream=${cream}\n`,
+    `Generated brand assets using brand=${brandColor} brandDark=${brandColorDark} lightBg=${lightBg} darkBg=${darkBg}\n`,
   );
 }
 
