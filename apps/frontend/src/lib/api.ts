@@ -5,7 +5,6 @@ import type {
   ApiError,
   WordEntry,
   UnlimitedPersonalStats,
-  DuelPublic,
 } from '@harfhane/shared';
 
 const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
@@ -59,19 +58,3 @@ export function fetchUnlimitedStats(token: string): Promise<{ stats: UnlimitedPe
   return request<{ stats: UnlimitedPersonalStats }>('/results/me/unlimited', undefined, token);
 }
 
-export function registerDuelResult(
-  token: string,
-  wordId: number,
-  guesses: number,
-  won: boolean
-): Promise<{ duel: DuelPublic }> {
-  return request<{ duel: DuelPublic }>(
-    '/duels',
-    { method: 'POST', body: JSON.stringify({ word_id: wordId, guesses, won }) },
-    token
-  );
-}
-
-export function fetchDuel(token: string, wordId: number): Promise<{ duel: DuelPublic }> {
-  return request<{ duel: DuelPublic }>(`/duels/${wordId}`, undefined, token);
-}

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema, seedTestData, createTestUser } from '../helpers/db';
 import { deleteUser } from '../../src/repositories/user-repository';
-import { upsertDuel, recordOpponentResult } from '../../src/repositories/duel-repository';
 import { saveResult } from '../../src/repositories/result-repository';
 import { upsertSubscription } from '../../src/repositories/push-repository';
 
@@ -15,6 +14,20 @@ let wordId: number;
 async function tableHasRow(sql: string, params: unknown[]): Promise<boolean> {
   const row = await env.DB.prepare(sql).bind(...params).first();
   return row !== null;
+}
+
+async function insertDuel(
+  wordIdValue: number,
+  challengerId: number,
+  opponentId: number | null = null
+): Promise<void> {
+  await env.DB
+    .prepare(
+      `INSERT INTO duels (word_id, challenger_id, challenger_guesses, challenger_won, opponent_id)
+       VALUES (?, ?, 3, 1, ?)`
+    )
+    .bind(wordIdValue, challengerId, opponentId)
+    .run();
 }
 
 async function createList(
@@ -73,12 +86,11 @@ beforeAll(async () => {
   await addComment(env.DB, otherId, otherListId, 'Kendi listem');
   await addLike(env.DB, ownerId, otherListId);
 
-  await upsertDuel(env.DB, wordId, ownerId, 4, true);
+  await insertDuel(wordId, ownerId);
   const word2 = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('KALEM').first<{ id: number }>();
-  await upsertDuel(env.DB, word2!.id, otherId, 3, true);
-  await recordOpponentResult(env.DB, word2!.id, ownerId, 5, false);
+  await insertDuel(word2!.id, otherId, ownerId);
   const word3 = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('BEYAZ').first<{ id: number }>();
-  await upsertDuel(env.DB, word3!.id, otherId, 2, true);
+  await insertDuel(word3!.id, otherId);
 
   await saveResult(env.DB, ownerId, '2026-01-01', 5, 4, true, 'daily');
   await saveResult(env.DB, otherId, '2026-01-01', 5, 5, false, 'daily');

@@ -146,13 +146,3 @@ export interface UnlimitedPersonalStats {
   bestStreak: number;
 }
 
-export interface DuelPublic {
-  id: number;
-  wordId: number;
-  myRole: 'challenger' | 'opponent';
-  myGuesses: number;
-  myWon: boolean;
-  opponentGuesses: number | null;
-  opponentWon: boolean | null;
-  opponentFinished: boolean;
-}

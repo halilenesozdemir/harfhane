@@ -10,7 +10,6 @@ import { gamification } from './routes/gamification';
 import { push } from './routes/push';
 import { notifications } from './routes/notifications';
 import { profile } from './routes/profile';
-import { duels } from './routes/duels';
 import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
 import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
@@ -70,7 +69,6 @@ app.route('/api/xp', gamification);
 app.route('/api/push', push);
 app.route('/api/notifications', notifications);
 app.route('/api/profile', profile);
-app.route('/api/duels', duels);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {

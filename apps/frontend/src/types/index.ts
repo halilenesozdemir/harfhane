@@ -1,5 +1,5 @@
 import type { WordEntry, GameXPResult } from '@harfhane/shared';
-export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile, UnlimitedPersonalStats, DuelPublic } from '@harfhane/shared';
+export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile, UnlimitedPersonalStats } from '@harfhane/shared';
 export type { TileStatus, TimeCountdown } from '@harfhane/shared';
 import type { TileStatus } from '@harfhane/shared';
 
