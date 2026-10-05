@@ -33,7 +33,7 @@ harfhane/
 │   │       ├── types/
 │   │       └── utils/
 │   └── backend/           # Hono API (@harfhane/backend)
-│       ├── migrations/
+│       ├── db/migrations/
 │       └── src/
 │           ├── routes/
 │           ├── services/
@@ -134,4 +134,4 @@ wrangler d1 execute harfhane-db --local --file=scripts/seed.sql
 
 ## Geliştirme Rehberi
 
-Geliştirme süreci, slash komutları ve agent sistemi için: [USAGE.md](USAGE.md)
+Agent kuralları ve Invariant'lar için: [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md)
