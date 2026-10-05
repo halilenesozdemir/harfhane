@@ -18,6 +18,7 @@ import { CONFLICT, UNAUTHORIZED } from '../errors/api-error';
 import { sendPasswordResetEmail } from '../utils/email';
 import { rateLimiter } from '../middleware/rate-limiter';
 import { requireAuth } from '../middleware/auth-middleware';
+import { issueOAuthState, consumeOAuthState } from '../utils/oauth-state';
 
 const RESET_TOKEN_EXPIRES_MS = 60 * 60 * 1000;
 
@@ -142,6 +143,7 @@ auth.get('/google', (c) => {
     response_type: 'code',
     scope: 'openid email profile',
     access_type: 'offline',
+    state: issueOAuthState(c),
   });
   return c.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
 });
@@ -150,7 +152,7 @@ auth.get('/google/callback', async (c) => {
   const code = c.req.query('code');
   const errorRedirect = `${c.env.APP_URL}?auth_error=true`;
 
-  if (!code) return c.redirect(errorRedirect);
+  if (!consumeOAuthState(c) || !code) return c.redirect(errorRedirect);
 
   const tokenData = await exchangeGoogleCode(code, c.env);
   if (!tokenData) return c.redirect(errorRedirect);
