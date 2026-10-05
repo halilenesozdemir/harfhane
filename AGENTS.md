@@ -205,31 +205,13 @@ When a primary model is unavailable, the system automatically falls back:
 
 ---
 
-## Metrics & Performance Tracking
+## Memory & Plans
 
-- **Token Usage**: Actual token consumption per task is recorded in `.github/metrics/token-usage.md` for calibration.
-- **Agent Performance**: Task counts, review rounds, and fallback activations are tracked in `.github/metrics/agent-performance.md`.
-- **Orchestrator Responsibility**: The Orchestrator updates these metrics at the end of each multi-agent session.
-
----
-
-## Session Memory
-
-- Every conversation must be saved to `.github/memory/sessions/` at session end.
-- Session file format: `YYYY-MM-DD-HH-MM-session-name.md`
-- Template: `.github/memory/sessions/_session-template.md`
-- Maximum 20 session files retained; older sessions archived to `.github/memory/history/archive.md`.
-- Orchestrator manages session lifecycle (start, save, archive).
-- Agents read session files for context recovery but do not create them directly.
-
----
-
-## Token Optimization
-
-- Shared rules are centralized in `.github/instructions/shared-base.instructions.md` — agent files reference this instead of duplicating content.
-- Skills are loaded on-demand per task type, not all at once. See `.github/instructions/context-loading.instructions.md`.
-- Tasks are decomposed into subtasks with a maximum 15K token budget each. See `.github/instructions/task-planning.instructions.md`.
-- Active plan is tracked in `.github/todo/active-plan.md` for pause/resume across token limits.
+- **Plans**: `docs/plans/` — one file per unit of work; progress is read from git, not tracked in the plan.
+- **Decisions**: `docs/decisions/` (ADRs). **Deferred work**: `docs/backlog.md` — half-done work is written here before a session ends.
+- **Session memory**: the second-brain bridge (`~/.claude/settings.json` hooks) loads context at SessionStart and records it at Stop/PreCompact/SessionEnd. Agents never hand-write session files.
+- **Recent work**: `git log` is the source of truth for what changed.
+- Retired 2026-10-05: `.github/memory`, `.github/todo`, `.github/metrics` — archived under `docs/archive/github-2026-10-05/`.
 
 ---
 
@@ -248,8 +230,6 @@ At session start, agents automatically discover and follow the host project's do
 1. **Boilerplate structural rules** (tier hierarchy, review chain, file ownership) — NEVER overridden
 2. **Project-specific rules** (`CLAUDE.md`, `products.md`) — OVERRIDE boilerplate coding defaults
 3. **Boilerplate coding defaults** — apply only when the project has no specific guidance
-
-Full protocol: `.github/instructions/project-context-discovery.instructions.md`
 
 ---
 
@@ -271,8 +251,6 @@ Before starting any non-trivial development task, the Orchestrator enriches the 
 2. **Ask 3-7 questions**: Cover scope, behavior, technical decisions, edge cases — offer choices with recommended defaults
 3. **Generate plan**: Produce implementation plan with task breakdown, agent assignments, confirmed requirements
 4. **Get approval**: Wait for user confirmation before dispatching agents (max 2 revision rounds)
-
-Full protocol: `.github/instructions/prompt-enrichment.instructions.md`
 
 ---
 

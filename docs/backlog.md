@@ -38,3 +38,8 @@ The web app carries code from many experiments; removed features such as challen
 - `DEPLOYMENT.md`: update the database section at cutover (`harfhane` and `db/migrations`).
 - `SECURITY.md`: keep.
 - `LEGACY_TEST_GUIDE.md`: untracked and owned by the owner; not touched.
+
+## Feature ideas from the old backlog
+`docs/archive/github-2026-10-05/todo/BACKLOG.md` lists product ideas from before October 2026: onboarding, password reset, GDPR account deletion, weekly leaderboard, admin auto-scheduling.
+- Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
+- Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
