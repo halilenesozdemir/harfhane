@@ -18,6 +18,15 @@ describe('POST /api/admin/import', () => {
     expect(res.status).toBe(401);
   });
 
+  it('should reject a request with a wrong admin secret', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': `${ADMIN_SECRET}-wrong` },
+      body: JSON.stringify({ words: [{ word: 'MASAL', meaning: 'Hayali öykü', category: 'isim' }] }),
+    });
+    expect(res.status).toBe(401);
+  });
+
   it('imports words as approved, family-safe rows with default source and license', async () => {
     const res = await SELF.fetch('http://example.com/api/admin/import', {
       method: 'POST',
