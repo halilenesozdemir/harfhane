@@ -25,6 +25,7 @@ The web app carries code from many experiments; removed features such as challen
 `apps/backend/migrations/` (26 files) is replaced by `apps/backend/db/migrations/0001_baseline.sql`.
 - Delete the legacy folder at database cutover.
 - Point the root `scripts/` (which target `harfhane-db`) at the new pipeline, or retire them.
+- Until then they are outside `pnpm lint` (Plan 003 lints `apps/` and `packages/` only), so `no-console` and unused-code rules do not reach them.
 
 ## Known bug fixed in passing
 `findOrCreateWord` inserted user words with `category = NULL` and no `length`. This violated `NOT NULL` and stored 6-letter words as length 5. The baseline schema and repository now handle both.
