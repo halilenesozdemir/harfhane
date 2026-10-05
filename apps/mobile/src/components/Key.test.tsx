@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Key } from './Key';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -14,6 +14,23 @@ describe('Key', () => {
     await renderWithTheme(<Key label="K" value="K" status={null} accessibilityLabel="K" onPress={() => undefined} />);
     const style = flattenStyle(screen.getByLabelText('K').props.style);
     expect(style.backgroundColor).toBe(themes.light.keyBg);
+  });
+
+  it('should use dark tokens when the stored theme is dark', async () => {
+    await renderWithTheme(<Key label="K" value="K" status="absent" accessibilityLabel="K" onPress={jest.fn()} />, { 'harfhane:theme': '"dark"' });
+    await waitFor(() => expect(flattenStyle(screen.getByLabelText('K').props.style).backgroundColor).toBe(themes.dark.absent));
+  });
+
+  it('should use high-contrast tokens when high contrast is stored', async () => {
+    await renderWithTheme(<Key label="K" value="K" status="correct" accessibilityLabel="K" onPress={jest.fn()} />, { 'harfhane:high-contrast': 'true' });
+    await waitFor(() => expect(flattenStyle(screen.getByLabelText('K').props.style).backgroundColor).toBe(themes['high-contrast'].correct));
+  });
+
+  it('should share the row width instead of using a fixed width', async () => {
+    await renderWithTheme(<Key label="K" value="K" status={null} accessibilityLabel="K" onPress={jest.fn()} />);
+    const style = flattenStyle(screen.getByLabelText('K').props.style);
+    expect(style.width).toBeUndefined();
+    expect(style.flex).toBe(1);
   });
 
   it('should have accessibilityRole button', async () => {

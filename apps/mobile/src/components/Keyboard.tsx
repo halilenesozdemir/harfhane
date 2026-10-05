@@ -17,6 +17,7 @@ const ENTER_ACCESSIBILITY_LABEL = 'Gönder';
 const BACKSPACE_ACCESSIBILITY_LABEL = 'Sil';
 const KEYBOARD_ROW_GAP = 6;
 const KEYBOARD_KEY_GAP = 4;
+const KEYBOARD_SIDE_PADDING = 4;
 
 const KEYBOARD_ROWS: readonly (readonly string[])[] = [
   ['E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Ğ', 'Ü'],
@@ -65,6 +66,6 @@ export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: Keybo
 }
 
 const styles = StyleSheet.create({
-  keyboard: { gap: KEYBOARD_ROW_GAP },
+  keyboard: { alignSelf: 'stretch', gap: KEYBOARD_ROW_GAP, paddingHorizontal: KEYBOARD_SIDE_PADDING },
   row: { flexDirection: 'row', justifyContent: 'center', gap: KEYBOARD_KEY_GAP },
 });

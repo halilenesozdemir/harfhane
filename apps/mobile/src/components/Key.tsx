@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { base } from '@harfhane/ui-tokens';
@@ -16,8 +16,9 @@ export interface KeyProps {
 }
 
 const KEY_HEIGHT = 46;
-const KEY_WIDTH = 32;
-const WIDE_KEY_WIDTH = 56;
+const KEY_MAX_WIDTH = 44;
+const WIDE_KEY_FLEX = 1.5;
+const WIDE_KEY_MAX_WIDTH = 66;
 const WIDE_KEY_PADDING = 4;
 const KEY_FONT_SIZE = 14;
 const KEY_DEPTH_HEIGHT = 3;
@@ -35,14 +36,17 @@ export function Key({ label, value, status, accessibilityLabel, isWide = false, 
   const { colors } = useTheme();
   const [isPressed, setIsPressed] = useState(false);
   const { backgroundColor, color, depthColor } = getKeyColors(status, colors);
+  const handlePressIn = useCallback(() => setIsPressed(true), []);
+  const handlePressOut = useCallback(() => setIsPressed(false), []);
+  const handlePress = useCallback(() => onPress(value), [onPress, value]);
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPressIn={() => setIsPressed(true)}
-      onPressOut={() => setIsPressed(false)}
-      onPress={() => onPress(value)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
       style={[
         styles.key,
         isWide && styles.wideKey,
@@ -61,12 +65,13 @@ export function Key({ label, value, status, accessibilityLabel, isWide = false, 
 
 const styles = StyleSheet.create({
   key: {
-    width: KEY_WIDTH,
+    flex: 1,
+    maxWidth: KEY_MAX_WIDTH,
     height: KEY_HEIGHT,
     borderRadius: parsePx(base.radiusKey),
     alignItems: 'center',
     justifyContent: 'center',
   },
-  wideKey: { width: WIDE_KEY_WIDTH, paddingHorizontal: WIDE_KEY_PADDING },
+  wideKey: { flex: WIDE_KEY_FLEX, maxWidth: WIDE_KEY_MAX_WIDTH, paddingHorizontal: WIDE_KEY_PADDING },
   label: { fontSize: KEY_FONT_SIZE, fontWeight: '700' },
 });
