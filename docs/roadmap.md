@@ -23,6 +23,7 @@ Agents cannot do these; each one unblocks the units listed.
 
 | Decision or account | Unblocks |
 |---------------------|----------|
+| Mobile styling: verify NativeWind v4 on a device/emulator, or choose StyleSheet + tokens (`docs/research/2026-10-05-nativewind-spike.md`) | 004 U2, U5–U7 |
 | Supporter price in TRY, included themes, free unlimited limit (if any) | 005 status → approved |
 | RevenueCat project and webhook secret | 005 U2, U4 |
 | Google Cloud Android OAuth client (package name + SHA-1) | 007 U3 in production, U7 |
