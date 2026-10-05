@@ -48,16 +48,12 @@ Supporting layers:
 |------|---------|
 | `src/index.ts` | Hono app entry, route mounting |
 | `src/routes/words.ts` | Word API routes |
-| `src/routes/lists.ts` | Word list routes |
 | `src/routes/admin.ts` | Admin panel routes |
 | `src/routes/auth.ts` | Auth routes |
 | `src/routes/results.ts` | Game result routes |
 | `src/services/word-service.ts` | Word business logic |
-| `src/services/list-service.ts` | List business logic |
 | `src/services/admin-service.ts` | Admin business logic |
-| `src/services/social-service.ts` | Likes/comments logic |
 | `src/repositories/word-repository.ts` | D1 word queries |
-| `src/repositories/list-repository.ts` | D1 list queries |
 | `src/repositories/admin-repository.ts` | D1 admin queries |
 | `src/schemas/word-schemas.ts` | Zod schemas for word routes |
 | `src/utils/normalize.ts` | Turkish uppercase normalization |

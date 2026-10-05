@@ -2,8 +2,6 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema, seedTestData, createTestUser } from '../helpers/db';
 import { deleteUser } from '../../src/repositories/user-repository';
-import { createList, addWordToList } from '../../src/repositories/list-repository';
-import { toggleLike, addComment } from '../../src/repositories/social-repository';
 import { upsertDuel, recordOpponentResult } from '../../src/repositories/duel-repository';
 import { saveResult } from '../../src/repositories/result-repository';
 import { upsertSubscription } from '../../src/repositories/push-repository';
@@ -19,6 +17,41 @@ async function tableHasRow(sql: string, params: unknown[]): Promise<boolean> {
   return row !== null;
 }
 
+async function createList(
+  db: D1Database,
+  slug: string,
+  name: string,
+  ownerUserId: number
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `INSERT INTO word_lists (slug, name, word_length, is_public, owner_user_id)
+       VALUES (?, ?, 5, 1, ?)
+       RETURNING id`
+    )
+    .bind(slug, name, ownerUserId)
+    .first<{ id: number }>();
+  return result!.id;
+}
+
+async function addWordToList(db: D1Database, listId: number, wordId: number): Promise<void> {
+  await db
+    .prepare('INSERT OR IGNORE INTO word_list_words (list_id, word_id) VALUES (?, ?)')
+    .bind(listId, wordId)
+    .run();
+}
+
+async function addLike(db: D1Database, userId: number, listId: number): Promise<void> {
+  await db.prepare('INSERT INTO list_likes (user_id, list_id) VALUES (?, ?)').bind(userId, listId).run();
+}
+
+async function addComment(db: D1Database, userId: number, listId: number, content: string): Promise<void> {
+  await db
+    .prepare('INSERT INTO list_comments (user_id, list_id, content) VALUES (?, ?, ?)')
+    .bind(userId, listId, content)
+    .run();
+}
+
 beforeAll(async () => {
   await applySchema(env.DB);
   await seedTestData(env.DB);
@@ -31,14 +64,14 @@ beforeAll(async () => {
   const word = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('KİTAP').first<{ id: number }>();
   wordId = word!.id;
 
-  ownedListId = await createList(env.DB, 'owner-list', 'Owner Liste', null, 5, true, ownerId);
-  otherListId = await createList(env.DB, 'other-list', 'Other Liste', null, 5, true, otherId);
+  ownedListId = await createList(env.DB, 'owner-list', 'Owner Liste', ownerId);
+  otherListId = await createList(env.DB, 'other-list', 'Other Liste', otherId);
   await addWordToList(env.DB, ownedListId, wordId);
 
-  await toggleLike(env.DB, otherId, ownedListId);
+  await addLike(env.DB, otherId, ownedListId);
   await addComment(env.DB, otherId, ownedListId, 'Güzel liste');
   await addComment(env.DB, otherId, otherListId, 'Kendi listem');
-  await toggleLike(env.DB, ownerId, otherListId);
+  await addLike(env.DB, ownerId, otherListId);
 
   await upsertDuel(env.DB, wordId, ownerId, 4, true);
   const word2 = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('KALEM').first<{ id: number }>();
