@@ -57,10 +57,10 @@ Oyun, Türkçe'nin kendine özgü harf kurallarını (ı/İ, ş, ğ, ü, ö, ç 
 olarak destekler — İngilizce kelime oyunlarının Türkçe'ye uymayan
 kısıtlamaları burada yoktur.
 
-[SAHİP: isteğe bağlı eklenebilir — düello/turnuva modu lansmanda varsa bir
-paragraf; hesap/giriş gerekiyorsa bir cümle; XP/rozet sistemi lansmanda aktifse
-bir cümle. Bu taslak, Plan 004 MVP kapsamını (günlük + sınırsız mod, 4/5/6
-harf, tema) yansıtır; lansman kapsamı genişlerse açıklama güncellenmelidir.]
+[SAHİP: isteğe bağlı eklenebilir — hesap/giriş gerekiyorsa bir cümle; XP/rozet
+sistemi lansmanda aktifse bir cümle. Bu taslak, Plan 004 MVP kapsamını (günlük
++ sınırsız mod, 4/5/6 harf, tema) yansıtır; lansman kapsamı genişlerse açıklama
+güncellenmelidir.]
 
 Harfhane hakkında daha fazla bilgi ve web sürümü: harfhane.app
 ```
@@ -79,9 +79,6 @@ Harfhane hakkında daha fazla bilgi ve web sürümü: harfhane.app
 - Oyun; şiddet, cinsel içerik, kumar veya kullanıcı tarafından oluşturulan açık içerik barındırmaz.
 - Kelime listesi TDK tabanlı ve `family_safe` bayrağıyla filtrelenir (bkz. `AGENTS.md` Invariant 1,
   3) — aile/genel izleyici derecelendirmesi bekleniyor (örn. IARC "Everyone" / PEGI 3 dengi).
-- Kullanıcı tarafından oluşturulan kelime listeleri varsa (Faz 2 özelliği) ve lansımda aktifse,
-  içerik denetimi/şikayet mekanizması olup olmadığı [SAHİP: Play'in İçerik Derecelendirmesi
-  anketinde "kullanıcı tarafından oluşturulan içerik" sorusuna doğru yanıt verilmeli] belirtilmeli.
 - Reklam yok (Invariant 8) → "reklam içerir" kutusu işaretlenmemeli.
 - [SAHİP: IARC anketini Play Console üzerinden doldurup gerçek derecelendirmeyi burada
   güncelleyin; bu bölüm bir öneri/kontrol listesidir, resmi derecelendirme değildir.]
@@ -104,8 +101,7 @@ Play Console minimum 2, önerilen 4-8 telefon ekran görüntüsü ister. Öneril
 4. Sınırsız mod — oyun içi ekran.
 5. Tema seçimi — açık/koyu/yüksek kontrast karşılaştırması (tek görselde ikiye bölünmüş veya
    galeri halinde ayrı ayrı).
-6. [SAHİP: lansımda aktifse] Düello veya turnuva ekranı.
-7. [SAHİP: lansımda aktifse] Profil/XP/rozet ekranı.
+6. [SAHİP: lansımda aktifse] Profil/XP/rozet ekranı.
 
 Ayrıca gerekli:
 - **Uygulama simgesi** (512x512 PNG, yüksek çözünürlük) — bu birimde üretilen

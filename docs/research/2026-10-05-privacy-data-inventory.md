@@ -14,12 +14,12 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
 | `password_reset_tokens` | random token, `user_id`, expiry | `0001_baseline.sql:153-160` |
 | `push_subscriptions` | Web Push `endpoint` URL (identifies browser/push service), `p256dh`/`auth` keys, `user_id` | `0001_baseline.sql:137-145` |
 | `game_results` | `user_id`, play date, word length, guesses, win flag, mode | `0001_baseline.sql:99-112` |
-| `tournament_results` | `user_id`, word, guesses, score, timestamp | `0001_baseline.sql:162-173` |
-| `duels` | `challenger_id`, `opponent_id`, guesses/won per side | `0001_baseline.sql:175-186` |
+| `tournament_results` | `user_id`, word, guesses, score, timestamp — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:162-173` |
+| `duels` | `challenger_id`, `opponent_id`, guesses/won per side — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:175-186` |
 | `user_xp`, `user_badges` | `user_id`, XP total, level, earned badges | `0001_baseline.sql:122-135` |
 | `streak_freezes` | `user_id`, date | `0001_baseline.sql:147-151` |
-| `word_lists`, `word_list_words` | `owner_user_id` (nullable), list content (not personal) | `0001_baseline.sql:62-80` |
-| `list_likes`, `list_comments` | `user_id` + free-text comment content | `0001_baseline.sql:82-97` |
+| `word_lists`, `word_list_words` | `owner_user_id` (nullable), list content (not personal) — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:62-80` |
+| `list_likes`, `list_comments` | `user_id` + free-text comment content — **feature removed 2026-10-05, table pending drop** | `0001_baseline.sql:82-97` |
 | `words`, `valid_words`, `daily_words`, `badges` | No personal data (word dictionary/catalog) | `0001_baseline.sql:3-48,114-120` |
 
 ## 2. Backend — collection and processing
@@ -35,19 +35,17 @@ Schema source: `apps/backend/db/migrations/0001_baseline.sql`.
 - **Forgot/reset password** (`auth.ts:188-219`): generates a random token (`generateToken`, `auth.ts:24-28`),
   stores it with 1-hour expiry (`RESET_TOKEN_EXPIRES_MS`, `auth.ts:22`), emails a reset link via Resend
   (see §2.3).
-- **Account deletion** (`auth.ts:236-239`): `DELETE FROM users WHERE id = ?`
-  (`apps/backend/src/repositories/user-repository.ts:82-84`). Relies entirely on SQL foreign-key cascade
-  behavior defined in the schema:
-  - **Deleted (CASCADE)**: `game_results`, `tournament_results`, `push_subscriptions`,
-    `password_reset_tokens`, `streak_freezes`, `user_xp`, `user_badges`, `list_likes`, `list_comments`,
-    `duels` rows where the user is `challenger_id`.
-  - **NOT deleted, anonymized**: `duels` rows where the user is `opponent_id` → `opponent_id` set to NULL
-    (`ON DELETE SET NULL`, `0001_baseline.sql:181`); the challenger's duel record and score survive.
-  - **NOT deleted, orphaned**: `word_lists` owned by the user → `owner_user_id` set to NULL
-    (`ON DELETE SET NULL`, `0001_baseline.sql:70`). The word list itself (name, description, word content)
-    is **not deleted** by account deletion.
-  - This is grounded entirely in the FK clauses above — no explicit cleanup code was found beyond the
-    single `DELETE FROM users` statement.
+- **Account deletion** (`auth.ts:236-239`): `deleteUser`
+  (`apps/backend/src/repositories/user-repository.ts:82-99`) runs an explicit `db.batch` of targeted
+  `DELETE` statements before deleting the `users` row — it does not rely on FK cascade behavior.
+  - **Deleted**: `word_list_words`/`word_lists` owned by the user, `list_likes`/`list_comments` by or on
+    the user's lists, `game_results`, `tournament_results`, `duels` rows where the user is `challenger_id`
+    **or** `opponent_id`, `user_xp`, `user_badges`, `push_subscriptions`, `streak_freezes`,
+    `password_reset_tokens`.
+  - Correction (2026-10-05): an earlier version of this document claimed `duels` rows where the user is
+    `opponent_id` are anonymized (opponent_id set to NULL) rather than deleted, and that owned `word_lists`
+    are orphaned rather than deleted. That is no longer accurate — `deleteUser` deletes both duel sides and
+    the user's lists outright. There is no "not deleted / anonymized" exception left.
 
 ### Results / gamification (`apps/backend/src/routes/results.ts`, `src/services/gamification-service.ts`)
 Stores per-user game outcomes (date, word length, guesses, win/lose, mode) tied to `user_id`; feeds XP/level
