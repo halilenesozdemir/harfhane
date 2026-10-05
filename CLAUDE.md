@@ -27,7 +27,9 @@ harfhane/
 ├── packages/shared/          # Shared TypeScript types (@harfhane/shared)
 ├── packages/ui-tokens/       # Design token source: tokens.json → generated CSS + TS (@harfhane/ui-tokens)
 ├── docs/
+│   ├── roadmap.md             # Plan order and what waits on the owner — read first
 │   ├── plans/                # Active feature/infra plans
+│   ├── research/              # Dated evidence behind plans
 │   ├── decisions/             # ADRs — required to change an Invariant
 │   ├── archive/               # Superseded docs (e.g. this file's previous version)
 │   └── backlog.md             # Deliberately deferred work
