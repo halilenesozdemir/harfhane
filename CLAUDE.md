@@ -25,6 +25,7 @@ harfhane/
 │       ├── migrations/      # Legacy, pre-cutover; see docs/backlog.md "Legacy migrations folder"
 │       └── db/seeds/
 ├── packages/shared/          # Shared TypeScript types (@harfhane/shared)
+├── packages/ui-tokens/       # Design token source: tokens.json → generated CSS + TS (@harfhane/ui-tokens)
 ├── docs/
 │   ├── plans/                # Active feature/infra plans
 │   ├── decisions/             # ADRs — required to change an Invariant
@@ -81,7 +82,7 @@ Per-app commands and gotchas: `apps/backend/CLAUDE.md`, `apps/frontend/CLAUDE.md
 - **Stack**: React 19, Vite 7, TypeScript 5 strict, Tailwind 3, TanStack Query v5, Lucide React.
 - **Components**: declare with `function`, not arrow-`const`. Props interface named `ComponentNameProps`. Types live in `src/types/index.ts` (re-exports `@harfhane/shared`) — import from there, not the package directly.
 - **Hooks**: custom hooks in `src/hooks/`, named `use*.ts`. Server state goes through TanStack Query, not duplicated into local/Context state; data transforms belong in `select`, not the component.
-- **Styling**: theme is a token set — use `--hh-*` Tailwind classes (`bg-correct`, `text-correct-fg`, `shadow-depth-*`); no raw hex in components (Invariant 5). No inline `style` or `!important` without a documented reason.
+- **Styling**: token values live only in `packages/ui-tokens/tokens.json`; edit it, run `pnpm --filter @harfhane/ui-tokens run build`, commit the generated files (a test fails if they drift). Theme is a token set — use `--hh-*` Tailwind classes (`bg-correct`, `text-correct-fg`, `shadow-depth-*`); no raw hex in components (Invariant 5). No inline `style` or `!important` without a documented reason.
 - **UI text**: no emojis anywhere (Lucide icons instead); every `<button>`/`<a>`/`onClick` has `cursor-pointer`; all user-facing text uses correct Turkish characters (ç ş ğ ı ö ü İ Ş Ç Ğ Ö Ü).
 - **Turkish casing**: use `normalizeChar()` / `normalizeWord()` from `src/utils/gameLogic.ts`, same pitfall as backend.
 - Full key-file map and gotchas: `apps/frontend/CLAUDE.md`.

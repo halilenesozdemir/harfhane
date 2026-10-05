@@ -1,0 +1,86 @@
+// Generated from packages/ui-tokens/tokens.json by `pnpm --filter @harfhane/ui-tokens run build`. Do not edit.
+
+export const base = {
+  "fontDisplay": "'Baloo 2', 'Nunito', system-ui, sans-serif",
+  "fontBody": "'Nunito', system-ui, sans-serif",
+  "radiusTile": "14px",
+  "radiusKey": "10px",
+  "motionFast": "100ms",
+  "motionBase": "220ms",
+  "easePop": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+} as const;
+
+export const themes = {
+  "light": {
+    "bg": "#fff4dc",
+    "surface": "#ffffff",
+    "surfaceBorder": "#ead6ae",
+    "surfaceDepth": "#e8d3a8",
+    "text": "#3b2a1a",
+    "textMuted": "#6b5233",
+    "brand": "rgb(194, 65, 12)",
+    "brandFg": "#ffffff",
+    "brandDepth": "#8a2d07",
+    "keyBg": "#ffffff",
+    "keyFg": "#3b2a1a",
+    "keyDepth": "#e2cfa6",
+    "tileEmptyBg": "#fffbf1",
+    "tileEmptyBorder": "#eadbb8",
+    "tileFilledBorder": "#c9a86a",
+    "correct": "rgb(31, 138, 91)",
+    "correctFg": "#ffffff",
+    "correctDepth": "#156b45",
+    "correctText": "#15704a",
+    "present": "rgb(242, 181, 68)",
+    "presentFg": "#3b2a1a",
+    "presentDepth": "#c98c1f",
+    "presentText": "#8a5a06",
+    "absent": "rgb(122, 122, 122)",
+    "absentFg": "#ffffff",
+    "absentDepth": "#5c5c5c",
+    "themeColor": "#fff4dc"
+  },
+  "dark": {
+    "bg": "#1c1611",
+    "surface": "#2a2119",
+    "surfaceBorder": "#3e3226",
+    "surfaceDepth": "#120e0a",
+    "text": "#fff4dc",
+    "textMuted": "#cbb896",
+    "brand": "rgb(232, 98, 42)",
+    "brandFg": "#1c1611",
+    "brandDepth": "#a8431a",
+    "keyBg": "#3a2e23",
+    "keyFg": "#fff4dc",
+    "keyDepth": "#15100c",
+    "tileEmptyBg": "#241c15",
+    "tileEmptyBorder": "#3e3226",
+    "tileFilledBorder": "#8a7350",
+    "correct": "rgb(31, 138, 91)",
+    "correctFg": "#ffffff",
+    "correctDepth": "#0f5a39",
+    "correctText": "#4fc58c",
+    "present": "rgb(224, 169, 62)",
+    "presentFg": "#2b1d0e",
+    "presentDepth": "#a87a22",
+    "presentText": "#f2c46a",
+    "absent": "rgb(90, 81, 72)",
+    "absentFg": "#ffffff",
+    "absentDepth": "#3d3630",
+    "themeColor": "#1c1611"
+  },
+  "high-contrast": {
+    "correct": "rgb(245, 121, 58)",
+    "correctFg": "#1a1a1a",
+    "correctDepth": "#b8531f",
+    "correctText": "#c2410c",
+    "present": "rgb(133, 192, 249)",
+    "presentFg": "#0b1b2b",
+    "presentDepth": "#4f8fcf",
+    "presentText": "#1d5fa3"
+  },
+  "dark-high-contrast": {
+    "correctText": "#f5793a",
+    "presentText": "#85c0f9"
+  }
+} as const;
