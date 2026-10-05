@@ -1,3 +1,4 @@
+import { getTodayString } from '@harfhane/shared';
 import type { DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
@@ -12,19 +13,12 @@ function isValidDate(date: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(Date.parse(date));
 }
 
-function todayTR(): string {
-  // Türkiye saati UTC+3 — günlük kelime gece yarısı (TR) değişsin
-  const now = new Date();
-  now.setUTCHours(now.getUTCHours() + 3);
-  return now.toISOString().slice(0, 10);
-}
-
 export async function getDailyWord(
   db: Env['DB'],
   date?: string,
   length = 5
 ): Promise<DailyWordResponse> {
-  const targetDate = date ?? todayTR();
+  const targetDate = date ?? getTodayString();
 
   if (!isValidDate(targetDate)) throw INVALID_DATE();
 
