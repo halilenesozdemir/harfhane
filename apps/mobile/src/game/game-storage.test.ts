@@ -39,6 +39,18 @@ describe('game storage', () => {
     expect(await loadGameState(store, KEY)).toEqual(createInitialState());
   });
 
+  it('should return a fresh game when an evaluation row holds unknown statuses', async () => {
+    const stored = { guesses: ['KALAY'], evaluations: [1], currentGuess: '', gameStatus: 'playing', keyboardStatus: {} };
+    const store = createMemoryStore({ [KEY]: JSON.stringify(stored) });
+    expect(await loadGameState(store, KEY)).toEqual(createInitialState());
+  });
+
+  it('should return a fresh game when a keyboard status is unknown', async () => {
+    const stored = { guesses: [], evaluations: [], currentGuess: '', gameStatus: 'playing', keyboardStatus: { K: 'green' } };
+    const store = createMemoryStore({ [KEY]: JSON.stringify(stored) });
+    expect(await loadGameState(store, KEY)).toEqual(createInitialState());
+  });
+
   it('should return a fresh game when the stored value is not JSON', async () => {
     expect(await loadGameState(createMemoryStore({ [KEY]: '{' }), KEY)).toEqual(createInitialState());
   });

@@ -29,6 +29,7 @@ export function removeLetter(state: GameState): GameState {
 
 export function applyGuess(state: GameState, solution: string): GameState {
   const guess = state.currentGuess;
+  if (state.gameStatus !== 'playing' || guess.length !== solution.length) return state;
   const evaluation = evaluateGuess(guess, solution);
   const guesses = [...state.guesses, guess];
   return {
@@ -36,7 +37,7 @@ export function applyGuess(state: GameState, solution: string): GameState {
     evaluations: [...state.evaluations, evaluation],
     currentGuess: '',
     gameStatus: checkGameStatus(guesses, solution),
-    keyboardStatus: updateKeyboardStatus({ ...state.keyboardStatus }, guess, evaluation),
+    keyboardStatus: updateKeyboardStatus(state.keyboardStatus, guess, evaluation),
   };
 }
 

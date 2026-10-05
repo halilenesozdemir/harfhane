@@ -7,9 +7,22 @@ export interface KeyValueStore {
 }
 
 const GAME_STATUSES = new Set(['playing', 'won', 'lost']);
+const TILE_STATUSES = new Set(['correct', 'present', 'absent']);
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+function isTileStatus(value: unknown): boolean {
+  return value === null || (typeof value === 'string' && TILE_STATUSES.has(value));
+}
+
+function isEvaluationList(value: unknown): boolean {
+  return Array.isArray(value) && value.every((row) => Array.isArray(row) && row.every(isTileStatus));
+}
+
+function isKeyboardStatus(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && Object.values(value).every(isTileStatus);
 }
 
 function isGameState(value: unknown): value is GameState {
@@ -17,11 +30,10 @@ function isGameState(value: unknown): value is GameState {
   const candidate = value as Record<string, unknown>;
   return (
     isStringArray(candidate['guesses']) &&
-    Array.isArray(candidate['evaluations']) &&
+    isEvaluationList(candidate['evaluations']) &&
     typeof candidate['currentGuess'] === 'string' &&
     GAME_STATUSES.has(String(candidate['gameStatus'])) &&
-    typeof candidate['keyboardStatus'] === 'object' &&
-    candidate['keyboardStatus'] !== null
+    isKeyboardStatus(candidate['keyboardStatus'])
   );
 }
 

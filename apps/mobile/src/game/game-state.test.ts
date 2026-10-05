@@ -43,6 +43,16 @@ describe('applyGuess', () => {
     expect(applyGuess(typeWord('KALEM'), SOLUTION).gameStatus).toBe('won');
   });
 
+  it('should ignore the guess when it is shorter than the solution', () => {
+    const partial = typeWord('KAL');
+    expect(applyGuess(partial, SOLUTION)).toBe(partial);
+  });
+
+  it('should ignore further guesses when the game is over', () => {
+    const won = applyGuess(typeWord('KALEM'), SOLUTION);
+    expect(applyGuess({ ...won, currentGuess: 'KALAY' }, SOLUTION)).toEqual({ ...won, currentGuess: 'KALAY' });
+  });
+
   it('should mark the game lost after six wrong guesses', () => {
     const guesses = ['KALAY', 'KALIP', 'KALAS', 'KALIN', 'KALÇA', 'KALAN'];
     const state = guesses.reduce((current, guess) => applyGuess({ ...current, currentGuess: guess }, SOLUTION), createInitialState());
