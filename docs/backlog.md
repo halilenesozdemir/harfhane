@@ -54,6 +54,20 @@ wiring navigation, per the unit's scope boundary.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
+## Player-facing word queries only exclude `source = 'user'`, not the full approved/family-safe filter
+`findRandomWord`, `findWordById` and `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`)
+now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
+mode, the challenge/duel endpoint, or the daily word (Invariant 1). This is a legacy-schema-compatible
+patch only: production still runs on `harfhane-db` (binding `DB`), which has a `source` column but no
+`status`/`family_safe` columns, so the full `status = 'approved' AND family_safe = 1` filter used by the
+`0001_baseline.sql` schema can't be applied there yet.
+- At the DB cutover (`docs/plans/2026-10-04-001-infra-clean-database-plan.md`, plan 001), replace
+  `source != 'user'` in these three queries with `status = 'approved' AND family_safe = 1` to match the
+  baseline schema's own invariant (`words_require_active_word` / the `is_active` CHECK already encode this
+  for new rows, but the read queries didn't, which was the bug this entry's fix closed for the legacy DB).
+- Guess-validation (`wordExists`) was intentionally left untouched — it must keep accepting `source = 'user'`
+  words so custom-list words remain guessable.
+
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
 2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
