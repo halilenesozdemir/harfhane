@@ -19,12 +19,18 @@ export default function WordStats({ secret }: WordStatsProps): React.JSX.Element
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    setError('');
-    getWordStats(secret, sort)
-      .then(setRows)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Yüklenemedi'))
-      .finally(() => setLoading(false));
+    const run = async (): Promise<void> => {
+      setLoading(true);
+      setError('');
+      try {
+        setRows(await getWordStats(secret, sort));
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Yüklenemedi');
+      } finally {
+        setLoading(false);
+      }
+    };
+    void run();
   }, [secret, sort]);
 
   return (

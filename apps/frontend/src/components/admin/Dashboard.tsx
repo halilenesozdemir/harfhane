@@ -72,14 +72,19 @@ export default function Dashboard({ secret }: DashboardProps): React.JSX.Element
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([getAdminStats(secret), getScheduleHealth(secret)])
-      .then(([statsResult, healthResult]) => {
+    const run = async (): Promise<void> => {
+      setLoading(true);
+      try {
+        const [statsResult, healthResult] = await Promise.all([getAdminStats(secret), getScheduleHealth(secret)]);
         setStats(statsResult);
         setScheduleHealth(healthResult);
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Yüklenemedi'))
-      .finally(() => setLoading(false));
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Yüklenemedi');
+      } finally {
+        setLoading(false);
+      }
+    };
+    void run();
   }, [secret]);
 
   if (loading) {

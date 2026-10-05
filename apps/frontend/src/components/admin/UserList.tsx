@@ -25,12 +25,18 @@ export default function UserList({ secret }: UserListProps): React.JSX.Element {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setIsLoading(true);
-    setError('');
-    getAdminUsers(secret)
-      .then(setUsers)
-      .catch(() => setError('Kullanıcılar yüklenemedi.'))
-      .finally(() => setIsLoading(false));
+    const run = async (): Promise<void> => {
+      setIsLoading(true);
+      setError('');
+      try {
+        setUsers(await getAdminUsers(secret));
+      } catch {
+        setError('Kullanıcılar yüklenemedi.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void run();
   }, [secret]);
 
   if (isLoading) {
