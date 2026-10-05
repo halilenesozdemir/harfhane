@@ -52,12 +52,14 @@ harfhane/
 | `pnpm build` | Build shared, then frontend + backend |
 | `pnpm typecheck` | Recursive `tsc --noEmit` across workspaces |
 | `pnpm lint` | Recursive lint across workspaces |
-| `pnpm test` | Backend Vitest suite (root-level alias) |
+| `pnpm test` | Vitest in shared, frontend and backend |
 | `pnpm --filter @harfhane/backend run deploy` | `wrangler deploy` |
 | `pnpm --filter @harfhane/backend run db:migrate:local` / `db:migrate:remote` | Apply `db/migrations/` via wrangler |
 | `pnpm --filter @harfhane/frontend run test:coverage` | Frontend coverage run |
 
 Per-app commands and gotchas: `apps/backend/CLAUDE.md`, `apps/frontend/CLAUDE.md`.
+
+**Commit gate**: `.githooks/pre-commit` runs typecheck + lint + test whenever code is staged; `pnpm install` enables it via `prepare`. A red gate means fix the code, never `git commit --no-verify`.
 
 ---
 
