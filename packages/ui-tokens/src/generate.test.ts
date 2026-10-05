@@ -43,6 +43,12 @@ describe('toTs', () => {
     expect(ts).toContain('"correct": "rgb(31, 138, 91)"');
     expect(ts).toContain('"radiusTile": "14px"');
   });
+
+  it('should throw when an rgb token does not have three channels', () => {
+    const source = createSource();
+    const themes = { ...source.themes, dark: { 'brand-rgb': '194 65' } };
+    expect(() => toTs(parseTokenSource({ ...source, themes }))).toThrow('brand-rgb');
+  });
 });
 
 describe('generated files', () => {

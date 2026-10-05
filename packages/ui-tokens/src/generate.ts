@@ -18,6 +18,7 @@ const THEME_SELECTORS: Record<ThemeName, string> = {
 const BASE_SELECTOR = ':root';
 const CSS_PREFIX = '--hh-';
 const RGB_SUFFIX = '-rgb';
+const RGB_CHANNEL_COUNT = 3;
 const GENERATED_NOTICE = 'Generated from packages/ui-tokens/tokens.json by `pnpm --filter @harfhane/ui-tokens run build`. Do not edit.';
 
 function isTokenGroup(value: unknown): value is TokenGroup {
@@ -51,9 +52,16 @@ function toCamelCase(name: string): string {
   return name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
 }
 
+function rgbChannels(name: string, value: string): string[] {
+  const channels = value.trim().split(/\s+/);
+  const isValid = channels.length === RGB_CHANNEL_COUNT && channels.every((channel) => /^\d{1,3}$/.test(channel));
+  if (!isValid) throw new Error(`Token "${name}" must be ${RGB_CHANNEL_COUNT} space-separated integers, got "${value}"`);
+  return channels;
+}
+
 function toNativeEntry([name, value]: [string, string]): [string, string] {
   if (!name.endsWith(RGB_SUFFIX)) return [toCamelCase(name), value];
-  const channels = value.trim().split(/\s+/).join(', ');
+  const channels = rgbChannels(name, value).join(', ');
   return [toCamelCase(name.slice(0, -RGB_SUFFIX.length)), `rgb(${channels})`];
 }
 

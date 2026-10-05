@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/frontend/**'
       - 'packages/shared/**'
+      - 'packages/ui-tokens/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
