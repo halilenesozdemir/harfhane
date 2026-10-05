@@ -83,17 +83,11 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
   const [showGameOverModal, setShowGameOverModal] = useState(false);
   const [countdown, setCountdown] = useState<TimeCountdown>(getTimeUntilMidnight());
   const isSubmittingRef = useRef(false);
-  const prevSolutionRef = useRef('');
+  const [prevSolution, setPrevSolution] = useState('');
+  const [restoreFinishedFor, setRestoreFinishedFor] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!hasDaily) return;
-    const timer = setInterval(() => setCountdown(getTimeUntilMidnight()), 1000);
-    return () => clearInterval(timer);
-  }, [hasDaily]);
-
-  useEffect(() => {
-    if (!solution || solution === prevSolutionRef.current) return;
-    prevSolutionRef.current = solution;
+  if (solution && solution !== prevSolution) {
+    setPrevSolution(solution);
 
     if (hasDaily && dailyPersistedState?.date === today) {
       setGameState({
@@ -103,16 +97,28 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
         gameStatus: dailyPersistedState.gameStatus,
         keyboardStatus: dailyPersistedState.keyboardStatus,
       });
-      if (dailyPersistedState.gameStatus !== 'playing') setTimeout(() => setShowGameOverModal(true), 300);
-      return;
+      setRestoreFinishedFor(dailyPersistedState.gameStatus !== 'playing' ? solution : null);
+    } else {
+      setGameState(EMPTY_GAME_STATE);
+      setIsRevealing(false);
+      setShakeRow(false);
+      setMessage('');
+      setShowGameOverModal(false);
+      setRestoreFinishedFor(null);
     }
+  }
 
-    setGameState(EMPTY_GAME_STATE);
-    setIsRevealing(false);
-    setShakeRow(false);
-    setMessage('');
-    setShowGameOverModal(false);
-  }, [solution, hasDaily, dailyPersistedState, today]);
+  useEffect(() => {
+    if (!hasDaily) return;
+    const timer = setInterval(() => setCountdown(getTimeUntilMidnight()), 1000);
+    return () => clearInterval(timer);
+  }, [hasDaily]);
+
+  useEffect(() => {
+    if (!restoreFinishedFor) return undefined;
+    const timer = setTimeout(() => setShowGameOverModal(true), 300);
+    return () => clearTimeout(timer);
+  }, [restoreFinishedFor]);
 
   useEffect(() => {
     if (gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') {
@@ -197,8 +203,8 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
   const startNewGame = useCallback(() => {
     queryClient.removeQueries({ queryKey: ['word', 'slug', slug] });
     void refetch();
-    prevSolutionRef.current = '';
-  }, [queryClient, slug, refetch]);
+    setPrevSolution('');
+  }, [queryClient, slug, refetch, setPrevSolution]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
