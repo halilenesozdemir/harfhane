@@ -15,7 +15,7 @@ const HOOK_RULES_FIXED_IN_PLAN_003_U2 = {
 }
 
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', 'packages/ui-tokens/generated/']),
+  globalIgnores(['**/dist/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', 'packages/ui-tokens/generated/', 'scripts/']),
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/**/*.ts'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
