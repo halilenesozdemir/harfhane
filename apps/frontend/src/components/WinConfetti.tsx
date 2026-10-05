@@ -28,7 +28,7 @@ interface WinConfettiProps {
 }
 
 export default function WinConfetti({ active }: WinConfettiProps): React.JSX.Element | null {
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const [particles, setParticles] = useState<Particle[]>(() => (active ? generateParticles() : []));
   const [prevActive, setPrevActive] = useState(active);
 
   if (active !== prevActive) {

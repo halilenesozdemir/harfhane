@@ -8,10 +8,10 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 const FRONTEND = 'apps/frontend'
 const UNUSED_VARS = ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' }]
 const CONTEXT_HOOKS = ['useAuth', 'useThemeContext']
-const HOOK_RULES_FIXED_IN_PLAN_003_U2 = {
-  'react-hooks/set-state-in-effect': 'warn',
-  'react-hooks/exhaustive-deps': 'warn',
-  'react-hooks/preserve-manual-memoization': 'warn',
+const HOOK_RULES = {
+  'react-hooks/set-state-in-effect': 'error',
+  'react-hooks/exhaustive-deps': 'error',
+  'react-hooks/preserve-manual-memoization': 'error',
 }
 
 export default defineConfig([
@@ -29,7 +29,7 @@ export default defineConfig([
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: { globals: globals.browser },
     rules: {
-      ...HOOK_RULES_FIXED_IN_PLAN_003_U2,
+      ...HOOK_RULES,
       'react-refresh/only-export-components': ['error', { allowConstantExport: true, allowExportNames: CONTEXT_HOOKS }],
     },
   },

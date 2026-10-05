@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { GameStatus } from '../types';
 
 interface GameModalsState {
@@ -71,6 +71,8 @@ export function useGameModals({ gameStatus, isUnlimited, onGameEnd }: UseGameMod
 
   useEffect(() => { isFirstRender.current = false; }, []);
 
+  const openHelp = useCallback(() => setShowHelp(true), []);
+
   return {
     showHelp,
     showStats,
@@ -79,7 +81,7 @@ export function useGameModals({ gameStatus, isUnlimited, onGameEnd }: UseGameMod
     showAuth,
     showLeaderboard,
     showProfile,
-    openHelp: () => setShowHelp(true),
+    openHelp,
     closeHelp: () => setShowHelp(false),
     openStats: () => setShowStats(true),
     closeStats: () => setShowStats(false),

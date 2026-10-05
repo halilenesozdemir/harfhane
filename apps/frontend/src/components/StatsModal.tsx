@@ -44,11 +44,17 @@ function DistributionBar({ count, targetWidth, guessNumber, isHighlighted, anima
 
 function StatsModal({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnlimited }: StatsModalProps): React.JSX.Element {
   const [animate, setAnimate] = useState(false);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const { token } = useAuth();
   const { data: unlimitedPersonalData } = useUnlimitedStats();
 
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (!isOpen) setAnimate(false);
+  }
+
   useEffect(() => {
-    if (!isOpen) { setAnimate(false); return; }
+    if (!isOpen) return undefined;
     const timer = setTimeout(() => setAnimate(true), 150);
     return () => clearTimeout(timer);
   }, [isOpen]);
