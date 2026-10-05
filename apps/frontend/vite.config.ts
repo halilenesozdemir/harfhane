@@ -22,14 +22,20 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['harfhane-icon.svg', 'favicon.ico'],
+      includeAssets: [
+        'harfhane-icon.svg',
+        'harfhane-icon-192.png',
+        'harfhane-icon-512.png',
+        'harfhane-icon-512-maskable.png',
+        'apple-touch-icon.png'
+      ],
       manifest: {
         name: 'Harfhane - Kelime Oyunu',
         short_name: 'Harfhane',
         lang: 'tr',
         description: 'Türkçe günlük kelime oyunu: günün kelimesini 6 denemede bul',
-        theme_color: '#538d4e',
-        background_color: '#121213',
+        theme_color: '#c2410c',
+        background_color: '#fff4dc',
         display: 'standalone',
         scope: '/',
         start_url: '/',
@@ -37,15 +43,27 @@ export default defineConfig({
         icons: [
           {
             src: '/harfhane-icon.svg',
-            sizes: '192x192',
+            sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: '/harfhane-icon.svg',
+            src: '/harfhane-icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/harfhane-icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/harfhane-icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },

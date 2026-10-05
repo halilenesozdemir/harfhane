@@ -53,3 +53,10 @@ wiring navigation, per the unit's scope boundary.
   loaded via `loadDailyStats`/`loadUnlimitedStats` from `src/stats/stats.ts`.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
+
+## og-image.svg still uses old Wordle-green tile colors
+`apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
+2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
+grid, divider and footer text with `#538d4e` (the old Wordle-tile green) instead of the
+Harfhane brand token (`rgb(194 65 12)` / `#c2410c`). Regenerate `og-image.svg`/`og-image.png`
+with the brand token colors when a design pass is budgeted for it.
