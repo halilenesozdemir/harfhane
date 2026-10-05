@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { getTodayString } from '@harfhane/shared';
 import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
@@ -87,7 +88,7 @@ export default {
   fetch: app.fetch,
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = getTodayString();
 
     const [subscriptions, emailTargets, dailyWord] = await Promise.all([
       getSubscriptionsForUsersWithoutTodayPlay(env.DB, today),

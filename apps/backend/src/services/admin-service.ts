@@ -1,3 +1,4 @@
+import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND } from '../errors/api-error';
 import {
@@ -18,13 +19,9 @@ import {
   type BulkImportWord,
 } from '../repositories/admin-repository';
 
-function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function offsetDate(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
+function offsetDate(from: string, days: number): string {
+  const d = new Date(`${from}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
@@ -71,8 +68,8 @@ export async function toggleWordActive(db: Env['DB'], id: number, isActive: bool
 }
 
 export async function getDailySchedule(db: Env['DB'], from?: string, to?: string) {
-  const f = from ?? todayUTC();
-  const t = to ?? offsetDate(30);
+  const f = from ?? getTodayString();
+  const t = to ?? offsetDate(f, 30);
   return adminFindDailySchedule(db, f, t);
 }
 
@@ -94,12 +91,12 @@ export async function importWords(db: Env['DB'], words: BulkImportWord[]) {
 }
 
 export async function getStats(db: Env['DB']) {
-  return adminGetStats(db, todayUTC());
+  return adminGetStats(db, getTodayString());
 }
 
 export async function autoFillDailySchedule(db: Env['DB'], days: number) {
-  const from = offsetDate(0);
-  const to = offsetDate(days);
+  const from = getTodayString();
+  const to = offsetDate(from, days);
   return adminAutoFillSchedule(db, from, to);
 }
 

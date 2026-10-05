@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { requireAuth } from '../middleware/auth-middleware';
 import { getUserStats } from '../repositories/result-repository';
@@ -10,7 +11,7 @@ export const profile = new Hono<ProfileEnv>();
 
 profile.get('/me', requireAuth, async (c) => {
   const userId = c.get('userId');
-  const today = new Date().toISOString().split('T')[0]!;
+  const today = getTodayString();
 
   const [stats, freezeTokens] = await Promise.all([
     getUserStats(c.env.DB, userId),
@@ -33,7 +34,7 @@ profile.get('/me', requireAuth, async (c) => {
 
 profile.post('/freeze', requireAuth, async (c) => {
   const userId = c.get('userId');
-  const today = new Date().toISOString().split('T')[0]!;
+  const today = getTodayString();
 
   const playedToday = await c.env.DB
     .prepare('SELECT 1 FROM game_results WHERE user_id = ? AND date = ? LIMIT 1')

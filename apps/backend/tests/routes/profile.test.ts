@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env, SELF } from 'cloudflare:test';
 import { applySchema, seedTestData, createTestUser } from '../helpers/db';
 import { createTestToken } from '../helpers/auth';
@@ -112,6 +112,69 @@ describe('POST /api/profile/freeze', () => {
     const response = await SELF.fetch('http://example.com/api/profile/freeze', {
       method: 'POST',
       headers: { Authorization: `Bearer ${alreadyPlayedToken}` },
+    });
+
+    expect(response.status).toBe(400);
+    const body = await response.json() as FreezeResponse;
+    expect(body.error?.code).toBe('ALREADY_PLAYED');
+  });
+});
+
+describe('Turkey day boundary', () => {
+  let boundaryToken: string;
+  let boundaryUserId: number;
+
+  beforeAll(async () => {
+    const user = await createTestUser(env.DB, 'boundaryuser', 'boundaryuser@test.com');
+    boundaryUserId = user.id;
+    boundaryToken = await createTestToken(boundaryUserId, env.JWT_SECRET);
+    await env.DB
+      .prepare('UPDATE users SET freeze_tokens = 3 WHERE id = ?')
+      .bind(boundaryUserId)
+      .run();
+    await env.DB
+      .prepare(
+        'INSERT INTO game_results (user_id, date, word_length, guesses, won, mode) VALUES (?, ?, 5, 3, 1, ?)'
+      )
+      .bind(boundaryUserId, '2026-06-15', 'daily')
+      .run();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('GET /me reports playedToday=false just before the Turkey midnight crossover', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T20:59:00Z'));
+
+    const response = await SELF.fetch('http://example.com/api/profile/me', {
+      headers: { Authorization: `Bearer ${boundaryToken}` },
+    });
+
+    const body = await response.json() as ProfileResponse;
+    expect(body.data.playedToday).toBe(false);
+  });
+
+  it('GET /me reports playedToday=true right at the 21:00 UTC Turkey midnight crossover', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T21:00:00Z'));
+
+    const response = await SELF.fetch('http://example.com/api/profile/me', {
+      headers: { Authorization: `Bearer ${boundaryToken}` },
+    });
+
+    const body = await response.json() as ProfileResponse;
+    expect(body.data.playedToday).toBe(true);
+  });
+
+  it('POST /freeze rejects as ALREADY_PLAYED right at the 21:00 UTC Turkey midnight crossover', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T21:00:00Z'));
+
+    const response = await SELF.fetch('http://example.com/api/profile/freeze', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${boundaryToken}` },
     });
 
     expect(response.status).toBe(400);
