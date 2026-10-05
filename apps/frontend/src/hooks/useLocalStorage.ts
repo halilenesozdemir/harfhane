@@ -11,13 +11,17 @@ function readStorage<T>(key: string, initialValue: T): T {
 
 export const useLocalStorage = <T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] => {
   const [storedValue, setStoredValue] = useState<T>(() => readStorage(key, initialValue));
+  const [prevKey, setPrevKey] = useState(key);
   const keyRef = useRef(key);
 
   useEffect(() => {
-    if (keyRef.current === key) return;
     keyRef.current = key;
+  });
+
+  if (key !== prevKey) {
+    setPrevKey(key);
     setStoredValue(readStorage(key, initialValue));
-  }, [key, initialValue]);
+  }
 
   const setValue = useCallback((value: T | ((val: T) => T)): void => {
     try {
