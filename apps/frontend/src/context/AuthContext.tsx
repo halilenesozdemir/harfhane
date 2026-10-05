@@ -31,8 +31,6 @@ interface AuthContextValue {
   googleAuthFailed: boolean;
   justLoggedIn: boolean;
   clearJustLoggedIn: () => void;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   loginWithGoogle: () => void;
 }
@@ -129,20 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
   const clearJustLoggedIn = useCallback((): void => setJustLoggedIn(false), []);
 
-  const login = useCallback(async (email: string, password: string): Promise<void> => {
-    const res = await authApi.login(email, password);
-    localStorage.setItem(TOKEN_KEY, res.token);
-    setToken(res.token);
-    setUser(res.user);
-  }, []);
-
-  const register = useCallback(async (email: string, username: string, password: string): Promise<void> => {
-    const res = await authApi.register(email, username, password);
-    localStorage.setItem(TOKEN_KEY, res.token);
-    setToken(res.token);
-    setUser(res.user);
-  }, []);
-
   const logout = useCallback((): void => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -157,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     <AuthContext.Provider value={{
       user, token, isLoading, isAuthCallback,
       googleAuthFailed, justLoggedIn, clearJustLoggedIn,
-      login, register, logout, loginWithGoogle,
+      logout, loginWithGoogle,
     }}>
       {children}
     </AuthContext.Provider>

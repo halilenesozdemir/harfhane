@@ -1,31 +1,5 @@
 import type { Env } from '../types/env';
 
-export interface EmailReminderTarget {
-  id: number;
-  email: string;
-  username: string;
-}
-
-export async function getUsersForEmailReminder(
-  db: Env['DB'],
-  today: string
-): Promise<EmailReminderTarget[]> {
-  const rows = await db
-    .prepare(
-      `SELECT u.id, u.email, u.username
-       FROM users u
-       WHERE u.email_notifications = 1
-         AND NOT EXISTS (
-           SELECT 1 FROM game_results gr
-           WHERE gr.user_id = u.id AND gr.date = ?
-         )`
-    )
-    .bind(today)
-    .all<EmailReminderTarget>();
-
-  return rows.results ?? [];
-}
-
 export async function setEmailNotifications(
   db: Env['DB'],
   userId: number,

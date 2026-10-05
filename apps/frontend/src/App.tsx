@@ -11,7 +11,6 @@ import SplashScreen from './components/SplashScreen';
 import Toast from './components/Toast';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
-import ResetPasswordPage from './components/ResetPasswordPage';
 import { PageMeta } from './components/page-meta';
 import type { GameMode, WordLength } from './types';
 
@@ -103,7 +102,7 @@ function HomeRoute(): React.JSX.Element {
   );
 }
 
-function AppRoutes(): React.JSX.Element {
+export function AppRoutes(): React.JSX.Element {
   return (
     <>
       <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
@@ -118,7 +117,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
           <Route path="/tournament" element={<Navigate to="/" replace />} />
           <Route path="/discuss" element={<Navigate to="/" replace />} />
-          <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
+          <Route path="/sifre-sifirla" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

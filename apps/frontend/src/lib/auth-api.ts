@@ -28,20 +28,6 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export function register(email: string, username: string, password: string): Promise<AuthResponse> {
-  return request<AuthResponse>('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, username, password }),
-  });
-}
-
-export function login(email: string, password: string): Promise<AuthResponse> {
-  return request<AuthResponse>('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  });
-}
-
 export function refreshToken(token: string): Promise<AuthResponse> {
   return request<AuthResponse>('/auth/refresh', {
     method: 'POST',
@@ -94,20 +80,6 @@ export function deleteAccount(token: string): Promise<{ success: boolean }> {
   return request<{ success: boolean }>('/auth/account', {
     method: 'DELETE',
     headers: { ...authHeader(token), 'Content-Type': 'application/json' },
-  });
-}
-
-export function forgotPassword(email: string): Promise<{ sent: boolean }> {
-  return request<{ sent: boolean }>('/auth/forgot-password', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
-  });
-}
-
-export function resetPassword(token: string, password: string): Promise<{ success: boolean }> {
-  return request<{ success: boolean }>('/auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({ token, password }),
   });
 }
 

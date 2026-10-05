@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
-import { applySchema } from './helpers/db';
+import { applySchema, createTestUser } from './helpers/db';
 
 const { checkScheduleHealthAndAlertMock } = vi.hoisted(() => ({
   checkScheduleHealthAndAlertMock: vi.fn(),
@@ -39,5 +39,18 @@ describe('scheduled()', () => {
 
     await expect(worker.scheduled({} as ScheduledEvent, envWithoutAlertEmail as never)).resolves.toBeUndefined();
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send reminder emails to users who have not played today', async () => {
+    checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
+    await createTestUser(env.DB, 'reminderuser', 'reminder@test.com');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}'));
+    const worker = (await import('../src/index')).default;
+
+    await worker.scheduled({} as ScheduledEvent, env as never);
+
+    const resendCalls = fetchSpy.mock.calls.filter(([input]) => String(input).includes('api.resend.com'));
+    fetchSpy.mockRestore();
+    expect(resendCalls).toHaveLength(0);
   });
 });

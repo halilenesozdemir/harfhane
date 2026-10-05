@@ -76,4 +76,22 @@ describe('GET /api/auth/google/callback', () => {
     expect(res.headers.get('Set-Cookie')).toContain(`${STATE_COOKIE}=;`);
     expect(res.headers.get('Set-Cookie')).toContain('Max-Age=0');
   });
+
+  it('should issue a session token that authenticates the Google user on /me', async () => {
+    const res = await callback(`code=abc&state=${STATE}`, `${STATE_COOKIE}=${STATE}`);
+    const token = res.headers.get('Location')!.slice(SUCCESS_REDIRECT_PREFIX.length);
+
+    const me = await SELF.fetch('http://example.com/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(me.status).toBe(200);
+    const body = await me.json() as { data: { email: string; username: string } };
+    expect(body.data).toMatchObject({ email: 'google@test.com', username: 'Google User' });
+
+    const row = await env.DB
+      .prepare('SELECT google_id FROM users WHERE email = ?')
+      .bind('google@test.com')
+      .first<{ google_id: string }>();
+    expect(row?.google_id).toBe('google-123');
+  });
 });

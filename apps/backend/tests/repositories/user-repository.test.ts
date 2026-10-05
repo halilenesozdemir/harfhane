@@ -45,6 +45,13 @@ async function addLike(db: D1Database, userId: number, listId: number): Promise<
   await db.prepare('INSERT INTO list_likes (user_id, list_id) VALUES (?, ?)').bind(userId, listId).run();
 }
 
+async function addResetToken(db: D1Database, userId: number, token: string): Promise<void> {
+  await db
+    .prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)')
+    .bind(userId, token, '2099-01-01T00:00:00.000Z')
+    .run();
+}
+
 async function addComment(db: D1Database, userId: number, listId: number, content: string): Promise<void> {
   await db
     .prepare('INSERT INTO list_comments (user_id, list_id, content) VALUES (?, ?, ?)')
@@ -84,6 +91,9 @@ beforeAll(async () => {
   await saveResult(env.DB, otherId, '2026-01-01', 5, 5, false, 'daily');
 
   await upsertSubscription(env.DB, ownerId, { endpoint: 'https://push.example/owner', p256dh: 'p', auth: 'a' });
+
+  await addResetToken(env.DB, ownerId, 'owner-reset-token');
+  await addResetToken(env.DB, otherId, 'other-reset-token');
 
   await deleteUser(env.DB, ownerId);
 });
@@ -156,5 +166,13 @@ describe('deleteUser', () => {
 
   it('should keep the other user own game result', async () => {
     expect(await tableHasRow('SELECT 1 FROM game_results WHERE user_id = ?', [otherId])).toBe(true);
+  });
+
+  it('should delete password_reset_tokens rows for the user', async () => {
+    expect(await tableHasRow('SELECT 1 FROM password_reset_tokens WHERE user_id = ?', [ownerId])).toBe(false);
+  });
+
+  it('should keep password_reset_tokens rows of the other user', async () => {
+    expect(await tableHasRow('SELECT 1 FROM password_reset_tokens WHERE user_id = ?', [otherId])).toBe(true);
   });
 });

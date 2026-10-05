@@ -15,8 +15,6 @@ import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
 import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
 import { sendPushNotification } from './utils/web-push';
-import { getUsersForEmailReminder } from './repositories/notification-repository';
-import { sendReminderEmail } from './utils/resend';
 import { findDailyWord } from './repositories/word-repository';
 import { checkScheduleHealthAndAlert } from './services/schedule-health-service';
 
@@ -89,9 +87,8 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
     const today = new Date().toISOString().split('T')[0]!;
 
-    const [subscriptions, emailTargets, dailyWord] = await Promise.all([
+    const [subscriptions, dailyWord] = await Promise.all([
       getSubscriptionsForUsersWithoutTodayPlay(env.DB, today),
-      getUsersForEmailReminder(env.DB, today),
       findDailyWord(env.DB, today, 5),
     ]);
 
@@ -108,9 +105,6 @@ export default {
     await Promise.allSettled([
       ...subscriptions.map((sub) =>
         sendPushNotification(sub, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY, env.VAPID_SUBJECT, pushPayload)
-      ),
-      ...emailTargets.map((target) =>
-        sendReminderEmail(env.RESEND_API_KEY, target.email, target.username)
       ),
       checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL),
     ]);
