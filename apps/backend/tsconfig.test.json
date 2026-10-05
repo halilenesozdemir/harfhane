@@ -1,8 +1,22 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers"],
-    "skipLibCheck": true
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers"
+    ],
+    "skipLibCheck": true,
+    "paths": {
+      "jsdom": [
+        "./tests/types/optional-dom-environment.d.ts"
+      ],
+      "happy-dom": [
+        "./tests/types/optional-dom-environment.d.ts"
+      ]
+    }
   },
-  "include": ["src", "tests"]
+  "include": [
+    "src",
+    "tests"
+  ]
 }
