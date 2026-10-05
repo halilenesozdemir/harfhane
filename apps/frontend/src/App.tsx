@@ -1,8 +1,10 @@
-import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
+import { lazy, Suspense, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAutoOpenAuthModal } from './hooks/useAutoOpenAuthModal';
+import { useLoginWelcomeMessage } from './hooks/useLoginWelcomeMessage';
 import AuthModal from './components/AuthModal';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
@@ -83,22 +85,8 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
 function HomeRoute(): React.JSX.Element {
   const navigate = useNavigate();
   const { googleAuthFailed, justLoggedIn, clearJustLoggedIn, user } = useAuth();
-  const [showAuth, setShowAuth] = useState(false);
-  const [welcomeMessage, setWelcomeMessage] = useState('');
-
-  useEffect(() => {
-    if (googleAuthFailed) setShowAuth(true);
-  }, [googleAuthFailed]);
-
-  useEffect(() => {
-    if (!justLoggedIn || !user) return;
-    setWelcomeMessage(`Hoş geldin, ${user.username}!`);
-    const timer = setTimeout(() => {
-      setWelcomeMessage('');
-      clearJustLoggedIn();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [justLoggedIn, user, clearJustLoggedIn]);
+  const [showAuth, setShowAuth] = useAutoOpenAuthModal(googleAuthFailed);
+  const welcomeMessage = useLoginWelcomeMessage(justLoggedIn, user?.username, clearJustLoggedIn);
 
   return (
     <>
