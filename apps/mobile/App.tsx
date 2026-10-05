@@ -1,22 +1,70 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { evaluateGuess, normalizeWord } from '@harfhane/shared';
+import { useCallback, useReducer } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { deviceStore } from './src/game/device-store';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
+import { api } from './src/lib/api';
+import { GameScreen } from './src/screens/GameScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { HowToPlayScreen } from './src/screens/HowToPlayScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { StatsContainer } from './src/screens/StatsContainer';
+import { canGoBack, createInitialNavigationState, currentRoute, reduceNavigation } from './src/navigation/routes';
+import { useHardwareBackHandler } from './src/navigation/useHardwareBackHandler';
+import type { HomeScreenMode } from './src/screens/HomeScreen';
+import type { Route } from './src/navigation/routes';
+import type { WordLength } from './src/stats/stats';
 
-const PREVIEW_ANSWER = 'HARFH';
-const PREVIEW_GUESS = 'harfi';
-const TITLE_SIZE = 32;
-const SECTION_GAP = 12;
+interface RouteViewProps {
+  readonly route: Route;
+  readonly onStart: (mode: HomeScreenMode, length: WordLength) => void;
+  readonly onOpenHowToPlay: () => void;
+  readonly onOpenSettings: () => void;
+  readonly onOpenStats: (length: WordLength) => void;
+  readonly onBack: () => void;
+}
 
-function PreviewScreen() {
+function RouteView({ route, onStart, onOpenHowToPlay, onOpenSettings, onOpenStats, onBack }: RouteViewProps) {
+  if (route.screen === 'game') {
+    return <GameScreen mode={route.mode} wordLength={route.length} onBack={onBack} api={api} store={deviceStore} />;
+  }
+  if (route.screen === 'howToPlay') return <HowToPlayScreen onClose={onBack} />;
+  if (route.screen === 'settings') return <SettingsScreen onClose={onBack} />;
+  if (route.screen === 'stats') return <StatsContainer length={route.length} store={deviceStore} onClose={onBack} />;
+  return <HomeScreen onStart={onStart} onOpenHowToPlay={onOpenHowToPlay} onOpenSettings={onOpenSettings} onOpenStats={onOpenStats} />;
+}
+
+function AppNavigator() {
   const { colors, scheme } = useTheme();
-  const evaluation = evaluateGuess(normalizeWord(PREVIEW_GUESS), PREVIEW_ANSWER);
+  const [state, dispatch] = useReducer(reduceNavigation, undefined, createInitialNavigationState);
+  const route = currentRoute(state);
+
+  const handleHardwareBack = useCallback(() => {
+    if (!canGoBack(state)) return false;
+    dispatch({ type: 'back' });
+    return true;
+  }, [state]);
+  useHardwareBackHandler(handleHardwareBack);
+
+  const handleStart = useCallback(
+    (mode: HomeScreenMode, length: WordLength) => dispatch({ type: 'push', route: { screen: 'game', mode, length } }),
+    [],
+  );
+  const handleOpenHowToPlay = useCallback(() => dispatch({ type: 'push', route: { screen: 'howToPlay' } }), []);
+  const handleOpenSettings = useCallback(() => dispatch({ type: 'push', route: { screen: 'settings' } }), []);
+  const handleOpenStats = useCallback((length: WordLength) => dispatch({ type: 'push', route: { screen: 'stats', length } }), []);
+  const handleBack = useCallback(() => dispatch({ type: 'back' }), []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Harfhane</Text>
-      <Text style={{ color: colors.textMuted }}>{evaluation.join(' ')}</Text>
+      <RouteView
+        route={route}
+        onStart={handleStart}
+        onOpenHowToPlay={handleOpenHowToPlay}
+        onOpenSettings={handleOpenSettings}
+        onOpenStats={handleOpenStats}
+        onBack={handleBack}
+      />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </View>
   );
@@ -25,12 +73,11 @@ function PreviewScreen() {
 export default function App() {
   return (
     <ThemeProvider store={deviceStore}>
-      <PreviewScreen />
+      <AppNavigator />
     </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SECTION_GAP },
-  title: { fontSize: TITLE_SIZE, fontWeight: '800' },
+  container: { flex: 1 },
 });

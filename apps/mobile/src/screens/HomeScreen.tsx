@@ -8,6 +8,9 @@ export type HomeScreenMode = 'daily' | 'unlimited';
 
 export interface HomeScreenProps {
   readonly onStart: (mode: HomeScreenMode, length: WordLength) => void;
+  readonly onOpenHowToPlay: () => void;
+  readonly onOpenSettings: () => void;
+  readonly onOpenStats: (length: WordLength) => void;
 }
 
 const DEFAULT_WORD_LENGTH: WordLength = 5;
@@ -15,12 +18,13 @@ const UNLIMITED_LENGTHS: readonly WordLength[] = [4, 5, 6];
 const TITLE_LETTER_SPACING = 2;
 const LENGTH_OPTION_HEIGHT = 36;
 
-export function HomeScreen({ onStart }: HomeScreenProps) {
+export function HomeScreen({ onStart, onOpenHowToPlay, onOpenSettings, onOpenStats }: HomeScreenProps) {
   const { colors } = useTheme();
   const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
 
   const handleStartDaily = useCallback(() => onStart('daily', selectedLength), [onStart, selectedLength]);
   const handleStartUnlimited = useCallback(() => onStart('unlimited', selectedLength), [onStart, selectedLength]);
+  const handleOpenStats = useCallback(() => onOpenStats(selectedLength), [onOpenStats, selectedLength]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -56,7 +60,27 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
           ))}
         </View>
       </View>
+
+      <View style={styles.menuRow}>
+        <MenuLink label="Nasıl oynanır" onPress={onOpenHowToPlay} />
+        <MenuLink label="İstatistikler" onPress={handleOpenStats} />
+        <MenuLink label="Ayarlar" onPress={onOpenSettings} />
+      </View>
     </View>
+  );
+}
+
+interface MenuLinkProps {
+  readonly label: string;
+  readonly onPress: () => void;
+}
+
+function MenuLink({ label, onPress }: MenuLinkProps) {
+  const { colors } = useTheme();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.menuLink}>
+      <Text style={[styles.menuLinkLabel, { color: colors.textMuted }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -131,5 +155,17 @@ const styles = StyleSheet.create({
   lengthLabel: {
     fontSize: FONT_SIZE.body,
     fontWeight: '700',
+  },
+  menuRow: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    marginTop: SPACING.lg,
+  },
+  menuLink: {
+    padding: SPACING.sm,
+  },
+  menuLinkLabel: {
+    fontSize: FONT_SIZE.body,
+    fontWeight: '600',
   },
 });
