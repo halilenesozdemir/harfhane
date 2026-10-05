@@ -177,10 +177,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
           <h3 className="text-lg font-bold text-text-primary mb-3">Hakkında</h3>
           <div className="space-y-2 text-text-secondary text-sm">
             <p>
-              <strong>Harfhane</strong> - Kendi kelime listeni oluştur, oyna ve paylaş.
-            </p>
-            <p>
-              Wordle'dan ilham alınmıştır.
+              <strong>Harfhane</strong> - Her gün yeni bir Türkçe kelimeyi tahmin et.
             </p>
             <p className="text-text-secondary/60">
               Versiyon: 3.0.0
