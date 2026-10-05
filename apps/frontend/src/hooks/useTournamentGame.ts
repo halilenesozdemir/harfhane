@@ -14,6 +14,7 @@ import {
   normalizeWord,
 } from '@harfhane/shared';
 import type { GameState, TileStatus, WordLength } from '../types';
+import { letterFromKey } from '../utils/keyboard';
 
 const WIN_MESSAGES = ['Muhteşem!', 'Harika!', 'Güzel!', 'İyi!', 'Fena değil!', 'Kıl payı!'] as const;
 
@@ -203,7 +204,10 @@ export function useTournamentGame(): TournamentGameReturn {
       if (e.metaKey || e.ctrlKey) return;
       if (e.key === 'Enter') submitGuess();
       else if (e.key === 'Backspace') removeLetter();
-      else if (/^[a-zA-ZğüşıöçĞÜŞİÖÇ]$/.test(e.key)) addLetter(e.key.toUpperCase());
+      else {
+        const letter = letterFromKey(e.key);
+        if (letter) addLetter(letter);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);

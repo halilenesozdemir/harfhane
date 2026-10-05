@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, ChevronRight, ChevronLeft, Globe, Lock, Copy, Check, Pencil } from 'lucide-react';
+import { normalizeWord } from '@harfhane/shared';
 import {
   listWordLists,
   createWordList,
@@ -164,7 +165,7 @@ export default function ListsManager({ secret }: ListsManagerProps): React.JSX.E
   const listWordIds = new Set(listWords2.map(w => w.id));
   const filteredAllWords = allWords.filter(w =>
     !listWordIds.has(w.id) &&
-    (w.word.includes(wordSearch.toUpperCase()) || w.meaning.toLowerCase().includes(wordSearch.toLowerCase()))
+    (w.word.includes(normalizeWord(wordSearch)) || w.meaning.toLowerCase().includes(wordSearch.toLowerCase()))
   );
 
   return (

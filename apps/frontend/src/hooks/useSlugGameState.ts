@@ -12,6 +12,7 @@ import {
   getTodayString,
 } from '@harfhane/shared';
 import type { GameState, UnlimitedStats, WordEntry, TimeCountdown, TileStatus, WordLength } from '../types';
+import { letterFromKey } from '../utils/keyboard';
 
 interface PersistedDailyState {
   date: string;
@@ -205,7 +206,10 @@ export function useSlugGameState(slug: string): UseSlugGameStateReturn {
       if (e.metaKey || e.ctrlKey) return;
       if (e.key === 'Enter') submitGuess();
       else if (e.key === 'Backspace') removeLetter();
-      else if (/^[a-zA-ZğüşıöçĞÜŞİÖÇ]$/.test(e.key)) addLetter(e.key.toUpperCase());
+      else {
+        const letter = letterFromKey(e.key);
+        if (letter) addLetter(letter);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
