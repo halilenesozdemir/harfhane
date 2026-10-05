@@ -1,9 +1,14 @@
-import { screen } from '@testing-library/react-native';
+import { screen, waitFor } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Tile } from './Tile';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 
 describe('Tile', () => {
+  it('should use dark high-contrast tokens when both are stored', async () => {
+    await renderWithTheme(<Tile letter="K" status="correct" isFilled />, { 'harfhane:theme': '"dark"', 'harfhane:high-contrast': 'true' });
+    await waitFor(() => expect(flattenStyle(screen.getByLabelText('K, doğru yerde').props.style).backgroundColor).toBe(themes['high-contrast'].correct));
+  });
+
   it('should use the correct token color when status is correct', async () => {
     await renderWithTheme(<Tile letter="K" status="correct" isFilled />);
     const style = flattenStyle(screen.getByLabelText('K, doğru yerde').props.style);
