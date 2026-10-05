@@ -1,5 +1,6 @@
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
+import { ACTIVE_WORD_LENGTHS, type ActiveWordLength } from '../constants/schedule';
 
 export interface WordRow {
   id: number;
@@ -369,14 +370,15 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
-export async function adminAutoFillSchedule(
+async function autoFillLength(
   db: Env['DB'],
   from: string,
-  to: string
+  to: string,
+  length: ActiveWordLength
 ): Promise<{ scheduled: number; skipped: number }> {
   const [existingResult, activeResult] = await db.batch([
-    db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = 5').bind(from, to),
-    db.prepare('SELECT id FROM words WHERE is_active = 1 AND length = 5'),
+    db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
+    db.prepare('SELECT id FROM words WHERE is_active = 1 AND length = ?').bind(length),
   ]);
 
   const scheduledDates = new Set(
@@ -393,12 +395,27 @@ export async function adminAutoFillSchedule(
   const statements = unscheduledDates.map((date, i) => {
     const wordId = pool[i % pool.length] as number;
     return db
-      .prepare('INSERT OR IGNORE INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
-      .bind(wordId, date);
+      .prepare('INSERT OR IGNORE INTO daily_words (word_id, date, length) VALUES (?, ?, ?)')
+      .bind(wordId, date, length);
   });
 
   const insertResults = await db.batch(statements);
   const scheduled = insertResults.filter((r) => (r.meta.changes ?? 0) > 0).length;
 
   return { scheduled, skipped: scheduledDates.size };
+}
+
+export async function adminAutoFillSchedule(
+  db: Env['DB'],
+  from: string,
+  to: string
+): Promise<{ scheduled: number; skipped: number }> {
+  let scheduled = 0;
+  let skipped = 0;
+  for (const length of ACTIVE_WORD_LENGTHS) {
+    const result = await autoFillLength(db, from, to, length);
+    scheduled += result.scheduled;
+    skipped += result.skipped;
+  }
+  return { scheduled, skipped };
 }
