@@ -1,5 +1,5 @@
 import { expect, test } from './support/fixtures';
-import { playGuess, tile } from './support/game';
+import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen } from './support/game';
 
 const DAILY_WORDS: Record<4 | 5 | 6, { solution: string; wrongGuess: string }> = {
   4: { solution: 'MASA', wrongGuess: 'KAPI' },
@@ -15,7 +15,11 @@ for (const wordLength of [4, 5, 6] as const) {
 
     await page.goto(`/daily/${wordLength}`);
 
-    await playGuess(page, wrongGuess.split(''));
+    // Type a typo, fix it with on-screen backspace, then submit.
+    await typeOnScreen(page, wrongGuess.split(''));
+    await backspaceOnScreen(page);
+    await typeOnScreen(page, [wrongGuess.slice(-1)]);
+    await submitAndWaitForReveal(page, wordLength);
     await expect(tile(page, wordLength, 0, 0)).toHaveAttribute('data-status', /correct|present|absent/);
 
     await playGuess(page, solution.split(''));
@@ -70,4 +74,7 @@ test('a finished daily game survives a reload', async ({ page, api }) => {
   for (let col = 0; col < 4; col += 1) {
     await expect(tile(page, 4, 0, col)).toHaveAttribute('data-status', 'correct');
   }
+  // The game-over modal reappears for an already-finished game on mount
+  // (useGameModals), proving the restored state is "won", not just the tiles.
+  await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
 });

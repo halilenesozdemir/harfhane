@@ -9,10 +9,11 @@
     "generate:brand-icons": "node scripts/generate-brand-icons.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "typecheck:e2e": "tsc --noEmit -p e2e/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "vite build && playwright test"
+    "test:e2e": "pnpm run typecheck:e2e && vite build && playwright test"
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.3.0",

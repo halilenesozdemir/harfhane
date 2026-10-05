@@ -86,6 +86,16 @@ export const test = base.extend<{ api: ApiStub }>({
       { key: HAS_SEEN_HELP_KEY }
     );
     await page.clock.setFixedTime(FROZEN_TIME);
+    // Safety net: any /api call a test didn't explicitly stub fails fast
+    // instead of falling through vite preview's proxy to a real backend.
+    // Routes registered later (the api.stubX calls below) take priority.
+    await page.route('**/api/**', async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'not_stubbed', message: 'e2e: unstubbed request' } }),
+      });
+    });
     await use(page);
   },
   api: async ({ page }, use) => {

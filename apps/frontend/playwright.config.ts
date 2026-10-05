@@ -7,7 +7,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PREVIEW_PORT}`,
     trace: 'retain-on-failure',
@@ -26,7 +26,11 @@ export default defineConfig({
   webServer: {
     command: `pnpm exec vite preview --port ${PREVIEW_PORT} --strict-port`,
     port: PREVIEW_PORT,
-    reuseExistingServer: !process.env.CI,
+    // Always start a fresh preview server: with several git worktrees on
+    // this machine, reusing "whatever is already on 4173" can silently
+    // test a different worktree's build. --strict-port fails loudly
+    // instead if that port is genuinely taken.
+    reuseExistingServer: false,
     timeout: 60_000,
   },
 });

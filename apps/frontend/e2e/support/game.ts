@@ -28,19 +28,32 @@ export async function pressPhysicalKey(page: Page, keyValue: string): Promise<vo
 }
 
 export function tile(page: Page, wordLength: number, row: number, col: number): Locator {
-  return page.locator('[data-status]').nth(row * wordLength + col);
+  return page.getByTestId('tile').nth(row * wordLength + col);
 }
 
-// useGameState blocks the next submit while the previous guess's tiles are
-// still revealing (wordLength * 100 + 500ms, see hooks/useGameState.ts).
+// useGameState blocks the next submit until the tile-reveal timer clears
+// (wordLength * 100 + 500ms after the guess is evaluated, see
+// hooks/useGameState.ts). That timer only starts once /words/validate
+// resolves, so waiting on the response first removes the race with
+// network latency before adding the fixed animation margin.
 export async function waitForReveal(page: Page, wordLength: number): Promise<void> {
   await page.waitForTimeout(wordLength * 100 + 600);
 }
 
+export async function submitAndWaitForReveal(page: Page, wordLength: number): Promise<void> {
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes('/api/words/validate') && res.request().method() === 'POST'
+    ),
+    submitOnScreen(page),
+  ]);
+  await response.finished();
+  await waitForReveal(page, wordLength);
+}
+
 export async function playGuess(page: Page, letters: string[]): Promise<void> {
   await typeOnScreen(page, letters);
-  await submitOnScreen(page);
-  await waitForReveal(page, letters.length);
+  await submitAndWaitForReveal(page, letters.length);
 }
 
 // The board (and its window keydown listener) only mounts once the splash

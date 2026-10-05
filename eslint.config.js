@@ -38,10 +38,6 @@ export default defineConfig([
     extends: [reactHooks.configs.flat.recommended],
   },
   {
-    files: [`${FRONTEND}/e2e/**/*.ts`, `${FRONTEND}/playwright.config.ts`],
-    languageOptions: { globals: { ...globals.browser, ...globals.node } },
-  },
-  {
     files: [`${FRONTEND}/**/*.{js,jsx}`],
     extends: [js.configs.recommended, reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: {
