@@ -3,6 +3,12 @@ import type { KeyValueStore } from '../game/game-storage';
 
 export type WordLength = 4 | 5 | 6;
 
+const VALID_WORD_LENGTHS: ReadonlySet<number> = new Set<WordLength>([4, 5, 6]);
+
+export function isWordLength(value: number): value is WordLength {
+  return VALID_WORD_LENGTHS.has(value);
+}
+
 export interface DailyStats {
   readonly gamesPlayed: number;
   readonly gamesWon: number;

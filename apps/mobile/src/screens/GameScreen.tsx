@@ -4,8 +4,11 @@ import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
 import { useGame } from '../game/useGame';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { isWordLength } from '../stats/stats';
+import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
 import type { GameMode, GameSession } from '../game/game-session';
+import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 
 export interface GameScreenProps extends GameDependencies {
@@ -76,9 +79,13 @@ function GameBody({ mode, game, colors }: GameBodyProps) {
   return <GameBoard session={session} mode={mode} game={game} colors={colors} />;
 }
 
+const FALLBACK_STATS_WORD_LENGTH: WordLength = 5;
+
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store, today });
+  const statsWordLength = isWordLength(wordLength) ? wordLength : FALLBACK_STATS_WORD_LENGTH;
+  useResultRecorder({ store, mode, wordLength: statsWordLength, session: game.session, today });
   return (
     <View style={[styles.screen, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
