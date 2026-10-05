@@ -9,14 +9,12 @@ interface BeforeInstallPromptEvent extends Event {
 const InstallPrompt = (): React.JSX.Element | null => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
-  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+  const [isInstalled, setIsInstalled] = useState<boolean>(
+    () => window.matchMedia('(display-mode: standalone)').matches
+  );
 
   useEffect(() => {
-    // PWA zaten yüklü mü kontrol et
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
+    if (isInstalled) return;
 
     // Kullanıcı daha önce dismiss ettiyse gösterme
     const dismissed = localStorage.getItem('harfhane:install-prompt-dismissed');
@@ -41,7 +39,7 @@ const InstallPrompt = (): React.JSX.Element | null => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
     };
-  }, []);
+  }, [isInstalled]);
 
   const handleInstall = async (): Promise<void> => {
     if (!deferredPrompt) return;

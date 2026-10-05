@@ -29,10 +29,15 @@ interface WinConfettiProps {
 
 export default function WinConfetti({ active }: WinConfettiProps): React.JSX.Element | null {
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [prevActive, setPrevActive] = useState(active);
+
+  if (active !== prevActive) {
+    setPrevActive(active);
+    setParticles(active ? generateParticles() : []);
+  }
 
   useEffect(() => {
-    if (!active) { setParticles([]); return; }
-    setParticles(generateParticles());
+    if (!active) return undefined;
     const timer = setTimeout(() => setParticles([]), 2500);
     return () => clearTimeout(timer);
   }, [active]);

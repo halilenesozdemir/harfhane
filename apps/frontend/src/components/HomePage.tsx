@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Calendar, Infinity as InfinityIcon, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useProfile";
@@ -14,17 +14,13 @@ const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelp, setShowHelp] = useState(() => {
+    const seen = localStorage.getItem(HAS_SEEN_HELP_KEY);
+    return !seen || seen === 'false';
+  });
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { data: profileData } = useProfile(token);
-
-  useEffect(() => {
-    const seen = localStorage.getItem(HAS_SEEN_HELP_KEY);
-    if (!seen || seen === 'false') {
-      setShowHelp(true);
-    }
-  }, []);
 
   const stats = profileData?.stats;
 

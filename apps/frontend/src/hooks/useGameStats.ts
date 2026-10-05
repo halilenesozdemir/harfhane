@@ -99,7 +99,7 @@ export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGame
         }
       }).catch((_: unknown) => undefined);
     }
-  }, [isUnlimited, token, wordLength, setStats, setUnlimitedStats, queryClient]);
+  }, [isUnlimited, token, wordLength, wordId, setStats, setUnlimitedStats, queryClient]);
 
   return { currentStats: isUnlimited ? unlimitedStats : stats, updateStats, lastXPResult };
 }
