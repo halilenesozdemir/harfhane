@@ -9,3 +9,4 @@ Expo Android app (Plan 004, `docs/plans/2026-10-05-004-feat-android-mvp-plan.md`
 - Add native or Expo packages with `pnpm exec expo install <pkg>` inside `apps/mobile`, not `pnpm add`.
 - Tests: Vitest for logic (`src/**/*.test.ts`), jest-expo + React Native Testing Library for components (`src/**/*.test.tsx`; `render` is async in RNTL 14). `pnpm test` runs both.
 - Bundle check without a device: `pnpm --filter @harfhane/mobile run export:android`.
+- Running on a phone or emulator: `docs/guides/mobile-run.md`.
