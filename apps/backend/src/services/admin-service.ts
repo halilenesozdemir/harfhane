@@ -15,6 +15,7 @@ import {
   adminGetWordStats,
   adminGetUsers,
   type ListWordsOptions,
+  type BulkImportWord,
 } from '../repositories/admin-repository';
 
 function todayUTC(): string {
@@ -88,10 +89,7 @@ export async function removeDailyWord(db: Env['DB'], id: number) {
   if (!removed) throw NOT_FOUND('Daily word entry');
 }
 
-export async function importWords(
-  db: Env['DB'],
-  words: { word: string; meaning: string; context: string; category: string }[]
-) {
+export async function importWords(db: Env['DB'], words: BulkImportWord[]) {
   return adminBulkInsertWords(db, words);
 }
 
