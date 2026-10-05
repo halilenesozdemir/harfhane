@@ -55,8 +55,6 @@ function reloadOnChunkError(): never {
 
 const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
-const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
-const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
 const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
@@ -92,7 +90,7 @@ function HomeRoute(): React.JSX.Element {
     <>
       <PageMeta
         title="Harfhane — Türkçe Kelime Oyunu | Günlük Bulmaca"
-        description="Harfhane ile her gün yeni bir Türkçe kelime bul! Ücretsiz Türkçe kelime oyunu. Günlük bulmaca, sınırsız mod ve özel kelime listeleri."
+        description="Harfhane ile her gün yeni bir Türkçe kelime bul! Ücretsiz Türkçe kelime oyunu. Günlük bulmaca ve sınırsız mod."
         canonicalPath="/"
       />
       <HomePage
@@ -106,40 +104,6 @@ function HomeRoute(): React.JSX.Element {
       />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <Toast message={welcomeMessage} />
-    </>
-  );
-}
-
-function ListsRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  const [showAuth, setShowAuth] = useState(false);
-  return (
-    <>
-      <PageMeta
-        title="Kelime Listeleri | Harfhane"
-        description="Türkçe kelime listelerini keşfet, kendi listeni oluştur ve arkadaşlarınla paylaş."
-        canonicalPath="/lists"
-      />
-      <ListsPage onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-    </>
-  );
-}
-
-function SlugRoute(): React.JSX.Element {
-  const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-  const [showAuth, setShowAuth] = useState(false);
-  if (!slug) return <Navigate to="/" replace />;
-  return (
-    <>
-      <PageMeta
-        title={`${slug} — Özel Kelime Oyunu | Harfhane`}
-        description="Harfhane'de bir arkadaşının seçtiği özel kelimeyi tahmin et."
-        canonicalPath={`/play/${slug}`}
-      />
-      <SlugGame slug={slug} onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </>
   );
 }
@@ -164,8 +128,8 @@ function AppRoutes(): React.JSX.Element {
       <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />
-          <Route path="/lists" element={<ListsRoute />} />
-          <Route path="/play/:slug" element={<SlugRoute />} />
+          <Route path="/lists" element={<Navigate to="/" replace />} />
+          <Route path="/play/:slug" element={<Navigate to="/" replace />} />
           <Route path="/c/:wordId" element={<Navigate to="/" replace />} />
           <Route path="/daily" element={<GameRoute mode="daily" />} />
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />

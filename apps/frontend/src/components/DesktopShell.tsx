@@ -112,7 +112,6 @@ function ModeNav({
       </div>
 
       <NavLink label="Turnuva" isActive={false} onClick={() => navigate('/tournament')} />
-      <NavLink label="Listeler" isActive={false} onClick={() => navigate('/lists')} />
     </nav>
   );
 }
