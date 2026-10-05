@@ -20,7 +20,7 @@ export type ThemePreference = ColorScheme | 'system';
 export const THEME_PREFERENCE_KEY = 'harfhane:theme';
 export const HIGH_CONTRAST_KEY = 'harfhane:high-contrast';
 
-const THEME_PREFERENCES: readonly string[] = ['light', 'dark', 'system'];
+const THEME_PREFERENCES: readonly ThemePreference[] = ['light', 'dark', 'system'];
 
 export function resolveScheme(preference: ThemePreference, systemScheme: string | null | undefined): ColorScheme {
   if (preference !== 'system') return preference;
@@ -29,7 +29,7 @@ export function resolveScheme(preference: ThemePreference, systemScheme: string 
 
 export function parsePreference(raw: string | null): ThemePreference {
   const value = raw === null ? null : safeParse(raw);
-  return typeof value === 'string' && THEME_PREFERENCES.includes(value) ? (value as ThemePreference) : 'system';
+  return THEME_PREFERENCES.find((preference) => preference === value) ?? 'system';
 }
 
 export function parseHighContrast(raw: string | null): boolean {

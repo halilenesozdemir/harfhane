@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import type { KeyValueStore } from './game/game-storage';
@@ -24,49 +24,70 @@ export interface ThemeContextValue {
 export interface ThemeProviderProps {
   readonly store: KeyValueStore;
   readonly children: ReactNode;
+  readonly waitForStoredTheme?: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function useStoredSettings(store: KeyValueStore) {
-  const [preference, setPreferenceState] = useState<ThemePreference>('system');
-  const [isHighContrast, setHighContrastState] = useState(false);
+interface StoredSettings {
+  readonly preference: ThemePreference;
+  readonly isHighContrast: boolean;
+  readonly isLoaded: boolean;
+}
 
+const INITIAL_SETTINGS: StoredSettings = { preference: 'system', isHighContrast: false, isLoaded: false };
+
+type TouchedSettings = { preference: boolean; isHighContrast: boolean };
+
+function useLoadSettings(store: KeyValueStore, touched: { readonly current: TouchedSettings }, setSettings: (update: (current: StoredSettings) => StoredSettings) => void) {
   useEffect(() => {
     let isCurrent = true;
     void Promise.all([store.getItem(THEME_PREFERENCE_KEY), store.getItem(HIGH_CONTRAST_KEY)]).then(([rawPreference, rawContrast]) => {
       if (!isCurrent) return;
-      setPreferenceState(parsePreference(rawPreference));
-      setHighContrastState(parseHighContrast(rawContrast));
+      setSettings((current) => ({
+        preference: touched.current.preference ? current.preference : parsePreference(rawPreference),
+        isHighContrast: touched.current.isHighContrast ? current.isHighContrast : parseHighContrast(rawContrast),
+        isLoaded: true,
+      }));
     });
     return () => {
       isCurrent = false;
     };
-  }, [store]);
-
-  return { preference, setPreferenceState, isHighContrast, setHighContrastState };
+  }, [store, touched, setSettings]);
 }
 
-export function ThemeProvider({ store, children }: ThemeProviderProps) {
+function useStoredSettings(store: KeyValueStore) {
+  const [settings, setSettings] = useState<StoredSettings>(INITIAL_SETTINGS);
+  const touched = useRef<TouchedSettings>({ preference: false, isHighContrast: false });
+  useLoadSettings(store, touched, setSettings);
+
+  const setPreference = useCallback((preference: ThemePreference) => {
+    touched.current.preference = true;
+    setSettings((current) => ({ ...current, preference }));
+    void store.setItem(THEME_PREFERENCE_KEY, JSON.stringify(preference));
+  }, [store]);
+
+  const setHighContrast = useCallback((isHighContrast: boolean) => {
+    touched.current.isHighContrast = true;
+    setSettings((current) => ({ ...current, isHighContrast }));
+    void store.setItem(HIGH_CONTRAST_KEY, JSON.stringify(isHighContrast));
+  }, [store]);
+
+  return { settings, setPreference, setHighContrast };
+}
+
+export function ThemeProvider({ store, children, waitForStoredTheme = true }: ThemeProviderProps) {
   const systemScheme = useColorScheme();
-  const { preference, setPreferenceState, isHighContrast, setHighContrastState } = useStoredSettings(store);
+  const { settings, setPreference, setHighContrast } = useStoredSettings(store);
+  const { preference, isHighContrast, isLoaded } = settings;
   const scheme = resolveScheme(preference, systemScheme);
-
-  const setPreference = useCallback((next: ThemePreference) => {
-    setPreferenceState(next);
-    void store.setItem(THEME_PREFERENCE_KEY, JSON.stringify(next));
-  }, [store, setPreferenceState]);
-
-  const setHighContrast = useCallback((next: boolean) => {
-    setHighContrastState(next);
-    void store.setItem(HIGH_CONTRAST_KEY, JSON.stringify(next));
-  }, [store, setHighContrastState]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({ colors: getThemeColors({ scheme, isHighContrast }), scheme, preference, isHighContrast, setPreference, setHighContrast }),
     [scheme, preference, isHighContrast, setPreference, setHighContrast],
   );
 
+  if (waitForStoredTheme && !isLoaded) return null;
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

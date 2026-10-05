@@ -35,7 +35,54 @@ async function renderWithStore(store: KeyValueStore) {
   );
 }
 
+function createSlowStore(storedPreference: string) {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const store = createMemoryStore({ 'harfhane:theme': storedPreference });
+  const slowStore: KeyValueStore = {
+    getItem: async (key) => {
+      const valueAtRequest = await store.getItem(key);
+      await gate;
+      return valueAtRequest;
+    },
+    setItem: store.setItem,
+  };
+  return { slowStore, release: () => release() };
+}
+
 describe('ThemeProvider', () => {
+  it('should keep the player choice when stored values arrive after it', async () => {
+    const { slowStore, release } = createSlowStore('"light"');
+    await render(
+      <ThemeProvider store={slowStore} waitForStoredTheme={false}>
+        <Probe />
+      </ThemeProvider>,
+    );
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('dark'));
+    });
+    await act(async () => {
+      release();
+    });
+    expect(screen.getByTestId('bg').props.children).toBe(themes.dark.bg);
+  });
+
+  it('should render nothing until stored values are loaded', async () => {
+    const { slowStore, release } = createSlowStore('"dark"');
+    await render(
+      <ThemeProvider store={slowStore}>
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByTestId('bg')).toBeNull();
+    await act(async () => {
+      release();
+    });
+    expect(screen.getByTestId('bg').props.children).toBe(themes.dark.bg);
+  });
+
   it('should apply the stored dark preference when the app starts', async () => {
     await renderWithStore(createMemoryStore({ 'harfhane:theme': '"dark"' }));
     expect(await screen.findByText(themes.dark.bg)).toBeTruthy();
