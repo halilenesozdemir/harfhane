@@ -57,7 +57,6 @@ const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkE
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
 const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
 const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
-const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -97,10 +96,6 @@ function HomeRoute(): React.JSX.Element {
       />
       <HomePage
         onSelectMode={(mode: GameMode, length: WordLength) => {
-          if (mode === 'tournament') {
-            navigate('/tournament');
-            return;
-          }
           navigate(`/${mode}/${length}`);
         }}
       />
@@ -144,20 +139,6 @@ function SlugRoute(): React.JSX.Element {
   );
 }
 
-function TournamentRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  return (
-    <>
-      <PageMeta
-        title="Turnuva Modu | Harfhane"
-        description="Diğer oyuncularla yarış, Türkçe kelime turnuvasına katıl."
-        canonicalPath="/tournament"
-      />
-      <TournamentPage onGoHome={() => navigate('/')} />
-    </>
-  );
-}
-
 function AppRoutes(): React.JSX.Element {
   return (
     <>
@@ -171,7 +152,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
-          <Route path="/tournament" element={<TournamentRoute />} />
+          <Route path="/tournament" element={<Navigate to="/" replace />} />
           <Route path="/discuss" element={<Navigate to="/" replace />} />
           <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

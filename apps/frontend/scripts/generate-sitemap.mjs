@@ -17,7 +17,6 @@ const STATIC_ROUTES = [
   { path: '/daily/6', changefreq: 'daily', priority: '0.9' },
   { path: '/unlimited', changefreq: 'weekly', priority: '0.7' },
   { path: '/lists', changefreq: 'weekly', priority: '0.6' },
-  { path: '/tournament', changefreq: 'weekly', priority: '0.6' },
 ];
 
 function buildSitemap(lastmod) {
