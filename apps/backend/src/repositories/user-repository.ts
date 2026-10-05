@@ -80,7 +80,22 @@ export interface ResetTokenRow {
 }
 
 export async function deleteUser(db: Env['DB'], userId: number): Promise<void> {
-  await db.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
+  const ownedLists = 'SELECT id FROM word_lists WHERE owner_user_id = ?';
+  await db.batch([
+    db.prepare(`DELETE FROM word_list_words WHERE list_id IN (${ownedLists})`).bind(userId),
+    db.prepare(`DELETE FROM list_likes WHERE list_id IN (${ownedLists}) OR user_id = ?`).bind(userId, userId),
+    db.prepare(`DELETE FROM list_comments WHERE list_id IN (${ownedLists}) OR user_id = ?`).bind(userId, userId),
+    db.prepare('DELETE FROM word_lists WHERE owner_user_id = ?').bind(userId),
+    db.prepare('DELETE FROM game_results WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM tournament_results WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM duels WHERE challenger_id = ? OR opponent_id = ?').bind(userId, userId),
+    db.prepare('DELETE FROM user_xp WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM user_badges WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM streak_freezes WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM password_reset_tokens WHERE user_id = ?').bind(userId),
+    db.prepare('DELETE FROM users WHERE id = ?').bind(userId),
+  ]);
 }
 
 export async function createPasswordResetToken(
