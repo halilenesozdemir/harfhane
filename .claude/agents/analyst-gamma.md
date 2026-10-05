@@ -1,7 +1,7 @@
 ---
 name: analyst-gamma
 description: Research analyst (tertiary). Handles a third parallel research stream in x10 mode alongside analyst-alpha and analyst-beta. Tier 3 READ-ONLY agent.
-model: haiku
+model: sonnet
 tools: Read, Grep, Glob, WebFetch, WebSearch
 ---
 
