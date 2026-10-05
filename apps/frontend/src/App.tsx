@@ -55,7 +55,6 @@ function reloadOnChunkError(): never {
 
 const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
-const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -95,29 +94,11 @@ function HomeRoute(): React.JSX.Element {
       />
       <HomePage
         onSelectMode={(mode: GameMode, length: WordLength) => {
-          if (mode === 'tournament') {
-            navigate('/tournament');
-            return;
-          }
           navigate(`/${mode}/${length}`);
         }}
       />
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <Toast message={welcomeMessage} />
-    </>
-  );
-}
-
-function TournamentRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  return (
-    <>
-      <PageMeta
-        title="Turnuva Modu | Harfhane"
-        description="Diğer oyuncularla yarış, Türkçe kelime turnuvasına katıl."
-        canonicalPath="/tournament"
-      />
-      <TournamentPage onGoHome={() => navigate('/')} />
     </>
   );
 }
@@ -135,7 +116,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
-          <Route path="/tournament" element={<TournamentRoute />} />
+          <Route path="/tournament" element={<Navigate to="/" replace />} />
           <Route path="/discuss" element={<Navigate to="/" replace />} />
           <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

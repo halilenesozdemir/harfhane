@@ -54,6 +54,15 @@ wiring navigation, per the unit's scope boundary.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
+## Frontend style cleanup
+Seen while removing the tournament feature (2026-10-05); not fixed there to keep that diff scoped.
+- Arrow-function components that should be `function` declarations per `apps/frontend/CLAUDE.md`:
+  `apps/frontend/src/components/Keyboard.tsx:11`, `apps/frontend/src/components/HomePage.tsx:14`,
+  `apps/frontend/src/components/Header.tsx:6`, and any other remaining arrow-function components found
+  when this is picked up.
+- Leftover/stale comments: `apps/frontend/src/components/Keyboard.tsx:4`,
+  `apps/frontend/src/components/Header.tsx:13,24,41`, `apps/frontend/src/context/ThemeContext.tsx:11-13,24-26`.
+
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
 2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
