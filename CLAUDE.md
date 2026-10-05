@@ -126,6 +126,7 @@ Defined in `.claude/commands/`, invoked as `/command`.
 | `/check` | Full quality gate: typecheck + test + clean-code |
 | `/deploy [frontend\|backend\|both]` | Cloudflare deploy, asks for confirmation |
 | `/plan <feature>` | RIPER-protocol feature plan |
+| `/unit <plan> <U-no>` | Ship one approved plan unit: worktree → test → gate → fresh review → draft PR |
 | `/schema-audit` | Audit schema against `db/migrations/` |
 | `/prime-context` | Reload project context |
 

@@ -62,16 +62,6 @@
           }
         ]
       }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "mkdir -p $CLAUDE_PROJECT_DIR/.github/logs && echo \"[SESSION-END] $(date -u '+%Y-%m-%d %H:%M:%S UTC') branch=$(git -C $CLAUDE_PROJECT_DIR rev-parse --abbrev-ref HEAD 2>/dev/null)\" >> $CLAUDE_PROJECT_DIR/.github/logs/sessions.log 2>/dev/null; exit 0"
-          }
-        ]
-      }
     ]
   }
 }
