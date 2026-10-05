@@ -1,38 +1,100 @@
 name: Deploy Backend
 
+# Gated on CI: this only runs after the "CI" workflow finishes on main, and only
+# deploys when that run's conclusion was "success". workflow_run has no `paths`
+# filter, so the path scoping that used to live in `on.push.paths` is replicated
+# inside the job: it checks out the exact commit CI just validated
+# (github.event.workflow_run.head_sha) and diffs it against its parent to decide
+# whether backend-relevant files changed. workflow_dispatch bypasses that check
+# and always deploys (manual override + Invariant 9's "own file changed" case is
+# covered by the path list below also matching this workflow's own path).
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/backend/**'
-      - 'packages/shared/**'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-backend.yml'
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
   deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+
+      - name: Determine if backend changed
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -Eq '^(apps/backend/|packages/shared/|pnpm-lock\.yaml$|\.github/workflows/deploy-backend\.yml$)'; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: pnpm/action-setup@v4
+        if: steps.changes.outputs.deploy == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.deploy == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.changes.outputs.deploy == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build shared
+        if: steps.changes.outputs.deploy == 'true'
         run: pnpm --filter @harfhane/shared run build
 
       - name: Deploy to Cloudflare Workers
+        if: steps.changes.outputs.deploy == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: fd32026d220617d20fb552d13fb82abd
           workingDirectory: apps/backend
           command: deploy
+
+      - name: Smoke test production
+        if: steps.changes.outputs.deploy == 'true'
+        id: smoke
+        run: |
+          STATUS=$(curl -s -o /tmp/smoke.json -w '%{http_code}' "https://api.harfhane.app/api/words/daily?length=5")
+          echo "HTTP status: $STATUS"
+          cat /tmp/smoke.json || true
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Smoke test failed: expected HTTP 200, got $STATUS"
+            exit 1
+          fi
+          if ! jq -e 'has("data")' /tmp/smoke.json > /dev/null 2>&1; then
+            echo "::error::Smoke test failed: response body has no 'data' field"
+            exit 1
+          fi
+
+      - name: Roll back failed deploy
+        if: failure() && steps.smoke.conclusion == 'failure'
+        working-directory: apps/backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "::warning::Smoke test failed for ${{ github.event.workflow_run.head_sha || github.sha }} — attempting rollback"
+          if npx wrangler rollback --message "Automatic rollback: smoke test failed for ${{ github.event.workflow_run.head_sha || github.sha }}"; then
+            echo "::error::Deploy of ${{ github.event.workflow_run.head_sha || github.sha }} failed smoke test and was rolled back. Investigate before re-deploying."
+          else
+            echo "::error::Deploy of ${{ github.event.workflow_run.head_sha || github.sha }} failed smoke test AND automatic rollback failed. Manual intervention required immediately."
+          fi
+          exit 1

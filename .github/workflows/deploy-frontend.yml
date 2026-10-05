@@ -1,44 +1,91 @@
 name: Deploy Frontend
 
+# Gated on CI: this only runs after the "CI" workflow finishes on main, and only
+# deploys when that run's conclusion was "success". workflow_run has no `paths`
+# filter, so the path scoping that used to live in `on.push.paths` is replicated
+# inside the job: it checks out the exact commit CI just validated
+# (github.event.workflow_run.head_sha) and diffs it against its parent to decide
+# whether frontend-relevant files changed. workflow_dispatch bypasses that check
+# and always deploys (manual override + Invariant 9's "own file changed" case is
+# covered by the path list below also matching this workflow's own path).
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/frontend/**'
-      - 'packages/shared/**'
-      - 'packages/ui-tokens/**'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-frontend.yml'
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
   deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+
+      - name: Determine if frontend changed
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -Eq '^(apps/frontend/|packages/shared/|packages/ui-tokens/|pnpm-lock\.yaml$|\.github/workflows/deploy-frontend\.yml$)'; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: pnpm/action-setup@v4
+        if: steps.changes.outputs.deploy == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.deploy == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.changes.outputs.deploy == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build shared
+        if: steps.changes.outputs.deploy == 'true'
         run: pnpm --filter @harfhane/shared run build
 
       - name: Build frontend
+        if: steps.changes.outputs.deploy == 'true'
         run: pnpm --filter @harfhane/frontend run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - name: Deploy to Cloudflare Pages
+        if: steps.changes.outputs.deploy == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: fd32026d220617d20fb552d13fb82abd
           workingDirectory: apps/backend
           command: pages deploy ../frontend/dist --project-name harfhane --branch main
+
+      - name: Smoke test production
+        if: steps.changes.outputs.deploy == 'true'
+        run: |
+          STATUS=$(curl -s -o /tmp/smoke.html -w '%{http_code}' "https://harfhane.app/")
+          echo "HTTP status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Smoke test failed: expected HTTP 200, got $STATUS"
+            exit 1
+          fi
+          if ! grep -q 'id="root"' /tmp/smoke.html; then
+            echo "::error::Smoke test failed: response body has no app root element"
+            cat /tmp/smoke.html
+            exit 1
+          fi
