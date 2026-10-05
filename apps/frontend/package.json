@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && node scripts/generate-sitemap.mjs && vite build",
+    "generate:brand-icons": "node scripts/generate-brand-icons.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -35,6 +36,7 @@
     "autoprefixer": "^10.4.23",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.6",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
     "vite": "^7.2.4",

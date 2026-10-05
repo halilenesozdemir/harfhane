@@ -44,3 +44,10 @@ The web app carries code from many experiments; removed features such as challen
 `docs/archive/github-2026-10-05/todo/BACKLOG.md` lists product ideas from before October 2026: onboarding, password reset, GDPR account deletion, weekly leaderboard, admin auto-scheduling.
 - Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
 - Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
+
+## og-image.svg still uses old Wordle-green tile colors
+`apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
+2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
+grid, divider and footer text with `#538d4e` (the old Wordle-tile green) instead of the
+Harfhane brand token (`rgb(194 65 12)` / `#c2410c`). Regenerate `og-image.svg`/`og-image.png`
+with the brand token colors when a design pass is budgeted for it.

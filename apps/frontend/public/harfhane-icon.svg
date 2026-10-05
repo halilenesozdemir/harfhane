@@ -1,12 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="15" fill="#121213"/>
-  <rect x="10" y="10" width="35" height="35" rx="5" fill="#6aaa64"/>
-  <rect x="55" y="10" width="35" height="35" rx="5" fill="#c9b458"/>
-  <rect x="10" y="55" width="35" height="35" rx="5" fill="#3a3a3c"/>
-  <rect x="55" y="55" width="35" height="35" rx="5" fill="#6aaa64"/>
-  <text x="27.5" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">N</text>
-  <text x="72.5" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">U</text>
-  <text x="27.5" y="80" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">R</text>
-  <text x="72.5" y="80" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">D</text>
-</svg>
-
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" fill="rgb(194 65 12)" />
+      <g fill="#fff4dc">
+    <rect x="192" y="192" width="140.8" height="640" rx="25.344" />
+    <rect x="691.2" y="192" width="140.8" height="640" rx="25.344" />
+    <rect x="192" y="441.6" width="640" height="140.8" rx="25.344" />
+  </g>
+    </svg>
