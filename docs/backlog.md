@@ -68,6 +68,23 @@ patch only: production still runs on `harfhane-db` (binding `DB`), which has a `
 - Guess-validation (`wordExists`) was intentionally left untouched — it must keep accepting `source = 'user'`
   words so custom-list words remain guessable.
 
+## Same unmoderated-user-word bug exists outside word-repository.ts (Invariant 1)
+Found during fresh review of the `fix/random-word-pool` unit (which fixed `findRandomWord`,
+`findWordById` and `findDailyWord` in `apps/backend/src/repositories/word-repository.ts` — see the
+entry above). Two more player-facing paths have the identical gap and were left out of that unit
+because its stated scope was limited to `word-repository.ts`:
+- `apps/backend/src/repositories/tournament-repository.ts:27-43`, `getTournamentWord` — selects a
+  random active word for the tournament mode with `WHERE is_active = 1 AND length = ? AND LENGTH(word) = ?`,
+  no `source != 'user'` exclusion. An unmoderated custom-list word can be served as a tournament answer.
+- `apps/backend/src/repositories/admin-repository.ts:373-399`, `autoFillLength` — builds its
+  auto-schedule candidate pool from `SELECT id FROM words WHERE is_active = 1 AND length = ?` and
+  `INSERT OR IGNORE INTO daily_words` directly, bypassing `findDailyWord`'s guard. On the legacy
+  production DB (no `status`/`family_safe` columns, no `daily_words_require_active_word` trigger)
+  nothing stops an unmoderated `source='user'` word from being auto-scheduled as a daily word — this
+  is more severe than a read-path leak since it writes the word into `daily_words`.
+- Apply the same `source != 'user'` exclusion to both queries in a follow-up unit before considering
+  Invariant 1 closed for custom word lists.
+
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the
 2026-10-05 brand-icon fix), so it was left untouched there. It still fills its decorative tile
