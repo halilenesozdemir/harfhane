@@ -145,6 +145,43 @@ describe('DELETE /api/auth/account', () => {
       .first();
     expect(check).toBeNull();
   });
+
+  it('should delete the account own list and push subscription', async () => {
+    const passwordHash = await hashPassword('deletetest456');
+    const created = await env.DB
+      .prepare('INSERT INTO users (email, username, password_hash) VALUES (?, ?, ?) RETURNING id')
+      .bind('delete2@test.com', 'deleteuser2', passwordHash)
+      .first<{ id: number }>();
+    const userId = created!.id;
+    const authToken = await createTestToken(userId, env.JWT_SECRET);
+
+    const list = await env.DB
+      .prepare(
+        `INSERT INTO word_lists (slug, name, description, word_length, is_public, owner_user_id)
+         VALUES ('delete-route-list', 'Silinecek Liste', NULL, 5, 1, ?) RETURNING id`
+      )
+      .bind(userId)
+      .first<{ id: number }>();
+    await env.DB
+      .prepare('INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth) VALUES (?, ?, ?, ?)')
+      .bind(userId, 'https://push.example/route-test', 'p', 'a')
+      .run();
+
+    const res = await SELF.fetch('http://example.com/api/auth/account', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    expect(res.status).toBe(200);
+
+    const remainingList = await env.DB.prepare('SELECT id FROM word_lists WHERE id = ?').bind(list!.id).first();
+    expect(remainingList).toBeNull();
+
+    const remainingSubscription = await env.DB
+      .prepare('SELECT id FROM push_subscriptions WHERE user_id = ?')
+      .bind(userId)
+      .first();
+    expect(remainingSubscription).toBeNull();
+  });
 });
 
 describe('POST /api/auth/forgot-password', () => {
