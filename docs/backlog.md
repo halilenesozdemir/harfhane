@@ -77,3 +77,53 @@ Seen while removing the tournament feature (2026-10-05); not fixed there to keep
 grid, divider and footer text with `#538d4e` (the old Wordle-tile green) instead of the
 Harfhane brand token (`rgb(194 65 12)` / `#c2410c`). Regenerate `og-image.svg`/`og-image.png`
 with the brand token colors when a design pass is budgeted for it.
+
+## Architecture review findings (2026-10-05)
+Four read-only reviews (system, backend, frontend, product) after the MVP was cut to daily + unlimited.
+Items already in flight are left out: auth hardening, backend Turkey-day dates, Playwright e2e, docs cleanup.
+
+### Needs the owner
+- **Purchase without an account.** Plan 005 KTD3 assumes buying needs sign-in, which puts Google OAuth
+  (plan 007 U3/U7), the privacy text and RevenueCat in series before the first sale. Alternative: RevenueCat
+  anonymous app user id at launch, restore via the Play account, `logIn` alias when accounts arrive.
+- **Per-length cutover.** Plan 001/006 tie the cutover to 90 days for every active length, but only the
+  5-letter pool is reviewed. Cut over with the lengths that have 90+ days, hide the others until stocked;
+  active lengths are hardcoded in `apps/backend/src/constants/schedule.ts:1`, `apps/frontend/src/types/index.ts`,
+  `apps/mobile/src/screens/HomeScreen.tsx`, `apps/mobile/src/stats/stats.ts:4`.
+- **Self-healing daily schedule.** The runway alert silently returns when `ADMIN_ALERT_EMAIL` is unset
+  (`apps/backend/src/services/schedule-health-service.ts:32`) and auto-fill is a manual admin click. Let the
+  cron top the schedule up to 90 days from approved stock (the DB trigger already limits it to approved,
+  family-safe words) and alert on remaining stock, not runway.
+- **Rate limiting that works.** `apps/backend/src/middleware/rate-limiter.ts` keeps counts in a per-isolate
+  `Map`, so limits don't hold across Workers isolates; `/words/validate` is also counted twice. Move to the
+  Workers Rate Limiting binding or a WAF rule (wrangler.toml / dashboard change).
+- **Admin plane.** One static secret in `sessionStorage`, compared with `===` (`middleware/admin-auth.ts:6`),
+  no rate limit on `/api/admin/*`. Put Cloudflare Access in front of `/admin` and `/api/admin/*`.
+- **Further scope cuts to consider.** Email/password sign-up, password reset and Resend mail; XP, badges,
+  freeze and leaderboard. The mobile MVP uses none of them and they carry most of the KVKK surface.
+
+### Agent work, no owner needed
+- **`0002` migration (local first, before the 346-word import).** Drop the `source = 'user'` escape in the
+  `words` CHECK (`db/migrations/0001_baseline.sql:18`); add a `BEFORE UPDATE` guard on `daily_words`
+  (only `BEFORE INSERT` exists, `:40-48`); block deactivating a word that is scheduled in the future;
+  refuse activating a `rejected` word (`admin-repository.ts` `adminSetWordActive` writes approved +
+  family_safe unconditionally); drop the list, tournament and duel tables. Remote apply needs the owner.
+- **Deploy waits for CI.** `deploy-backend.yml` / `deploy-frontend.yml` run in parallel with `ci.yml`, so a
+  red main still deploys. Gate deploys on CI, stop when `wrangler d1 migrations list --remote` shows pending
+  migrations, smoke-test `GET /api/words/daily?length=N` after deploy and roll back on failure.
+- **Observability.** No `[observability]` in wrangler.toml; `onError` (`apps/backend/src/index.ts`) and the
+  cron's `Promise.allSettled` swallow errors with no log. Enable Workers Logs, add one logger module exempt
+  from the no-console lint rule, log errors and cron results, ping a heartbeat at the end of the cron.
+- **`/api/config`.** Shipped APKs can't be forced to update: expose `minSupportedVersion`, active lengths and
+  feature flags (Invariant 8 needs a remote ads flag), and move response schemas into `packages/shared`.
+- **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
+  `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
+  version the storage schema, key daily saves by the server's `date`.
+- **Deletions.** `apps/frontend/public/_worker.js` is now a passthrough that forces Pages Functions mode;
+  `/api/words/challenge/:wordId` lets anyone walk the answer pool by id; `profile.ts` queries D1 directly
+  twice (layering); root TDK scrape files (`scripts/scraped-words.json`, `tdk-seed.sql`, `tdk-wordlist.sql`,
+  `scrape-words.ts`, `build-tdk-wordlist.mjs`) conflict with Invariant 3.
+- **Web player experience.** `min-h-screen` instead of `dvh` on game pages; no safe-area padding under the
+  keyboard; `index.html:6` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
+  announced to screen readers (no `aria-live` on the grid); no `prefers-reduced-motion`; admin components
+  are eagerly imported into the player bundle (`App.tsx`); `/admin` and `/sifre-sifirla` lack `noindex`.
