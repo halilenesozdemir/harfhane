@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useReducer, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
@@ -45,8 +46,9 @@ function RouteView({ route, selectedLength, onSelectLength, onStart, onOpenHowTo
   );
 }
 
-function AppNavigator() {
+export function AppNavigator() {
   const { colors, scheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const [state, dispatch] = useReducer(reduceNavigation, undefined, createInitialNavigationState);
   const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
   const route = currentRoute(state);
@@ -67,8 +69,15 @@ function AppNavigator() {
   const handleOpenStats = useCallback((length: WordLength) => dispatch({ type: 'push', route: { screen: 'stats', length } }), []);
   const handleBack = useCallback(() => dispatch({ type: 'back' }), []);
 
+  const insetStyle = {
+    paddingTop: insets.top,
+    paddingBottom: insets.bottom,
+    paddingLeft: insets.left,
+    paddingRight: insets.right,
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg }, insetStyle]} testID="app-safe-area-container">
       <RouteView
         route={route}
         selectedLength={selectedLength}
@@ -86,9 +95,11 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <ThemeProvider store={deviceStore}>
-      <AppNavigator />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider store={deviceStore}>
+        <AppNavigator />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

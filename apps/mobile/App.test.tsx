@@ -1,6 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
-import App from './App';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import App, { AppNavigator } from './App';
+import { ThemeProvider } from './src/ThemeProvider';
+import { createMemoryStore, flattenStyle } from './src/test-utils/render-with-theme';
 
 jest.mock('./src/lib/api', () => ({
   api: {
@@ -102,5 +105,20 @@ describe('App', () => {
     expect(await screen.findByText('HARFHANE')).toBeTruthy();
 
     addSpy.mockRestore();
+  });
+
+  it('should apply nonzero safe-area insets as padding on the root container', async () => {
+    const insets = { top: 24, right: 0, bottom: 16, left: 0 };
+    await render(
+      <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 320, height: 640 }, insets }}>
+        <ThemeProvider store={createMemoryStore()}>
+          <AppNavigator />
+        </ThemeProvider>
+      </SafeAreaProvider>,
+    );
+    const container = screen.getByTestId('app-safe-area-container');
+    const style = flattenStyle(container.props.style);
+    expect(style.paddingTop).toBe(24);
+    expect(style.paddingBottom).toBe(16);
   });
 });
