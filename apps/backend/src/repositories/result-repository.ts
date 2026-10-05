@@ -1,3 +1,4 @@
+import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { getFrozenDates } from './freeze-repository';
 
@@ -175,8 +176,8 @@ export type LeaderboardPeriod = 'all' | 'week' | 'month';
 
 function periodStartDate(period: LeaderboardPeriod): string | null {
   if (period === 'all') return null;
-  const d = new Date();
-  d.setDate(d.getDate() - (period === 'week' ? 7 : 30));
+  const d = new Date(`${getTodayString()}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - (period === 'week' ? 7 : 30));
   return d.toISOString().slice(0, 10);
 }
 

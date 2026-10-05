@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema, seedTestData, createTestUser } from '../helpers/db';
-import { saveResult, getUserStats } from '../../src/repositories/result-repository';
+import { saveResult, getUserStats, getLeaderboard } from '../../src/repositories/result-repository';
 
 let userId: number;
 let statsUserId: number;
@@ -47,5 +47,38 @@ describe('getUserStats', () => {
     expect(stats.totalPlayed).toBe(0);
     expect(stats.totalWon).toBe(0);
     expect(stats.currentStreak).toBe(0);
+  });
+});
+
+describe('getLeaderboard week window Turkey day boundary', () => {
+  let boundaryUserId: number;
+
+  beforeAll(async () => {
+    const user = await createTestUser(env.DB, 'leaderboarduser', 'leaderboard@test.com');
+    boundaryUserId = user.id;
+    await saveResult(env.DB, boundaryUserId, '2026-06-07', 5, 3, true);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should exclude a result from exactly 8 Turkey days ago at 22:00 UTC', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T22:00:00Z'));
+
+    const leaderboard = await getLeaderboard(env.DB, 'week');
+
+    expect(leaderboard.some((row) => row.user_id === boundaryUserId)).toBe(false);
+  });
+
+  it('should include a result from exactly 7 Turkey days ago at 22:00 UTC', async () => {
+    await saveResult(env.DB, boundaryUserId, '2026-06-08', 5, 3, true);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T22:00:00Z'));
+
+    const leaderboard = await getLeaderboard(env.DB, 'week');
+
+    expect(leaderboard.some((row) => row.user_id === boundaryUserId)).toBe(true);
   });
 });
