@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi } from 'vitest';
 import { useGameStats } from './useGameStats';
@@ -24,7 +24,7 @@ describe('useGameStats', () => {
     const { result, rerender } = renderUseGameStats(1);
 
     rerender({ wordId: 2 });
-    result.current.updateStats(true, 3);
+    act(() => { result.current.updateStats(true, 3); });
 
     expect(saveResultMock).toHaveBeenCalledWith('tok', expect.objectContaining({ word_id: 2 }));
   });

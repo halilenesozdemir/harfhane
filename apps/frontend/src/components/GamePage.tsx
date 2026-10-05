@@ -47,12 +47,13 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     onGameEnd: (won) => sessionChallenge.record(won),
   });
 
+  const { openHelp } = modals;
   useEffect(() => {
     if (!hasSeenHelp) {
-      modals.openHelp();
+      openHelp();
       setHasSeenHelp(true);
     }
-  }, [hasSeenHelp, setHasSeenHelp]);
+  }, [hasSeenHelp, setHasSeenHelp, openHelp]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://harfhane.app';
   const challengeUrl = `${origin}/daily/${wordLength}`;
