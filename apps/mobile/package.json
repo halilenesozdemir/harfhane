@@ -7,7 +7,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run && jest",
     "export:android": "expo export --platform android --output-dir dist"
   },
   "dependencies": {
@@ -20,7 +20,11 @@
     "react-native": "0.86.3"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.0.1",
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.5",
     "typescript": "~6.0.3",
     "vitest": "^3.2.4"
   }
