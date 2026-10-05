@@ -5,6 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "pnpm --parallel --filter \"@harfhane/*\" run dev",
     "dev:frontend": "pnpm --filter @harfhane/frontend run dev",
     "dev:backend": "pnpm --filter @harfhane/backend run dev",
