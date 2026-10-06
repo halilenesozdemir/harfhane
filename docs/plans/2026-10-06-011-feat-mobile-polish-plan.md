@@ -22,6 +22,12 @@ Owner decisions, 2026-10-06:
   `lucide-react-native` (with `react-native-svg`).
 - The share text keeps the coloured emoji squares; the no-emoji rule covers the app's own UI, not
   the share grid players paste into chats.
+- Later the same day: no accounts at launch either (accounts only solve moving a streak between
+  devices; their privacy, KVKK and onboarding cost outweighs that now). Android Auto Backup is the
+  first line for keeping stats across reinstalls; if it proves insufficient, a local streak
+  export/import code is added. A used hint is marked in the share text (supersedes Plan 008 R7's
+  "not shown in share"). No anonymous server-side aggregate for now; closed-test feedback comes
+  from a survey. Research: `docs/research/2026-10-06-puzzle-game-ux-engagement.md`.
 - Post-launch engagement ideas (streak calendar, hard mode, local achievements, share image) are
   undecided and stay in `docs/backlog.md` until the owner revisits them.
 
@@ -44,6 +50,8 @@ Owner decisions, 2026-10-06:
 - R6. Launch: the native splash stays up until theme and stored game state are loaded
   (`preventAutoHideAsync` / `hideAsync`); the web splash no longer waits a fixed 1.9 s.
 - R7. First launch opens How to play once; later launches go straight home.
+- R8. When a hint was used, the share text says so on its header line (e.g. "Harfhane #279 3/6 ·
+  ipucu"), on web and mobile; the grid itself is unchanged. Stats do not count hints.
 
 ## Acceptance examples
 - AE1 (R1). Given a daily game won in three guesses, the game-over card shows the answer, a
@@ -54,6 +62,8 @@ Owner decisions, 2026-10-06:
 - AE3 (R3). Given haptics are switched off in Settings, pressing a key triggers no haptic call.
 - AE4 (R6). Given stored state loads after 300 ms, the splash screen is hidden only after it has
   loaded.
+- AE6 (R8). Given a daily game won in 3 guesses with one hint, the share text's first line ends
+  with "· ipucu"; without a hint it does not.
 - AE5 (R7). Given a fresh install, the first launch shows How to play; after closing it, the
   next launch shows the home screen.
 
@@ -78,6 +88,7 @@ tokens; C owns haptics, Settings and fonts; D owns splash, home title, icons and
 - U4 (D). Splash hold until loaded, web splash timing, hint pill border, brand colour, home title.
   (R5, R6, AE4)
 - U5 (D, after U4). First-launch How to play. (R7, AE5)
+- U6 (A, after U1). `generateShareText` takes a hint flag; web and mobile pass it. (R8, AE6)
 
 ## Not in this plan
 Streak calendar, hard mode, local achievements, share image, sound, themed weeks, timed mode,
