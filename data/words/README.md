@@ -45,9 +45,9 @@ Length-7 lists are generated for future hard-mode / weekly "super word" features
 
 | Length | Valid | Candidates (zipf ≥ 3.0) |
 | --- | --- | --- |
-| 4 | 5828 | 1657 |
-| 5 | 9862 | 3009 |
-| 6 | 12185 | 2711 |
+| 4 | 5828 | 1655 |
+| 5 | 9862 | 3007 |
+| 6 | 12185 | 2710 |
 | 7 | 11694 | 2623 |
 
 ## Known limitations
