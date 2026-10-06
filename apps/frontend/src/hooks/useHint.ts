@@ -1,37 +1,50 @@
-import { useState } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import type { WordEntry, WordLength } from '../types';
-import { getTodayString } from '@harfhane/shared';
+import type { WordLength } from '../types';
+import { getTodayString, hintAllowance, pickHint, type HintMode, type LetterHint } from '@harfhane/shared';
 
 interface UseHintReturn {
-  hintText: string | null;
+  hint: LetterHint | null;
   hintUsed: boolean;
+  hintAvailable: boolean;
   revealHint: () => void;
 }
 
-function buildHintText(entry: WordEntry): string {
-  const meaning = entry.meaning ?? '';
-  const words = meaning.split(' ').slice(0, 4).join(' ');
-  const suffix = meaning.split(' ').length > 4 ? '...' : '';
-  return `${entry.category} — "${words}${suffix}"`;
+function deriveHint(revealedPositions: number[], solution: string): LetterHint | null {
+  if (revealedPositions.length === 0) return null;
+  const position = revealedPositions[revealedPositions.length - 1]!;
+  const letter = solution[position];
+  if (letter === undefined) return null;
+  return { position, letter };
 }
 
 export function useHint(
-  solutionEntry: WordEntry | null,
+  solution: string,
   wordLength: WordLength,
+  guesses: string[],
   isUnlimited: boolean
 ): UseHintReturn {
+  const mode: HintMode = isUnlimited ? 'unlimited' : 'daily';
+  const isSupporter = false; // TODO(Plan 005 Phase 4): read the real supporter flag once purchases ship.
+  const allowance = hintAllowance(mode, isSupporter);
+
   const today = getTodayString();
   const storageKey = `harfhane:hint:${today}:${wordLength}`;
+  const [revealedPositions, setRevealedPositions] = useLocalStorage<number[]>(storageKey, []);
 
-  const [hintUsed, setHintUsed] = useLocalStorage<boolean>(storageKey, false);
-  const [hintText, setHintText] = useState<string | null>(null);
+  const hintAvailable = allowance > 0;
+  const hintUsed = revealedPositions.length >= allowance;
 
   const revealHint = (): void => {
-    if (isUnlimited || hintUsed || !solutionEntry) return;
-    setHintText(buildHintText(solutionEntry));
-    setHintUsed(true);
+    if (hintUsed || !hintAvailable) return;
+    const next = pickHint(solution, guesses, revealedPositions);
+    if (next === null) return;
+    setRevealedPositions((prev) => [...prev, next.position]);
   };
 
-  return { hintText, hintUsed, revealHint };
+  return {
+    hint: deriveHint(revealedPositions, solution),
+    hintUsed,
+    hintAvailable,
+    revealHint,
+  };
 }
