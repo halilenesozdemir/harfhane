@@ -10,10 +10,10 @@ longer written at all — the backend only serves daily/random/validate word end
 - The privacy policy must stay accurate (no accounts, no server-side game history).
 - If accounts return later (Faz 3), re-plan mobile auth/push from scratch rather than reviving the deleted code.
 
-## `0002` migration: drop every table left over from removed features
+## Drop migration: every table left over from removed features
 Code for these features is gone (accounts/auth/profile/results/XP/badges/freeze/leaderboard/push/email in #54,
 lists in #37/#42, tournaments in #40, duels in #54), but deleting code does not drop schema. Drop, in one
-migration, every table `apps/backend/db/migrations/0001_baseline.sql` still carries for them: `users`,
+migration (numbered after Plan 008's `0002_word_pools.sql`), every table `apps/backend/db/migrations/0001_baseline.sql` still carries for them: `users`,
 `game_results`, `badges`, `user_xp`, `user_badges`, `push_subscriptions`, `streak_freezes`,
 `password_reset_tokens`, `duels`, `word_lists`, `word_list_words`, `list_likes`, `list_comments`,
 `tournament_results`. Also add the guard-rail changes already scoped for this same migration (drop the
@@ -103,21 +103,19 @@ and already removed end to end in #54.
 - **Rate limiting that works.** `apps/backend/src/middleware/rate-limiter.ts` keeps counts in a per-isolate
   `Map`, so limits don't hold across Workers isolates; `/words/validate` is also counted twice. Move to the
   Workers Rate Limiting binding or a WAF rule (wrangler.toml / dashboard change).
-- **Admin plane.** One static secret in `sessionStorage`, compared with `===` (`middleware/admin-auth.ts:6`),
+- **Admin plane.** One static secret in `sessionStorage` (now compared in constant time, #46),
   no rate limit on `/api/admin/*`. Put Cloudflare Access in front of `/admin` and `/api/admin/*`.
 
 ### Agent work, no owner needed
-- **Deploy waits for CI.** `deploy-backend.yml` / `deploy-frontend.yml` run in parallel with `ci.yml`, so a
-  red main still deploys. Gate deploys on CI, stop when `wrangler d1 migrations list --remote` shows pending
-  migrations, smoke-test `GET /api/words/daily?length=N` after deploy and roll back on failure. (In flight
-  on PR #53.)
+- **Deploy stops on pending migrations.** Deploys now wait for CI, smoke-test `/api/health` and roll back
+  (#53). Still open: stop the backend deploy when `wrangler d1 migrations list --remote` shows pending
+  migrations.
 - **Observability.** No `[observability]` in wrangler.toml; `onError` (`apps/backend/src/index.ts`) and the
   cron's `Promise.allSettled` swallow errors with no log. Enable Workers Logs, add one logger module exempt
   from the no-console lint rule, log errors and cron results, ping a heartbeat at the end of the cron.
 - **`/api/config`.** Shipped APKs can't be forced to update: expose `minSupportedVersion` and feature flags
   (Invariant 8 needs a remote ads flag), and move response schemas into `packages/shared`. (Active-length
-  reporting itself is covered separately by the client length-visibility unit in
-  `docs/plans/2026-10-04-001-infra-clean-database-plan.md` U7.)
+  reporting itself is covered by Plan 008 U1–U3.)
 - **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
   `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
   version the storage schema, key daily saves by the server's `date`.
