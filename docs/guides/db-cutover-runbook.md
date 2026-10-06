@@ -18,6 +18,17 @@ reaches 90 days and gets its own one-line `PLAYABLE_WORD_LENGTHS` deploy (Plan 0
 lengths `[5]`, future dates return 404. Rollback anchors (bookmarks, prior Worker version,
 exports) are in the owner's local backup note, not in the repo. Steps 8–9 are ongoing.
 
+Deviations from the steps as written:
+- The schedule started **today** (2026-10-06), not tomorrow, so the step-4 and step-5
+  checks that count from tomorrow return 89, not 90; counted from 2026-10-06 they return 90.
+- The `daily_words_5.sql` applied remotely was the version generated from the older
+  `review-5.csv` with categories (commit `7fb8d0b`). The committed file is now generated
+  from the word-only CSV and writes `category` as NULL; same 346 words, and re-applying
+  it remotely is a no-op (`INSERT OR IGNORE` on the unique word).
+- "Before you start" below is kept as executed: #74, #59 and #63 are merged, so `main`
+  now carries `0002_word_pools.sql` and the `DB` → `harfhane` binding. Run future
+  steps from `main`.
+
 ## Before you start
 
 - **Checkout the `infra/db-binding-switch` branch (PR #74) locally**, not `main`:

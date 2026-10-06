@@ -11,9 +11,8 @@ Writes:
   `wrangler d1 execute --remote --file`, never by calling the live admin auto-fill
   endpoint — that endpoint runs against whatever database the deployed Worker is
   currently bound to, which before the cutover is still the legacy `harfhane-db`.
-  `SCHEDULE_START_DATE` is a fixed date, not "tomorrow" computed at import time, so this
-  file is deterministic and reviewable; regenerate it with `--start-date` right before
-  the real cutover run (`docs/guides/db-cutover-runbook.md`).
+  `SCHEDULE_START_DATE` is the fixed start date of the schedule applied at the
+  2026-10-06 cutover, so the committed file is deterministic and matches production.
 
 All three files use `INSERT OR IGNORE`, so re-running an already-applied file is a no-op,
 and chunk statements to stay well under D1's per-statement limit (100 KiB; see
@@ -47,12 +46,10 @@ VALID_LENGTHS = (4, 5, 6)
 REVIEW_LENGTH = 5
 SCHEDULE_TOPUP_DAYS = 90
 
-# Committed, fixed date — NOT "tomorrow" computed at generation time, so the file is
-# deterministic and its diff is reviewable. Regenerate with `--start-date <tomorrow's
-# Turkey date>` immediately before running docs/guides/db-cutover-runbook.md step 4,
-# since a schedule generated for a past date would collide with nothing and import
-# with 0 effect (INSERT OR IGNORE against dates nobody is asking for).
-SCHEDULE_START_DATE = "2026-10-07"
+# The start date of the schedule actually applied to remote `harfhane` on 2026-10-06
+# (docs/guides/db-cutover-runbook.md, "Executed"). Fixed so the committed file matches
+# what production holds; a later top-up passes its own `--start-date`.
+SCHEDULE_START_DATE = "2026-10-06"
 
 # https://developers.cloudflare.com/d1/platform/limits/ — "Maximum SQL statement
 # length": 100,000 bytes. Chunk well under that so one row's worth of slack never
@@ -73,6 +70,10 @@ DAILY_WORD_POOL = "daily"
 
 def sql_quote(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
+
+
+def sql_quote_or_null(value) -> str:
+    return "NULL" if value is None else sql_quote(value)
 
 
 def valid_words_path(length: int) -> str:
@@ -107,7 +108,9 @@ def read_daily_review_rows(csv_path: str, expected_length: int = REVIEW_LENGTH) 
     """Read `review-N.csv` into (word, length, category) rows, dropping meaning/context
     per Plan 008 R5/R6 (no meaning or context anywhere). The CSV may be the word-only
     shape (header `word`, Plan 008 U4/PR #58) or the older `word,category,meaning,context`
-    shape; `category` is optional and reads as `''` when the column is absent."""
+    shape. A missing or empty `category` reads as None and is written as NULL: the
+    baseline CHECK allows only NULL or isim/sıfat/fiil, and `INSERT OR IGNORE` would
+    silently drop a row with `''`."""
     rows = []
     seen_words = set()
     with open(csv_path, encoding="utf-8") as handle:
@@ -118,7 +121,7 @@ def read_daily_review_rows(csv_path: str, expected_length: int = REVIEW_LENGTH) 
             if word in seen_words:
                 raise ValueError(f"duplicate word in {csv_path}: {word!r}")
             seen_words.add(word)
-            category = (raw.get("category") or "").strip()
+            category = (raw.get("category") or "").strip() or None
             rows.append((word, expected_length, category))
     return rows
 
@@ -131,7 +134,7 @@ def chunk_daily_words_statements(rows: list, chunk_size: int = CHUNK_SIZE) -> li
             "({}, {}, '', '', {}, {}, {}, 'approved', 1, 1, {})".format(
                 sql_quote(word),
                 length,
-                sql_quote(category),
+                sql_quote_or_null(category),
                 sql_quote(DAILY_WORD_SOURCE),
                 sql_quote(DAILY_WORD_LICENSE),
                 sql_quote(DAILY_WORD_POOL),

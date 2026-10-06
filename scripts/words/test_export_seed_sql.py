@@ -1,10 +1,13 @@
 import csv
 import os
-import re
+import sqlite3
 import tempfile
 import unittest
 
 import export_seed_sql as seed
+
+MIGRATIONS_DIR = os.path.join(seed.REPO_ROOT, "apps", "backend", "db", "migrations")
+EXPECTED_DAILY_WORDS = 346
 
 
 class ValidWordsStatementsTests(unittest.TestCase):
@@ -89,11 +92,15 @@ class DailyWordsStatementsTests(unittest.TestCase):
                 writer.writerow([word])
         return path
 
-    def test_should_default_category_to_empty_string_when_the_csv_is_word_only(self):
+    def test_should_read_category_as_none_when_the_csv_is_word_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = self._write_word_only_csv(tmp, ["ADRES"])
             rows = seed.read_daily_review_rows(path)
-            self.assertEqual(rows, [("ADRES", 5, "")])
+            self.assertEqual(rows, [("ADRES", 5, None)])
+
+    def test_should_write_null_category_when_the_row_has_no_category(self):
+        statements = seed.chunk_daily_words_statements([("ADRES", 5, None)])
+        self.assertIn("('ADRES', 5, '', '', NULL, ", statements[0])
 
 
 class ScheduleStatementsTests(unittest.TestCase):
@@ -180,18 +187,33 @@ class CommittedSeedFilesDriftTests(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_should_match_regeneration_when_comparing_the_committed_schedule_5_sql(self):
-        # The committed file's own header records the --start-date it was generated
-        # with, which may differ from the SCHEDULE_START_DATE placeholder constant
-        # (e.g. after the real cutover regenerated it with the actual applied date).
-        # Regenerating with that recorded date, not the constant, is what "no drift"
-        # means here.
+        # Compared against the constant, not the file's own header, so a default
+        # regeneration with another start date cannot silently pass.
+        expected = seed.render_schedule_sql()
         with open(seed.SCHEDULE_5_SQL_PATH, encoding="utf-8") as handle:
             actual = handle.read()
-        match = re.search(r"--start-date (\d{4}-\d{2}-\d{2})", actual)
-        self.assertIsNotNone(match, "committed schedule_5.sql header is missing --start-date")
-        committed_start_date = match.group(1)
-        expected = seed.render_schedule_sql(start_date=committed_start_date)
         self.assertEqual(actual, expected)
+
+    def test_should_keep_the_applied_start_date_when_reading_the_schedule_constant(self):
+        self.assertEqual(seed.SCHEDULE_START_DATE, "2026-10-06")
+
+
+class SeedAgainstSchemaTests(unittest.TestCase):
+    def _apply(self, conn, path):
+        with open(path, encoding="utf-8") as handle:
+            conn.executescript(handle.read())
+
+    def test_should_insert_every_word_and_day_when_seeds_run_on_the_migrated_schema(self):
+        conn = sqlite3.connect(":memory:")
+        for name in sorted(os.listdir(MIGRATIONS_DIR)):
+            if name.endswith(".sql"):
+                self._apply(conn, os.path.join(MIGRATIONS_DIR, name))
+        self._apply(conn, seed.DAILY_WORDS_5_SQL_PATH)
+        self._apply(conn, seed.SCHEDULE_5_SQL_PATH)
+        word_count = conn.execute("SELECT COUNT(*) FROM words WHERE pool = 'daily'").fetchone()[0]
+        day_count = conn.execute("SELECT COUNT(*) FROM daily_words WHERE length = 5").fetchone()[0]
+        self.assertEqual(word_count, EXPECTED_DAILY_WORDS)
+        self.assertEqual(day_count, seed.SCHEDULE_TOPUP_DAYS)
 
 
 if __name__ == "__main__":

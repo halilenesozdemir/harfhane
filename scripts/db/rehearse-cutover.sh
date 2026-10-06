@@ -5,9 +5,8 @@
 # docs/guides/db-cutover-runbook.md for the real, owner-run remote sequence this rehearses.
 #
 # What it does, in order:
-#   1. Copies migration 0002_word_pools.sql from the open feat/word-pools PR (read-only;
-#      see WORD_POOLS_REF below) next to this branch's own 0001_baseline.sql, in a scratch
-#      migrations dir. Nothing from that branch is merged into this one.
+#   1. Copies this checkout's migrations (0001_baseline.sql, 0002_word_pools.sql) into a
+#      scratch migrations dir.
 #   2. Applies both migrations to a throwaway local D1 database (fresh persist dir each run).
 #   3. Imports data/words/seed/valid_words.sql and data/words/seed/daily_words_5.sql
 #      (idempotent: INSERT OR IGNORE).
@@ -26,7 +25,6 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BACKEND_DIR="$REPO_ROOT/apps/backend"
 SEED_DIR="$REPO_ROOT/data/words/seed"
 
-WORD_POOLS_REF="${WORD_POOLS_REF:-origin/feat/word-pools}"
 TARGET_LENGTH=5
 TOPUP_DAYS=90
 # Matches the `harfhane` database_name declared in apps/backend/wrangler.toml — the
@@ -58,12 +56,9 @@ run_d1_json() {
   npx wrangler d1 execute "$DB_NAME" --local --persist-to "$PERSIST_DIR" --json --command "$1"
 }
 
-log "staging migrations: 0001 from this branch, 0002 read-only from $WORD_POOLS_REF"
+log "staging migrations 0001 and 0002 from this checkout"
 cp "$BACKEND_DIR/db/migrations/0001_baseline.sql" "$MIGRATIONS_DIR/0001_baseline.sql"
-if ! git -C "$REPO_ROOT" show "$WORD_POOLS_REF:apps/backend/db/migrations/0002_word_pools.sql" \
-  > "$MIGRATIONS_DIR/0002_word_pools.sql" 2>/dev/null; then
-  fail "could not read 0002_word_pools.sql from $WORD_POOLS_REF — fetch it (git fetch origin feat/word-pools) or pass WORD_POOLS_REF=<ref>"
-fi
+cp "$BACKEND_DIR/db/migrations/0002_word_pools.sql" "$MIGRATIONS_DIR/0002_word_pools.sql"
 
 table_exists() {
   local table="$1"
