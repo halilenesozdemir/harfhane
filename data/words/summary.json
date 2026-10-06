@@ -1,24 +1,24 @@
 {
   "lengths": {
     "4": {
-      "blocked_count": 6,
-      "candidate_count": 1660,
+      "blocked_count": 9,
+      "candidate_count": 1657,
       "valid_count": 5828
     },
     "5": {
-      "blocked_count": 14,
-      "candidate_count": 2978,
+      "blocked_count": 24,
+      "candidate_count": 3009,
       "valid_count": 9862
     },
     "6": {
-      "blocked_count": 9,
-      "candidate_count": 2597,
-      "valid_count": 12177
+      "blocked_count": 17,
+      "candidate_count": 2711,
+      "valid_count": 12185
     },
     "7": {
-      "blocked_count": 5,
-      "candidate_count": 2519,
-      "valid_count": 11687
+      "blocked_count": 4,
+      "candidate_count": 2623,
+      "valid_count": 11694
     }
   },
   "source_commit": "7302eca5f3652fe7ae3d3ec06c44697c97342b4e"
