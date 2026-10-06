@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 import tempfile
 import unittest
 
@@ -78,6 +79,21 @@ class DailyWordsStatementsTests(unittest.TestCase):
             path = self._write_review_csv(tmp, [("kiraz", "isim", "x", "y")])
             rows = seed.read_daily_review_rows(path, expected_length=5)
             self.assertEqual(rows, [("KİRAZ", 5, "isim")])
+
+    def _write_word_only_csv(self, dir_path: str, words: list) -> str:
+        path = os.path.join(dir_path, "review-5.csv")
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["word"])
+            for word in words:
+                writer.writerow([word])
+        return path
+
+    def test_should_default_category_to_empty_string_when_the_csv_is_word_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_word_only_csv(tmp, ["ADRES"])
+            rows = seed.read_daily_review_rows(path)
+            self.assertEqual(rows, [("ADRES", 5, "")])
 
 
 class ScheduleStatementsTests(unittest.TestCase):
@@ -164,9 +180,17 @@ class CommittedSeedFilesDriftTests(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_should_match_regeneration_when_comparing_the_committed_schedule_5_sql(self):
-        expected = seed.render_schedule_sql()
+        # The committed file's own header records the --start-date it was generated
+        # with, which may differ from the SCHEDULE_START_DATE placeholder constant
+        # (e.g. after the real cutover regenerated it with the actual applied date).
+        # Regenerating with that recorded date, not the constant, is what "no drift"
+        # means here.
         with open(seed.SCHEDULE_5_SQL_PATH, encoding="utf-8") as handle:
             actual = handle.read()
+        match = re.search(r"--start-date (\d{4}-\d{2}-\d{2})", actual)
+        self.assertIsNotNone(match, "committed schedule_5.sql header is missing --start-date")
+        committed_start_date = match.group(1)
+        expected = seed.render_schedule_sql(start_date=committed_start_date)
         self.assertEqual(actual, expected)
 
 

@@ -11,6 +11,13 @@ Covers Plan 001 U3/U4, Plan 006 U6, Plan 008 U8. Scope: opening **5 letters only
 reaches 90 days and gets its own one-line `PLAYABLE_WORD_LENGTHS` deploy (Plan 001 R7, Plan
 008 KTD1). That is a separate, later runbook; do not fold it into this one.
 
+**Executed 2026-10-06.** Steps 1–7 ran against remote `harfhane`: migration 0002 applied,
+27,875 `valid_words` and 346 daily 5-letter words imported, 90-day schedule
+2026-10-06..2027-01-03 applied from `data/words/seed/schedule_5.sql` (start 2026-10-06),
+#74 merged as `709fd08` and deployed. Smoke test passed: today's answer resolved, playable
+lengths `[5]`, future dates return 404. Rollback anchors (bookmarks, prior Worker version,
+exports) are in the owner's local backup note, not in the repo. Steps 8–9 are ongoing.
+
 ## Before you start
 
 - **Checkout the `infra/db-binding-switch` branch (PR #74) locally**, not `main`:

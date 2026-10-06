@@ -104,8 +104,10 @@ def chunk_valid_words_statements(rows: list, chunk_size: int = CHUNK_SIZE) -> li
 
 
 def read_daily_review_rows(csv_path: str, expected_length: int = REVIEW_LENGTH) -> list:
-    """Read `review-N.csv` (`word,category,meaning,context`) into (word, length, category)
-    rows, dropping meaning/context per Plan 008 R5/R6 (no meaning or context anywhere)."""
+    """Read `review-N.csv` into (word, length, category) rows, dropping meaning/context
+    per Plan 008 R5/R6 (no meaning or context anywhere). The CSV may be the word-only
+    shape (header `word`, Plan 008 U4/PR #58) or the older `word,category,meaning,context`
+    shape; `category` is optional and reads as `''` when the column is absent."""
     rows = []
     seen_words = set()
     with open(csv_path, encoding="utf-8") as handle:
@@ -116,7 +118,8 @@ def read_daily_review_rows(csv_path: str, expected_length: int = REVIEW_LENGTH) 
             if word in seen_words:
                 raise ValueError(f"duplicate word in {csv_path}: {word!r}")
             seen_words.add(word)
-            rows.append((word, expected_length, raw["category"].strip()))
+            category = (raw.get("category") or "").strip()
+            rows.append((word, expected_length, category))
     return rows
 
 
