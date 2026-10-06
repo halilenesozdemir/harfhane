@@ -34,6 +34,11 @@ The web app carries code from many experiments; removed features such as challen
 `apps/backend/migrations/` (26 files) is replaced by `apps/backend/db/migrations/0001_baseline.sql`.
 - Delete the legacy folder at database cutover.
 - Point the root `scripts/` (which target `harfhane-db`) at the new pipeline, or retire them.
+  `schedule-new-words.mjs`, `schedule-daily-words.ts` and the generated `schedule-new-words.sql`
+  were deleted at the cutover binding switch (would have silently written to the now-dead
+  `harfhane-db`). `enrich-meanings.ts`, `auto-import.ts`, `import-curated.ts` and `seed-db.ts`
+  still hardcode `harfhane-db --remote` and were not touched — same risk, needs the same
+  retire-or-repoint decision before anyone runs them again.
 - Until then `eslint.config.js` ignores them (Plan 003 lints `apps/` and `packages/` only; without the ignore ESLint parses root `*.js` with defaults and fails), so `no-console` and unused-code rules do not reach them.
 
 ## Known bug fixed in passing
@@ -126,3 +131,33 @@ and already removed end to end in #54.
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
   player bundle (`App.tsx`); `/admin` lacks `noindex`.
+- **Sitemap still lists hidden lengths.** `apps/frontend/scripts/generate-sitemap.mjs`'s `STATIC_ROUTES`
+  hard-codes `/daily/4`, `/daily/5` and `/daily/6` regardless of `PLAYABLE_WORD_LENGTHS` (Plan 008 R1); with
+  only 5 playable, the sitemap still advertises `/daily/4`/`/daily/6` to crawlers even though the app
+  redirects them away. Generate the sitemap's daily routes from the backend's playable lengths (or drop the
+  non-playable ones) once this is worth a build-time fetch.
+
+## Plan 008 U2/U3 follow-ups (playable lengths, 2026-10-06)
+- **Lengths refresh only on cold start.** Both `apps/frontend/src/hooks/usePlayableLengths.ts`
+  (`staleTime: Infinity`) and `apps/mobile/src/lib/playable-lengths.ts` (`usePlayableLengths`,
+  fetched once per mount) only pick up a `PLAYABLE_WORD_LENGTHS` change on the next cold
+  start/page load. Opening a length (KTD1's "one-line deploy") won't reach an already-running
+  session until it's reloaded or restarted. Mobile: refetch when the app returns to the
+  foreground (`AppState` → `active`). Web: a window-focus or visibility-change refetch, or a
+  short `staleTime` instead of `Infinity`.
+- **Stats of a hidden length become unreachable, not deleted.** If a length stops being playable
+  (e.g. owner reverts `PLAYABLE_WORD_LENGTHS`), its `StatsContainer`/`StatsScreen` can no longer be
+  opened from `HomeScreen` (the picker only offers playable lengths), but the stored
+  `dailyStatsKey`/`unlimitedStatsKey` rows for that length remain in `AsyncStorage`/`localStorage`
+  forever with no UI path to them. Decide whether that's acceptable (data just sits unused) or
+  whether hidden-length stats need their own access point (e.g. still reachable once a length
+  reopens) or a cleanup policy.
+
+## Reusable factory (after Harfhane is stable)
+Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
+deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
+routine) should later be reusable for another product on the same stack (pnpm monorepo, Hono +
+Workers + D1, React + Vite, Expo). Do it once Harfhane has shipped and the gates have settled: write an
+ADR, map every file as factory or product, extract the factory layer into a GitHub template repo and
+`~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
+then, write new rules so the factory part stays separable from product rules.

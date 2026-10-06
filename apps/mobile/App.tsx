@@ -5,8 +5,9 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { deviceStore } from './src/game/device-store';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
+import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
 import { GameScreen } from './src/screens/GameScreen';
-import { DEFAULT_WORD_LENGTH, HomeScreen } from './src/screens/HomeScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 import { HowToPlayScreen } from './src/screens/HowToPlayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StatsContainer } from './src/screens/StatsContainer';
@@ -19,6 +20,7 @@ import type { WordLength } from './src/stats/stats';
 interface RouteViewProps {
   readonly route: Route;
   readonly selectedLength: WordLength;
+  readonly playableLengths: readonly WordLength[];
   readonly onSelectLength: (length: WordLength) => void;
   readonly onStart: (mode: HomeScreenMode, length: WordLength) => void;
   readonly onOpenHowToPlay: () => void;
@@ -27,7 +29,17 @@ interface RouteViewProps {
   readonly onBack: () => void;
 }
 
-function RouteView({ route, selectedLength, onSelectLength, onStart, onOpenHowToPlay, onOpenSettings, onOpenStats, onBack }: RouteViewProps) {
+function RouteView({
+  route,
+  selectedLength,
+  playableLengths,
+  onSelectLength,
+  onStart,
+  onOpenHowToPlay,
+  onOpenSettings,
+  onOpenStats,
+  onBack,
+}: RouteViewProps) {
   if (route.screen === 'game') {
     return <GameScreen mode={route.mode} wordLength={route.length} onBack={onBack} api={api} store={deviceStore} />;
   }
@@ -37,6 +49,7 @@ function RouteView({ route, selectedLength, onSelectLength, onStart, onOpenHowTo
   return (
     <HomeScreen
       selectedLength={selectedLength}
+      playableLengths={playableLengths}
       onSelectLength={onSelectLength}
       onStart={onStart}
       onOpenHowToPlay={onOpenHowToPlay}
@@ -50,7 +63,12 @@ export function AppNavigator() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const [state, dispatch] = useReducer(reduceNavigation, undefined, createInitialNavigationState);
-  const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
+  const playableLengths = usePlayableLengths(api, deviceStore);
+  // null means "no explicit pick yet"; resolveSelectedLength also falls
+  // back whenever a previous pick stops being playable (derived, not an
+  // effect, to avoid a redundant render).
+  const [pickedLength, setPickedLength] = useState<WordLength | null>(null);
+  const selectedLength = resolveSelectedLength(pickedLength, playableLengths);
   const route = currentRoute(state);
 
   const handleHardwareBack = useCallback(() => {
@@ -81,7 +99,8 @@ export function AppNavigator() {
       <RouteView
         route={route}
         selectedLength={selectedLength}
-        onSelectLength={setSelectedLength}
+        playableLengths={playableLengths}
+        onSelectLength={setPickedLength}
         onStart={handleStart}
         onOpenHowToPlay={handleOpenHowToPlay}
         onOpenSettings={handleOpenSettings}

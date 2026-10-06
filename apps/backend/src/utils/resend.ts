@@ -6,12 +6,18 @@ export interface ScheduleAlertEntry {
   runwayDays: number;
   lastScheduledDate: string | null;
   unscheduledStock: number;
+  restockRunwayDays: number;
+  restockStatus: 'ok' | 'restock';
 }
 
 function buildScheduleAlertRow(entry: ScheduleAlertEntry): string {
   const lastDate = entry.lastScheduledDate ?? 'yok';
+  const restockNote =
+    entry.restockStatus === 'restock'
+      ? ` — <strong style="color:#ffb703;">stok takviyesi gerekiyor</strong> (kullanılabilir kelime: ${entry.restockRunwayDays})`
+      : '';
   return `<li style="color:#ffffff;font-size:14px;margin:0 0 6px;">${entry.length} harf: <strong>${entry.runwayDays} gün</strong> kaldı
-    (son tarih: ${lastDate}, planlanmamış stok: ${entry.unscheduledStock})</li>`;
+    (son tarih: ${lastDate}, planlanmamış stok: ${entry.unscheduledStock})${restockNote}</li>`;
 }
 
 function buildScheduleAlertHtml(entries: ScheduleAlertEntry[]): string {

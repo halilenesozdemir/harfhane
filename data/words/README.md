@@ -29,10 +29,11 @@ directory.
   that length.
 - `candidates-4.csv` ... `candidates-7.csv`: columns `word,length,needs_review,reason`.
   Subset of the valid list with `wordfreq` zipf frequency ≥ 3.0, infinitive verb forms
-  (`-mak`/`-mek`) excluded, and family-safety blocklist matches excluded. No frequency value
-  is stored. `needs_review=1` rows have few Hunspell inflection flags, which correlates with
-  proper nouns, abbreviations and loanwords; they should be spot-checked before use as a daily
-  answer.
+  (`-mak`/`-mek`) excluded, likely-English loanwords excluded
+  (`candidates.is_likely_english`), and family-safety blocklist matches excluded. No
+  frequency value is stored. `needs_review=1` rows have few Hunspell inflection flags, which
+  correlates with proper nouns, abbreviations and loanwords; they should be spot-checked
+  before use as a daily answer.
 - `summary.json`: counts per length plus the pinned source commit, for quick verification.
 
 ## Length 7
@@ -44,17 +45,20 @@ Length-7 lists are generated for future hard-mode / weekly "super word" features
 
 | Length | Valid | Candidates (zipf ≥ 3.0) |
 | --- | --- | --- |
-| 4 | 5828 | 1696 |
-| 5 | 9862 | 3028 |
-| 6 | 12185 | 2727 |
-| 7 | 11694 | 2624 |
+| 4 | 5828 | 1654 |
+| 5 | 9862 | 3005 |
+| 6 | 12185 | 2710 |
+| 7 | 11694 | 2623 |
 
 ## Known limitations
 
 - The inflection heuristic (see `scripts/words/inflection.py`) only strips nominal suffixes
   (possessive, case, plural). Hunspell's `tr_TR.dic` also contains fully inflected verb forms
   (e.g. negative/past conjugations); those are not filtered and can surface in the candidate
-  lists. Manual review of `needs_review=0` candidates before promoting them to daily answers
-  is still recommended.
+  lists. A verb-conjugation and consonant-softening heuristic was tried and reverted (see
+  `scripts/words/README.md` "Quality notes"): it wrongly dropped independent dictionary words
+  that happen to share a verb's or a softened root's surface form (e.g. "geçmiş", "altmış",
+  "içecek", "gelecek", "düğünü", "kendini"). Manual review of `needs_review=0` candidates
+  before promoting them to daily answers is still recommended.
 - `needs_review` is a heuristic (low inflection-flag count), not a verified proper-noun/foreign-
   word detector.

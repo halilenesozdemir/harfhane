@@ -1,6 +1,14 @@
 import type { WordEntry } from '@harfhane/shared';
+import { getGameNumber } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
+
+// Midday UTC always falls inside the same Turkey calendar day as `date` (fixed UTC+3
+// offset, see packages/shared/src/game/time.ts), so this is a safe anchor for turning a
+// `YYYY-MM-DD` daily-word date back into a Date for getGameNumber.
+function gameNumberForDate(date: string): number {
+  return getGameNumber(new Date(`${date}T12:00:00Z`));
+}
 
 interface WordRow {
   id: number;
@@ -46,21 +54,12 @@ export async function findDailyWord(
 
   if (!row) return null;
 
-  const countRow = await db
-    .prepare(
-      `SELECT COUNT(*) as count FROM daily_words dw
-       JOIN words w ON w.id = dw.word_id
-       WHERE dw.date <= ? AND length(w.word) = ?`
-    )
-    .bind(date, length)
-    .first<{ count: number }>();
-
   return {
     word: row.word,
     meaning: row.meaning,
     context: row.context,
     category: row.category,
-    gameNumber: countRow?.count ?? 1,
+    gameNumber: gameNumberForDate(date),
   };
 }
 

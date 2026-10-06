@@ -117,4 +117,43 @@ describe('HomeScreen', () => {
     await renderWithTheme(<HomeScreen selectedLength={6} onSelectLength={noop} onStart={noop} onOpenHowToPlay={noop} onOpenSettings={noop} onOpenStats={noop} />);
     expect(screen.getByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
   });
+
+  it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
+    await renderWithTheme(
+      <HomeScreen
+        selectedLength={5}
+        onSelectLength={noop}
+        onStart={noop}
+        onOpenHowToPlay={noop}
+        onOpenSettings={noop}
+        onOpenStats={noop}
+        playableLengths={[5]}
+      />
+    );
+    expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
+    expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
+  });
+
+  it('should show the length picker for every scheduled length by default', async () => {
+    await renderWithTheme(<ControlledHomeScreen />);
+    expect(screen.getByLabelText('4 harfli kelime seç')).toBeTruthy();
+    expect(screen.getByLabelText('6 harfli kelime seç')).toBeTruthy();
+  });
+
+  it('(008-AE1) should offer only the playable lengths and hide the rest', async () => {
+    await renderWithTheme(
+      <HomeScreen
+        selectedLength={4}
+        onSelectLength={noop}
+        onStart={noop}
+        onOpenHowToPlay={noop}
+        onOpenSettings={noop}
+        onOpenStats={noop}
+        playableLengths={[4, 5]}
+      />
+    );
+    expect(screen.getByLabelText('4 harfli kelime seç')).toBeTruthy();
+    expect(screen.getByLabelText('5 harfli kelime seç')).toBeTruthy();
+    expect(screen.queryByLabelText('6 harfli kelime seç')).toBeNull();
+  });
 });

@@ -7,11 +7,13 @@ from hunspell_source import fetch_dic_path, parse_dic_file, PINNED_COMMIT
 from inflection import is_inflected_form
 from candidates import (
     is_mastar,
+    is_likely_english,
     passes_frequency,
     is_blocked,
     needs_review,
     review_reason,
     load_blocklist,
+    load_allowlist,
 )
 
 LENGTHS = (4, 5, 6, 7)
@@ -19,6 +21,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 OUTPUT_DIR = os.path.join(REPO_ROOT, "data", "words")
 BLOCKLIST_PATH = os.path.join(SCRIPT_DIR, "blocklist.txt")
+ALLOWLIST_PATH = os.path.join(SCRIPT_DIR, "turkish_allowlist.txt")
 
 
 def load_raw_words():
@@ -47,7 +50,7 @@ def build_valid_set(length_words, known_words):
     return valid
 
 
-def build_candidate_rows(valid_words, blocklist):
+def build_candidate_rows(valid_words, blocklist, allowlist=frozenset()):
     rows = []
     for word in sorted(valid_words):
         flags = valid_words[word]
@@ -56,6 +59,8 @@ def build_candidate_rows(valid_words, blocklist):
         if is_blocked(word, blocklist):
             continue
         if not passes_frequency(word):
+            continue
+        if is_likely_english(word, allowlist):
             continue
         rows.append(
             {
@@ -93,13 +98,14 @@ def main():
     raw_words = load_raw_words()
     known_words = set(tr_lower(w) for w in raw_words)
     blocklist = load_blocklist(BLOCKLIST_PATH)
+    allowlist = load_allowlist(ALLOWLIST_PATH)
 
     summary = {"source_commit": PINNED_COMMIT, "lengths": {}}
 
     for length in LENGTHS:
         length_words = filter_by_length_and_alphabet(raw_words, length)
         valid_words = build_valid_set(length_words, known_words)
-        candidate_rows = build_candidate_rows(valid_words, blocklist)
+        candidate_rows = build_candidate_rows(valid_words, blocklist, allowlist)
 
         write_valid_file(os.path.join(OUTPUT_DIR, f"valid-{length}.txt"), valid_words.keys())
         write_candidates_file(
