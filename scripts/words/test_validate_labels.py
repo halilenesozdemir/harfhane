@@ -1,18 +1,16 @@
 import unittest
 
-from validate_labels import mentions_answer, validate
+import csv
+import os
+import tempfile
+
+from validate_labels import validate, write_review_csv
 
 POOL = ["KALEM", "GELDİ", "MASA", "DENİZ"]
 
 
 def accepted(word, **overrides):
-    label = {
-        "word": word,
-        "decision": "accept",
-        "category": "isim",
-        "meaning": "Yazı yazmaya yarayan ince ve uzun araç",
-        "context": "Çantasından mavi bir kalem çıkardı.",
-    }
+    label = {"word": word, "decision": "accept"}
     label.update(overrides)
     return label
 
@@ -21,29 +19,21 @@ def rejected(word, reason="verb_form"):
     return {"word": word, "decision": "reject", "reason": reason}
 
 
-class MentionsAnswerTests(unittest.TestCase):
-    def test_detects_inflected_answer(self):
-        self.assertTrue(mentions_answer("Kalemler masada duruyor", "KALEM"))
-
-    def test_detects_turkish_dotted_capital(self):
-        self.assertTrue(mentions_answer("Denize girdik", "DENİZ"))
-
-    def test_ignores_unrelated_text(self):
-        self.assertFalse(mentions_answer("Yazı yazmaya yarayan araç", "KALEM"))
-
-    def test_uses_full_word_for_short_answers(self):
-        self.assertFalse(mentions_answer("Mastar biçimi", "MASA"))
-
-
 class ValidateTests(unittest.TestCase):
-    def test_flags_context_when_it_does_not_use_the_answer(self):
-        label = accepted("KALEM", context="Çantasından mavi bir araç çıkardı.")
-        report = validate([label], POOL)
-        self.assertEqual(report["errors"], {"KALEM": ["context_missing_answer"]})
+    def test_accepts_a_bare_decision_with_no_other_fields(self):
+        report = validate([accepted("KALEM")], POOL)
+        self.assertEqual(report["errors"], {})
+        self.assertEqual([label["word"] for label in report["accepted"]], ["KALEM"])
 
-    def test_accepts_context_when_the_answer_drops_a_vowel(self):
-        label = accepted("VAKİT", meaning="Bir işin yapılacağı zaman dilimi", context="Eve dönme vakti geldi.")
-        self.assertEqual(validate([label], ["VAKİT"])["errors"], {})
+    def test_ignores_legacy_meaning_and_context_fields(self):
+        label = accepted(
+            "KALEM",
+            category="isim",
+            meaning="Yazı yazmaya yarayan araç",
+            context="not even a sentence",
+        )
+        report = validate([label], POOL)
+        self.assertEqual(report["errors"], {})
 
     def test_drops_every_copy_when_a_word_is_duplicated(self):
         report = validate([accepted("KALEM"), accepted("KALEM")], POOL)
@@ -58,22 +48,6 @@ class ValidateTests(unittest.TestCase):
     def test_reports_missing_pool_words(self):
         report = validate([accepted("KALEM")], POOL)
         self.assertEqual(report["missing"], ["GELDİ", "MASA", "DENİZ"])
-
-    def test_rejects_meaning_that_mentions_answer(self):
-        report = validate([accepted("KALEM", meaning="Kalemlik içinde duran araç")], POOL)
-        self.assertIn("meaning_mentions_answer", report["errors"]["KALEM"])
-
-    def test_rejects_category_outside_answer_standard(self):
-        report = validate([accepted("KALEM", category="fiil")], POOL)
-        self.assertIn("category", report["errors"]["KALEM"])
-
-    def test_rejects_context_without_sentence_ending(self):
-        report = validate([accepted("KALEM", context="Mavi bir kalem çıkardı")], POOL)
-        self.assertIn("context_not_sentence", report["errors"]["KALEM"])
-
-    def test_rejects_unknown_characters(self):
-        report = validate([accepted("KALEM", meaning="Yazı aracı ✏ ince ve uzun")], POOL)
-        self.assertIn("meaning_characters", report["errors"]["KALEM"])
 
     def test_rejects_word_outside_pool(self):
         report = validate([accepted("KİTAP")], POOL)
@@ -94,6 +68,20 @@ class ValidateTests(unittest.TestCase):
     def test_flags_duplicates(self):
         report = validate([rejected("GELDİ"), rejected("GELDİ")], POOL)
         self.assertEqual(report["errors"]["GELDİ"], ["duplicate"])
+
+    def test_requires_a_known_decision(self):
+        report = validate([{"word": "KALEM", "decision": "maybe"}], POOL)
+        self.assertEqual(report["errors"]["KALEM"], ["decision"])
+
+
+class WriteReviewCsvTests(unittest.TestCase):
+    def test_writes_a_word_only_header_and_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "review.csv")
+            write_review_csv(path, [accepted("GELDİ"), accepted("KALEM")])
+            with open(path, encoding="utf-8", newline="") as handle:
+                rows = list(csv.reader(handle))
+        self.assertEqual(rows, [["word"], ["GELDİ"], ["KALEM"]])
 
 
 if __name__ == "__main__":
