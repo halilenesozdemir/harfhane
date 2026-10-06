@@ -23,7 +23,7 @@ describe('pickHint', () => {
   });
 
   it('should skip a position solved in any earlier guess when later guesses miss it', () => {
-    expect(pickHint('KALEM', ['ZZLZZ', 'KZZZZ'], [])).toEqual({ position: 1, letter: 'A' });
+    expect(pickHint('KALEM', ['KZZZZ', 'ZZZZZ'], [])).toEqual({ position: 1, letter: 'A' });
   });
 
   it('should not treat a present letter as solved when it is in the wrong position', () => {
