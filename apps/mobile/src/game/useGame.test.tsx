@@ -3,9 +3,25 @@ import type { ApiClient } from '../lib/api';
 import { createMemoryStore } from '../test-utils/render-with-theme';
 import { useGame } from './useGame';
 
+const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-haptics', () => ({
+  AndroidHaptics: { Keyboard_Tap: 'keyboard-tap', Confirm: 'confirm', Reject: 'reject' },
+  performAndroidHapticsAsync: (...args: unknown[]) => mockPerformAndroidHapticsAsync(...args),
+}));
+
+// jest.mock factories cannot close over imported identifiers, so this key is a plain
+// literal; the real HAPTICS_ENABLED_KEY is checked against it in useHapticsSettings.test.tsx.
+jest.mock('./device-store', () => ({
+  deviceStore: { getItem: () => Promise.resolve(null), setItem: () => Promise.resolve() },
+}));
+
 const TODAY = '2026-10-05';
 const DAILY_KEY = `harfhane:game:anon:${TODAY}:5`;
 const today = () => TODAY;
+
+beforeEach(() => {
+  mockPerformAndroidHapticsAsync.mockClear();
+});
 
 function createApi(overrides: Partial<ApiClient> = {}): ApiClient {
   return {
@@ -56,6 +72,16 @@ describe('useGame', () => {
     await waitFor(async () => expect(JSON.parse((await store.getItem(DAILY_KEY)) ?? '{}').guesses).toEqual(['KALEM']));
   });
 
+  it('should trigger the confirm haptic once a guess wins the game', async () => {
+    const store = createMemoryStore();
+    const api = createApi();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    await typeAndSubmit(result, 'KALEM');
+    await waitFor(() => expect(result.current.session.game.gameStatus).toBe('won'));
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('confirm');
+  });
+
   it('should show a message and keep the row when the word is not in the list', async () => {
     const api = createApi({ validateWord: jest.fn().mockResolvedValue({ isValid: false }) });
     const store = createMemoryStore();
@@ -64,6 +90,22 @@ describe('useGame', () => {
     await typeAndSubmit(result, 'KALAY');
     await waitFor(() => expect(result.current.session.message).toBe('Kelime listede yok'));
     expect(result.current.session.game.currentGuess).toBe('KALAY');
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('reject');
+  });
+
+  it('should trigger the reject haptic for a too-short guess without calling the API', async () => {
+    const api = createApi();
+    const store = createMemoryStore();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    await act(async () => {
+      'KAL'.split('').forEach((letter) => result.current.onLetter(letter));
+    });
+    await act(async () => {
+      result.current.onSubmit();
+    });
+    expect(api.validateWord).not.toHaveBeenCalled();
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('reject');
   });
 
   it('should show a connection message when validation fails', async () => {
