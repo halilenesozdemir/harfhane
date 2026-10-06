@@ -11,6 +11,9 @@ ZIPF_SCORES = {
     "masal": 2.6,
     "sokak": 2.9,
     "yasak": 2.0,
+    "sabah": up.UNLIMITED_ZIPF_FLOOR,
+    "duvar": up.UNLIMITED_ZIPF_FLOOR - 0.1,
+    "gitmek": 9.0,
 }
 
 
@@ -55,6 +58,28 @@ class BuildUnlimitedPoolTests(unittest.TestCase):
         raw = {"yasak": ()}
         known = {"yasak"}
         pool = up.build_unlimited_pool(5, raw, known, blocklist=set(), excluded=set())
+        self.assertEqual(pool, [])
+
+    def test_floor_is_inclusive_like_the_daily_threshold(self):
+        # A word scoring exactly UNLIMITED_ZIPF_FLOOR must be kept (>=, not >), the
+        # same inclusive rule candidates.py uses for the daily ZIPF_THRESHOLD.
+        raw = {"sabah": ()}
+        known = {"sabah"}
+        pool = up.build_unlimited_pool(5, raw, known, blocklist=set(), excluded=set())
+        self.assertEqual(pool, ["SABAH"])
+
+    def test_drops_a_word_just_below_the_floor(self):
+        raw = {"duvar": ()}
+        known = {"duvar"}
+        pool = up.build_unlimited_pool(5, raw, known, blocklist=set(), excluded=set())
+        self.assertEqual(pool, [])
+
+    def test_excludes_mastar_verb_forms(self):
+        # "gitmek" scores well above the floor, but the mastar (-mek/-mak) ending
+        # must still exclude it, same as the daily pipeline.
+        raw = {"gitmek": ()}
+        known = {"gitmek"}
+        pool = up.build_unlimited_pool(6, raw, known, blocklist=set(), excluded=set())
         self.assertEqual(pool, [])
 
     def test_only_keeps_the_requested_length(self):
