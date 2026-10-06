@@ -59,13 +59,6 @@ The web app carries code from many experiments; removed features such as challen
 - Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
 - Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
 
-## Mobile — app version line on SettingsScreen
-Navigation wiring (Plan 004 U7 follow-up) is done: `App.tsx` mounts a state-based router with the device
-`AsyncStorage`-backed store, `HomeScreen` opens How to play/Stats/Settings, and the Android hardware back
-button pops the stack.
-- `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
-  `pnpm exec expo install expo-constants` if the version display is wanted.
-
 ## Player-facing word queries only exclude `source = 'user'`, not the full approved/family-safe filter
 `findRandomWord`, `findWordById`, `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`) and
 `autoFillLength` (`admin-repository.ts`) now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
