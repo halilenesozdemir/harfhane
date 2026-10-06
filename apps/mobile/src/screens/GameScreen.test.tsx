@@ -34,7 +34,7 @@ describe('GameScreen', () => {
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
     expect(await screen.findByTestId('gameover-card')).toBeTruthy();
-    const expectedTitle = selectResultMessage('won', 1, dailyGameNumber(today()));
+    const expectedTitle = selectResultMessage('daily', 'won', 1, dailyGameNumber(today()));
     expect(await screen.findByText(expectedTitle)).toBeTruthy();
     expect(await screen.findByTestId('gameover-share')).toBeTruthy();
     expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();

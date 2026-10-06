@@ -1,4 +1,5 @@
 import { getGameNumber } from '@harfhane/shared';
+import type { GameMode } from '../game/game-session';
 
 export type FinishedGameStatus = 'won' | 'lost';
 
@@ -13,7 +14,20 @@ const WIN_MESSAGE_VARIANTS: Readonly<Record<number, readonly string[]>> = {
   6: ['Zor oldu ama başardın!', 'Son hamlede!', 'Tam sınırda!'],
 };
 const FALLBACK_WIN_VARIANTS: readonly string[] = ['Tebrikler!'];
-const LOSS_MESSAGE_VARIANTS: readonly string[] = ['Bir dahaki sefere!', 'Yakındı!', 'Pes etme!', 'Tekrar dene!'];
+
+// Daily has no retry (the next word only opens at Turkey midnight), so its loss variants never
+// imply trying again now; unlimited always offers "Yeni kelime", so a retry-flavoured variant
+// fits there.
+const DAILY_LOSS_MESSAGE_VARIANTS: readonly string[] = [
+  'Bu sefer olmadı',
+  'Yarın yeni bir kelime var',
+  'Kelime bu sefer zor çıktı',
+];
+const UNLIMITED_LOSS_MESSAGE_VARIANTS: readonly string[] = [
+  'Tekrar dene!',
+  'Bir sonraki senin!',
+  'Yeni kelimeyle devam et!',
+];
 
 // Mirrors apps/backend/src/repositories/word-repository.ts: noon UTC keeps the instant well
 // inside the Turkey day the date string names, regardless of DST-free UTC+3 arithmetic.
@@ -28,8 +42,16 @@ export function dailyGameNumber(dailyDate: string): number {
   return getGameNumber(new Date(`${dailyDate}${DAILY_NOON_UTC_SUFFIX}`));
 }
 
-export function selectResultMessage(gameStatus: FinishedGameStatus, guessCount: number, seed: number): string {
-  if (gameStatus === 'lost') return pickVariant(LOSS_MESSAGE_VARIANTS, seed);
+export function selectResultMessage(
+  mode: GameMode,
+  gameStatus: FinishedGameStatus,
+  guessCount: number,
+  seed: number,
+): string {
+  if (gameStatus === 'lost') {
+    const lossVariants = mode === 'daily' ? DAILY_LOSS_MESSAGE_VARIANTS : UNLIMITED_LOSS_MESSAGE_VARIANTS;
+    return pickVariant(lossVariants, seed);
+  }
   const variants = WIN_MESSAGE_VARIANTS[guessCount] ?? FALLBACK_WIN_VARIANTS;
   return pickVariant(variants, seed);
 }

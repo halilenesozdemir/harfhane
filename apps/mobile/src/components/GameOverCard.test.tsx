@@ -42,13 +42,18 @@ describe('GameOverCard', () => {
     expect(shareButton).toBeTruthy();
     expect(screen.queryByTestId('gameover-new-word')).toBeNull();
 
+    expect(await screen.findByText('Tahmin dağılımı')).toBeTruthy();
+
     const thirdRow = await screen.findByTestId('gameover-distribution-3');
     expect(within(thirdRow).getByText('1')).toBeTruthy();
     const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
     const thirdFill = screen.getByTestId('gameover-distribution-3-fill');
     expect(flattenStyle(thirdFill.props.style)['backgroundColor']).toBe(colors.correct);
-    const firstFill = screen.getByTestId('gameover-distribution-1-fill');
-    expect(flattenStyle(firstFill.props.style)['backgroundColor']).toBe(colors.brand);
+
+    // Rows with no games at this guess count (1 and 2, before the just-won third) render no
+    // fill bar at all — no coloured stub for a zero count.
+    expect(screen.queryByTestId('gameover-distribution-1-fill')).toBeNull();
+    expect(screen.queryByTestId('gameover-distribution-2-fill')).toBeNull();
 
     await act(async () => fireEvent.press(shareButton));
     expect(Share.share).toHaveBeenCalledWith(
@@ -121,5 +126,72 @@ describe('GameOverCard', () => {
     );
     const secondRow = await screen.findByTestId('gameover-distribution-2');
     expect(within(secondRow).getByText('3')).toBeTruthy();
+    const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+    expect(flattenStyle(screen.getByTestId('gameover-distribution-2-fill').props.style)['backgroundColor']).toBe(
+      colors.correct,
+    );
+  });
+
+  it('should keep a non-current row with a historical count in the plain brand colour, not highlighted', async () => {
+    const store = createMemoryStore();
+    const priorStats = { ...createInitialDailyStats(), guessDistribution: [0, 2, 0, 0, 0, 0] };
+    await saveDailyStats(store, 5, priorStats);
+    await renderWithTheme(
+      <GameOverCard
+        mode="daily"
+        wordLength={5}
+        gameStatus="won"
+        solution="KALEM"
+        guesses={[...WON_GUESSES]}
+        evaluations={WON_EVALUATIONS.map((row) => [...row])}
+        wordId={null}
+        dailyDate={DAILY_DATE}
+        store={store}
+        today={() => DAILY_DATE}
+        onNewGame={jest.fn()}
+      />,
+    );
+    const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+    const secondRowFill = await screen.findByTestId('gameover-distribution-2-fill');
+    expect(flattenStyle(secondRowFill.props.style)['backgroundColor']).toBe(colors.brand);
+    const thirdRowFill = await screen.findByTestId('gameover-distribution-3-fill');
+    expect(flattenStyle(thirdRowFill.props.style)['backgroundColor']).toBe(colors.correct);
+  });
+
+  it('should use a daily-appropriate loss title, never the unlimited retry wording', async () => {
+    await renderWithTheme(
+      <GameOverCard
+        mode="daily"
+        wordLength={5}
+        gameStatus="lost"
+        solution="KALEM"
+        guesses={[]}
+        evaluations={[]}
+        wordId={null}
+        dailyDate={DAILY_DATE}
+        store={createMemoryStore()}
+        today={() => DAILY_DATE}
+        onNewGame={jest.fn()}
+      />,
+    );
+    expect(screen.queryByText('Tekrar dene!')).toBeNull();
+  });
+
+  it('should offer a retry-flavoured loss title in unlimited mode', async () => {
+    await renderWithTheme(
+      <GameOverCard
+        mode="unlimited"
+        wordLength={5}
+        gameStatus="lost"
+        solution="KALEM"
+        guesses={[]}
+        evaluations={[]}
+        wordId={0}
+        dailyDate={null}
+        store={createMemoryStore()}
+        onNewGame={jest.fn()}
+      />,
+    );
+    expect(await screen.findByText('Tekrar dene!')).toBeTruthy();
   });
 });

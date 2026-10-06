@@ -16,30 +16,44 @@ describe('dailyGameNumber', () => {
 
 describe('selectResultMessage', () => {
   it('should return the same win variant for the same guess count and seed every time', () => {
-    const first = selectResultMessage('won', 3, 7);
-    const second = selectResultMessage('won', 3, 7);
+    const first = selectResultMessage('daily', 'won', 3, 7);
+    const second = selectResultMessage('daily', 'won', 3, 7);
     expect(first).toBe(second);
   });
 
   it('should return a different win variant when the seed changes to a different remainder', () => {
     const variants = new Set<string>();
     for (let seed = 0; seed < 3; seed += 1) {
-      variants.add(selectResultMessage('won', 3, seed));
+      variants.add(selectResultMessage('daily', 'won', 3, seed));
     }
     expect(variants.size).toBeGreaterThan(1);
   });
 
   it('should fall back to a generic win message when the guess count is out of range', () => {
-    expect(selectResultMessage('won', 0, 0)).toBe('Tebrikler!');
+    expect(selectResultMessage('daily', 'won', 0, 0)).toBe('Tebrikler!');
   });
 
   it('should pick a loss variant deterministically when the game is lost', () => {
-    const first = selectResultMessage('lost', 6, 5);
-    const second = selectResultMessage('lost', 6, 5);
+    const first = selectResultMessage('daily', 'lost', 6, 5);
+    const second = selectResultMessage('daily', 'lost', 6, 5);
     expect(first).toBe(second);
   });
 
   it('should normalize a negative seed into a valid variant index', () => {
-    expect(() => selectResultMessage('won', 3, -1)).not.toThrow();
+    expect(() => selectResultMessage('daily', 'won', 3, -1)).not.toThrow();
+  });
+
+  it('should never suggest retrying now on a daily loss, since the next word only opens at midnight', () => {
+    for (let seed = 0; seed < 10; seed += 1) {
+      expect(selectResultMessage('daily', 'lost', 6, seed)).not.toMatch(/tekrar dene/i);
+    }
+  });
+
+  it('should offer a retry-flavoured loss variant in unlimited mode, where a new word is always one tap away', () => {
+    const variants = new Set<string>();
+    for (let seed = 0; seed < 10; seed += 1) {
+      variants.add(selectResultMessage('unlimited', 'lost', 6, seed));
+    }
+    expect(variants).toContain('Tekrar dene!');
   });
 });

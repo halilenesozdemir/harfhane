@@ -30,7 +30,7 @@ const COUNTDOWN_LABEL = 'Sonraki kelime';
 const NEW_WORD_LABEL = 'Yeni kelime';
 const SHARE_LABEL = 'Paylaş';
 const ANSWER_LABEL = 'Kelime';
-const DISTRIBUTION_LABEL = 'Tahmin Dağılımı';
+const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
 const COUNTDOWN_UPDATE_INTERVAL_MS = 1000;
 const MIN_BAR_PERCENT = 8;
 
@@ -74,18 +74,23 @@ interface DistributionRowProps {
 
 function DistributionRow({ guessNumber, count, maxCount, isHighlighted }: DistributionRowProps) {
   const { colors } = useTheme();
-  const widthPercent = count === 0 ? 0 : Math.max((count / maxCount) * 100, MIN_BAR_PERCENT);
+  const hasCount = count > 0;
   const fill = isHighlighted ? colors.correct : colors.brand;
   return (
     <View testID={`gameover-distribution-${guessNumber}`} style={styles.distributionRow}>
       <Text style={[styles.distributionIndex, { color: colors.textMuted }]}>{guessNumber}</Text>
       <View style={[styles.distributionTrack, { backgroundColor: colors.tileEmptyBg }]}>
-        <View
-          testID={`gameover-distribution-${guessNumber}-fill`}
-          style={[styles.distributionFill, { width: `${widthPercent}%`, backgroundColor: fill }]}
-        >
-          {count > 0 && <Text style={[styles.distributionCount, { color: colors.brandFg }]}>{count}</Text>}
-        </View>
+        {hasCount && (
+          <View
+            testID={`gameover-distribution-${guessNumber}-fill`}
+            style={[
+              styles.distributionFill,
+              { width: `${Math.max((count / maxCount) * 100, MIN_BAR_PERCENT)}%`, backgroundColor: fill },
+            ]}
+          >
+            <Text style={[styles.distributionCount, { color: colors.brandFg }]}>{count}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -156,7 +161,7 @@ export function GameOverCard({
   const { colors } = useTheme();
   const guessCount = guesses.length;
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
-  const title = selectResultMessage(gameStatus, guessCount, seed);
+  const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today);
   const countdown = useCountdown(mode === 'daily');
 
@@ -209,7 +214,10 @@ const styles = StyleSheet.create({
   title: { fontSize: FONT_SIZE.title, fontWeight: '800', textAlign: 'center' },
   answer: { fontSize: FONT_SIZE.bodyLarge, fontWeight: '700', textAlign: 'center' },
   distribution: { gap: SPACING.xs },
-  distributionLabel: { fontSize: FONT_SIZE.caption, fontWeight: '700', textTransform: 'uppercase' },
+  // No textTransform: 'uppercase' — React Native's uppercase transform is locale-unaware, so the
+  // dotted "i" in "Tahmin" becomes a dotless "I" ("TAHMIN") instead of the correct Turkish "İ"
+  // ("TAHMİN"). Writing the literal string avoids this (same rule as .toUpperCase() in code).
+  distributionLabel: { fontSize: FONT_SIZE.caption, fontWeight: '700' },
   distributionRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   distributionIndex: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: SPACING.md },
   distributionTrack: { flex: 1, height: SPACING.lg, borderRadius: RADIUS.xs, overflow: 'hidden' },
