@@ -132,6 +132,22 @@ and already removed end to end in #54.
   redirects them away. Generate the sitemap's daily routes from the backend's playable lengths (or drop the
   non-playable ones) once this is worth a build-time fetch.
 
+## Plan 008 U2/U3 follow-ups (playable lengths, 2026-10-06)
+- **Lengths refresh only on cold start.** Both `apps/frontend/src/hooks/usePlayableLengths.ts`
+  (`staleTime: Infinity`) and `apps/mobile/src/lib/playable-lengths.ts` (`usePlayableLengths`,
+  fetched once per mount) only pick up a `PLAYABLE_WORD_LENGTHS` change on the next cold
+  start/page load. Opening a length (KTD1's "one-line deploy") won't reach an already-running
+  session until it's reloaded or restarted. Mobile: refetch when the app returns to the
+  foreground (`AppState` → `active`). Web: a window-focus or visibility-change refetch, or a
+  short `staleTime` instead of `Infinity`.
+- **Stats of a hidden length become unreachable, not deleted.** If a length stops being playable
+  (e.g. owner reverts `PLAYABLE_WORD_LENGTHS`), its `StatsContainer`/`StatsScreen` can no longer be
+  opened from `HomeScreen` (the picker only offers playable lengths), but the stored
+  `dailyStatsKey`/`unlimitedStatsKey` rows for that length remain in `AsyncStorage`/`localStorage`
+  forever with no UI path to them. Decide whether that's acceptable (data just sits unused) or
+  whether hidden-length stats need their own access point (e.g. still reachable once a length
+  reopens) or a cleanup policy.
+
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
 deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
