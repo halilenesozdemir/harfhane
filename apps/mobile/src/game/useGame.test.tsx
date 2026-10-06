@@ -90,6 +90,7 @@ describe('useGame', () => {
     await typeAndSubmit(result, 'KALAY');
     await waitFor(async () => expect(JSON.parse((await store.getItem(DAILY_KEY)) ?? '{}').guesses).toEqual(['KALAY']));
     expect(await store.getItem('harfhane:game:anon:2026-10-06:5')).toBeNull();
+    expect(result.current.session.dailyDate).toBe('2026-10-05');
   });
 
   it('should report an error when the word cannot be loaded', async () => {

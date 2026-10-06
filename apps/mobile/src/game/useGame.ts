@@ -31,12 +31,20 @@ const MESSAGE_DURATION_MS = 2000;
 async function loadSession({ mode, wordLength, api, store, today = getTodayString }: UseGameOptions): Promise<SessionAction> {
   if (mode === 'unlimited') {
     const random = await api.fetchRandomWord(wordLength);
-    return { type: 'loaded', solution: normalizeWord(random.word.word), wordId: random.wordId, game: createInitialState(), storageKey: null };
+    return {
+      type: 'loaded',
+      solution: normalizeWord(random.word.word),
+      wordId: random.wordId,
+      game: createInitialState(),
+      storageKey: null,
+      dailyDate: null,
+    };
   }
-  const storageKey = dailyGameKey(today(), wordLength);
+  const date = today();
+  const storageKey = dailyGameKey(date, wordLength);
   const daily = await api.fetchDailyWord(wordLength);
   const game = await loadGameState(store, storageKey);
-  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey };
+  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey, dailyDate: date };
 }
 
 function useSessionLoader(options: UseGameOptions, dispatch: (action: SessionAction) => void, round: number) {
