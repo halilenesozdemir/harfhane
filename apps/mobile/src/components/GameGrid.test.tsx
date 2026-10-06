@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react-native';
 import { GameGrid } from './GameGrid';
-import { renderWithTheme } from '../test-utils/render-with-theme';
+import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 
 const MAX_GUESSES = 6;
 const WORD_LENGTH = 5;
@@ -35,6 +35,45 @@ describe('GameGrid', () => {
     expect(within(screen.getByTestId('tile-1-0')).getByText('A')).toBeTruthy();
     expect(within(screen.getByTestId('tile-1-1')).getByText('B')).toBeTruthy();
     expect(screen.getByTestId('tile-1-2').props.accessibilityLabel).toBe('boş');
+  });
+
+  it('should mark the hinted position on the active row as a hint tile', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={[]} evaluations={[]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 2, letter: 'L' }]} />,
+    );
+    expect(screen.getByTestId('tile-0-2').props.accessibilityLabel).toBe('L, ipucu');
+    expect(screen.getByTestId('tile-0-0').props.accessibilityLabel).toBe('boş');
+  });
+
+  it('should not overlay a hint on a position the player already typed', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={[]} evaluations={[]} currentGuess="KA" wordLength={WORD_LENGTH} hints={[{ position: 0, letter: 'K' }]} />,
+    );
+    expect(screen.getByTestId('tile-0-0').props.accessibilityLabel).toBe('K');
+  });
+
+  it('should not mark a hint tile once the game has finished, even with guesses left unused', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={[]} evaluations={[]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 2, letter: 'L' }]} isPlaying={false} />,
+    );
+    expect(screen.getByTestId('tile-0-2').props.accessibilityLabel).toBe('boş');
+  });
+
+  it('should only mark the hint on the active row after a past guess, not on every row', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={['KAPAK']} evaluations={[['correct', 'correct', 'absent', 'absent', 'absent']]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 2, letter: 'L' }]} />,
+    );
+    expect(screen.getByTestId('tile-1-2').props.accessibilityLabel).toBe('L, ipucu');
+    expect(screen.getByTestId('tile-2-2').props.accessibilityLabel).toBe('boş');
+  });
+
+  it('should show a solid border and no hint styling once a typed letter overwrites the hinted position', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={[]} evaluations={[]} currentGuess="D" wordLength={WORD_LENGTH} hints={[{ position: 0, letter: 'A' }]} />,
+    );
+    const tile = screen.getByTestId('tile-0-0');
+    expect(tile.props.accessibilityLabel).toBe('D');
+    expect(flattenStyle(tile.props.style).borderStyle).not.toBe('dashed');
   });
 
   it('should leave rows after the current guess empty', async () => {

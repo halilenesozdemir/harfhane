@@ -44,3 +44,9 @@ export function applyGuess(state: GameState, solution: string): GameState {
 export function dailyGameKey(date: string, wordLength: number): string {
   return `harfhane:game:${ANONYMOUS_USER_KEY}:${date}:${wordLength}`;
 }
+
+// Keyed by mode too, even though only daily ever persists a hint today, so a future unlimited
+// hint (Plan 005) can never read or overwrite a daily hint sharing the same date and length.
+export function hintStorageKey(mode: 'daily' | 'unlimited', date: string, wordLength: number): string {
+  return `harfhane:hint:${ANONYMOUS_USER_KEY}:${mode}:${date}:${wordLength}`;
+}

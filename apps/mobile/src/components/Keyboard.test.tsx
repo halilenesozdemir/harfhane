@@ -49,4 +49,11 @@ describe('Keyboard', () => {
     const style = flattenStyle(screen.getByLabelText('A').props.style);
     expect(style.backgroundColor).toBe(themes.light.keyBg);
   });
+
+  it('should expose a stable testID per key for Maestro flows', async () => {
+    await renderKeyboard();
+    expect(screen.getByTestId('key-A')).toBeTruthy();
+    expect(screen.getByTestId('key-ENTER')).toBeTruthy();
+    expect(screen.getByTestId('key-BACKSPACE')).toBeTruthy();
+  });
 });

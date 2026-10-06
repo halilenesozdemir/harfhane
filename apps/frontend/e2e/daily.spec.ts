@@ -1,5 +1,5 @@
 import { expect, test } from './support/fixtures';
-import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen } from './support/game';
+import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen, waitForBoardReady } from './support/game';
 
 const DAILY_WORDS: Record<4 | 5 | 6, { solution: string; wrongGuess: string }> = {
   4: { solution: 'MASA', wrongGuess: 'KAPI' },
@@ -58,6 +58,80 @@ test('an invalid word shows an error toast instead of being submitted', async ({
   await expect(page.getByText('Kelime listede yok')).toBeVisible();
   // The rejected guess stays on the board (unsubmitted) so the player can fix it.
   await expect(tile(page, 5, 0, 0)).toHaveAttribute('data-status', 'filled');
+});
+
+test('revealing the hint shows a letter pill and marks the board tile', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+
+  const hintButton = page.getByRole('button', { name: 'İpucu göster' });
+  await expect(hintButton).toBeVisible();
+  await hintButton.click();
+
+  await expect(page.getByText(/\d\. harf: [A-ZÇĞİÖŞÜ]/)).toBeVisible();
+  const hintedTile = page.locator('[data-hint="true"]');
+  await expect(hintedTile).toHaveCount(1);
+
+  // Once a hint is revealed, the pill replaces the button entirely (no second
+  // press is possible because there is no button left to press).
+  await expect(hintButton).not.toBeVisible();
+});
+
+test('the hint only counts submitted guesses, not the unsubmitted current guess', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await waitForBoardReady(page);
+
+  // KAPAK already places K and A correctly, so the real leftmost-unsolved
+  // position is L at index 2 before anything else happens.
+  await playGuess(page, 'KAPAK'.split(''));
+
+  // Type "KAL" into the next row WITHOUT submitting. A hint computed over
+  // guesses + currentGuess would wrongly treat index 2 (L) as solved too and
+  // skip ahead to E; the real hint must still land on L.
+  await typeOnScreen(page, ['K', 'A', 'L']);
+
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  await expect(page.getByText('3. harf: L')).toBeVisible();
+});
+
+test('a hint revealed in daily mode does not leak into unlimited mode', async ({ page, api }) => {
+  await api.stubDailyWord(5, { word: 'KALEM' });
+  await api.stubRandomWord(5, [{ word: 'MASAL' }]);
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
+
+  await page.goto('/unlimited/5');
+  await waitForBoardReady(page);
+
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(0);
+});
+
+test('a hint survives a reload without granting a fresh one', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  const pill = page.getByText(/\d\. harf: [A-ZÇĞİÖŞÜ]/);
+  const pillTextBefore = await pill.textContent();
+
+  await page.reload();
+
+  await expect(page.getByText(pillTextBefore!)).toBeVisible();
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
 });
 
 test('a finished daily game survives a reload', async ({ page, api }) => {
