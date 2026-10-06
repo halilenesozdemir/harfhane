@@ -24,12 +24,14 @@ what the admin's own data pipeline holds.
 ## Requirements
 - R1. ~~Google sign-in on Android creates or reuses the same `users` row and JWT as the web.~~ **Postponed past MVP** — no accounts.
 - R2. ~~The daily reminder reaches Android players through Expo push, alongside web push.~~ **Postponed past MVP** — no push, no accounts to target.
-- R3. A privacy page exists at a public URL and is linked from Settings; the Play listing and purchases (Plan 005) point to it. Content reflects no-accounts MVP: local-only stats on device, no per-player data server-side, only the admin's own content/schedule data lives in D1.
+- R3. A privacy page exists at a public URL and is linked from Settings; the Play listing and purchases (Plan 005) point to it. Content reflects no-accounts MVP: local-only stats on device, no per-player data on Harfhane's own servers, only the admin's own content/schedule data lives in D1. This does not mean no purchase-related processing happens at all: RevenueCat (anonymous app user id) and Google Play (the buyer's Play account) process purchase data as third parties, and the privacy text must disclose that even though Harfhane stores nothing per-player itself.
 - R4. ~~Anonymous completed games are counted with no identifiers, cookies or IP storage.~~ **Postponed past MVP.**
 
 ## Acceptance examples
 - AE1 (R3). Given the published privacy page, then it states plainly that the MVP has no
-  accounts, stats stay on-device, and no play-level data is collected server-side.
+  accounts, stats stay on-device, no play-level data is collected on Harfhane's own servers,
+  and purchase data (RevenueCat anonymous app user id, Google Play account) is processed by
+  those third parties.
 
 ## Key technical decisions
 - KTD1. ~~ID tokens verified on the Worker with `jose`...~~ **Postponed with R1.**

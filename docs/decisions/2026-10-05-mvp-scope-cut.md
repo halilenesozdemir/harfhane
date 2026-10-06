@@ -30,9 +30,15 @@ data is held server-side — only the admin's own content and schedule data live
 ## Consequences
 - Plan 007: scope drops to the static privacy page only (R3); Google sign-in, JWT, push and
   the play counter (R1, R2, R4 and their units) are marked postponed past MVP, not Google-only.
-- Plan 004: KTD5 updated to anonymous play with no account at all. KTD6 (screen list) is left
-  to the agent already working on it; not touched here.
-- Existing web code and schema for these features (`users` Google/JWT columns, `user_xp`,
-  `user_badges`, `streak_freezes`, password reset, Resend) are not deleted by this decision;
-  removal or deprecation from the live web app is separate follow-up work, not scoped here.
+- Plan 004: KTD5 updated to anonymous play with no account at all. KTD6 (screen list) was
+  finalized the same way: leaderboard, profile, duels, tournaments and lists are removed from
+  the product entirely, not web-only.
+- Removed, not deferred: the code for these features was deleted end to end — accounts, auth,
+  profile, results, XP/badges/freeze/leaderboard, push, email sign-up/reset and duels in #54,
+  lists in #37/#42, tournaments in #40. The database tables (`users`, `game_results`, `badges`,
+  `user_xp`, `user_badges`, `push_subscriptions`, `streak_freezes`, `password_reset_tokens`,
+  `duels`, `word_lists`, `word_list_words`, `list_likes`, `list_comments`,
+  `tournament_results`, …) stay in the schema until an owner-approved `0002` drop migration
+  (`docs/backlog.md`) — deleting the code does not drop the schema, and Invariant 4 requires
+  the owner for any remote D1 write, including applying that migration.
 - `docs/roadmap.md` reorders so the first sale no longer waits on Plan 007 at all.

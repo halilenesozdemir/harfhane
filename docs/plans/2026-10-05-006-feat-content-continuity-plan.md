@@ -14,11 +14,11 @@ Research: `docs/research/2026-10-05-content-continuity.md`.
 
 ## Requirements
 - R1. Admin bulk import works against the baseline schema and records `source` and `license` (Invariant 3).
-- R2. One-click auto-fill schedules every active length (`ACTIVE_WORD_LENGTHS`), not only length 5.
+- R2. One-click auto-fill schedules every *scheduled* length (4, 5 and 6, fixed), not only length 5. Scheduled is distinct from *active/playable* (Plan 001 R7, `docs/decisions/2026-10-06-length-visibility.md`): a hidden length still gets scheduled and stocked so it is already at 90 days the moment it becomes visible.
 - R3. The schedule-health warning runs on the cron, not only when the admin dashboard is opened.
 - R4. The word review pipeline (pool → model labels → deterministic validation → review CSV) lives in the repo and is reproducible.
 - R5. At least 90 approved days per active length before the Plan 001 cutover for that length (owner decision, 2026-10-05: cutover is per length, 5 letters first; see Plan 001 R7).
-- R6. A daily cron tops the schedule up to 90 days from approved, family-safe stock for each active length. (owner decision, 2026-10-05)
+- R6. A daily cron tops the schedule up to 90 days from approved, family-safe stock for each *scheduled* length (4, 5, 6 — including lengths still hidden from players; see R2). (owner decision, 2026-10-05)
 - R7. Low-stock alerts fire on remaining approved stock dropping below a threshold, not only on projected runway. (owner decision, 2026-10-05)
 
 ## Acceptance examples
@@ -35,12 +35,12 @@ Research: `docs/research/2026-10-05-content-continuity.md`.
 
 ## Units
 - U1. Fix `/admin/import` per KTD1, with repository and route tests. (R1)
-- U2. Auto-fill for all active lengths, with a test per length. (R2)
+- U2. Auto-fill for all scheduled lengths, with a test per length. (R2)
 - U3. Call schedule health from `scheduled()`; tests with a mocked alert. (R3)
-- U3a. Daily cron top-up: schedule approved, family-safe stock up to 90 days per active length; test per length. (R6)
+- U3a. Daily cron top-up: schedule approved, family-safe stock up to 90 days per scheduled length; test per length. (R6)
 - U3b. Low-stock alert on remaining approved stock below threshold, independent of U3's runway check; tests with a mocked alert. (R7)
 - U4. *Owner first:* land `answer_pool.py`, `validate_labels.py` and their tests from the `feat/word-review` worktree; decide what in `data/words/review/` is committed. (R4)
 - U5. Label-generation script feeding `validate_labels.py`. (R4)
-- U6. *Owner:* import 346 reviewed 5-letter words and auto-fill 90+ days on the new database (remote D1, Invariant 4), then trigger the Plan 001 U4 cutover for length 5 — the other lengths cut over independently once stocked. (R5)
-- U7. Label and review 4- and 6-letter pools; *owner* imports and schedules them, then triggers Plan 001 U4 for each length once it reaches 90+ days. (R5)
-- U8. *Owner:* confirm 90+ days for a given length, then run the Plan 001 U4 cutover for that length. (R5)
+- U6. *Owner:* import 346 reviewed 5-letter words and auto-fill 90+ days on the new database (remote D1, Invariant 4), then run the one-time Plan 001 U4 binding switch (`DB` → `harfhane`), triggered once, by 5 letters reaching 90 days. (R5)
+- U7. Label and review 4- and 6-letter pools in parallel; *owner* imports and schedules them (remote D1, Invariant 4). Plan 001 U4 already ran in U6 and does not run again — once a length reaches 90+ days it becomes visible/playable automatically (Plan 001 R7, the client length-visibility unit). (R5)
+- U8. *Owner:* confirm each length's 90+ day stock. This only flips that length's visibility flag (Plan 001 R7) — no further Plan 001 U4 binding switch, which already happened once in U6. (R5)
