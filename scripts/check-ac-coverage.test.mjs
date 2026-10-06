@@ -9,6 +9,13 @@ import { checkAcCoverage } from "./check-ac-coverage.mjs";
 
 const SCRIPT_PATH = fileURLToPath(new URL("./check-ac-coverage.mjs", import.meta.url));
 
+// Built by concatenation so this file's own source never contains the
+// contiguous substring "(009-AE1)" except inside this file's own real test
+// names below — a fixture string assembled with this constant, written into
+// a throwaway test file, must not make itself (this file) satisfy 009-AE1
+// just because the text happens to look like a test() call.
+const AE1_TAG = "(" + "009-AE1" + ")";
+
 function makeFixtureDirs() {
   const rootDir = mkdtempSync(join(tmpdir(), "ac-coverage-"));
   const plansDir = join(rootDir, "docs", "plans");
@@ -58,7 +65,7 @@ test("should not report AE1 of Plan 009 as missing when a test name tags it (009
     mkdirSync(join(rootDir, "scripts"), { recursive: true });
     writeFileSync(
       join(rootDir, "scripts", "traceability.test.ts"),
-      "test('should fail when an AE has no test (009-AE1)', () => {});",
+      `test('should fail when an AE has no test ${AE1_TAG}', () => {});`,
     );
 
     const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
@@ -106,7 +113,7 @@ test("should exclude node_modules when searching for test files", () => {
     mkdirSync(nodeModulesDir, { recursive: true });
     writeFileSync(
       join(nodeModulesDir, "vendored.test.ts"),
-      "test('should not count (009-AE1)', () => {});",
+      `test('should not count ${AE1_TAG}', () => {});`,
     );
 
     const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
@@ -117,7 +124,7 @@ test("should exclude node_modules when searching for test files", () => {
   }
 });
 
-test("should find a tag in a Python test file named test_*.py", () => {
+test("should not count a tag that only appears in a Python comment, not in the test's name", () => {
   const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
   try {
     writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
@@ -125,12 +132,68 @@ test("should find a tag in a Python test file named test_*.py", () => {
     mkdirSync(scriptsDir, { recursive: true });
     writeFileSync(
       join(scriptsDir, "test_validate_labels.py"),
-      "def test_should_pass_when_label_valid_009_AE1():\n    # (009-AE1)\n    pass\n",
+      `def test_should_pass_when_label_valid():\n    # ${AE1_TAG}\n    pass\n`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should find a tag written as a '_<plan>_AE<n>' suffix on a Python test function name", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      "def test_should_pass_when_label_valid_009_AE1():\n    pass\n",
     );
 
     const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
 
     assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should find a tag in the first line of a Python test's docstring", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      `def test_should_pass_when_label_valid():\n    """should accept a valid label ${AE1_TAG}"""\n    pass\n`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a tag that only appears in a JS/TS comment, not in the test's name", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `// ${AE1_TAG}\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }
@@ -143,7 +206,7 @@ test("should find a tag in a .test.mjs file", () => {
     mkdirSync(join(rootDir, "scripts"), { recursive: true });
     writeFileSync(
       join(rootDir, "scripts", "checker.test.mjs"),
-      "test('should fail when an AE has no test (009-AE1)', () => {});",
+      `test('should fail when an AE has no test ${AE1_TAG}', () => {});`,
     );
 
     const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
@@ -161,7 +224,7 @@ test("should fail when an id is tagged by a test and still listed in the allowli
     mkdirSync(join(rootDir, "scripts"), { recursive: true });
     writeFileSync(
       join(rootDir, "scripts", "traceability.test.ts"),
-      "test('should fail when an AE has no test (009-AE1)', () => {});",
+      `test('should fail when an AE has no test ${AE1_TAG}', () => {});`,
     );
     writeFileSync(allowlistPath, "009-AE1  stale reason, a test already proves this\n");
 
@@ -233,6 +296,23 @@ test("should recognize an 'Acceptance Examples' heading at any level and case", 
   }
 });
 
+test("should recognize an 'Acceptance examples' heading with a trailing suffix", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    const suffixedHeadingPlan = PLAN_009_AE1_PLAN.replace(
+      "## Acceptance examples",
+      "## Acceptance examples (R1-R2)",
+    );
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), suffixedHeadingPlan);
+
+    const { requiredCount } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.equal(requiredCount, 1);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("should recognize '* AEn' and '- **AEn**' bullet forms, not just '- AEn'", () => {
   const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
   try {
@@ -292,6 +372,108 @@ TBD, not written yet.
       () => checkAcCoverage({ rootDir, plansDir, allowlistPath }),
       /Acceptance examples/,
     );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should throw on a numbered-list AE bullet ('1. AE2'), not silently skip it", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    const numberedBulletPlan = `---
+title: Fixture plan
+type: test
+date: 2026-10-06
+status: approved
+---
+
+# Fixture plan
+
+## Requirements
+- R1. One acceptance example, written as a numbered list item by mistake.
+
+## Acceptance examples
+1. AE2 (R1). Should have been a "-" bullet.
+`;
+    writeFileSync(join(plansDir, "2026-10-06-014-fixture-plan.md"), numberedBulletPlan);
+
+    assert.throws(
+      () => checkAcCoverage({ rootDir, plansDir, allowlistPath }),
+      /malformed/,
+    );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should throw on a bullet with a stray hyphen before the number ('- AE-3')", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    const hyphenatedBulletPlan = `---
+title: Fixture plan
+type: test
+date: 2026-10-06
+status: approved
+---
+
+# Fixture plan
+
+## Requirements
+- R1. One acceptance example, written with a stray hyphen before the number.
+
+## Acceptance examples
+- AE-3 (R1). Should have been "AE3", not "AE-3".
+`;
+    writeFileSync(join(plansDir, "2026-10-06-015-fixture-plan.md"), hyphenatedBulletPlan);
+
+    assert.throws(
+      () => checkAcCoverage({ rootDir, plansDir, allowlistPath }),
+      /malformed/,
+    );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not flag a continuation line of a wrapped bullet that mentions another plan's AE id in prose", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    // PLAN_009_AE1_PLAN's own AE1 bullet wraps onto a second line that reads
+    // "traceability check fails and names Plan 008 AE7." — a continuation
+    // line, not a new list item, so it must not be treated as malformed.
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+
+    const { requiredCount } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.equal(requiredCount, 1);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should fail when ac-pending.txt lists an id matching no AE in any approved plan (typo guard)", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    writeFileSync(allowlistPath, "009-AE99  typo, Plan 009 has no AE99\n");
+
+    const { unknownPending } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(unknownPending, ["009-AE99"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not flag a pending id as unknown when it matches a real approved plan's AE", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    writeFileSync(allowlistPath, "009-AE1  no test yet, tracked for later unit\n");
+
+    const { unknownPending } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(unknownPending, []);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }

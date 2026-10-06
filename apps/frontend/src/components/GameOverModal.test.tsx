@@ -66,5 +66,7 @@ describe('GameOverModal', () => {
     expect(screen.getByText('KALEM')).toBeInTheDocument();
     expect(screen.queryByText('Yazı yazmaya yarayan araç')).not.toBeInTheDocument();
     expect(screen.queryByText('Anlam:')).not.toBeInTheDocument();
+    expect(screen.queryByText('"Çantasından bir kalem çıkardı."')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bağlam:')).not.toBeInTheDocument();
   });
 });
