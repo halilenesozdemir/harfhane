@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { addLetter, applyGuess, createInitialState } from './game-state';
-import { loadGameState, saveGameState } from './game-storage';
+import { loadGameState, loadRevealedHints, saveGameState, saveRevealedHints } from './game-storage';
 import type { KeyValueStore } from './game-storage';
 
 const KEY = 'harfhane:game:anon:2026-10-05:5';
+const HINT_KEY = 'harfhane:hint:anon:2026-10-05:5';
+const HINT_WORD_LENGTH = 5;
 
 function createMemoryStore(initial: Record<string, string> = {}): KeyValueStore {
   const entries = new Map(Object.entries(initial));
@@ -53,5 +55,41 @@ describe('game storage', () => {
 
   it('should return a fresh game when the stored value is not JSON', async () => {
     expect(await loadGameState(createMemoryStore({ [KEY]: '{' }), KEY)).toEqual(createInitialState());
+  });
+});
+
+describe('hint storage', () => {
+  it('should restore revealed positions after a restart when one was saved', async () => {
+    const store = createMemoryStore();
+    await saveRevealedHints(store, HINT_KEY, [2]);
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([2]);
+  });
+
+  it('should return no revealed positions when nothing is stored', async () => {
+    expect(await loadRevealedHints(createMemoryStore(), HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when the stored value is not a number array', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '{"oops":true}' });
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when the stored value holds non-number entries', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '["2"]' });
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when a position is negative or not an integer', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '[-1, 2.5]' });
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when a position is out of range for the word length', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '[5]' });
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when the stored value is not JSON', async () => {
+    expect(await loadRevealedHints(createMemoryStore({ [HINT_KEY]: '{' }), HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
   });
 });

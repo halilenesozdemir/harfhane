@@ -54,3 +54,21 @@ export async function loadGameState(store: KeyValueStore, key: string): Promise<
 export async function saveGameState(store: KeyValueStore, key: string, state: GameState): Promise<void> {
   await store.setItem(key, JSON.stringify(state));
 }
+
+function isValidHintPosition(entry: unknown, wordLength: number): entry is number {
+  return typeof entry === 'number' && Number.isInteger(entry) && entry >= 0 && entry < wordLength;
+}
+
+function isHintPositionArray(value: unknown, wordLength: number): value is number[] {
+  return Array.isArray(value) && value.every((entry) => isValidHintPosition(entry, wordLength));
+}
+
+export async function loadRevealedHints(store: KeyValueStore, key: string, wordLength: number): Promise<number[]> {
+  const raw = await store.getItem(key);
+  const parsed = raw === null ? null : parseJson(raw);
+  return isHintPositionArray(parsed, wordLength) ? parsed : [];
+}
+
+export async function saveRevealedHints(store: KeyValueStore, key: string, positions: readonly number[]): Promise<void> {
+  await store.setItem(key, JSON.stringify(positions));
+}
