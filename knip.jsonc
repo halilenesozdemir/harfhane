@@ -1,0 +1,49 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.mjs", "scripts/*.ts", "scripts/*.test.mjs"],
+      "project": ["scripts/**/*.{js,mjs,ts}"],
+      // node-html-parser: scripts/scrape-words.ts is one of the legacy word
+      // scripts already flagged in docs/backlog.md ("Legacy docs review" /
+      // Invariant 3 conflict); not reinstalling a dep for retired code.
+      "ignoreDependencies": ["node-html-parser"],
+      // wrangler: auto-import.ts, enrich-meanings.ts, import-curated.ts and
+      // seed-db.ts shell out to the wrangler CLI but hardcode `harfhane-db
+      // --remote`; already tracked in docs/backlog.md ("Legacy migrations
+      // folder") pending a retire-or-repoint decision.
+      "ignoreBinaries": ["wrangler"]
+    },
+    "apps/backend": {
+      "project": ["src/**/*.ts", "tests/**/*.ts"],
+      // cloudflare:test is a virtual module injected by
+      // @cloudflare/vitest-pool-workers, not an installable npm package.
+      "ignoreDependencies": ["cloudflare"],
+    },
+    "apps/frontend": {
+      "entry": ["e2e/**/*.ts", "scripts/*.mjs"],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs"],
+      // @fontsource/*: referenced only from src/fonts.css via url(), which
+      // knip does not resolve; genuinely used, not dead.
+      "ignoreDependencies": ["@fontsource/baloo-2", "@fontsource/nunito"]
+    },
+    "apps/mobile": {
+      "entry": ["App.tsx", "scripts/*.mjs"],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.mjs"],
+      // expo-updates/expo-system-ui: implied by app.json (OTA updates
+      // default-enabled, userInterfaceStyle "automatic") but not installed;
+      // decision needed on OTA updates, tracked in docs/backlog.md.
+      "ignoreDependencies": ["expo-updates", "expo-system-ui"]
+    },
+    "packages/shared": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/ui-tokens": {
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignoreExportsUsedInFile": true,
+  // Exports tagged "@deferred" are kept on purpose; see docs/backlog.md for
+  // the specific reason at each tagged export.
+  "tags": ["-deferred"]
+}
