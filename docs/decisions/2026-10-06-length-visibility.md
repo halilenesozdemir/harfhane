@@ -22,5 +22,8 @@ active/playable.
 - `docs/plans/2026-10-05-006-feat-content-continuity-plan.md` R2 and
   `docs/plans/2026-10-04-001-infra-clean-database-plan.md` R7 both use this split
   ("scheduled" vs. "active/playable") instead of conflicting language.
+- Implementation lives in `docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`
+  R1 (U1–U3): the backend-reported `PLAYABLE_WORD_LENGTHS` and the `SCHEDULED_WORD_LENGTHS`
+  rename carry out this split in code; Plan 001/006 only record the decision.
 - If AGENTS.md Invariant 10's own wording should be amended to spell this out explicitly, that
   edit needs the owner — AGENTS.md is binding and not edited here; flagged in the PR #51 body.

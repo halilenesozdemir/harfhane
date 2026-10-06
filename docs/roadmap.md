@@ -16,7 +16,7 @@ Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 
 ### Phase 1 — finish development code
 - Close the open docs PRs (#45, #47, #51).
-- Length visibility: the backend reports the active/playable lengths; web `App.tsx`'s hard-coded `VALID_LENGTHS` and mobile's hard-coded `HomeScreen`/stats length lists read that instead of `[4, 5, 6]`; the cron keeps filling scheduled-but-hidden lengths too (001 U7, 006 R2).
+- Plan 008 U1–U7, U9–U10: playable lengths, word pools, the 3-year repeat cooldown, the 180-day restock runway, and the letter hint (`docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`).
 - Shared/docs leftovers cleanup (`docs/backlog.md`).
 - `0002` drop migration file: writing it is agent work; applying it to the remote database needs the owner (Invariant 4).
 - Privacy page draft for the no-accounts product (007 U5), left unlinked until the owner approves the text (007 U6).
@@ -28,6 +28,7 @@ Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 - 001 U3 + 006 U6: import the 346 reviewed 5-letter words and auto-fill 90+ days (owner, remote D1, Invariant 4).
 - 001 U4: the one-time cutover (`DB` → `harfhane`), triggered once when 5 letters reaches 90 days.
 - 006 U7: label, review, import and schedule the 4- and 6-letter pools in parallel; each becomes visible automatically at 90+ days, no second cutover.
+- 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` before the import (Invariant 4).
 
 ### Phase 3 — owner tests on Android emulator
 - Emulator test via `docs/guides/mobile-run.md`, against the production API.
