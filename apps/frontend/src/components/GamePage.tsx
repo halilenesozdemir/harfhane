@@ -142,6 +142,7 @@ export default function GamePage({
           onGoHome={handleGoHome}
           sessionChallenge={isUnlimited ? sessionChallenge : undefined}
           challengeUrl={challengeUrl}
+          hintUsed={hintUsed}
         />
         <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />
       </div>

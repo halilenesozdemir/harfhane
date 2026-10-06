@@ -34,6 +34,7 @@ function GameOverModal({
   onGoHome,
   sessionChallenge,
   challengeUrl,
+  hintUsed = false,
 }: GameOverModalProps): React.JSX.Element {
   const [countdown, setCountdown] = useState<TimeCountdown>(
     getTimeUntilMidnight()
@@ -46,7 +47,7 @@ function GameOverModal({
     evaluations,
     modeText,
     gameStatus === "won",
-    challengeUrl
+    { shareUrl: challengeUrl, hintUsed }
   );
   const { share, copied, failed } = useShare(shareText);
 

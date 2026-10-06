@@ -134,6 +134,36 @@ test('a hint survives a reload without granting a fresh one', async ({ page, api
   await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
 });
 
+test('share text header ends with "· ipucu" when a hint was revealed (011-AE6)', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  // Force the clipboard fallback path in useShare: delete navigator.share so
+  // the headless browser's Web Share availability cannot make this flaky,
+  // and capture what gets copied instead.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: (text: string) => { (window as unknown as { __copiedText: string }).__copiedText = text; return Promise.resolve(); } },
+      configurable: true,
+    });
+  });
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  await playGuess(page, solution.split(''));
+  await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole('button', { name: /Paylaş/ }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __copiedText?: string }).__copiedText)).toBeTruthy();
+
+  const copiedText = await page.evaluate(() => (window as unknown as { __copiedText: string }).__copiedText);
+  const headerLine = copiedText.split('\n')[0]!;
+  expect(headerLine.endsWith('· ipucu')).toBe(true);
+});
+
 test('a finished daily game survives a reload', async ({ page, api }) => {
   const solution = 'MASA';
   await api.stubDailyWord(4, { word: solution });

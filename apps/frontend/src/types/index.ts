@@ -128,6 +128,7 @@ export interface GameOverModalProps {
   onGoHome: () => void;
   sessionChallenge?: SessionChallenge;
   challengeUrl?: string;
+  hintUsed?: boolean;
 }
 
 export interface HomePageProps {
