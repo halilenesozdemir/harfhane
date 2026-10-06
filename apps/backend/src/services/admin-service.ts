@@ -13,8 +13,6 @@ import {
   adminBulkInsertWords,
   adminGetStats,
   adminAutoFillSchedule,
-  adminGetWordStats,
-  adminGetUsers,
   type ListWordsOptions,
   type BulkImportWord,
 } from '../repositories/admin-repository';
@@ -98,12 +96,4 @@ export async function autoFillDailySchedule(db: Env['DB'], days: number) {
   const from = getTodayString();
   const to = offsetDate(from, days);
   return adminAutoFillSchedule(db, from, to);
-}
-
-export async function getWordStats(db: Env['DB'], sort: 'played' | 'win_rate') {
-  return adminGetWordStats(db, sort);
-}
-
-export async function getUsers(db: Env['DB']) {
-  return adminGetUsers(db);
 }
