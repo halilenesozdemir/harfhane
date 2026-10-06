@@ -1,5 +1,5 @@
 import { expect, test } from './support/fixtures';
-import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen } from './support/game';
+import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen, waitForBoardReady } from './support/game';
 
 const DAILY_WORDS: Record<4 | 5 | 6, { solution: string; wrongGuess: string }> = {
   4: { solution: 'MASA', wrongGuess: 'KAPI' },
@@ -78,6 +78,28 @@ test('revealing the hint shows a letter pill and marks the board tile', async ({
   // Once a hint is revealed, the pill replaces the button entirely (no second
   // press is possible because there is no button left to press).
   await expect(hintButton).not.toBeVisible();
+});
+
+test('the hint only counts submitted guesses, not the unsubmitted current guess', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await waitForBoardReady(page);
+
+  // KAPAK already places K and A correctly, so the real leftmost-unsolved
+  // position is L at index 2 before anything else happens.
+  await playGuess(page, 'KAPAK'.split(''));
+
+  // Type "KAL" into the next row WITHOUT submitting. A hint computed over
+  // guesses + currentGuess would wrongly treat index 2 (L) as solved too and
+  // skip ahead to E; the real hint must still land on L.
+  await typeOnScreen(page, ['K', 'A', 'L']);
+
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  await expect(page.getByText('3. harf: L')).toBeVisible();
 });
 
 test('a hint survives a reload without granting a fresh one', async ({ page, api }) => {
