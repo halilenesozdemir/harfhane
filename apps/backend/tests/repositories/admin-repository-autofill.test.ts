@@ -51,4 +51,23 @@ describe('adminAutoFillSchedule', () => {
       .first<{ count: number }>();
     expect(row?.count).toBe(0);
   });
+
+  it('should never schedule an unlimited-pool word when filling the schedule', async () => {
+    await env.DB
+      .prepare(
+        `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+         VALUES ('UNLTD', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+      )
+      .run();
+
+    await adminAutoFillSchedule(env.DB, FROM, TO);
+
+    const row = await env.DB
+      .prepare(
+        `SELECT COUNT(*) as count FROM daily_words dw JOIN words w ON w.id = dw.word_id
+         WHERE w.pool = 'unlimited'`
+      )
+      .first<{ count: number }>();
+    expect(row?.count).toBe(0);
+  });
 });

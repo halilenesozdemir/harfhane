@@ -59,6 +59,19 @@ describe('findRandomWord', () => {
     const result = await findRandomWord(env.DB, 6);
     expect(result).toBeNull();
   });
+
+  it('draws from the unlimited pool when no daily-pool word exists for that length', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words
+        (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)
+       VALUES
+        ('TABANCA', '', '', 'isim', 7, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+    ).run();
+
+    const result = await findRandomWord(env.DB, 7);
+    expect(result).not.toBeNull();
+    expect(result!.entry.word).toBe('TABANCA');
+  });
 });
 
 describe('findWordById', () => {

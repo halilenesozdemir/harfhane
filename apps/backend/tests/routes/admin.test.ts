@@ -83,4 +83,88 @@ describe('POST /api/admin/import', () => {
     expect(row?.source).toBe('review-pipeline');
     expect(row?.license).toBe('cc-by-sa');
   });
+
+  it('accepts an unlimited-pool word with no meaning or context', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({
+        words: [{ word: 'TOPLU', category: 'isim', pool: 'unlimited' }],
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const row = await env.DB
+      .prepare('SELECT pool, meaning, context FROM words WHERE word = ?')
+      .bind('TOPLU')
+      .first<{ pool: string; meaning: string; context: string }>();
+
+    expect(row?.pool).toBe('unlimited');
+    expect(row?.meaning).toBe('');
+    expect(row?.context).toBe('');
+  });
+
+  it('defaults to the daily pool when none is given', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ words: [{ word: 'SEHER', category: 'isim' }] }),
+    });
+
+    expect(res.status).toBe(200);
+    const row = await env.DB
+      .prepare('SELECT pool FROM words WHERE word = ?')
+      .bind('SEHER')
+      .first<{ pool: string }>();
+    expect(row?.pool).toBe('daily');
+  });
+});
+
+describe('POST /api/admin/words', () => {
+  it('accepts a daily-pool word with no meaning or context', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/words', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ word: 'YAZIT', category: 'isim' }),
+    });
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { data: { word: string; meaning: string } };
+    expect(body.data.word).toBe('YAZIT');
+    expect(body.data.meaning).toBe('');
+  });
+});
+
+describe('POST /api/admin/daily', () => {
+  it('refuses to schedule an unlimited-pool word', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUNA', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUNA').first<{ id: number }>();
+
+    const res = await SELF.fetch('http://example.com/api/admin/daily', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ word_id: wordRow?.id, date: '2026-05-01' }),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('schedules a daily-pool word', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUNB', 5, 'test', 'test', 'approved', 1, 1, 'daily')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUNB').first<{ id: number }>();
+
+    const res = await SELF.fetch('http://example.com/api/admin/daily', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ word_id: wordRow?.id, date: '2026-05-02' }),
+    });
+
+    expect(res.status).toBe(201);
+  });
 });

@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from '../helpers/db';
-import { adminBulkInsertWords } from '../../src/repositories/admin-repository';
+import {
+  adminBulkInsertWords,
+  adminFindWordById,
+  adminScheduleDailyWord,
+} from '../../src/repositories/admin-repository';
 
 beforeEach(async () => {
   await applySchema(env.DB);
@@ -61,5 +65,71 @@ describe('adminBulkInsertWords', () => {
 
     expect(result.inserted).toBe(0);
     expect(result.skipped).toBe(1);
+  });
+
+  it('defaults a word with no pool given to the daily pool', async () => {
+    await adminBulkInsertWords(env.DB, [
+      { word: 'ORMAN', meaning: '', context: '', category: 'isim' },
+    ]);
+
+    const row = await env.DB
+      .prepare('SELECT pool FROM words WHERE word = ?')
+      .bind('ORMAN')
+      .first<{ pool: string }>();
+
+    expect(row?.pool).toBe('daily');
+  });
+
+  it('stores the given pool and allows empty meaning for it', async () => {
+    const result = await adminBulkInsertWords(env.DB, [
+      { word: 'TEPSİ', meaning: '', context: '', category: 'isim', pool: 'unlimited' },
+    ]);
+
+    expect(result.inserted).toBe(1);
+    const row = await env.DB
+      .prepare('SELECT pool, meaning FROM words WHERE word = ?')
+      .bind('TEPSİ')
+      .first<{ pool: string; meaning: string }>();
+
+    expect(row?.pool).toBe('unlimited');
+    expect(row?.meaning).toBe('');
+  });
+});
+
+describe('adminScheduleDailyWord', () => {
+  async function insertWord(pool: 'daily' | 'unlimited'): Promise<number> {
+    const result = await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('BALON', 5, 'test', 'test', 'approved', 1, 1, ?)
+       RETURNING id`
+    )
+      .bind(pool)
+      .first<{ id: number }>();
+    if (!result) throw new Error('insert failed');
+    return result.id;
+  }
+
+  it('schedules a daily-pool word', async () => {
+    const id = await insertWord('daily');
+    await expect(adminScheduleDailyWord(env.DB, id, '2026-04-01', 5)).resolves.toBeTypeOf('number');
+  });
+
+  it('refuses to schedule an unlimited-pool word', async () => {
+    const id = await insertWord('unlimited');
+    await expect(adminScheduleDailyWord(env.DB, id, '2026-04-02', 5)).rejects.toThrow();
+  });
+});
+
+describe('adminFindWordById', () => {
+  it('includes the word pool', async () => {
+    const id = await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('SEPET', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')
+       RETURNING id`
+    ).first<{ id: number }>();
+    if (!id) throw new Error('insert failed');
+
+    const word = await adminFindWordById(env.DB, id.id);
+    expect(word?.pool).toBe('unlimited');
   });
 });

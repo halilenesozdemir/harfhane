@@ -1,6 +1,6 @@
 import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
-import { NOT_FOUND } from '../errors/api-error';
+import { NOT_FOUND, CONFLICT } from '../errors/api-error';
 import {
   adminFindWords,
   adminFindWordById,
@@ -74,6 +74,7 @@ export async function getDailySchedule(db: Env['DB'], from?: string, to?: string
 export async function scheduleDailyWord(db: Env['DB'], wordId: number, date: string) {
   const word = await adminFindWordById(db, wordId);
   if (!word) throw NOT_FOUND('Word');
+  if (word.pool !== 'daily') throw CONFLICT('Only daily-pool words can be scheduled');
   const length = word.word.length;
   const id = await adminScheduleDailyWord(db, wordId, date, length);
   return { id, word_id: wordId, date, word: word.word, length };

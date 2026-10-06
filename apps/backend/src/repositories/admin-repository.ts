@@ -10,6 +10,7 @@ export interface WordRow {
   category: 'isim' | 'sıfat' | 'fiil';
   is_active: number;
   created_at: string;
+  pool: 'daily' | 'unlimited';
 }
 
 export interface DailyWordRow {
@@ -64,7 +65,7 @@ export async function adminFindWords(
 
   const batchResults = await db.batch([
     db.prepare(
-      `SELECT id, word, meaning, context, category, is_active, created_at
+      `SELECT id, word, meaning, context, category, is_active, created_at, pool
        FROM words ${where}
        ${orderBy}
        LIMIT ? OFFSET ?`
@@ -86,7 +87,7 @@ export async function adminFindWordById(
   id: number
 ): Promise<WordRow | null> {
   return db
-    .prepare('SELECT id, word, meaning, context, category, is_active, created_at FROM words WHERE id = ?')
+    .prepare('SELECT id, word, meaning, context, category, is_active, created_at, pool FROM words WHERE id = ?')
     .bind(id)
     .first<WordRow>();
 }
@@ -229,6 +230,7 @@ export async function adminGetStats(db: Env['DB'], todayDate: string): Promise<A
 
 const DEFAULT_IMPORT_SOURCE = 'admin';
 const DEFAULT_IMPORT_LICENSE = 'owner-curated';
+const DEFAULT_IMPORT_POOL = 'daily';
 
 export interface BulkImportWord {
   word: string;
@@ -237,6 +239,7 @@ export interface BulkImportWord {
   category: string;
   source?: string;
   license?: string;
+  pool?: 'daily' | 'unlimited';
 }
 
 export async function adminBulkInsertWords(
@@ -247,8 +250,8 @@ export async function adminBulkInsertWords(
     db
       .prepare(
         `INSERT OR IGNORE INTO words
-          (word, meaning, context, category, length, source, license, status, family_safe, approved_at, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', 1, datetime('now'), 1)`
+          (word, meaning, context, category, length, source, license, status, family_safe, approved_at, is_active, pool)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', 1, datetime('now'), 1, ?)`
       )
       .bind(
         w.word,
@@ -257,7 +260,8 @@ export async function adminBulkInsertWords(
         w.category,
         w.word.length,
         w.source ?? DEFAULT_IMPORT_SOURCE,
-        w.license ?? DEFAULT_IMPORT_LICENSE
+        w.license ?? DEFAULT_IMPORT_LICENSE,
+        w.pool ?? DEFAULT_IMPORT_POOL
       )
   );
 
@@ -299,7 +303,9 @@ async function autoFillLength(
 ): Promise<{ scheduled: number; skipped: number }> {
   const [existingResult, activeResult] = await db.batch([
     db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
-    db.prepare("SELECT id FROM words WHERE is_active = 1 AND source != 'user' AND length = ?").bind(length),
+    db
+      .prepare("SELECT id FROM words WHERE is_active = 1 AND source != 'user' AND pool = 'daily' AND length = ?")
+      .bind(length),
   ]);
 
   const scheduledDates = new Set(
