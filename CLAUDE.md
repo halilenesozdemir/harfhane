@@ -28,7 +28,10 @@ Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tes
 
 ## Conventions
 
-- Tests: TDD; names are English, `should <behavior> when <condition>`.
+- Tests: TDD; names are English, `should <behavior> when <condition>`. A test that proves an
+  approved plan's acceptance example adds the id to the name: `should <behavior> when <condition>
+  (<plan>-AE<n>)` (e.g. `should fail when AE has no test (008-AE4)`); `pnpm run check:ac` enforces
+  this (`scripts/check-ac-coverage.mjs`).
 - Commits: Conventional Commits whose scope is the changed path, e.g. `fix(repositories/admin-repository.ts): include length in daily word insert`.
 - PRs: at most 500 changed lines, 15 files, 10 commits; split otherwise. Body has Summary, Verification (evidence, gate result) and Not covered.
 
