@@ -36,7 +36,11 @@
       "ignoreDependencies": ["expo-updates", "expo-system-ui"]
     },
     "packages/shared": {
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      // This package's entry file is its public API surface for the other
+      // workspaces; knip otherwise assumes every entry export is used by
+      // definition and never flags a dead one.
+      "includeEntryExports": true
     },
     "packages/ui-tokens": {
       "project": ["src/**/*.ts"]
