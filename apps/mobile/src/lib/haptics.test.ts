@@ -43,4 +43,9 @@ describe('haptics', () => {
     await reject(false);
     expect(performAndroidHapticsAsync).not.toHaveBeenCalled();
   });
+
+  it('should not throw when the device has no haptics engine', async () => {
+    performAndroidHapticsAsync.mockRejectedValueOnce(new Error('no haptics engine'));
+    await expect(keyTap(true)).resolves.toBeUndefined();
+  });
 });

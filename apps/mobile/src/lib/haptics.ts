@@ -2,7 +2,11 @@ import { AndroidHaptics, performAndroidHapticsAsync } from 'expo-haptics';
 
 async function performHaptic(type: AndroidHaptics, isEnabled: boolean): Promise<void> {
   if (!isEnabled) return;
-  await performAndroidHapticsAsync(type);
+  try {
+    await performAndroidHapticsAsync(type);
+  } catch {
+    // A missing/unsupported haptics engine on a device should never crash the game.
+  }
 }
 
 /** Light feedback for a single key press. No-op when haptics are disabled. */
