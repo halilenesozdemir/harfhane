@@ -5,9 +5,9 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { deviceStore } from './src/game/device-store';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
-import { usePlayableLengths } from './src/lib/playable-lengths';
+import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
 import { GameScreen } from './src/screens/GameScreen';
-import { DEFAULT_WORD_LENGTH, HomeScreen } from './src/screens/HomeScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 import { HowToPlayScreen } from './src/screens/HowToPlayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StatsContainer } from './src/screens/StatsContainer';
@@ -64,14 +64,11 @@ export function AppNavigator() {
   const insets = useSafeAreaInsets();
   const [state, dispatch] = useReducer(reduceNavigation, undefined, createInitialNavigationState);
   const playableLengths = usePlayableLengths(api, deviceStore);
-  // null means "no explicit pick yet"; falls back to the first playable
-  // length, and also whenever a previous pick stops being playable
-  // (derived, not an effect, to avoid a redundant render).
+  // null means "no explicit pick yet"; resolveSelectedLength also falls
+  // back whenever a previous pick stops being playable (derived, not an
+  // effect, to avoid a redundant render).
   const [pickedLength, setPickedLength] = useState<WordLength | null>(null);
-  // Prefer 5 when it's playable (matches the pre-feature default); otherwise
-  // the first playable length.
-  const fallbackLength = playableLengths.includes(DEFAULT_WORD_LENGTH) ? DEFAULT_WORD_LENGTH : playableLengths[0] ?? DEFAULT_WORD_LENGTH;
-  const selectedLength = pickedLength !== null && playableLengths.includes(pickedLength) ? pickedLength : fallbackLength;
+  const selectedLength = resolveSelectedLength(pickedLength, playableLengths);
   const route = currentRoute(state);
 
   const handleHardwareBack = useCallback(() => {

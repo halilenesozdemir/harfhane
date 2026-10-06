@@ -118,7 +118,7 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
   });
 
-  it('should hide the unlimited-mode length picker when only one length is playable', async () => {
+  it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
     await renderWithTheme(
       <HomeScreen
         selectedLength={5}
