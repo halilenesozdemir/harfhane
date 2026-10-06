@@ -33,4 +33,7 @@ describe('parsePlayableLengths', () => {
   it('should default to [5] when every value is invalid', () => {
     expect(parsePlayableLengths('7,0,abc')).toEqual([5]);
   });
+  it('should drop values with trailing junk or decimals when parsing', () => {
+    expect(parsePlayableLengths('5abc,4.9,6')).toEqual([6]);
+  });
 });

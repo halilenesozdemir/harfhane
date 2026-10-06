@@ -16,7 +16,7 @@ export function parsePlayableLengths(raw: string | undefined): ScheduledWordLeng
 
   const parsed = raw
     .split(',')
-    .map((part) => Number.parseInt(part.trim(), 10))
+    .map((part) => Number(part.trim()))
     .filter(isScheduledLength);
 
   const unique = Array.from(new Set(parsed)).sort((a, b) => a - b);

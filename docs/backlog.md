@@ -8,10 +8,19 @@ end for the MVP (owner decision 2026-10-05: no accounts). Every player is now an
 longer written at all — the backend only serves daily/random/validate word endpoints and the admin panel.
 - Decide on a cookie-free metric, e.g. Cloudflare Web Analytics, if usage numbers are wanted.
 - The privacy policy must stay accurate (no accounts, no server-side game history).
-- A later migration (0002) drops the now-unused tables (`users`, `game_results`, `badges`, `user_xp`,
-  `user_badges`, `push_subscriptions`, `streak_freezes`, `password_reset_tokens`, `duels`); this unit intentionally
-  left the schema and `apps/backend/migrations/` legacy folder alone.
 - If accounts return later (Faz 3), re-plan mobile auth/push from scratch rather than reviving the deleted code.
+
+## Drop migration: every table left over from removed features
+Code for these features is gone (accounts/auth/profile/results/XP/badges/freeze/leaderboard/push/email in #54,
+lists in #37/#42, tournaments in #40, duels in #54), but deleting code does not drop schema. Drop, in one
+migration (numbered after Plan 008's `0002_word_pools.sql`), every table `apps/backend/db/migrations/0001_baseline.sql` still carries for them: `users`,
+`game_results`, `badges`, `user_xp`, `user_badges`, `push_subscriptions`, `streak_freezes`,
+`password_reset_tokens`, `duels`, `word_lists`, `word_list_words`, `list_likes`, `list_comments`,
+`tournament_results`. Also add the guard-rail changes already scoped for this same migration (drop the
+`source = 'user'` escape in the `words` CHECK, a `BEFORE UPDATE` guard on `daily_words`, block deactivating a
+word scheduled in the future, refuse activating a `rejected` word).
+- Writing the migration file is agent work. Applying it to the remote database needs explicit owner approval
+  (Invariant 4) — remote D1 writes are never done without it.
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
@@ -81,3 +90,39 @@ Seen while removing the tournament feature (2026-10-05); not fixed there to keep
 grid, divider and footer text with `#538d4e` (the old Wordle-tile green) instead of the
 Harfhane brand token (`rgb(194 65 12)` / `#c2410c`). Regenerate `og-image.svg`/`og-image.png`
 with the brand token colors when a design pass is budgeted for it.
+
+## Architecture review findings (2026-10-05)
+Four read-only reviews (system, backend, frontend, product) after the MVP was cut to daily + unlimited.
+Items already in flight or already decided are left out: backend Turkey-day dates, Playwright e2e and docs
+cleanup are in flight; auth hardening landed in #46; purchase-without-account, per-length visibility and the
+self-healing schedule are now owner decisions recorded in `docs/plans/` and `docs/roadmap.md`, not open
+backlog items; the further scope cuts considered here (accounts, XP/badges/freeze/leaderboard) were decided
+and already removed end to end in #54.
+
+### Needs the owner
+- **Rate limiting that works.** `apps/backend/src/middleware/rate-limiter.ts` keeps counts in a per-isolate
+  `Map`, so limits don't hold across Workers isolates; `/words/validate` is also counted twice. Move to the
+  Workers Rate Limiting binding or a WAF rule (wrangler.toml / dashboard change).
+- **Admin plane.** One static secret in `sessionStorage` (now compared in constant time, #46),
+  no rate limit on `/api/admin/*`. Put Cloudflare Access in front of `/admin` and `/api/admin/*`.
+
+### Agent work, no owner needed
+- **Deploy stops on pending migrations.** Deploys now wait for CI, smoke-test `/api/health` and roll back
+  (#53). Still open: stop the backend deploy when `wrangler d1 migrations list --remote` shows pending
+  migrations.
+- **Observability.** No `[observability]` in wrangler.toml; `onError` (`apps/backend/src/index.ts`) and the
+  cron's `Promise.allSettled` swallow errors with no log. Enable Workers Logs, add one logger module exempt
+  from the no-console lint rule, log errors and cron results, ping a heartbeat at the end of the cron.
+- **`/api/config`.** Shipped APKs can't be forced to update: expose `minSupportedVersion` and feature flags
+  (Invariant 8 needs a remote ads flag), and move response schemas into `packages/shared`. (Active-length
+  reporting itself is covered by Plan 008 U1–U3.)
+- **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
+  `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
+  version the storage schema, key daily saves by the server's `date`.
+- **Deletions.** `apps/frontend/public/_worker.js` is now a passthrough that forces Pages Functions mode;
+  `/api/words/challenge/:wordId` lets anyone walk the answer pool by id; root TDK scrape files (`tdk-seed.sql`,
+  `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`) conflict with Invariant 3.
+- **Web player experience.** `min-h-screen` instead of `dvh` on game pages; no safe-area padding under the
+  keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
+  announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
+  player bundle (`App.tsx`); `/admin` lacks `noindex`.

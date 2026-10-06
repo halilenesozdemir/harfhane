@@ -78,11 +78,12 @@ describe('POST /api/words/validate', () => {
 });
 
 describe('GET /api/words/lengths', () => {
-  it('returns the playable lengths from the PLAYABLE_WORD_LENGTHS var', async () => {
+  it('should return the PLAYABLE_WORD_LENGTHS var when it is set', async () => {
     const res = await SELF.fetch('http://example.com/api/words/lengths');
     expect(res.status).toBe(200);
     const body = await res.json() as { data: { lengths: number[] } };
-    expect(body.data.lengths).toEqual([5]);
+    // vitest.config.ts binds "6,5", which differs from the [5] default, so this proves the var is read.
+    expect(body.data.lengths).toEqual([5, 6]);
   });
 });
 
