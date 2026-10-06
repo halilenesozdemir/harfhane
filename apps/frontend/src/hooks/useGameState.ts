@@ -189,5 +189,3 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
     wordId,
   };
 };
-
-export default useGameState;

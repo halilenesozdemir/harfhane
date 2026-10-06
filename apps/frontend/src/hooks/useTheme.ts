@@ -100,5 +100,3 @@ export const useTheme = (): ThemeContextValue => {
     setHighContrast,
   };
 };
-
-export default useTheme;

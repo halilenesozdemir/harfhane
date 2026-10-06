@@ -4,7 +4,6 @@ import type {
   RandomWordResponse,
   ValidateWordResponse,
   ApiError,
-  WordEntry,
 } from '@harfhane/shared';
 
 const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
@@ -38,10 +37,6 @@ export function fetchDailyWord(length?: number): Promise<DailyWordResponse> {
 export function fetchRandomWord(length?: number): Promise<RandomWordResponse> {
   const params = length && length !== 5 ? `?length=${length}` : '';
   return request<RandomWordResponse>(`/words/random${params}`);
-}
-
-export function fetchWordById(wordId: number): Promise<{ word: WordEntry; wordId: number }> {
-  return request<{ word: WordEntry; wordId: number }>(`/words/challenge/${wordId}`);
 }
 
 export function fetchPlayableLengths(): Promise<PlayableLengthsResponse> {

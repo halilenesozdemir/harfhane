@@ -1,5 +1,5 @@
 import type { WordEntry } from '@harfhane/shared';
-export type { WordEntry, WordData } from '@harfhane/shared';
+export type { WordEntry } from '@harfhane/shared';
 export type { TileStatus, TimeCountdown } from '@harfhane/shared';
 import type { TileStatus } from '@harfhane/shared';
 
@@ -130,12 +130,6 @@ export interface GameOverModalProps {
 
 export interface HomePageProps {
   onSelectMode: (mode: GameMode, wordLength: WordLength) => void;
-}
-
-export interface GameProps {
-  mode: GameMode;
-  wordLength: WordLength;
-  onGoHome: () => void;
 }
 
 export interface UseGameStateReturn {
