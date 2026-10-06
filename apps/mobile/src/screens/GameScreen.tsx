@@ -60,9 +60,12 @@ function GameBoard({ session, mode, game, hint, colors }: GameBoardProps) {
         currentGuess={session.game.currentGuess}
         wordLength={session.solution.length}
         hints={hint.hints}
+        isPlaying={!isFinished}
       />
       <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
-      {mode === 'daily' && <HintControl canReveal={hint.canReveal} hints={hint.hints} onReveal={hint.revealHint} />}
+      {mode === 'daily' && !isFinished && (
+        <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
+      )}
       {mode === 'unlimited' && isFinished && <ActionButton label="Yeni kelime" onPress={game.startNewGame} colors={colors} />}
       <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={game.onSubmit} />
     </>

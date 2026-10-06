@@ -6,6 +6,7 @@ import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 export interface HintControlProps {
   readonly canReveal: boolean;
   readonly hints: readonly LetterHint[];
+  readonly isUsed: boolean;
   readonly onReveal: () => void;
 }
 
@@ -17,28 +18,31 @@ function hintLineLabel(hint: LetterHint): string {
   return `${hint.position + 1}. harf: ${hint.letter}`;
 }
 
-export function HintControl({ canReveal, hints, onReveal }: HintControlProps) {
+// Once a hint reveals, the pill with its letter takes the button's place (parity with web); the
+// disabled "İpucu kullanıldı" button only ever reappears as a fallback if a position was used
+// but, for some reason, could not be rendered as hint text (e.g. it fell outside the solution).
+export function HintControl({ canReveal, hints, isUsed, onReveal }: HintControlProps) {
   const { colors } = useTheme();
-  const label = canReveal ? LABEL_AVAILABLE : LABEL_USED;
+  if (hints.length > 0) {
+    return (
+      <Text testID="hint-text" style={[styles.hintText, { color: colors.textMuted }]}>
+        {hints.map(hintLineLabel).join(', ')}
+      </Text>
+    );
+  }
+  const label = isUsed ? LABEL_USED : LABEL_AVAILABLE;
   return (
-    <>
-      <Pressable
-        testID="hint-button"
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ disabled: !canReveal }}
-        disabled={!canReveal}
-        onPress={onReveal}
-        style={[styles.button, { borderColor: colors.brand, opacity: canReveal ? 1 : DISABLED_OPACITY }]}
-      >
-        <Text style={[styles.label, { color: colors.brand }]}>{label}</Text>
-      </Pressable>
-      {hints.length > 0 && (
-        <Text testID="hint-text" style={[styles.hintText, { color: colors.textMuted }]}>
-          {hints.map(hintLineLabel).join(', ')}
-        </Text>
-      )}
-    </>
+    <Pressable
+      testID="hint-button"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !canReveal }}
+      disabled={!canReveal}
+      onPress={onReveal}
+      style={[styles.button, { borderColor: colors.brand, opacity: canReveal ? 1 : DISABLED_OPACITY }]}
+    >
+      <Text style={[styles.label, { color: colors.brand }]}>{label}</Text>
+    </Pressable>
   );
 }
 

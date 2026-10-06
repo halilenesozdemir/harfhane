@@ -79,8 +79,13 @@ describe('hint storage', () => {
     expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
   });
 
-  it('should return no revealed positions when a position is negative or not an integer', async () => {
-    const store = createMemoryStore({ [HINT_KEY]: '[-1, 2.5]' });
+  it('should return no revealed positions when a position is negative', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '[-1]' });
+    expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
+  });
+
+  it('should return no revealed positions when a position is not an integer', async () => {
+    const store = createMemoryStore({ [HINT_KEY]: '[2.5]' });
     expect(await loadRevealedHints(store, HINT_KEY, HINT_WORD_LENGTH)).toEqual([]);
   });
 

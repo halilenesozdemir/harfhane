@@ -2,28 +2,36 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createMemoryStore } from '../test-utils/render-with-theme';
 import { loadRevealedHints, saveRevealedHints } from './game-storage';
 import { useHint } from './useHint';
+import type { KeyValueStore } from './game-storage';
 
 const TODAY = '2026-10-05';
 const HINT_KEY = `harfhane:hint:anon:daily:${TODAY}:5`;
+
+function createDelayedStore(): { store: KeyValueStore; resolveLoad: (value: string | null) => void; setItem: jest.Mock } {
+  let resolveLoad: (value: string | null) => void = () => undefined;
+  const setItem = jest.fn().mockResolvedValue(undefined);
+  const store: KeyValueStore = {
+    getItem: () => new Promise((resolve) => { resolveLoad = resolve; }),
+    setItem,
+  };
+  return { store, resolveLoad: (value) => resolveLoad(value), setItem };
+}
 
 describe('useHint', () => {
   it('should reveal a letter at an unsolved position when the answer is KALEM and K and A are green (008-AE7)', async () => {
     const store = createMemoryStore();
     const { result } = await renderHook(() =>
-      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: ['KALİP'] }),
+      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: ['KAPAK'] }),
     );
     expect(result.current.canReveal).toBe(true);
     await act(async () => result.current.revealHint());
-    expect(result.current.hints).toHaveLength(1);
-    const [hint] = result.current.hints;
-    expect(['L', 'E', 'M']).toContain(hint.letter);
-    expect(hint.position).toBeGreaterThanOrEqual(2);
+    expect(result.current.hints).toEqual([{ position: 2, letter: 'L' }]);
   });
 
   it('should do nothing on a second press once the free daily allowance is used (008-AE7)', async () => {
     const store = createMemoryStore();
     const { result } = await renderHook(() =>
-      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: ['KALİP'] }),
+      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: ['KAPAK'] }),
     );
     await act(async () => result.current.revealHint());
     const firstHints = result.current.hints;
@@ -87,5 +95,26 @@ describe('useHint', () => {
     );
     await waitFor(() => expect(result.current.hints).toHaveLength(0));
     expect(result.current.canReveal).toBe(false);
+  });
+
+  it('should refuse to reveal and never overwrite storage until the stored positions have finished loading', async () => {
+    const { store, resolveLoad, setItem } = createDelayedStore();
+    const { result } = await renderHook(() =>
+      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: [] }),
+    );
+
+    // The load is still pending: an early tap must be a no-op, not a second hint.
+    expect(result.current.canReveal).toBe(false);
+    await act(async () => result.current.revealHint());
+    expect(result.current.hints).toHaveLength(0);
+    expect(setItem).not.toHaveBeenCalled();
+
+    await act(async () => resolveLoad(JSON.stringify([0])));
+    await waitFor(() => expect(result.current.hints).toHaveLength(1));
+
+    // Once loaded, position 0 was already used by (hypothetically) a previous session.
+    expect(result.current.hints).toEqual([{ position: 0, letter: 'K' }]);
+    expect(result.current.canReveal).toBe(false);
+    expect(setItem).not.toHaveBeenCalled();
   });
 });

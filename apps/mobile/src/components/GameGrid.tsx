@@ -8,6 +8,9 @@ export interface GameGridProps {
   readonly currentGuess: string;
   readonly wordLength: number;
   readonly hints?: readonly LetterHint[];
+  // A hint only ever marks the active (still-playable) row; once the game is won or lost that
+  // row is just a blank trailing row and must not keep showing a placeholder letter.
+  readonly isPlaying?: boolean;
 }
 
 const MAX_GUESSES = 6;
@@ -49,11 +52,11 @@ function GameRow({ rowIndex, letters, evaluation, wordLength, hints }: GameRowPr
   return <View style={styles.row}>{tiles}</View>;
 }
 
-export function GameGrid({ guesses, evaluations, currentGuess, wordLength, hints }: GameGridProps) {
+export function GameGrid({ guesses, evaluations, currentGuess, wordLength, hints, isPlaying = true }: GameGridProps) {
   const rows = [];
   for (let rowIndex = 0; rowIndex < MAX_GUESSES; rowIndex++) {
     const letters = getRowLetters(rowIndex, guesses, currentGuess);
-    const rowHints = rowIndex === guesses.length ? hints : undefined;
+    const rowHints = isPlaying && rowIndex === guesses.length ? hints : undefined;
     rows.push(
       <GameRow
         key={rowIndex}

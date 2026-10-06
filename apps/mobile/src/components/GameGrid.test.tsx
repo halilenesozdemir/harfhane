@@ -52,6 +52,13 @@ describe('GameGrid', () => {
     expect(screen.getByTestId('tile-0-0').props.accessibilityLabel).toBe('K');
   });
 
+  it('should not mark a hint tile once the game has finished, even with guesses left unused', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={[]} evaluations={[]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 2, letter: 'L' }]} isPlaying={false} />,
+    );
+    expect(screen.getByTestId('tile-0-2').props.accessibilityLabel).toBe('boş');
+  });
+
   it('should leave rows after the current guess empty', async () => {
     await renderWithTheme(
       <GameGrid guesses={['HARFİ']} evaluations={[['correct', 'correct', 'correct', 'correct', 'absent']]} currentGuess="AB" wordLength={WORD_LENGTH} />,

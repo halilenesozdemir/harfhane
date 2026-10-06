@@ -16,10 +16,12 @@ function createApi(): ApiClient {
   };
 }
 
-async function pressKeys(labels: readonly string[]) {
-  for (const label of labels) {
+// By testID, not label: a repeated letter (e.g. KAPAK) fills a tile whose own accessibility
+// label is that same bare letter once typed, which would collide with the keyboard key's label.
+async function pressKeys(values: readonly string[]) {
+  for (const value of values) {
     await act(async () => {
-      fireEvent.press(screen.getByLabelText(label));
+      fireEvent.press(screen.getByTestId(`key-${value}`));
     });
   }
 }
@@ -29,14 +31,14 @@ describe('GameScreen', () => {
     const onBack = jest.fn();
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={onBack} api={createApi()} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'Gönder']);
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
     expect(await screen.findByText('Muhteşem!')).toBeTruthy();
   });
 
   it('should offer a new word when an unlimited game is over', async () => {
     await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'İ', 'T', 'A', 'P', 'Gönder']);
+    await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
     expect(await screen.findByText('Yeni kelime')).toBeTruthy();
   });
 
@@ -44,7 +46,7 @@ describe('GameScreen', () => {
     const store = createMemoryStore();
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'Gönder']);
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
     await screen.findByText('Muhteşem!');
     await waitFor(async () => {
       const stats = await loadDailyStats(store, 5);
@@ -60,15 +62,35 @@ describe('GameScreen', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('should reveal a letter and then disable the hint button on a daily game', async () => {
+  it('should replace the hint button with the revealed letter once pressed', async () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
     const hintButton = await screen.findByLabelText('İpucu göster');
     await act(async () => fireEvent.press(hintButton));
-    expect(await screen.findByLabelText('İpucu kullanıldı')).toBeTruthy();
-    expect(screen.getByLabelText('İpucu kullanıldı').props.accessibilityState?.disabled).toBe(true);
-    expect(screen.getByTestId('hint-text')).toHaveTextContent('1. harf: K');
-    await act(async () => fireEvent.press(screen.getByLabelText('İpucu kullanıldı')));
-    expect(screen.getByLabelText('İpucu kullanıldı')).toBeTruthy();
+    expect(await screen.findByTestId('hint-text')).toHaveTextContent('1. harf: K');
+    expect(screen.queryByTestId('hint-button')).toBeNull();
+    expect(screen.queryByLabelText('İpucu kullanıldı')).toBeNull();
+  });
+
+  it('should reveal L at tile-1-2 when K and A are green and do nothing on a second press (008-AE7)', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
+
+    const hintButton = await screen.findByLabelText('İpucu göster');
+    await act(async () => fireEvent.press(hintButton));
+
+    expect(screen.getByTestId('tile-1-2').props.accessibilityLabel).toBe('L, ipucu');
+    expect(await screen.findByTestId('hint-text')).toHaveTextContent('3. harf: L');
+    // The button is gone, so there is no way to press it a second time.
+    expect(screen.queryByTestId('hint-button')).toBeNull();
+  });
+
+  it('should ignore an unsubmitted current guess when choosing the hint position', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    const hintButton = await screen.findByLabelText('İpucu göster');
+    await act(async () => fireEvent.press(screen.getByLabelText('K')));
+    await act(async () => fireEvent.press(hintButton));
+    expect(await screen.findByTestId('hint-text')).toHaveTextContent('1. harf: K');
   });
 
   it('should show no hint control in unlimited mode', async () => {
@@ -92,10 +114,32 @@ describe('GameScreen', () => {
     const first = await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     const hintButton = await first.findByLabelText('İpucu göster');
     await act(async () => fireEvent.press(hintButton));
-    await first.findByLabelText('İpucu kullanıldı');
+    await first.findByTestId('hint-text');
     await act(async () => first.unmount());
 
     const reopened = await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
-    expect(await reopened.findByLabelText('İpucu kullanıldı')).toBeTruthy();
+    expect(await reopened.findByTestId('hint-text')).toHaveTextContent('1. harf: K');
+    expect(reopened.queryByLabelText('İpucu göster')).toBeNull();
+  });
+
+  it('should hide the hint control once the daily game is won', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await screen.findByText('Muhteşem!');
+    expect(screen.queryByTestId('hint-button')).toBeNull();
+    expect(screen.queryByTestId('hint-text')).toBeNull();
+    expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('boş');
+  });
+
+  it('should hide the hint control once the daily game is lost', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
+    }
+    expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
+    expect(screen.queryByTestId('hint-button')).toBeNull();
+    expect(screen.queryByTestId('hint-text')).toBeNull();
   });
 });
