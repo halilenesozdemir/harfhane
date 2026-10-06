@@ -16,8 +16,8 @@ Research: `docs/research/2026-10-06-word-supply-standards.md`. Owner decisions o
 after 3 years; unlimited mode gets its own larger pool; words carry no meaning or context at all (the hint
 reveals a letter instead, and may later become a supporter perk); no Wiktionary or other
 CC BY-SA sources. Later the same day the owner rejected SEKS, BEST and PART from the daily
-4-letter pool (`pool-4.txt` regenerated from `answer_pool.py`) and ESKORT and RAKI as answers
-(exact `blocklist.txt` entries).
+4-letter pool (`pool-4.txt` regenerated from `answer_pool.py`) and ESKORT, RAKI, BİRA, VİSKİ,
+VOTKA, STOP, START and TALK as answers (exact `blocklist.txt` entries).
 
 ## Requirements
 - R1. The backend decides which lengths are playable; web and mobile stop hard-coding `[4, 5, 6]`.
