@@ -14,6 +14,9 @@ database_name = "harfhane"
 database_id = "58cbee2e-aa45-4b66-90c7-f5daa798f5e5"
 migrations_dir = "db/migrations"
 
+[vars]
+PLAYABLE_WORD_LENGTHS = "5"
+
 [[routes]]
 pattern = "api.harfhane.app/*"
 zone_name = "harfhane.app"

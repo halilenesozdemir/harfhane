@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
-import { getDailyWord, getRandomWord, validateWord } from '../../src/services/word-service';
+import { getDailyWord, getPlayableLengths, getRandomWord, validateWord } from '../../src/services/word-service';
 import { ApiError } from '../../src/errors/api-error';
 import { applySchema, seedTestData } from '../helpers/db';
 
@@ -29,6 +29,28 @@ describe('getDailyWord', () => {
     await expect(getDailyWord(env.DB, 'not-a-date')).rejects.toMatchObject({
       code: 'INVALID_DATE',
       statusCode: 400,
+    });
+  });
+
+  describe('explicit future dates', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should throw NOT_FOUND when the requested date is after the Turkey day', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T12:00:00Z'));
+
+      await expect(getDailyWord(env.DB, '2026-01-01')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+
+    it('should return the word when the requested date is the Turkey day', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T21:00:00Z'));
+
+      const result = await getDailyWord(env.DB, '2026-01-01');
+
+      expect(result.word.word).toBe('KİTAP');
     });
   });
 
@@ -78,5 +100,15 @@ describe('validateWord', () => {
   it('normalises lowercase input', async () => {
     const result = await validateWord(env.DB, 'kalem');
     expect(result.isValid).toBe(true);
+  });
+});
+
+describe('getPlayableLengths', () => {
+  it('returns the parsed lengths from the var', () => {
+    expect(getPlayableLengths('4,6')).toEqual({ lengths: [4, 6] });
+  });
+
+  it('falls back to [5] when the var is missing', () => {
+    expect(getPlayableLengths(undefined)).toEqual({ lengths: [5] });
   });
 });
