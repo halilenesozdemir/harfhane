@@ -104,7 +104,10 @@ redesign once A-D's open PRs have merged.
   (R5, R6, AE4)
 - U5 (D, after U4). First-launch How to play. (R7, AE5)
 - U6 (A, after U1). `generateShareText` takes a hint flag; web and mobile pass it. (R8, AE6)
-- U7 (E, proposed, needs owner approval). Mobile UI standard redesign (R9, AE7). Starts only
+- U7 (E, approved by the owner 2026-10-07). Mobile UI standard redesign (R9, AE7). Owner choices:
+  home actions as top-bar icon buttons (not a bottom row); streak chip shown on home; Nunito added
+  for body text (`@expo-google-fonts/nunito`, new dependency approved); launcher icon also moves to
+  the 3D "H" tile; splash background stays cream. Starts only
   after U1-U6 have all merged (#87, #88, #89 and the not-yet-started U2, U5, U6), because it
   touches `GameScreen.tsx` (U2), `HowToPlayScreen.tsx` and `App.tsx` (U5) and `GameOverCard.tsx`
   (U1, U6). Ships as four PRs, strictly one after another (each stays under 15 files):
