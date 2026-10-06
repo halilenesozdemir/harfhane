@@ -40,7 +40,8 @@ answers either (exact `blocklist.txt` entries; `pool-4.txt`, `pool-5.txt`, `pool
   on web and mobile. Allowance (owner 2026-10-06): free players get 1 hint per daily game and none
   in unlimited; Supporters get 3 per daily game and 1 per unlimited game. The counts are named
   constants; the Supporter values take effect when the purchase lands (Plan 005, Phase 4). Hint use
-  is not shown in the share text or stats (`docs/research/2026-10-06-hint-economy.md`).
+  is not counted in stats. Share text: superseded by the owner on 2026-10-06 (late) — a used hint is
+  marked in the share text for fair comparison; built in Plan 011 R8.
 
 ## Acceptance examples
 - AE1 (R1). Given `PLAYABLE_WORD_LENGTHS = "5"`, `GET /api/words/lengths` returns `[5]`; the web home

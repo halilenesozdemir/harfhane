@@ -28,6 +28,7 @@ Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 - Plan 008 U1–U7, U9–U10: playable lengths, word pools, the 3-year repeat cooldown, the 180-day restock runway, and the letter hint (`docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`).
 - Plan 009 U1–U7, then U8 as the Phase 1 exit gate: AE traceability, Playwright journeys + axe, real-backend Playwright, Maestro on Android, property and mutation tests, knip and dependency-cruiser (`docs/plans/2026-10-06-009-test-e2e-quality-gates-plan.md`).
 - Plan 010: type strictness, branded types, ts-reset and the label eval gate (U5–U6 must land before any model-labelled unlimited batch is imported) (`docs/plans/2026-10-06-010-quality-types-label-evals-plan.md`).
+- Plan 011 U1–U5: mobile polish before the closed test — game-over card, tile animations, haptics and Baloo 2, splash hold, first-launch how-to-play (`docs/plans/2026-10-06-011-feat-mobile-polish-plan.md`, owner decisions 2026-10-06).
 - "Web cleanup before the shared engine" (`docs/backlog.md`) — the launch-sequencing ADR requires this done before Phase 2's content import.
 - Other shared/docs leftovers cleanup (`docs/backlog.md`).
 - The drop migration file (removed-feature tables, numbered after Plan 008's `0002_word_pools.sql` — not `0002` itself): writing it is agent work, done in this phase; applying it to the remote database needs the owner (Invariant 4) and does not block this phase.

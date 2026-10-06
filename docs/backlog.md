@@ -223,3 +223,9 @@ Workers + D1, React + Vite, Expo). Do it once Harfhane has shipped and the gates
 ADR, map every file as factory or product, extract the factory layer into a GitHub template repo and
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
+
+## Engagement ideas after launch (owner undecided, 2026-10-06)
+From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
+local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
+timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
+closed test; promote chosen items into a plan.
