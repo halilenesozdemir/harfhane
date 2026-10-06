@@ -32,8 +32,10 @@ CC BY-SA sources.
 - R6. The label validator needs only a decision (and a reason for reject/unsure) in both pools and
   writes word-only review files.
 - R7. The daily hint reveals one letter of the answer at a position the player has not yet solved,
-  once per daily game, on web and mobile. How many hints a player gets is a single constant so a
-  supporter perk can change it later (Plan 005).
+  on web and mobile. Allowance (owner 2026-10-06): free players get 1 hint per daily game and none
+  in unlimited; Supporters get 3 per daily game and 1 per unlimited game. The counts are named
+  constants; the Supporter values take effect when the purchase lands (Plan 005, Phase 4). Hint use
+  is not shown in the share text or stats (`docs/research/2026-10-06-hint-economy.md`).
 
 ## Acceptance examples
 - AE1 (R1). Given `PLAYABLE_WORD_LENGTHS = "5"`, `GET /api/words/lengths` returns `[5]`; the web home
@@ -89,7 +91,8 @@ group run in order.
   health per R4 (restock runway and status), cron alert includes restock. (R3, R4, AE4, AE5)
 - U7 (after U4). Script: `scripts/words/unlimited_pool.py` builds candidates per KTD5 and the pool
   file for labelling; README section. (R2)
-- U9 (after U4). Web: `useHint.ts` and `GameHint.tsx` reveal a letter per R7 (`HINTS_PER_DAILY_GAME = 1`). (R7, AE7)
+- U9 (after U4). Web: `useHint.ts` and `GameHint.tsx` reveal a letter per R7 (`FREE_DAILY_HINTS = 1`, `SUPPORTER_DAILY_HINTS = 3`,
+  `SUPPORTER_UNLIMITED_HINTS = 1`; only the free path is reachable until Plan 005). (R7, AE7)
 - U10 (after U3). Mobile: the same letter hint on the game screen. (R7)
 - U8 *(owner)*. Remote: apply `0002_word_pools.sql` to `harfhane` before importing (Invariant 4).
 
