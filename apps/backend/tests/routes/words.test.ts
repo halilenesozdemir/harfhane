@@ -40,6 +40,32 @@ describe('GET /api/words/random', () => {
     expect(body.data.word.word).toBeDefined();
     expect(body.data.word.meaning).toBeDefined();
   });
+
+  it('should serve an unlimited-pool word when no daily-pool word exists for that length (AE3)', async () => {
+    await env.DB
+      .prepare(
+        `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)
+         VALUES ('KAPLAN', '', '', 'isim', 6, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+      )
+      .run();
+
+    const autoFillRes = await SELF.fetch('http://example.com/api/admin/daily/auto-fill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': 'local-test-admin-secret' },
+      body: JSON.stringify({ days: 5 }),
+    });
+    expect(autoFillRes.status).toBe(200);
+
+    const scheduledRow = await env.DB
+      .prepare('SELECT COUNT(*) as count FROM daily_words WHERE length = 6')
+      .first<{ count: number }>();
+    expect(scheduledRow?.count).toBe(0);
+
+    const randomRes = await SELF.fetch('http://example.com/api/words/random?length=6');
+    expect(randomRes.status).toBe(200);
+    const body = (await randomRes.json()) as { data: { word: { word: string } } };
+    expect(body.data.word.word).toBe('KAPLAN');
+  });
 });
 
 describe('POST /api/words/validate', () => {

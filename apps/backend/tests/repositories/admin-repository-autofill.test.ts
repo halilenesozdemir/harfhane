@@ -60,7 +60,7 @@ describe('adminAutoFillSchedule with full stock', () => {
     expect(row?.count).toBe(0);
   });
 
-  it('should never schedule an unlimited-pool word when filling the schedule', async () => {
+  it('should not schedule an unlimited-pool word when filling the schedule', async () => {
     await env.DB
       .prepare(
         `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)

@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 
 describe('words.pool column', () => {
-  it('defaults new words to the daily pool', async () => {
+  it('should default a new word to the daily pool when pool is not given', async () => {
     await env.DB.prepare(
       `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
        VALUES ('KARGA', 5, 'test', 'test', 'approved', 1, 1)`
@@ -44,13 +44,13 @@ describe('words.pool column', () => {
     expect(row?.pool).toBe('daily');
   });
 
-  it('rejects a pool value outside daily/unlimited', async () => {
+  it('should reject the insert when pool is outside daily/unlimited', async () => {
     await expect(insertWord({ word: 'YANLI', pool: 'other' })).rejects.toThrow();
   });
 });
 
 describe('daily_words_require_active_word trigger', () => {
-  it('allows scheduling an approved, family-safe, active, daily-pool word', async () => {
+  it('should allow scheduling when the word is approved, family-safe, active and daily-pool', async () => {
     const wordId = await insertWord({ word: 'DOGRU', pool: 'daily' });
 
     await expect(
@@ -60,7 +60,7 @@ describe('daily_words_require_active_word trigger', () => {
     ).resolves.toBeDefined();
   });
 
-  it('rejects scheduling an unlimited-pool word', async () => {
+  it('should reject scheduling when the word is unlimited-pool', async () => {
     const wordId = await insertWord({ word: 'SINIR', pool: 'unlimited' });
 
     await expect(
@@ -70,7 +70,7 @@ describe('daily_words_require_active_word trigger', () => {
     ).rejects.toThrow();
   });
 
-  it('still rejects a draft word regardless of pool', async () => {
+  it('should reject scheduling when the word is draft regardless of pool', async () => {
     // source='user' so the table CHECK permits is_active=1 without status='approved'.
     const wordId = await insertWord({ word: 'TASLA', status: 'draft', pool: 'daily', source: 'user' });
 
@@ -81,7 +81,7 @@ describe('daily_words_require_active_word trigger', () => {
     ).rejects.toThrow();
   });
 
-  it('still rejects a word that is not family-safe regardless of pool', async () => {
+  it('should reject scheduling when the word is not family-safe regardless of pool', async () => {
     const wordId = await insertWord({ word: 'ACIMA', familySafe: 0, pool: 'daily', source: 'user' });
 
     await expect(
@@ -91,7 +91,7 @@ describe('daily_words_require_active_word trigger', () => {
     ).rejects.toThrow();
   });
 
-  it('still rejects an inactive word regardless of pool', async () => {
+  it('should reject scheduling when the word is inactive regardless of pool', async () => {
     const wordId = await insertWord({ word: 'ARASI', isActive: 0, pool: 'daily' });
 
     await expect(

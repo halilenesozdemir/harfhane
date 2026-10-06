@@ -84,7 +84,7 @@ describe('POST /api/admin/import', () => {
     expect(row?.license).toBe('cc-by-sa');
   });
 
-  it('accepts an unlimited-pool word with no meaning or context', async () => {
+  it('should accept an unlimited-pool word when meaning and context are empty', async () => {
     const res = await SELF.fetch('http://example.com/api/admin/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
@@ -104,7 +104,7 @@ describe('POST /api/admin/import', () => {
     expect(row?.context).toBe('');
   });
 
-  it('defaults to the daily pool when none is given', async () => {
+  it('should default to the daily pool when none is given', async () => {
     const res = await SELF.fetch('http://example.com/api/admin/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
@@ -121,7 +121,7 @@ describe('POST /api/admin/import', () => {
 });
 
 describe('POST /api/admin/words', () => {
-  it('accepts a daily-pool word with no meaning or context', async () => {
+  it('should accept a daily-pool word when meaning and context are empty', async () => {
     const res = await SELF.fetch('http://example.com/api/admin/words', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
@@ -136,7 +136,7 @@ describe('POST /api/admin/words', () => {
 });
 
 describe('POST /api/admin/daily', () => {
-  it('refuses to schedule an unlimited-pool word', async () => {
+  it('should return 409 when scheduling an unlimited-pool word', async () => {
     await env.DB.prepare(
       `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
        VALUES ('OYUNA', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')`
@@ -152,7 +152,7 @@ describe('POST /api/admin/daily', () => {
     expect(res.status).toBe(409);
   });
 
-  it('schedules a daily-pool word', async () => {
+  it('should return 201 when scheduling a daily-pool word', async () => {
     await env.DB.prepare(
       `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
        VALUES ('OYUNB', 5, 'test', 'test', 'approved', 1, 1, 'daily')`

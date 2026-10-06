@@ -67,7 +67,7 @@ describe('adminBulkInsertWords', () => {
     expect(result.skipped).toBe(1);
   });
 
-  it('defaults a word with no pool given to the daily pool', async () => {
+  it('should default to the daily pool when no pool is given', async () => {
     await adminBulkInsertWords(env.DB, [
       { word: 'ORMAN', meaning: '', context: '', category: 'isim' },
     ]);
@@ -80,7 +80,7 @@ describe('adminBulkInsertWords', () => {
     expect(row?.pool).toBe('daily');
   });
 
-  it('stores the given pool and allows empty meaning for it', async () => {
+  it('should store the given pool and allow empty meaning when pool is unlimited', async () => {
     const result = await adminBulkInsertWords(env.DB, [
       { word: 'TEPSİ', meaning: '', context: '', category: 'isim', pool: 'unlimited' },
     ]);
@@ -109,19 +109,19 @@ describe('adminScheduleDailyWord', () => {
     return result.id;
   }
 
-  it('schedules a daily-pool word', async () => {
+  it('should schedule the word when it is daily-pool', async () => {
     const id = await insertWord('daily');
     await expect(adminScheduleDailyWord(env.DB, id, '2026-04-01', 5)).resolves.toBeTypeOf('number');
   });
 
-  it('refuses to schedule an unlimited-pool word', async () => {
+  it('should reject scheduling when the word is unlimited-pool', async () => {
     const id = await insertWord('unlimited');
     await expect(adminScheduleDailyWord(env.DB, id, '2026-04-02', 5)).rejects.toThrow();
   });
 });
 
 describe('adminFindWordById', () => {
-  it('includes the word pool', async () => {
+  it('should include the word pool when finding a word by id', async () => {
     const id = await env.DB.prepare(
       `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
        VALUES ('SEPET', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')
