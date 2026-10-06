@@ -57,7 +57,7 @@ export function Tile({ letter, status, isFilled, isHint = false, testID }: TileP
     <View
       testID={testID}
       accessibilityLabel={getAccessibilityLabel(letter, status, isHint)}
-      style={[styles.tile, isHint && styles.hintTile, { backgroundColor, borderColor }]}
+      style={[styles.tile, isHint ? styles.hintTile : styles.solidTile, { backgroundColor, borderColor }]}
     >
       <Text style={[styles.letter, { color: getTextColor(status, isHint, colors) }, isHint && styles.hintLetter]}>
         {letter}
@@ -76,6 +76,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hintTile: { borderStyle: 'dashed' },
+  // Android keeps a previously applied dashed border unless solid is set explicitly.
+  solidTile: { borderStyle: 'solid' },
   letter: {
     fontSize: TILE_FONT_SIZE,
     fontWeight: '800',

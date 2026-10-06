@@ -55,4 +55,10 @@ describe('Tile', () => {
     const letterStyle = flattenStyle(within(screen.getByLabelText('K')).getByText('K').props.style);
     expect(letterStyle.opacity).toBeUndefined();
   });
+
+  it('should set an explicit solid border when the tile is not a hint', async () => {
+    // Android keeps a previously applied dashed border unless the style is set back explicitly.
+    await renderWithTheme(<Tile letter="D" status={null} isFilled isHint={false} />);
+    expect(flattenStyle(screen.getByLabelText('D').props.style).borderStyle).toBe('solid');
+  });
 });
