@@ -55,6 +55,11 @@ Owner decisions, 2026-10-06:
 - R7. First launch opens How to play once; later launches go straight home.
 - R8. When a hint was used, the share text says so on its header line (e.g. "Harfhane #279 3/6 ·
   ipucu"), on web and mobile; the grid itself is unchanged. Stats do not count hints.
+- R9. Mobile screens follow `docs/design/mobile-ui-standard.md` (proposed 2026-10-07 after owner
+  feedback that splash, home and the game header look cheap and web-like): a shared top bar with
+  an icon back button labelled "Geri" and a compact centred title, home actions as icon buttons
+  instead of text links, depth cards with today's status (streak, played or not, countdown), a 3D
+  tile splash icon with a short reduce-motion-aware intro. Spec: `docs/design/mobile-redesign-spec.md`.
 
 ## Acceptance examples
 - AE1 (R1). Given a daily game won in three guesses, the game-over card shows the answer, a
@@ -69,6 +74,10 @@ Owner decisions, 2026-10-06:
   with "· ipucu"; without a hint it does not.
 - AE5 (R7). Given a fresh install, the first launch shows How to play; after closing it, the
   next launch shows the home screen.
+- AE7 (R9). Given the home screen, "Nasıl oynanır", "İstatistikleri aç" and "Ayarları aç" are
+  icon buttons with those accessibility labels and hit areas of at least 48 dp; given a daily
+  5-letter game, the game screen shows an icon back button labelled "Geri" and a header "Günlük"
+  with a separate "5 harf" chip, not the string "Günlük · 5 harf".
 
 ## Key technical decisions
 - KTD1. Animations use React Native `Animated` with `useNativeDriver` on transform and opacity
@@ -82,7 +91,8 @@ Owner decisions, 2026-10-06:
 
 ## Units
 File ownership: A owns `GameOverCard` and its wiring; B owns `Tile`, `GameGrid`, animations and
-tokens; C owns haptics, Settings and fonts; D owns splash, home title, icons and first launch.
+tokens; C owns haptics, Settings and fonts; D owns splash, home title, icons and first launch; E (U7) owns the UI standard
+redesign once A-D's open PRs have merged.
 
 - U1 (A). Mobile game-over card with share, distribution, countdown, message variants. (R1, AE1)
 - U2 (B, after U1). Tile animations, reduce-motion, responsive tile size, motion tokens. (R2, AE2)
@@ -92,6 +102,15 @@ tokens; C owns haptics, Settings and fonts; D owns splash, home title, icons and
   (R5, R6, AE4)
 - U5 (D, after U4). First-launch How to play. (R7, AE5)
 - U6 (A, after U1). `generateShareText` takes a hint flag; web and mobile pass it. (R8, AE6)
+- U7 (E, proposed, needs owner approval; after #87, #88 and #89 merge). Mobile UI standard
+  redesign: `ui/` primitives and layout constants, top bar on Game, Stats, How to play and
+  Settings, home redesign with today's status, splash tile assets and launch intro. (R9, AE7)
+  Owns `apps/mobile/src/ui/**`, `apps/mobile/src/home/**`, `apps/mobile/src/screens/**`,
+  `apps/mobile/src/components/LaunchIntro.tsx`, `apps/mobile/src/components/GameOverCard.tsx`
+  (button/card adoption only), `apps/mobile/App.tsx` (intro wiring), `apps/mobile/app.json` and
+  `apps/mobile/assets/**`. Ships as three PRs to stay under the PR limits: U7a primitives + top
+  bars, U7b home + today status, U7c splash assets + intro. Runs after U2 or coordinates with it
+  on `GameScreen.tsx`.
 
 ## Not in this plan
 Streak calendar, hard mode, local achievements, share image, sound, themed weeks, timed mode,
