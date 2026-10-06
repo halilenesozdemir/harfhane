@@ -1,5 +1,5 @@
 import { expect, test } from './support/fixtures';
-import { keyButton, playGuess, tile } from './support/game';
+import { keyButton, playGuess, tile, waitForBoardReady } from './support/game';
 
 test('unlimited mode can be won and "new word" starts a fresh game', async ({ page, api }) => {
   await api.stubRandomWord(5, [{ word: 'KALEM' }, { word: 'MASAL' }]);
@@ -17,4 +17,15 @@ test('unlimited mode can be won and "new word" starts a fresh game', async ({ pa
 
   await playGuess(page, 'MASAL'.split(''));
   await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+});
+
+test('unlimited mode shows no hint button (FREE_UNLIMITED_HINTS = 0)', async ({ page, api }) => {
+  await api.stubRandomWord(5, [{ word: 'KALEM' }]);
+  await api.stubValidate(() => true);
+
+  await page.goto('/unlimited/5');
+  await waitForBoardReady(page);
+
+  await expect(page.getByRole('button', { name: 'İpucu göster' })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'İpucu kullanıldı' })).not.toBeVisible();
 });

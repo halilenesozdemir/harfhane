@@ -23,9 +23,6 @@ export const turkishWordArb = (
     .array(turkishLowercaseCharArb, { minLength, maxLength })
     .map((chars) => chars.join(''));
 
-export const turkishWordOfLengthArb = (length: number): fc.Arbitrary<string> =>
-  fc.array(turkishLowercaseCharArb, { minLength: length, maxLength: length }).map((chars) => chars.join(''));
-
 export const turkishMixedCaseWordArb = (minLength = 0, maxLength = MAX_WORD_LENGTH): fc.Arbitrary<string> =>
   fc
     .array(turkishMixedCaseCharArb, { minLength, maxLength })

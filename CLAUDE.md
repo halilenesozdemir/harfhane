@@ -17,6 +17,14 @@ Turkish word game (daily and unlimited modes, duels, XP, badges) on web and Andr
 `pnpm dev`, `pnpm build`, `pnpm typecheck`, `pnpm typecheck:test`, `pnpm lint`, `pnpm test` (shared, ui-tokens, frontend, mobile, backend).
 Run one workspace with `pnpm --filter @harfhane/<name> run <script>`.
 
+`pnpm knip` finds unused files, exports and dependencies (`knip.jsonc`). `pnpm depcruise` checks the
+backend's `routes -> services -> repositories` layering, `packages/*` never importing `apps/*`, and
+circular imports (`.dependency-cruiser.cjs`). Both run in CI. `dependency-cruiser`'s `engines` field
+rejects odd-numbered Node releases (e.g. 25.x); if your local Node is one of those, use Node 22
+(`.nvmrc` pins it) to run `pnpm depcruise` locally — `nvm use`, `fnm use`, or
+`npx -y node@22 node_modules/.bin/depcruise --config .dependency-cruiser.cjs apps packages`. CI runs
+Node 22, so it is never affected.
+
 Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests when code is staged (`pnpm install` enables it). A red gate means fix the code; never `--no-verify`.
 
 ## Rules agents here have broken before
