@@ -1,0 +1,84 @@
+---
+title: Mobile polish before the closed test
+type: feat
+date: 2026-10-06
+status: approved
+---
+
+# Mobile polish before the closed test
+
+## Goal
+The Android app plays correctly but feels unfinished next to the web app: a game ends with one
+line of text, tiles never move, the board leaves a large gap above the keyboard, and the launch
+screen may close before data is ready. Fix that before the Play closed test (Phase 4), without
+adding accounts, server features or ads.
+
+Research: `docs/research/2026-10-06-mobile-polish-engagement.md`.
+
+Owner decisions, 2026-10-06:
+- First slice before the closed test: game-over card, tile animations with responsive tile size,
+  small fixes with the splash screen, first-launch how-to-play.
+- New mobile dependencies approved: `expo-haptics`, `expo-font` with Baloo 2, and
+  `lucide-react-native` (with `react-native-svg`).
+- The share text keeps the coloured emoji squares; the no-emoji rule covers the app's own UI, not
+  the share grid players paste into chats.
+- Post-launch engagement ideas (streak calendar, hard mode, local achievements, share image) are
+  undecided and stay in `docs/backlog.md` until the owner revisits them.
+
+## Requirements
+- R1. When a game ends on mobile, a game-over card shows the result, the answer, the guess
+  distribution, a share button (React Native `Share`, text from `generateShareText`) and a
+  countdown to the next daily word (Turkey day); unlimited also offers "Yeni kelime". Result
+  messages vary by guess count (3-5 Turkish variants each).
+- R2. Tiles animate: pop when a letter is typed, flip with a per-tile stagger when a row is
+  evaluated, shake when a guess is rejected. All animations are skipped when the system
+  reduce-motion setting is on. Tile size is computed from the window so the board fills the space
+  above the keyboard between a named minimum and maximum.
+- R3. Haptics: light feedback on key press, distinct feedback on win and on a rejected guess; a
+  Settings switch turns haptics off (stored locally, default on).
+- R4. Mobile typography uses Baloo 2 for tiles, titles and keys, matching the web tokens; icons
+  come from Lucide, never emoji. The Enter key reads "GİR" or shows a Lucide icon with an
+  accessible label.
+- R5. Small visual fixes: the hint pill border uses `surfaceBorder` (not brand), one brand colour
+  across web logo and app icon, home title as an H-A-R-F tile row.
+- R6. Launch: the native splash stays up until theme and stored game state are loaded
+  (`preventAutoHideAsync` / `hideAsync`); the web splash no longer waits a fixed 1.9 s.
+- R7. First launch opens How to play once; later launches go straight home.
+
+## Acceptance examples
+- AE1 (R1). Given a daily game won in three guesses, the game-over card shows the answer, a
+  distribution with the third bar highlighted, a share button whose text starts with the game
+  number, and a countdown to the next Turkey midnight.
+- AE2 (R2). Given reduce-motion is on, submitting a guess shows the evaluated colours with no
+  flip animation running.
+- AE3 (R3). Given haptics are switched off in Settings, pressing a key triggers no haptic call.
+- AE4 (R6). Given stored state loads after 300 ms, the splash screen is hidden only after it has
+  loaded.
+- AE5 (R7). Given a fresh install, the first launch shows How to play; after closing it, the
+  next launch shows the home screen.
+
+## Key technical decisions
+- KTD1. Animations use React Native `Animated` with `useNativeDriver` on transform and opacity
+  only; no animation library.
+- KTD2. Durations and sizes are tokens in `packages/ui-tokens` (`motion-flip`, `motion-stagger`,
+  `tile-size-min`, `tile-size-max`) so web and mobile share them.
+- KTD3. The game-over card reuses `generateShareText` and the Turkey-day helpers from
+  `@harfhane/shared`; no new share logic on mobile.
+- KTD4. Check each dependency's Expo SDK 57 version with `expo install`; the splash screen's real
+  look is verified on a release build, not Expo Go.
+
+## Units
+File ownership: A owns `GameOverCard` and its wiring; B owns `Tile`, `GameGrid`, animations and
+tokens; C owns haptics, Settings and fonts; D owns splash, home title, icons and first launch.
+
+- U1 (A). Mobile game-over card with share, distribution, countdown, message variants. (R1, AE1)
+- U2 (B, after U1). Tile animations, reduce-motion, responsive tile size, motion tokens. (R2, AE2)
+- U3 (C). `expo-haptics` with Settings switch; Baloo 2 via `expo-font`; Lucide icons and the
+  Enter key. (R3, R4, AE3)
+- U4 (D). Splash hold until loaded, web splash timing, hint pill border, brand colour, home title.
+  (R5, R6, AE4)
+- U5 (D, after U4). First-launch How to play. (R7, AE5)
+
+## Not in this plan
+Streak calendar, hard mode, local achievements, share image, sound, themed weeks, timed mode,
+local reminders: undecided, recorded in `docs/backlog.md`.
