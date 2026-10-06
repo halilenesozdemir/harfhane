@@ -12,7 +12,7 @@ beforeEach(async () => {
 });
 
 describe('adminBulkInsertWords', () => {
-  it('stores approved, family-safe rows with non-null source and license when none are given', async () => {
+  it('stores approved, family-safe rows with non-null source and license when none are given (006-AE1)', async () => {
     const result = await adminBulkInsertWords(env.DB, [
       { word: 'MASAL', meaning: 'Hayali öykü', context: 'Masal okudu.', category: 'isim' },
       { word: 'DERGİ', meaning: 'Süreli yayın', context: 'Dergi aldı.', category: 'isim' },
