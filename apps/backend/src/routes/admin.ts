@@ -10,9 +10,6 @@ import {
   importWordsSchema,
   listWordsQuerySchema,
   listDailyQuerySchema,
-  createListSchema,
-  updateListSchema,
-  listWordActionSchema,
   autoFillSchema,
 } from '../schemas/admin-schemas';
 import {
@@ -27,8 +24,6 @@ import {
   importWords,
   getStats,
   autoFillDailySchedule,
-  getWordStats,
-  getUsers,
 } from '../services/admin-service';
 import { getScheduleHealth } from '../services/schedule-health-service';
 
@@ -41,17 +36,6 @@ admin.use('/*', adminAuth);
 admin.get('/stats', async (c) => {
   const stats = await getStats(c.env.DB);
   return c.json({ data: stats });
-});
-
-admin.get('/users', async (c) => {
-  const users = await getUsers(c.env.DB);
-  return c.json({ data: users });
-});
-
-admin.get('/word-stats', async (c) => {
-  const sort = c.req.query('sort') === 'win_rate' ? 'win_rate' : 'played';
-  const rows = await getWordStats(c.env.DB, sort);
-  return c.json({ data: rows });
 });
 
 admin.get('/schedule-health', async (c) => {
@@ -180,79 +164,6 @@ admin.post(
     const { words } = c.req.valid('json');
     const result = await importWords(c.env.DB, words);
     return c.json({ data: result });
-  }
-);
-
-// ── Word Lists ────────────────────────────────────────────────────────────────
-
-import {
-  adminListAll,
-  adminCreateList,
-  adminUpdateList,
-  adminDeleteList,
-  adminGetListWords,
-  adminAddWord,
-  adminRemoveWord,
-} from '../services/admin-list-service';
-
-admin.get('/lists', async (c) => {
-  const result = await adminListAll(c.env.DB);
-  return c.json({ data: result });
-});
-
-admin.post(
-  '/lists',
-  zValidator('json', createListSchema, (r, c) => {
-    if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
-    return;
-  }),
-  async (c) => {
-    const { slug, name, description, word_length, is_public } = c.req.valid('json');
-    const list = await adminCreateList(c.env.DB, slug, name, description, word_length, is_public);
-    return c.json({ data: list }, 201);
-  }
-);
-
-admin.patch(
-  '/lists/:slug',
-  zValidator('json', updateListSchema, (r, c) => {
-    if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
-    return;
-  }),
-  async (c) => {
-    const list = await adminUpdateList(c.env.DB, c.req.param('slug'), c.req.valid('json'));
-    return c.json({ data: list });
-  }
-);
-
-admin.delete('/lists/:slug', async (c) => {
-  await adminDeleteList(c.env.DB, c.req.param('slug'));
-  return c.json({ data: { success: true } });
-});
-
-admin.get('/lists/:slug/words', async (c) => {
-  const result = await adminGetListWords(c.env.DB, c.req.param('slug'));
-  return c.json({ data: result });
-});
-
-admin.post(
-  '/lists/:slug/words',
-  zValidator('json', listWordActionSchema, (r, c) => {
-    if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
-    return;
-  }),
-  async (c) => {
-    const { word_id } = c.req.valid('json');
-    await adminAddWord(c.env.DB, c.req.param('slug'), word_id);
-    return c.json({ data: { success: true } }, 201);
-  }
-);
-
-admin.delete(
-  '/lists/:slug/words/:wordId',
-  async (c) => {
-    await adminRemoveWord(c.env.DB, c.req.param('slug'), Number(c.req.param('wordId')));
-    return c.json({ data: { success: true } });
   }
 );
 

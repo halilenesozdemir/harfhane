@@ -1,17 +1,11 @@
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { useAutoOpenAuthModal } from './hooks/useAutoOpenAuthModal';
-import { useLoginWelcomeMessage } from './hooks/useLoginWelcomeMessage';
-import AuthModal from './components/AuthModal';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
-import Toast from './components/Toast';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
-import ResetPasswordPage from './components/ResetPasswordPage';
 import { PageMeta } from './components/page-meta';
 import type { GameMode, WordLength } from './types';
 
@@ -55,9 +49,6 @@ function reloadOnChunkError(): never {
 
 const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
-const ListsPage = lazy(() => import('./components/ListsPage').catch(reloadOnChunkError));
-const SlugGame = lazy(() => import('./components/SlugGame').catch(reloadOnChunkError));
-const TournamentPage = lazy(() => import('./components/TournamentPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const VALID_LENGTHS = [4, 5, 6] as const;
@@ -84,76 +75,19 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
 
 function HomeRoute(): React.JSX.Element {
   const navigate = useNavigate();
-  const { googleAuthFailed, justLoggedIn, clearJustLoggedIn, user } = useAuth();
-  const [showAuth, setShowAuth] = useAutoOpenAuthModal(googleAuthFailed);
-  const welcomeMessage = useLoginWelcomeMessage(justLoggedIn, user?.username, clearJustLoggedIn);
 
   return (
     <>
       <PageMeta
         title="Harfhane — Türkçe Kelime Oyunu | Günlük Bulmaca"
-        description="Harfhane ile her gün yeni bir Türkçe kelime bul! Ücretsiz Türkçe kelime oyunu. Günlük bulmaca, sınırsız mod ve özel kelime listeleri."
+        description="Harfhane ile her gün yeni bir Türkçe kelime bul! Ücretsiz Türkçe kelime oyunu. Günlük bulmaca ve sınırsız mod."
         canonicalPath="/"
       />
       <HomePage
         onSelectMode={(mode: GameMode, length: WordLength) => {
-          if (mode === 'tournament') {
-            navigate('/tournament');
-            return;
-          }
           navigate(`/${mode}/${length}`);
         }}
       />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-      <Toast message={welcomeMessage} />
-    </>
-  );
-}
-
-function ListsRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  const [showAuth, setShowAuth] = useState(false);
-  return (
-    <>
-      <PageMeta
-        title="Kelime Listeleri | Harfhane"
-        description="Türkçe kelime listelerini keşfet, kendi listeni oluştur ve arkadaşlarınla paylaş."
-        canonicalPath="/lists"
-      />
-      <ListsPage onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-    </>
-  );
-}
-
-function SlugRoute(): React.JSX.Element {
-  const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-  const [showAuth, setShowAuth] = useState(false);
-  if (!slug) return <Navigate to="/" replace />;
-  return (
-    <>
-      <PageMeta
-        title={`${slug} — Özel Kelime Oyunu | Harfhane`}
-        description="Harfhane'de bir arkadaşının seçtiği özel kelimeyi tahmin et."
-        canonicalPath={`/play/${slug}`}
-      />
-      <SlugGame slug={slug} onGoHome={() => navigate('/')} onAuthRequired={() => setShowAuth(true)} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-    </>
-  );
-}
-
-function TournamentRoute(): React.JSX.Element {
-  const navigate = useNavigate();
-  return (
-    <>
-      <PageMeta
-        title="Turnuva Modu | Harfhane"
-        description="Diğer oyuncularla yarış, Türkçe kelime turnuvasına katıl."
-        canonicalPath="/tournament"
-      />
-      <TournamentPage onGoHome={() => navigate('/')} />
     </>
   );
 }
@@ -164,16 +98,16 @@ function AppRoutes(): React.JSX.Element {
       <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />
-          <Route path="/lists" element={<ListsRoute />} />
-          <Route path="/play/:slug" element={<SlugRoute />} />
+          <Route path="/lists" element={<Navigate to="/" replace />} />
+          <Route path="/play/:slug" element={<Navigate to="/" replace />} />
           <Route path="/c/:wordId" element={<Navigate to="/" replace />} />
           <Route path="/daily" element={<GameRoute mode="daily" />} />
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
-          <Route path="/tournament" element={<TournamentRoute />} />
+          <Route path="/tournament" element={<Navigate to="/" replace />} />
           <Route path="/discuss" element={<Navigate to="/" replace />} />
-          <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
+          <Route path="/sifre-sifirla" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
@@ -183,22 +117,9 @@ function AppRoutes(): React.JSX.Element {
 }
 
 function AppShell(): React.JSX.Element {
-  const { isLoading, isAuthCallback } = useAuth();
   const [splashDone, setSplashDone] = useState(false);
-  const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
-  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
-
-  if (isAuthCallback && isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 bg-correct rounded-xl flex items-center justify-center shadow-lg">
-          <span className="text-white font-bold text-3xl">H</span>
-        </div>
-        <p className="text-text-secondary text-sm tracking-wide">Giriş yapılıyor...</p>
-      </div>
-    );
-  }
+  if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />;
 
   return (
     <BrowserRouter>
@@ -250,9 +171,7 @@ function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <AppShell />
-        </AuthProvider>
+        <AppShell />
       </ThemeProvider>
     </QueryClientProvider>
   );

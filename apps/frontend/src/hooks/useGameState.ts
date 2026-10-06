@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
 import { useGameStats } from './useGameStats';
 import { useDailyWord, useRandomWord } from './useWordApi';
-import { useAuth } from '../context/AuthContext';
 import { validateWord } from '../lib/api';
 import {
   evaluateGuess,
@@ -21,19 +20,6 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const isUnlimited = mode === 'unlimited';
   const queryClient = useQueryClient();
   const todayString = getTodayString();
-  const { token, user } = useAuth();
-  const userKey = user?.id ?? 'anon';
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const anonKey = `harfhane:game:anon:${todayString}:${wordLength}`;
-    const userGameKey = `harfhane:game:${user.id}:${todayString}:${wordLength}`;
-    const anonData = localStorage.getItem(anonKey);
-    if (anonData && !localStorage.getItem(userGameKey)) {
-      localStorage.setItem(userGameKey, anonData);
-      localStorage.removeItem(anonKey);
-    }
-  }, [user?.id, todayString, wordLength]);
 
   const { data: dailyData, isLoading: isDailyLoading, isError: isDailyError } = useDailyWord(wordLength);
   const { data: randomData, isLoading: isRandomLoading, isError: isRandomError, refetch: refetchRandom } = useRandomWord(isUnlimited, wordLength);
@@ -47,9 +33,9 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
   const gameNumber = isUnlimited ? 0 : (dailyData?.gameNumber ?? 0);
   const wordId = isUnlimited ? (randomData?.wordId ?? null) : null;
 
-  const { currentStats, updateStats, lastXPResult } = useGameStats({ isUnlimited, wordLength, token, wordId });
+  const { currentStats, updateStats } = useGameStats({ isUnlimited, wordLength });
 
-  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`harfhane:game:${userKey}:${todayString}:${wordLength}`, {
+  const [dailyGameState, setDailyGameState] = useLocalStorage<GameState>(`harfhane:game:anon:${todayString}:${wordLength}`, {
     guesses: [],
     evaluations: [],
     currentGuess: '',
@@ -200,7 +186,6 @@ export const useGameState = (mode: GameMode = 'daily', wordLength: WordLength = 
     submitGuess,
     setHasSeenHelp,
     startNewGame,
-    lastXPResult,
     wordId,
   };
 };

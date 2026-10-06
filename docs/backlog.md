@@ -2,16 +2,16 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
-## Mobile auth
-Mobile needs native Google Sign-In and a backend endpoint that verifies mobile ID tokens. Part of the Android MVP plan.
-
-## Mobile push
-Web push exists. Expo push tokens need storage and sending alongside web push.
-
-## Anonymous player analytics
-Only signed-in players write `game_results`, so database counts understate real usage.
-- Decide on a cookie-free metric, e.g. Cloudflare Web Analytics.
-- The privacy policy must stay accurate.
+## Anonymous player analytics (2026-10-06)
+Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
+end for the MVP (owner decision 2026-10-05: no accounts). Every player is now anonymous and `game_results` is no
+longer written at all — the backend only serves daily/random/validate word endpoints and the admin panel.
+- Decide on a cookie-free metric, e.g. Cloudflare Web Analytics, if usage numbers are wanted.
+- The privacy policy must stay accurate (no accounts, no server-side game history).
+- A later migration (0002) drops the now-unused tables (`users`, `game_results`, `badges`, `user_xp`,
+  `user_badges`, `push_subscriptions`, `streak_freezes`, `password_reset_tokens`, `duels`); this unit intentionally
+  left the schema and `apps/backend/migrations/` legacy folder alone.
+- If accounts return later (Faz 3), re-plan mobile auth/push from scratch rather than reviving the deleted code.
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
@@ -29,6 +29,14 @@ The web app carries code from many experiments; removed features such as challen
 
 ## Known bug fixed in passing
 `findOrCreateWord` inserted user words with `category = NULL` and no `length`. This violated `NOT NULL` and stored 6-letter words as length 5. The baseline schema and repository now handle both.
+
+## UTC-date usage outside the Turkey-day fix (2026-10-05)
+Fixing `getTodayString`/`getTimeUntilMidnight`/`getGameNumber` in `packages/shared/src/game/time.ts` (branch `fix/turkey-day-boundary`) surfaced other backend code still keying "today" off the plain UTC date instead of the Turkey calendar day, now that clients save game results under the Turkey date (`useGameStats.ts`):
+- `apps/backend/src/routes/profile.ts` (`:13`, `:36`) — `/me` and `/freeze` can disagree with a just-played result between 21:00–24:00 UTC (`playedToday` false right after a win; a freeze token usable when it shouldn't be).
+- `apps/backend/src/index.ts:95` — the scheduled reminder picks the daily word / target users by UTC day.
+- `apps/backend/src/services/admin-service.ts:22` and `apps/backend/src/services/schedule-health-service.ts:19` — same UTC-day pattern.
+- `apps/backend/src/routes/lists.ts:98` already uses `Europe/Istanbul` correctly — a model for the fix.
+- Fix: route these through the now-shared `getTodayString()` (or equivalent Turkey-aware helper) in a follow-up unit; add a backend test asserting `getDailyWord()`'s no-args path matches `getTodayString()` at the 21:00 UTC boundary.
 
 ## Legacy docs review (2026-10-04)
 - `products.md`: the 854-line PRD from the original product. It still describes the old word source and long-finished phases.
@@ -51,6 +59,15 @@ Navigation wiring (Plan 004 U7 follow-up) is done: `App.tsx` mounts a state-base
 button pops the stack.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
+
+## Frontend style cleanup
+Seen while removing the tournament feature (2026-10-05); not fixed there to keep that diff scoped.
+- Arrow-function components that should be `function` declarations per `apps/frontend/CLAUDE.md`:
+  `apps/frontend/src/components/Keyboard.tsx:11`, `apps/frontend/src/components/HomePage.tsx:14`,
+  `apps/frontend/src/components/Header.tsx:6`, and any other remaining arrow-function components found
+  when this is picked up.
+- Leftover/stale comments: `apps/frontend/src/components/Keyboard.tsx:4`,
+  `apps/frontend/src/components/Header.tsx:13,24,41`, `apps/frontend/src/context/ThemeContext.tsx:11-13,24-26`.
 
 ## og-image.svg still uses old Wordle-green tile colors
 `apps/frontend/public/og-image.svg` has no "Nurdle"/"Wordle" wording (checked during the

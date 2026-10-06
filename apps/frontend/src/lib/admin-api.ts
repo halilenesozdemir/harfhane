@@ -143,70 +143,11 @@ export function importWords(
   });
 }
 
-// ── Word Lists ────────────────────────────────────────────────────────────────
-
-export interface AdminWordList {
-  id: number;
-  slug: string;
-  name: string;
-  description: string | null;
-  wordLength: number;
-  isPublic: boolean;
-  createdAt: string;
-  wordCount: number;
-}
-
-export function listWordLists(secret: string): Promise<{ lists: AdminWordList[] }> {
-  return adminRequest<{ lists: AdminWordList[] }>('/lists', secret);
-}
-
-export function createWordList(
-  secret: string,
-  data: { slug: string; name: string; description?: string; word_length: number; is_public: boolean }
-): Promise<AdminWordList> {
-  return adminRequest<AdminWordList>('/lists', secret, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateWordList(
-  secret: string,
-  slug: string,
-  data: { name?: string; description?: string | null; is_public?: boolean }
-): Promise<AdminWordList> {
-  return adminRequest<AdminWordList>(`/lists/${slug}`, secret, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteWordList(secret: string, slug: string): Promise<{ success: boolean }> {
-  return adminRequest(`/lists/${slug}`, secret, { method: 'DELETE' });
-}
-
-export function getListWords(secret: string, slug: string): Promise<{ words: AdminWord[] }> {
-  return adminRequest<{ words: AdminWord[] }>(`/lists/${slug}/words`, secret);
-}
-
-export function addWordToList(secret: string, slug: string, word_id: number): Promise<{ success: boolean }> {
-  return adminRequest(`/lists/${slug}/words`, secret, {
-    method: 'POST',
-    body: JSON.stringify({ word_id }),
-  });
-}
-
-export function removeWordFromList(secret: string, slug: string, wordId: number): Promise<{ success: boolean }> {
-  return adminRequest(`/lists/${slug}/words/${wordId}`, secret, { method: 'DELETE' });
-}
-
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
 export interface AdminStats {
   words: { total: number; active: number; inactive: number };
   daily: { today: string | null; scheduledNext30: number; unscheduledNext30: number };
-  users: { total: number };
-  games: { totalPlayed: number; playedToday: number };
 }
 
 export function getAdminStats(secret: string): Promise<AdminStats> {
@@ -235,29 +176,3 @@ export function autoFillSchedule(
   });
 }
 
-export interface WordStatRow {
-  word: string;
-  meaning: string;
-  total_played: number;
-  total_won: number;
-  win_rate: number;
-  avg_guesses: number | null;
-}
-
-export function getWordStats(secret: string, sort: 'played' | 'win_rate' = 'played'): Promise<WordStatRow[]> {
-  return adminRequest<WordStatRow[]>(`/word-stats?sort=${sort}`, secret);
-}
-
-export interface AdminUserRow {
-  id: number;
-  username: string;
-  email: string;
-  created_at: string;
-  total_played: number;
-  total_won: number;
-  last_played: string | null;
-}
-
-export function getAdminUsers(secret: string): Promise<AdminUserRow[]> {
-  return adminRequest<AdminUserRow[]>('/users', secret);
-}

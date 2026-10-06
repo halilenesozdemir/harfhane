@@ -4,38 +4,9 @@ import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
 import { admin } from './routes/admin';
-import { lists } from './routes/lists';
-import { auth } from './routes/auth';
-import { results } from './routes/results';
-import { gamification } from './routes/gamification';
-import { push } from './routes/push';
-import { notifications } from './routes/notifications';
-import { profile } from './routes/profile';
-import { tournament } from './routes/tournament';
-import { duels } from './routes/duels';
-import { rateLimiter, gameRateLimiter } from './middleware/rate-limiter';
+import { gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
-import { getSubscriptionsForUsersWithoutTodayPlay } from './repositories/push-repository';
-import { sendPushNotification } from './utils/web-push';
-import { getUsersForEmailReminder } from './repositories/notification-repository';
-import { sendReminderEmail } from './utils/resend';
-import { findDailyWord } from './repositories/word-repository';
 import { checkScheduleHealthAndAlert } from './services/schedule-health-service';
-
-const CATEGORY_LABELS: Record<string, string> = {
-  isim: 'isim',
-  sıfat: 'sıfat',
-  fiil: 'fiil',
-};
-
-function buildHint(meaning: string | null, category: string): string {
-  const text = meaning ?? '';
-  const wordParts = text.split(' ');
-  const snippet = wordParts.slice(0, 4).join(' ');
-  const suffix = wordParts.length > 4 ? '..."' : '"';
-  const label = CATEGORY_LABELS[category] ?? category;
-  return `${label} — "${snippet}${suffix}`;
-}
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -61,21 +32,10 @@ app.use(
   })
 );
 app.use('/api/*', securityHeaders);
-app.use('/api/auth/*', rateLimiter);
 app.use('/api/words/*', gameRateLimiter);
-app.use('/api/tournament/*', gameRateLimiter);
 
 app.route('/api/words', words);
-app.route('/api/lists', lists);
 app.route('/api/admin', admin);
-app.route('/api/auth', auth);
-app.route('/api/results', results);
-app.route('/api/xp', gamification);
-app.route('/api/push', push);
-app.route('/api/notifications', notifications);
-app.route('/api/profile', profile);
-app.route('/api/tournament', tournament);
-app.route('/api/duels', duels);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {
@@ -92,33 +52,8 @@ export default {
   fetch: app.fetch,
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
-    const today = new Date().toISOString().split('T')[0]!;
-
-    const [subscriptions, emailTargets, dailyWord] = await Promise.all([
-      getSubscriptionsForUsersWithoutTodayPlay(env.DB, today),
-      getUsersForEmailReminder(env.DB, today),
-      findDailyWord(env.DB, today, 5),
-    ]);
-
-    const hint = dailyWord
-      ? buildHint(dailyWord.meaning, dailyWord.category)
-      : 'Bugünün kelimesi seni bekliyor';
-
-    const pushPayload = {
-      title: 'Harfhane — Günlük Kelime',
-      body: `Seriyi koru! İpucu: ${hint}`,
-      url: '/daily/5',
-    };
-
     await Promise.allSettled([
-      ...subscriptions.map((sub) =>
-        sendPushNotification(sub, env.VAPID_PRIVATE_KEY, env.VAPID_PUBLIC_KEY, env.VAPID_SUBJECT, pushPayload)
-      ),
-      ...emailTargets.map((target) =>
-        sendReminderEmail(env.RESEND_API_KEY, target.email, target.username)
-      ),
       checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL),
     ]);
   },
 };
-
