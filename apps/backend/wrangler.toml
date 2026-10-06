@@ -18,9 +18,6 @@ migrations_dir = "db/migrations"
 pattern = "api.harfhane.app/*"
 zone_name = "harfhane.app"
 
-[vars]
-APP_URL = "https://harfhane.app"
-
 [triggers]
 crons = ["0 17 * * *"]
 

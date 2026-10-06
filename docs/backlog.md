@@ -2,16 +2,16 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
-## Mobile auth
-Mobile needs native Google Sign-In and a backend endpoint that verifies mobile ID tokens. Part of the Android MVP plan.
-
-## Mobile push
-Web push exists. Expo push tokens need storage and sending alongside web push.
-
-## Anonymous player analytics
-Only signed-in players write `game_results`, so database counts understate real usage.
-- Decide on a cookie-free metric, e.g. Cloudflare Web Analytics.
-- The privacy policy must stay accurate.
+## Anonymous player analytics (2026-10-06)
+Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
+end for the MVP (owner decision 2026-10-05: no accounts). Every player is now anonymous and `game_results` is no
+longer written at all — the backend only serves daily/random/validate word endpoints and the admin panel.
+- Decide on a cookie-free metric, e.g. Cloudflare Web Analytics, if usage numbers are wanted.
+- The privacy policy must stay accurate (no accounts, no server-side game history).
+- A later migration (0002) drops the now-unused tables (`users`, `game_results`, `badges`, `user_xp`,
+  `user_badges`, `push_subscriptions`, `streak_freezes`, `password_reset_tokens`, `duels`); this unit intentionally
+  left the schema and `apps/backend/migrations/` legacy folder alone.
+- If accounts return later (Faz 3), re-plan mobile auth/push from scratch rather than reviving the deleted code.
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
@@ -53,12 +53,10 @@ Fixing `getTodayString`/`getTimeUntilMidnight`/`getGameNumber` in `packages/shar
 - Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
 - Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
 
-## Mobile U7 screens — navigation wiring and app version
-Plan 004 U7 (`apps/mobile/src/screens/{Home,HowToPlay,Stats,Settings}Screen.tsx`) built the screens without
-wiring navigation, per the unit's scope boundary.
-- The next unit must mount a `ThemeProvider` with a real `AsyncStorage`-backed `KeyValueStore` at the app root
-  and route `HomeScreen.onStart` into the game screen; `StatsScreen` needs its `stats`/`isUnlimited` props
-  loaded via `loadDailyStats`/`loadUnlimitedStats` from `src/stats/stats.ts`.
+## Mobile — app version line on SettingsScreen
+Navigation wiring (Plan 004 U7 follow-up) is done: `App.tsx` mounts a state-based router with the device
+`AsyncStorage`-backed store, `HomeScreen` opens How to play/Stats/Settings, and the Android hardware back
+button pops the stack.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
