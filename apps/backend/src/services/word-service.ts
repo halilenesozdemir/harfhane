@@ -24,9 +24,12 @@ export async function getDailyWord(
   date?: string,
   length = 5
 ): Promise<DailyWordResponse> {
-  const targetDate = date ?? getTodayString();
+  const today = getTodayString();
+  const targetDate = date ?? today;
 
   if (!isValidDate(targetDate)) throw INVALID_DATE();
+  // Future answers stay hidden; the same error as a missing day reveals nothing about the schedule.
+  if (targetDate > today) throw NOT_FOUND('Daily word');
 
   const result = await findDailyWord(db, targetDate, length);
   if (!result) throw NOT_FOUND('Daily word');

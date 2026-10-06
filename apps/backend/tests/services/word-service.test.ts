@@ -32,6 +32,28 @@ describe('getDailyWord', () => {
     });
   });
 
+  describe('explicit future dates', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should throw NOT_FOUND when the requested date is after the Turkey day', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T12:00:00Z'));
+
+      await expect(getDailyWord(env.DB, '2026-01-01')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+
+    it('should return the word when the requested date is the Turkey day', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T21:00:00Z'));
+
+      const result = await getDailyWord(env.DB, '2026-01-01');
+
+      expect(result.word.word).toBe('KİTAP');
+    });
+  });
+
   describe('no-args path at the Turkey midnight boundary', () => {
     afterEach(() => {
       vi.useRealTimers();
