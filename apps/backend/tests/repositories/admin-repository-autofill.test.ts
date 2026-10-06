@@ -55,7 +55,7 @@ describe('adminAutoFillSchedule with full stock', () => {
     }
   });
 
-  it.each(SCHEDULED_WORD_LENGTHS)('should schedule %i days for length %i when stock covers every day', async (length) => {
+  it.each(SCHEDULED_WORD_LENGTHS)('should schedule %i days for length %i when stock covers every day (006-AE2)', async (length) => {
     await adminAutoFillSchedule(env.DB, FROM, TO);
 
     const row = await env.DB
