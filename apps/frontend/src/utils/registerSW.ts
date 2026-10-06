@@ -2,10 +2,12 @@ import { registerSW } from 'virtual:pwa-register';
 
 let deferredUpdate: (() => void) | null = null;
 
+/** @deferred No UI listens for "sw-update-available" yet. See docs/backlog.md. */
 export function hasPendingUpdate(): boolean {
   return deferredUpdate !== null;
 }
 
+/** @deferred No UI listens for "sw-update-available" yet. See docs/backlog.md. */
 export function applyPendingUpdate(): void {
   deferredUpdate?.();
   deferredUpdate = null;

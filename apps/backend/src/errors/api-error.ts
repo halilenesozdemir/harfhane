@@ -15,12 +15,15 @@ export const NOT_FOUND = (resource: string) =>
 export const INVALID_DATE = () =>
   new ApiError(400, 'INVALID_DATE', 'Invalid date format. Use YYYY-MM-DD');
 
+/** @deferred Part of the error vocabulary; not yet thrown by any route. See docs/backlog.md. */
 export const INTERNAL = () =>
   new ApiError(500, 'INTERNAL_ERROR', 'An unexpected error occurred');
 
+/** @deferred adminAuth hand-rolls its own 401 instead of this helper. See docs/backlog.md. */
 export const UNAUTHORIZED = () =>
   new ApiError(401, 'UNAUTHORIZED', 'Authentication required');
 
+/** @deferred Part of the error vocabulary; not yet thrown by any route. See docs/backlog.md. */
 export const FORBIDDEN = () =>
   new ApiError(403, 'FORBIDDEN', 'Access denied');
 

@@ -40,7 +40,7 @@ export default function GamePage({
   } = useGameState(mode, wordLength);
 
   const sessionChallenge = useSessionChallenge();
-  const { hintText, hintUsed, revealHint } = useHint(solutionEntry, wordLength, isUnlimited);
+  const { hint, hintUsed, hintAvailable, revealHint } = useHint(solution, wordLength, guesses, isUnlimited);
 
   const modals = useGameModals({
     gameStatus,
@@ -107,12 +107,13 @@ export default function GamePage({
             shakeRow={shakeRow}
             gameStatus={gameStatus}
             wordLength={wordLength}
+            hint={hint}
           />
           <GameHint
-            hintText={hintText}
+            hint={hint}
             hintUsed={hintUsed}
+            hintAvailable={hintAvailable}
             gameStatus={gameStatus}
-            isUnlimited={isUnlimited}
             onRevealHint={revealHint}
           />
         </main>

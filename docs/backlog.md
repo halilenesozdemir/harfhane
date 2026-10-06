@@ -2,6 +2,35 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
+## knip findings recorded instead of fixed (2026-10-06)
+From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
+reason; details here.
+- `apps/backend/src/errors/api-error.ts`: `INTERNAL`, `UNAUTHORIZED` and `FORBIDDEN` are part of the
+  `ApiError` vocabulary but no route throws them yet — `apps/backend/src/middleware/admin-auth.ts`
+  hand-rolls its own 401 JSON instead of calling `UNAUTHORIZED()`. Either wire routes/middleware to
+  use the full vocabulary or delete the unused members.
+- `apps/frontend/src/utils/registerSW.ts`: `hasPendingUpdate`/`applyPendingUpdate` and the
+  `sw-update-available` `CustomEvent` they support have no listener anywhere in the frontend. The
+  app silently waits for the hourly background `registration.update()` instead of ever prompting
+  the user to reload for a new service worker version. Decide whether to build the update-prompt UI
+  or remove this half-built path.
+- `apps/mobile/app.json` names `expo-updates` and `expo-system-ui` (via `userInterfaceStyle:
+  "automatic"`) but neither is an installed dependency. In practice this means OTA updates are
+  simply off (`expo-updates` was never installed, so `updates.enabled` has nothing to act on — not
+  "OTA is default-enabled") and `userInterfaceStyle` isn't applied by the native config plugin;
+  system dark mode still works today via the app's own DayNight theme and `useColorScheme`. Decide
+  whether to install `expo-updates` for OTA updates (Faz 2/3) and `expo-system-ui` to let
+  `userInterfaceStyle` take effect natively.
+- `scripts/scrape-words.ts` (missing `node-html-parser` dependency) and
+  `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
+  already covered by the "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc`
+  ignores them rather than reinstalling dependencies for scripts pending a retire-or-repoint decision.
+- `packages/shared/src/game/index.ts`'s hint re-exports (`FREE_DAILY_HINTS`, `FREE_UNLIMITED_HINTS`,
+  `SUPPORTER_DAILY_HINTS`, `SUPPORTER_UNLIMITED_HINTS`, `hintAllowance`, `pickHint`, `HintMode`,
+  `LetterHint`) are tagged `@deferred` because neither consumer has merged yet (open PRs #80 web,
+  #82 mobile). Drop the `@deferred` tag once either lands — `knip` will then see a real caller and
+  the tag becomes redundant (and `knip` reports an unused-tag hint if left in place).
+
 ## Anonymous player analytics (2026-10-06)
 Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
 end for the MVP (owner decision 2026-10-05: no accounts). Every player is now anonymous and `game_results` is no
@@ -26,6 +55,9 @@ word scheduled in the future, refuse activating a `rejected` word).
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
 - Audit unused files, hooks, routes, API endpoints and migrations-only tables before moving game logic into `packages/shared`.
 - Plan web ↔ mobile routing: store links, deep links, "get the app" banner.
+- Found by `knip` (Plan 009 U7): `apps/backend/src/routes/words.ts:51` (`GET /words/challenge/:wordId`)
+  has no frontend caller left now that the dead `useChallengeWord` hook is gone. Decide whether to
+  delete the route too.
 
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
@@ -145,6 +177,15 @@ and already removed end to end in #54.
   forever with no UI path to them. Decide whether that's acceptable (data just sits unused) or
   whether hidden-length stats need their own access point (e.g. still reachable once a length
   reopens) or a cleanup policy.
+
+## Plan 008 U9 follow-up (web letter hint, 2026-10-06)
+- **Midnight rollover can compute a hint against yesterday's word.** `useHint.ts` derives its
+  localStorage key and reads `solution`/`guesses` from `useGameState`, but `useDailyWord` and
+  `useGameState` already have a pre-existing drift in how they detect the day boundary (not
+  introduced by this unit). If a tab is left open across midnight, it's possible for the hint
+  hook to run `pickHint` against a `solution` that is stale relative to the now-current day's
+  `getTodayString()`-keyed storage slot, or vice versa. Out of scope for U9; needs the same fix
+  as (or depends on) resolving the `useDailyWord`/`useGameState` day-boundary drift itself.
 
 ## AC coverage check: source scanning is a stopgap
 `scripts/check-ac-coverage.mjs` finds AE tags by regex-scanning test file source (JS/TS call
