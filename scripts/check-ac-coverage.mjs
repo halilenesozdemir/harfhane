@@ -243,9 +243,13 @@ function stripJsComments(content) {
 // The modifier chain also tolerates a `.each(...)` or `` .each`...` ``
 // segment (e.g. `it.each([1, 2])('...', fn)` or `` test.each`...`('...', fn) ``)
 // interleaved with plain modifiers like `.only`/`.concurrent`, since the
-// final call that actually carries the test name is the one after it.
+// final call that actually carries the test name is the one after it. A
+// `.each` may also carry a TS generic type argument, e.g.
+// `it.each<[string, string]>([...])('...', fn)`; that `<...>` segment sits
+// between the modifier name and its call/template, so it is optional and
+// matched (non-greedily, one level deep) right there.
 const JS_TEST_CALL_PATTERN =
-  /(?<![.\w])(?:it|test)((?:\.\w+(?:\((?:[^()]|\([^()]*\))*\)|`(?:[^`\\]|\\.)*`)?)*)\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
+  /(?<![.\w])(?:it|test)((?:\.\w+(?:<[^<>]*>)?(?:\((?:[^()]|\([^()]*\))*\)|`(?:[^`\\]|\\.)*`)?)*)\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
 
 // A skipped or pending test (.skip, .todo) proves nothing: it does not run.
 const SKIPPED_MODIFIER_PATTERN = /\.(skip|todo)\b/;

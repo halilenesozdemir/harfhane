@@ -701,6 +701,24 @@ test("should recognize a tag on an it.each(...) call combined with .only", () =>
   }
 });
 
+test("should recognize a tag in an it.each<[T, T]>(array)('name', fn) call with a TS generic", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `it.each<[string, string]>([['a', 'b']])('should handle %s and %s ${AE1_TAG}', (a, b) => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("should recognize a tag on a test.concurrent(...) call", () => {
   const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
   try {

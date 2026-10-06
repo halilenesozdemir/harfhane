@@ -172,6 +172,20 @@ actually runs, not what the source merely looks like.
   Add a test that an unlimited-pool word of the matching length does not count toward
   `restockRunwayDays`.
 
+## AC coverage check: more skip/pending shapes it can miss (PR #69 round 6, 2026-10-06)
+`scripts/check-ac-coverage.mjs`'s skip handling (`describe.skip(...)`, `.skip`/`.todo` on a test
+call, `@pytest.mark.skip`) does not yet cover: a skip block whose body contains an unbalanced `)`
+(e.g. inside a string or comment, defeating `findMatchingParenIndex`'s naive depth count);
+`@unittest.skip` applied at class level (skips every test method, not matched by the per-test
+decorator check); a multi-line skip decorator (args spanning several lines before the decorated
+`def`); `pytest.skip()` or `self.skipTest()` called from inside a test body (always-skips but
+looks like a normal test to the regex); `describe.skip.each(...)` and `xdescribe(...)` (alternate
+spellings of a skipped suite); `it.fails(...)` (Jest/Vitest: expected to fail, not a proof either);
+and a template-literal test name whose state (e.g. a module-level counter or captured loop
+variable used to build the name) never resets between files, so two tags can collide or one can
+go unseen depending on scan order. Each needs its own fixture and regex/parsing fix in
+`scripts/check-ac-coverage.mjs` and `scripts/check-ac-coverage.test.mjs`.
+
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
 deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
