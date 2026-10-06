@@ -105,8 +105,8 @@ U5/U6) + the blocklist**, not a bigger suffix list. So this pipeline is kept del
 conservative: a filter change must not remove a good word without an explicit, tested
 exception for it, even if that means some verb forms, proper nouns and non-English loanwords
 still get through to be caught by labelling/review instead. `valid-N.txt` (the player-facing
-guess dictionary, every length) and the daily pool/review files are confirmed byte-identical
-to `main` — this pass changes nothing there.
+guess dictionary, every length), `pool-5.txt`, `pool-6.txt` and the label/review files are
+unchanged; `pool-4.txt` was regenerated on the owner's decision of 2026-10-06 (Plan 008).
 
 The English-loanword filter (`is_likely_english`) is not clean on its own: a later review
 found it wrongly dropping real Turkish words (FİRE, STEP, SURE, MOMENT — all words that score

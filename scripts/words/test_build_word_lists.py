@@ -168,6 +168,20 @@ class LoadBlocklistFileTests(unittest.TestCase):
         self.assertFalse(is_blocked("kaşarlı", blocklist))
         self.assertTrue(is_blocked("sokaklı", blocklist))
 
+    def test_lowercases_file_entries_with_turkish_rules(self):
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", encoding="utf-8", delete=False
+        ) as handle:
+            handle.write("=RAKI\nİLAÇ\n")
+            path = handle.name
+        try:
+            blocklist = load_blocklist(path)
+        finally:
+            os.remove(path)
+
+        self.assertTrue(is_blocked("rakı", blocklist))
+        self.assertTrue(is_blocked("ilaçlar", blocklist))
+
 
 class BlocklistAdditionsTests(unittest.TestCase):
     # Real blocklist.txt file: exact-match entries added for words that
@@ -187,7 +201,7 @@ class BlocklistAdditionsTests(unittest.TestCase):
 
     def test_blocks_owner_rejected_words_as_exact_entries(self):
         # Owner decision 2026-10-06: SEKS, ESKORT and RAKI are not answers.
-        for word in ("seks", "eskort", "rakı"):
+        for word in ("seks", "eskort", "rakı", "erotik"):
             self.assertTrue(is_blocked(word, self.blocklist))
 
     def test_does_not_block_longer_words_sharing_an_owner_rejected_prefix(self):
@@ -244,6 +258,25 @@ class GeneratedOutputTests(unittest.TestCase):
             valid = self._read_valid(length)
             for word in words:
                 self.assertIn(word, valid)
+
+    def _read_lines(self, name):
+        path = os.path.join(DATA_DIR, name)
+        if not os.path.exists(path):
+            self.skipTest(f"{path} not generated yet")
+        with open(path, encoding="utf-8") as handle:
+            return set(line.split(",")[0].strip() for line in handle if line.strip())
+
+    def test_allowlisted_words_survive_in_generated_pools(self):
+        # Proves main() wires the allowlist through, not just the helpers.
+        for word, length in (("FİRE", 4), ("STEP", 4), ("SURE", 4), ("MOMENT", 6)):
+            self.assertIn(word, self._read_lines(f"candidates-{length}.csv"))
+            self.assertIn(word, self._read_lines(f"review/unlimited-pool-{length}.txt"))
+
+    def test_blocked_words_absent_from_generated_pools(self):
+        for word, length in (("SEKS", 4), ("RAKI", 4), ("ESKORT", 6), ("EROTİK", 6)):
+            self.assertNotIn(word, self._read_lines(f"candidates-{length}.csv"))
+            self.assertNotIn(word, self._read_lines(f"review/unlimited-pool-{length}.txt"))
+            self.assertNotIn(word, self._read_lines(f"review/pool-{length}.txt"))
 
     def test_known_inflected_forms_absent(self):
         by_length = {}
