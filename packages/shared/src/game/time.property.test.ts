@@ -1,47 +1,58 @@
 import fc from 'fast-check';
 import { describe, it, expect } from 'vitest';
-import { getGameNumber, getTodayString } from './time';
+import { getGameNumber, getTimeUntilMidnight, getTodayString } from './time';
 
-const FC_OPTIONS = { numRuns: 50, seed: 42 };
+const NUM_RUNS = 500;
 
 const MS_PER_SECOND = 1000;
 const MS_PER_MINUTE = MS_PER_SECOND * 60;
 const MS_PER_HOUR = MS_PER_MINUTE * 60;
 const MS_PER_DAY = MS_PER_HOUR * 24;
-const SECONDS_BEFORE_BOUNDARY = 20 * MS_PER_HOUR + 59 * MS_PER_MINUTE + 59 * MS_PER_SECOND;
-const SECONDS_AT_BOUNDARY = 21 * MS_PER_HOUR;
+const TURKEY_OFFSET_MS = MS_PER_HOUR * 3;
 
-const isoDate = (date: Date): string => date.toISOString().split('T')[0]!;
+// Whole-second instants across a wide range. Aligning to whole seconds means
+// the countdown's floored hours/minutes/seconds reconstruct to the exact
+// remaining ms (no sub-second rounding loss), so the boundary checks below
+// are exact rather than occasionally flaky around a day crossover.
+const wholeSecondInstantArb = fc
+  .integer({ min: Date.UTC(2015, 0, 1), max: Date.UTC(2040, 11, 31) })
+  .map((ts) => ts - (ts % MS_PER_SECOND));
 
-// Any UTC midnight within a wide range, used as the base calendar day for the boundary check.
-const utcMidnightArb = fc
-  .date({ min: new Date(Date.UTC(2020, 0, 1)), max: new Date(Date.UTC(2035, 11, 31)) })
-  .map((date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())));
+const countdownToMs = (countdown: { hours: string; minutes: string; seconds: string }): number =>
+  (Number(countdown.hours) * MS_PER_HOUR +
+    Number(countdown.minutes) * MS_PER_MINUTE +
+    Number(countdown.seconds) * MS_PER_SECOND);
+
+// An independent model of the Turkey calendar day index, used to check
+// getGameNumber's day arithmetic without reusing its own GAME_START anchor.
+const turkeyDayIndex = (ts: number): number => Math.floor((ts + TURKEY_OFFSET_MS) / MS_PER_DAY);
 
 describe('Turkey-day boundary property tests', () => {
-  it('should map 20:59:59Z and 21:00:00Z on the same UTC day to consecutive Turkey calendar days for any date', () => {
+  it('should land exactly on the next Turkey calendar day after waiting out the countdown, and stay on today one second earlier, for any instant', () => {
     fc.assert(
-      fc.property(utcMidnightArb, (baseUtcMidnight) => {
-        const justBeforeBoundary = new Date(baseUtcMidnight.getTime() + SECONDS_BEFORE_BOUNDARY);
-        const atBoundary = new Date(baseUtcMidnight.getTime() + SECONDS_AT_BOUNDARY);
-        const nextUtcDay = new Date(baseUtcMidnight.getTime() + MS_PER_DAY);
+      fc.property(wholeSecondInstantArb, (ts) => {
+        const now = new Date(ts);
+        const todayStr = getTodayString(now);
+        const countdownMs = countdownToMs(getTimeUntilMidnight(now));
 
-        expect(getTodayString(justBeforeBoundary)).toBe(isoDate(baseUtcMidnight));
-        expect(getTodayString(atBoundary)).toBe(isoDate(nextUtcDay));
+        const atNextMidnight = new Date(ts + countdownMs);
+        const oneSecondEarlier = new Date(ts + countdownMs - MS_PER_SECOND);
+
+        expect(getTodayString(oneSecondEarlier)).toBe(todayStr);
+        expect(Date.parse(getTodayString(atNextMidnight)) - Date.parse(todayStr)).toBe(MS_PER_DAY);
       }),
-      FC_OPTIONS
+      { numRuns: NUM_RUNS }
     );
   });
 
-  it('should increment the game number by exactly one across the 21:00Z Turkey-day boundary for any date', () => {
+  it('should make getGameNumber differences equal the Turkey calendar day difference for any two instants', () => {
     fc.assert(
-      fc.property(utcMidnightArb, (baseUtcMidnight) => {
-        const justBeforeBoundary = new Date(baseUtcMidnight.getTime() + SECONDS_BEFORE_BOUNDARY);
-        const atBoundary = new Date(baseUtcMidnight.getTime() + SECONDS_AT_BOUNDARY);
-
-        expect(getGameNumber(atBoundary) - getGameNumber(justBeforeBoundary)).toBe(1);
+      fc.property(wholeSecondInstantArb, wholeSecondInstantArb, (a, b) => {
+        const actualDiff = getGameNumber(new Date(a)) - getGameNumber(new Date(b));
+        const expectedDiff = turkeyDayIndex(a) - turkeyDayIndex(b);
+        expect(actualDiff).toBe(expectedDiff);
       }),
-      FC_OPTIONS
+      { numRuns: NUM_RUNS }
     );
   });
 });
