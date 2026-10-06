@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './types/env';
 import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
+import { health } from './routes/health';
 import { admin } from './routes/admin';
 import { gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
@@ -34,6 +35,7 @@ app.use(
 app.use('/api/*', securityHeaders);
 app.use('/api/words/*', gameRateLimiter);
 
+app.route('/api/health', health);
 app.route('/api/words', words);
 app.route('/api/admin', admin);
 

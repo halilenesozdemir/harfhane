@@ -4,6 +4,7 @@ import { defineWorkersConfig, readD1Migrations } from '@cloudflare/vitest-pool-w
 const TEST_SECRETS = {
   JWT_SECRET: 'local-test-secret-not-real-0123456789abcdef',
   ADMIN_SECRET: 'local-test-admin-secret',
+  GIT_SHA: 'test-git-sha-0123456789abcdef',
 };
 
 export default defineWorkersConfig(async () => {

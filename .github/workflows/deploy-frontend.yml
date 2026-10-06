@@ -1,5 +1,13 @@
 name: Deploy Frontend
 
+# Gated on CI: `paths` stays native (range-aware across multi-commit pushes,
+# and each workflow still lists its own file so Invariant 9 holds literally).
+# The first real step waits for the CI run on this exact commit (`$GITHUB_SHA`)
+# and fails the job if it isn't found within a bounded timeout or doesn't
+# conclude with `success` — so a red, cancelled, or still-pending CI run blocks
+# the deploy instead of racing it. `concurrency` serializes deploys instead of
+# cancelling one mid-flight. workflow_dispatch is kept for manual runs
+# (Invariant 9) but only from main.
 on:
   push:
     branches: [main]
@@ -11,11 +19,64 @@ on:
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Wait for CI to pass on this commit
+        run: |
+          set -euo pipefail
+          # Budgets kept under the job's 30-minute timeout with margin for
+          # the remaining steps (install, build, deploy, smoke test).
+          FIND_TIMEOUT=480
+          WATCH_TIMEOUT=900
+          INTERVAL=10
+          ELAPSED=0
+          RUN_ID=""
+          FIND_ERROR_RETRIES=5
+          find_errors=0
+          echo "Looking for a CI run on $GITHUB_SHA..."
+          while [ -z "$RUN_ID" ]; do
+            if ! RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --branch main --json databaseId --jq '.[0].databaseId // empty'); then
+              find_errors=$((find_errors + 1))
+              echo "::warning::gh run list failed (attempt $find_errors/$FIND_ERROR_RETRIES)"
+              if [ "$find_errors" -ge "$FIND_ERROR_RETRIES" ]; then
+                echo "::error::gh run list failed $FIND_ERROR_RETRIES times in a row"
+                exit 1
+              fi
+              RUN_ID=""
+            else
+              find_errors=0
+            fi
+            if [ -n "$RUN_ID" ]; then
+              break
+            fi
+            if [ "$ELAPSED" -ge "$FIND_TIMEOUT" ]; then
+              echo "::error::No CI run found for commit $GITHUB_SHA within ${FIND_TIMEOUT}s"
+              exit 1
+            fi
+            sleep "$INTERVAL"
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+          echo "Found CI run $RUN_ID for $GITHUB_SHA — waiting for it to finish..."
+          if ! timeout "$WATCH_TIMEOUT" gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 30; then
+            echo "::error::CI run $RUN_ID for commit $GITHUB_SHA did not conclude with success"
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@v4
 
@@ -34,6 +95,7 @@ jobs:
         run: pnpm --filter @harfhane/frontend run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_BUILD_SHA: ${{ github.sha }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -42,3 +104,36 @@ jobs:
           accountId: fd32026d220617d20fb552d13fb82abd
           workingDirectory: apps/backend
           command: pages deploy ../frontend/dist --project-name harfhane --branch main
+
+      - name: Smoke test production
+        run: |
+          set -euo pipefail
+          # Cloudflare's edge can keep serving the previous version for a few
+          # seconds after deploy. `curl --retry` only retries on transport
+          # errors or non-2xx, so a 200 from the OLD version would pass
+          # immediately and false-green (or, on a flaky edge, false-red) the
+          # smoke test. Poll until the reported marker matches GITHUB_SHA or
+          # the attempt budget is exhausted.
+          POLL_ATTEMPTS=10
+          POLL_DELAY=6
+          MARKER=""
+          BODY=""
+          for attempt in $(seq 1 "$POLL_ATTEMPTS"); do
+            BODY=$(curl -sS --max-time 15 "https://harfhane.app/" || true)
+            # grep -o exits 1 on no match; `|| true` keeps pipefail from
+            # killing the loop so the real error below can be reported.
+            MARKER=$(echo "$BODY" | { grep -o '<meta name="build" content="[^"]*"' || true; } | sed -E 's/.*content="([^"]*)"/\1/')
+            echo "Attempt $attempt/$POLL_ATTEMPTS: marker='$MARKER'"
+            if [ "$MARKER" = "$GITHUB_SHA" ]; then
+              break
+            fi
+            sleep "$POLL_DELAY"
+          done
+          if [ "$MARKER" != "$GITHUB_SHA" ]; then
+            echo "::error::Smoke test failed: expected build marker $GITHUB_SHA, got '$MARKER' after $POLL_ATTEMPTS attempts"
+            exit 1
+          fi
+          if ! echo "$BODY" | grep -q 'id="root"'; then
+            echo "::error::Smoke test failed: response body has no app root element"
+            exit 1
+          fi

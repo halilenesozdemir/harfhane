@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { configDefaults } from 'vitest/config'
 
+// Give `%VITE_BUILD_SHA%` in index.html a fallback so a local or
+// non-CI build doesn't leave the placeholder literal in the page; the
+// deploy workflow still overrides this with the real GITHUB_SHA, which
+// the smoke check compares against.
+process.env.VITE_BUILD_SHA ??= 'dev';
+
 export default defineConfig({
   test: {
     environment: 'jsdom',
