@@ -61,3 +61,11 @@ vajina
 =stop
 =start
 =talk
+=şarap
+=alkol
+=içki
+=sarhoş
+=likör
+=kadeh
+=kadehi
+=duble

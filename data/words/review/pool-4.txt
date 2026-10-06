@@ -379,7 +379,6 @@ ZİYA
 KUTU
 ÇABA
 İMHA
-İÇKİ
 AKLI
 ALAY
 ALET
@@ -598,3 +597,4 @@ MİSS
 İLKE
 NEVİ
 FLAŞ
+KURA
