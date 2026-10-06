@@ -2,8 +2,11 @@ import unittest
 
 import csv
 import os
+import sys
 import tempfile
+from unittest.mock import patch
 
+import validate_labels as vl
 from validate_labels import has_blocking_errors, validate, write_review_csv
 
 POOL = ["KALEM", "GELDİ", "MASA", "DENİZ"]
@@ -114,6 +117,53 @@ class WriteReviewCsvTests(unittest.TestCase):
             with open(path, encoding="utf-8", newline="") as handle:
                 rows = list(csv.reader(handle))
         self.assertEqual(rows, [["word"], ["GELDİ"], ["KALEM"]])
+
+    def test_writes_the_csv_module_default_line_ending(self):
+        # Python's csv module writes "\r\n" by default regardless of platform; pin
+        # that exact byte format since downstream import tooling may depend on it.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "review.csv")
+            write_review_csv(path, [accepted("KALEM")])
+            with open(path, "rb") as handle:
+                raw = handle.read()
+        self.assertEqual(raw, b"word\r\nKALEM\r\n")
+
+
+class MainIntegrationTests(unittest.TestCase):
+    def _write(self, tmp, name, content):
+        with open(os.path.join(tmp, name), "w", encoding="utf-8") as handle:
+            handle.write(content)
+
+    def _run_main(self, tmp, argv):
+        with patch.object(vl, "REVIEW_DIR", tmp), patch.object(sys, "argv", ["validate_labels.py"] + argv):
+            vl.main()
+
+    def test_truncated_labels_exit_nonzero_and_write_no_csv(self):
+        # Only KALEM is labeled; GELDİ/MASA/DENİZ are missing. label_errors() alone
+        # reports no per-label errors here, so this fails if main() checks
+        # `report["errors"]` instead of has_blocking_errors(report).
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "pool-5.txt", "KALEM\nGELDİ\nMASA\nDENİZ\n")
+            self._write(tmp, "labels-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            with self.assertRaises(SystemExit) as ctx:
+                self._run_main(tmp, ["--length", "5"])
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "review-5.csv")))
+
+    def test_pool_daily_writes_review_csv_on_a_clean_complete_set(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._run_main(tmp, ["--length", "5"])
+            self.assertTrue(os.path.exists(os.path.join(tmp, "review-5.csv")))
+
+    def test_pool_unlimited_writes_unlimited_csv_never_review_csv(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._run_main(tmp, ["--length", "5", "--pool", "unlimited"])
+            self.assertTrue(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
+            self.assertFalse(os.path.exists(os.path.join(tmp, "review-5.csv")))
 
 
 if __name__ == "__main__":
