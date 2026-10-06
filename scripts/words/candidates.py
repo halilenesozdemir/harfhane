@@ -3,10 +3,21 @@ from wordfreq import zipf_frequency
 ZIPF_THRESHOLD = 3.0
 FLAG_COUNT_REVIEW_THRESHOLD = 3
 MASTAR_SUFFIXES = ("mak", "mek")
+# How much more common a word must be in English than in Turkish (wordfreq zipf
+# scale) before it's treated as an un-adapted English loanword rather than a word
+# Turkish actually uses. Assimilated loanwords (e.g. "banka") score far higher in
+# Turkish than this margin allows, so they are kept.
+ENGLISH_ZIPF_MARGIN = 1.5
 
 
 def is_mastar(word_lower: str) -> bool:
     return word_lower.endswith(MASTAR_SUFFIXES)
+
+
+def is_likely_english(word_lower: str) -> bool:
+    en_freq = zipf_frequency(word_lower, "en")
+    tr_freq = zipf_frequency(word_lower, "tr")
+    return en_freq - tr_freq >= ENGLISH_ZIPF_MARGIN
 
 
 def passes_frequency(word_lower: str) -> bool:

@@ -4,7 +4,7 @@ import os
 
 from wordfreq import zipf_frequency
 
-from candidates import is_blocked, is_mastar, load_blocklist
+from candidates import is_blocked, is_likely_english, is_mastar, load_blocklist
 from hunspell_source import fetch_dic_path, parse_dic_file
 from inflection import is_inflected_form
 from turkish import is_turkish_alphabet, tr_lower, tr_upper
@@ -69,6 +69,8 @@ def build_unlimited_pool(
     pool = []
     for word in sorted(valid_words):
         if is_mastar(word) or is_blocked(word, blocklist):
+            continue
+        if is_likely_english(word):
             continue
         upper = tr_upper(word)
         if upper in excluded:
