@@ -31,7 +31,16 @@ produces the same output files under `data/words/`.
 
 - `answer_pool.py --length N`: ranks `data/words/candidates-N.csv` by frequency and writes the
   top 600 to `data/words/review/pool-N.txt`.
-- `validate_labels.py --length N`: checks the model-written labels in
-  `data/words/review/labels-N.jsonl` against the pool and prints accepted/rejected counts and
-  errors as JSON. Accepted words with meaning and context go to `review-N.csv` for import.
+- `validate_labels.py --length N [--pool daily|unlimited]`: checks the model-written labels
+  against the pool for that mode and prints accepted/rejected counts and errors as JSON. A
+  label needs only `word` + `decision` (`accept`/`reject`/`unsure`), plus a `reason` for
+  `reject`/`unsure`; any other field (legacy `meaning`/`category`/`context`) is ignored. Words
+  carry no meaning or context in either pool.
+  - `--pool daily` (default): pool `data/words/review/pool-N.txt`, labels
+    `data/words/review/labels-N.jsonl`, accepted words go to `review-N.csv` (`word` column
+    only) for import.
+  - `--pool unlimited`: pool `data/words/review/unlimited-pool-N.txt` (from
+    `unlimited_pool.py`), labels `data/words/review/labels-unlimited-N.jsonl`, accepted words
+    go to `unlimited-N.csv` (`word` column only).
+  - Exits 1 without writing the CSV when there are any errors.
 - `test_validate_labels.py`: unittest suite for the validator.
