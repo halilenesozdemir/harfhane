@@ -10,6 +10,7 @@ import { parsePx } from '../utils/px';
 export interface KeyIconProps {
   readonly color?: string;
   readonly size?: number;
+  readonly testID?: string;
 }
 
 export interface KeyProps {
@@ -69,7 +70,11 @@ export function Key({ label, value, status, accessibilityLabel, isWide = false, 
         },
       ]}
     >
-      {Icon ? <Icon color={color} size={KEY_ICON_SIZE} /> : <Text style={[styles.label, { color }]}>{label}</Text>}
+      {Icon ? (
+        <Icon color={color} size={KEY_ICON_SIZE} testID={testID ? `${testID}-icon` : undefined} />
+      ) : (
+        <Text style={[styles.label, { color }]}>{label}</Text>
+      )}
     </Pressable>
   );
 }

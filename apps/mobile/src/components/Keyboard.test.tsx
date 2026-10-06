@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
+import { CornerDownLeft, Delete } from 'lucide-react-native';
 import { themes } from '@harfhane/ui-tokens';
-import { Keyboard } from './Keyboard';
+import { KEY_ICONS, Keyboard } from './Keyboard';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { HAPTICS_ENABLED_KEY } from '../lib/useHapticsSettings';
 
@@ -25,13 +26,31 @@ beforeEach(() => {
   storedHapticsValue.current = null;
 });
 
-async function renderKeyboard(keyboardStatus: Record<string, 'correct' | 'present' | 'absent' | null> = {}) {
+interface RenderKeyboardOptions {
+  readonly keyboardStatus?: Record<string, 'correct' | 'present' | 'absent' | null>;
+  readonly isHapticsEnabled?: boolean;
+  readonly isInputBlocked?: boolean;
+}
+
+async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBlocked }: RenderKeyboardOptions = {}) {
   const onLetter = jest.fn();
   const onDelete = jest.fn();
   const onSubmit = jest.fn();
   await renderWithTheme(
-    <Keyboard keyboardStatus={keyboardStatus} onLetter={onLetter} onDelete={onDelete} onSubmit={onSubmit} />,
+    <Keyboard
+      keyboardStatus={keyboardStatus}
+      onLetter={onLetter}
+      onDelete={onDelete}
+      onSubmit={onSubmit}
+      isHapticsEnabled={isHapticsEnabled}
+      isInputBlocked={isInputBlocked}
+    />,
   );
+  // Flushes the own-hook's AsyncStorage load, which otherwise reports haptics as off
+  // (the safe default before the stored value arrives) regardless of what's mocked.
+  await act(async () => {
+    await Promise.resolve();
+  });
   return { onLetter, onDelete, onSubmit };
 }
 
@@ -61,7 +80,7 @@ describe('Keyboard', () => {
   });
 
   it('should reflect keyboardStatus precedence on key color', async () => {
-    await renderKeyboard({ A: 'correct' });
+    await renderKeyboard({ keyboardStatus: { A: 'correct' } });
     const style = flattenStyle(screen.getByLabelText('A').props.style);
     expect(style.backgroundColor).toBe(themes.light.correct);
   });
@@ -92,10 +111,44 @@ describe('Keyboard', () => {
   it('should not trigger a haptic on key press when haptics are switched off (011-AE3)', async () => {
     storedHapticsValue.current = 'false';
     await renderKeyboard();
-    await act(async () => {
-      await Promise.resolve();
-    });
     fireEvent.press(screen.getByLabelText('A'));
     expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+  });
+
+  it('should prefer the isHapticsEnabled prop over its own stored setting when given', async () => {
+    storedHapticsValue.current = 'true';
+    await renderKeyboard({ isHapticsEnabled: false });
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+  });
+
+  it('should use the isHapticsEnabled prop to enable haptics even if storage says off', async () => {
+    storedHapticsValue.current = 'false';
+    await renderKeyboard({ isHapticsEnabled: true });
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+  });
+
+  it('should not trigger a haptic on key press when input is blocked (game over or submitting)', async () => {
+    await renderKeyboard({ isInputBlocked: true });
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+  });
+
+  it('should still call onLetter when input is blocked (the reducer, not Keyboard, owns ignoring it)', async () => {
+    const { onLetter } = await renderKeyboard({ isInputBlocked: true });
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(onLetter).toHaveBeenCalledWith('A');
+  });
+
+  it('should render CornerDownLeft for Enter and Delete for Backspace', () => {
+    expect(KEY_ICONS.ENTER).toBe(CornerDownLeft);
+    expect(KEY_ICONS.BACKSPACE).toBe(Delete);
+  });
+
+  it('should expose an icon testID for Enter and Backspace', async () => {
+    await renderKeyboard();
+    expect(screen.getByTestId('key-ENTER-icon', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByTestId('key-BACKSPACE-icon', { includeHiddenElements: true })).toBeTruthy();
   });
 });

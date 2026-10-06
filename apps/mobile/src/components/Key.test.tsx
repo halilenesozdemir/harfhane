@@ -53,4 +53,43 @@ describe('Key', () => {
     expect(screen.queryByText('⌫')).toBeNull();
     expect(screen.getByLabelText('Sil')).toBeTruthy();
   });
+
+  it('should expose the icon under a testID derived from the key testID', async () => {
+    await renderWithTheme(
+      <Key
+        label="⌫"
+        value="BACKSPACE"
+        status={null}
+        accessibilityLabel="Sil"
+        icon={Delete}
+        testID="key-BACKSPACE"
+        onPress={() => undefined}
+      />,
+    );
+    expect(screen.getByTestId('key-BACKSPACE-icon', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('should pass the key foreground colour to the icon, not a fixed colour', async () => {
+    const colorCapture: { seen: string | undefined } = { seen: undefined };
+    function CapturingIcon({ color }: { readonly color?: string }) {
+      colorCapture.seen = color;
+      return null;
+    }
+    await renderWithTheme(
+      <Key label="⌫" value="BACKSPACE" status="correct" accessibilityLabel="Sil" icon={CapturingIcon} onPress={() => undefined} />,
+    );
+    expect(colorCapture.seen).toBe(themes.light.correctFg);
+  });
+
+  it('should pass the default key foreground colour to the icon when there is no status', async () => {
+    const colorCapture: { seen: string | undefined } = { seen: undefined };
+    function CapturingIcon({ color }: { readonly color?: string }) {
+      colorCapture.seen = color;
+      return null;
+    }
+    await renderWithTheme(
+      <Key label="⌫" value="BACKSPACE" status={null} accessibilityLabel="Sil" icon={CapturingIcon} onPress={() => undefined} />,
+    );
+    expect(colorCapture.seen).toBe(themes.light.keyFg);
+  });
 });

@@ -13,6 +13,14 @@ export interface KeyboardProps {
   readonly onLetter: (letter: string) => void;
   readonly onDelete: () => void;
   readonly onSubmit: () => void;
+  /**
+   * Overrides the "Titreşim" setting for the key-tap haptic. Pass `useGame()`'s
+   * `isHapticsEnabled` once the parent screen reads it; omitting it falls back to this
+   * component's own `useHapticsSettings()` call so it still works stand-alone.
+   */
+  readonly isHapticsEnabled?: boolean;
+  /** Suppresses the key-tap haptic once the game is over or a guess is in flight. */
+  readonly isInputBlocked?: boolean;
 }
 
 const ENTER_KEY = 'ENTER';
@@ -23,7 +31,7 @@ const KEYBOARD_ROW_GAP = 6;
 const KEYBOARD_KEY_GAP = 4;
 const KEYBOARD_SIDE_PADDING = 4;
 
-const KEY_ICONS: Readonly<Record<string, ComponentType<KeyIconProps>>> = {
+export const KEY_ICONS: Readonly<Record<string, ComponentType<KeyIconProps>>> = {
   [ENTER_KEY]: CornerDownLeft,
   [BACKSPACE_KEY]: Delete,
 };
@@ -40,17 +48,25 @@ function getKeyAccessibilityLabel(value: string): string {
   return value;
 }
 
-export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: KeyboardProps) {
-  const { isEnabled: isHapticsEnabled } = useHapticsSettings();
+export function Keyboard({
+  keyboardStatus,
+  onLetter,
+  onDelete,
+  onSubmit,
+  isHapticsEnabled,
+  isInputBlocked = false,
+}: KeyboardProps) {
+  const ownHapticsSettings = useHapticsSettings();
+  const resolvedHapticsEnabled = isHapticsEnabled ?? ownHapticsSettings.isEnabled;
 
   const handlePress = useCallback(
     (value: string) => {
-      void keyTap(isHapticsEnabled);
+      if (!isInputBlocked) void keyTap(resolvedHapticsEnabled);
       if (value === ENTER_KEY) return onSubmit();
       if (value === BACKSPACE_KEY) return onDelete();
       onLetter(value);
     },
-    [isHapticsEnabled, onDelete, onLetter, onSubmit],
+    [isInputBlocked, resolvedHapticsEnabled, onDelete, onLetter, onSubmit],
   );
 
   return (
