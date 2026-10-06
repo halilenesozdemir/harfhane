@@ -18,7 +18,7 @@ describe('POST /api/admin/import', () => {
     expect(res.status).toBe(401);
   });
 
-  it('should reject a request with a wrong admin secret', async () => {
+  it('should return 401 when the admin secret is wrong', async () => {
     const res = await SELF.fetch('http://example.com/api/admin/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': `${ADMIN_SECRET}-wrong` },
