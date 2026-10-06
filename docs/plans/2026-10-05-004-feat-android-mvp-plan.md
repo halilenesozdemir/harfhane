@@ -32,11 +32,11 @@ Decisions marked *(assumption)* were made without the owner and are open to chan
 - KTD3. Tests: Vitest for pure logic (hooks, API client, storage), jest-expo + React Native Testing Library for rendered components. `apps/mobile` runs both from its `test` script.
 - KTD4. Storage: AsyncStorage behind a small async storage hook; web keys and JSON shapes are kept so a future export or sync is straightforward.
 - KTD5. *(assumption)* Anonymous play first. Sign-in arrives with Plan 007; email/password is not added to mobile separately.
-- KTD6. *(assumption)* Screens: Home (mode and length picker), Game (daily and unlimited share one screen), How to play, Stats, Settings. Leaderboard and profile stay web-only for the MVP; duels, tournaments and lists were removed from the product entirely on 2026-10-05 (not web-only — not shipping on any platform).
+- KTD6. *(assumption)* Screens: Home (mode and length picker), Game (daily and unlimited share one screen), How to play, Stats, Settings. Leaderboard, profile, duels, tournaments and lists stay web-only for the MVP.
 - KTD7. Verification without a device: `expo export --platform android` in CI-like local runs proves Metro resolves the workspace packages. Emulator and device checks are owner steps until an emulator is set up.
 
 ## Scope boundaries
-- Out of scope: purchases (Plan 005), sign-in and push (Plan 007), iOS, web parity for leaderboard/profile.
+- Out of scope: purchases (Plan 005), sign-in and push (Plan 007), iOS, web parity for leaderboard/profile/duels.
 
 ## Units
 - U1. Scaffold `apps/mobile` (SDK 57, TypeScript), wire scripts into the root gate, prove AE1 and AE2. (R1, R2)
