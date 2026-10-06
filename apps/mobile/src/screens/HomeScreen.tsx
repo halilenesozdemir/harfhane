@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { CONTENT_MAX_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { CONTENT_MAX_WIDTH, FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import type { ThemeColors } from '../theme';
 import type { WordLength } from '../stats/stats';
 
 export type HomeScreenMode = 'daily' | 'unlimited';
@@ -19,8 +20,31 @@ export interface HomeScreenProps {
 
 export const DEFAULT_WORD_LENGTH: WordLength = 5;
 const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
-const TITLE_LETTER_SPACING = 2;
 const LENGTH_OPTION_HEIGHT = 36;
+
+// R5: the home title is an H-A-R-F tile row, matching the web splash
+// screen's brand mark (apps/frontend/src/components/SplashScreen.tsx)
+// instead of a plain "HARFHANE" wordmark.
+const TITLE_LETTERS = ['H', 'A', 'R', 'F'] as const;
+const TITLE_TILE_SIZE = 40;
+const TITLE_ACCESSIBILITY_LABEL = 'HARFHANE';
+
+function titleTileColor(colors: ThemeColors, index: number): string {
+  return index % 2 === 0 ? colors.correct : colors.present;
+}
+
+function HomeTitle() {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.titleRow} accessibilityLabel={TITLE_ACCESSIBILITY_LABEL} testID="home-title-row">
+      {TITLE_LETTERS.map((letter, index) => (
+        <View key={letter} style={[styles.titleTile, { backgroundColor: titleTileColor(colors, index) }]}>
+          <Text style={[styles.titleTileLabel, { color: colors.correctFg }]}>{letter}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export function HomeScreen({
   selectedLength,
@@ -39,7 +63,7 @@ export function HomeScreen({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.title, { color: colors.text }]}>HARFHANE</Text>
+      <HomeTitle />
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>Türkçe kelime oyunu</Text>
 
       <Pressable
@@ -130,10 +154,20 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.md,
   },
-  title: {
-    fontSize: FONT_SIZE.display,
-    fontWeight: '800',
-    letterSpacing: TITLE_LETTER_SPACING,
+  titleRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  titleTile: {
+    width: TITLE_TILE_SIZE,
+    height: TITLE_TILE_SIZE,
+    borderRadius: RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleTileLabel: {
+    fontFamily: FONT_FAMILY_DISPLAY,
+    fontSize: FONT_SIZE.title,
   },
   subtitle: {
     fontSize: FONT_SIZE.bodyLarge,
@@ -146,8 +180,8 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   cardTitle: {
+    fontFamily: FONT_FAMILY_DISPLAY,
     fontSize: FONT_SIZE.title,
-    fontWeight: '700',
     marginBottom: SPACING.xs,
   },
   cardBody: {

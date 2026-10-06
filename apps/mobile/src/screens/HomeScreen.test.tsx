@@ -28,9 +28,16 @@ function ControlledHomeScreen({ onStart = noop, onOpenHowToPlay = noop, onOpenSe
 describe('HomeScreen', () => {
   it('should render the Turkish title and mode cards', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
-    expect(screen.getByText('HARFHANE')).toBeTruthy();
+    expect(screen.getByLabelText('HARFHANE')).toBeTruthy();
     expect(screen.getByText('Günlük Oyun')).toBeTruthy();
     expect(screen.getByText('Sınırsız Mod')).toBeTruthy();
+  });
+
+  it('(011-R5) should render the title as an H-A-R-F tile row', async () => {
+    await renderWithTheme(<ControlledHomeScreen />);
+    for (const letter of ['H', 'A', 'R', 'F']) {
+      expect(screen.getByText(letter)).toBeTruthy();
+    }
   });
 
   it('should call onStart with daily mode and the default length of 5', async () => {
