@@ -229,3 +229,21 @@ From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calend
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
+
+## Wire GameScreen to Keyboard's new haptics props (Plan 011 U3, PR #88, 2026-10-07)
+`Keyboard` now accepts `isHapticsEnabled` (overrides its own `useHapticsSettings()` read) and
+`isInputBlocked` (suppresses the key-tap haptic once the game is over or a guess is in flight);
+`useGame()` already exposes `isHapticsEnabled` on its result. `GameScreen.tsx` was off limits for
+PR #88 (owned by the game-over-card unit, PR #87, open at the time), so neither prop is wired yet:
+Keyboard still reads its own setting independently and never suppresses on game-over/in-flight.
+Once #87 merges, have `GameScreen.tsx` pass `isHapticsEnabled={session.isHapticsEnabled}` and
+`isInputBlocked={session.game.gameStatus !== 'playing' || session.isSubmitting}` (or equivalent)
+to `Keyboard`, then drop Keyboard's own `useHapticsSettings()` call — one hook instance per screen.
+
+## Remove the VIBRATE permission `expo-haptics` adds (Plan 011 U3, PR #88, 2026-10-07)
+Installing `expo-haptics` merges `android.permission.VIBRATE` into the manifest (a normal
+permission; shown on the Play Store listing, no runtime prompt). `performAndroidHapticsAsync`
+itself doesn't need it, so it can be dropped with `android.blockedPermissions` in `app.json`.
+Deferred because `app.json` is owned by PR #89 (open at the time); do it once #89 merges. A new
+Android dev build/APK is needed either way before a device can show haptics, since `expo-haptics`
+is a native module not present in Expo Go or any existing build.
