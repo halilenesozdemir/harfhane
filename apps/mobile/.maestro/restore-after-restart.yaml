@@ -1,0 +1,28 @@
+appId: host.exp.exponent
+---
+# Daily game state (unlike unlimited) is persisted to device storage on every change, including
+# an unsubmitted partial guess, so it must survive a full app stop and relaunch.
+- runFlow: subflows/open-fresh.yaml
+- tapOn: "Günlük Oyun"
+- extendedWaitUntil:
+    visible:
+      id: "tile-0-0"
+    timeout: 15000
+
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-A" }
+- assertVisible: { id: "tile-0-0", text: "K" }
+- assertVisible: { id: "tile-0-1", text: "A" }
+
+- stopApp
+- runFlow: subflows/open-resume.yaml
+- extendedWaitUntil:
+    visible: "HARFHANE"
+    timeout: 15000
+- tapOn: "Günlük Oyun"
+- extendedWaitUntil:
+    visible:
+      id: "tile-0-0"
+    timeout: 15000
+- assertVisible: { id: "tile-0-0", text: "K" }
+- assertVisible: { id: "tile-0-1", text: "A" }

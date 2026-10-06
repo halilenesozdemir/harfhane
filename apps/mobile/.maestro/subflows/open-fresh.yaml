@@ -1,0 +1,23 @@
+appId: host.exp.exponent
+---
+# Launches Expo Go with a clean app state and opens the Metro bundle for this project.
+# Expo Go shows a one-time developer-menu bottom sheet on a fresh connection; "Continue" opens
+# the full dev menu panel instead of dismissing it, so a hardware back closes that panel too.
+- launchApp:
+    clearState: true
+- openLink: "exp://127.0.0.1:8081"
+# The first bundle load after a clean state can be slow; this wait is optional so a slow
+# load (or no dev-menu sheet at all) never fails the flow outright.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - back
+- extendedWaitUntil:
+    visible: "HARFHANE"
+    timeout: 15000

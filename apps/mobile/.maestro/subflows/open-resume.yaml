@@ -1,0 +1,13 @@
+appId: host.exp.exponent
+---
+# Re-opens Expo Go without wiping app storage, so persisted game state survives. The
+# developer-menu sheet from open-fresh.yaml only appears on a clean app state, so it is handled
+# only when it actually shows up.
+- launchApp
+- openLink: "exp://127.0.0.1:8081"
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - back
