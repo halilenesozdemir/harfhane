@@ -35,6 +35,12 @@ jobs:
       - name: Build shared
         run: pnpm --filter @harfhane/shared run build
 
+      - name: Check for unused files, exports and dependencies
+        run: pnpm run knip
+
+      - name: Check dependency layering and circular imports
+        run: pnpm run depcruise
+
       - name: Typecheck
         run: pnpm typecheck
 

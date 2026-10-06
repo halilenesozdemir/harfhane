@@ -4,6 +4,9 @@
   "version": "3.0.0",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "dev": "pnpm --parallel --filter \"@harfhane/*\" run dev",
@@ -17,14 +20,18 @@
     "typecheck:test": "pnpm --filter @harfhane/backend run typecheck:test",
     "check": "pnpm --filter @harfhane/shared run build && pnpm typecheck && pnpm typecheck:test && pnpm lint && pnpm test && pnpm run check:ac",
     "check:ac": "node scripts/check-ac-coverage.mjs",
-    "test:e2e": "pnpm --filter @harfhane/frontend run test:e2e"
+    "test:e2e": "pnpm --filter @harfhane/frontend run test:e2e",
+    "knip": "knip",
+    "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "dependency-cruiser": "18.5.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "knip": "6.40.0",
     "typescript-eslint": "^8"
   }
 }
