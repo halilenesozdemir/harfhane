@@ -36,7 +36,7 @@ async function fetchUnscheduledStock(db: Env['DB'], length: number): Promise<num
   const row = await db
     .prepare(
       `SELECT COUNT(*) as count FROM words
-       WHERE is_active = 1 AND status = 'approved' AND length = ?
+       WHERE is_active = 1 AND status = 'approved' AND pool = 'daily' AND length = ?
          AND id NOT IN (SELECT word_id FROM daily_words WHERE length = ?)`
     )
     .bind(length, length)

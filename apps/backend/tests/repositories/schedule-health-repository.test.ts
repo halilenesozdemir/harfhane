@@ -68,4 +68,17 @@ describe('findScheduleRunway', () => {
     const entry = result.find((r) => r.length === 5);
     expect(entry?.unscheduledStock).toBe(0);
   });
+
+  it('should not raise unscheduledStock when an approved word belongs to the unlimited pool', async () => {
+    await env.DB
+      .prepare(
+        `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)
+         VALUES ('UNLIM', 'test anlamı', 'test bağlamı', 'isim', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+      )
+      .run();
+
+    const result = await findScheduleRunway(env.DB, TODAY);
+    const entry = result.find((r) => r.length === 5);
+    expect(entry?.unscheduledStock).toBe(0);
+  });
 });

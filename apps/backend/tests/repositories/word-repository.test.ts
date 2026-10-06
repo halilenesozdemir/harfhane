@@ -60,7 +60,7 @@ describe('findRandomWord', () => {
     expect(result).toBeNull();
   });
 
-  it('draws from the unlimited pool when no daily-pool word exists for that length', async () => {
+  it('should draw from the unlimited pool when no daily-pool word exists for that length', async () => {
     await env.DB.prepare(
       `INSERT INTO words
         (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)
