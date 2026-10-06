@@ -2,17 +2,18 @@ import { z } from 'zod';
 import { normalizeWord } from '../utils/normalize';
 
 const categorySchema = z.enum(['isim', 'sıfat', 'fiil']);
+const poolSchema = z.enum(['daily', 'unlimited']);
 
 export const createWordSchema = z.object({
   word: z.string().min(1).max(10).transform(normalizeWord),
-  meaning: z.string().min(1).max(500),
+  meaning: z.string().max(500).default(''),
   context: z.string().max(500).default(''),
   category: categorySchema,
 });
 
 export const updateWordSchema = z.object({
   word: z.string().min(1).max(10).transform(normalizeWord).optional(),
-  meaning: z.string().min(1).max(500).optional(),
+  meaning: z.string().max(500).optional(),
   context: z.string().max(500).optional(),
   category: categorySchema.optional(),
 });
@@ -31,11 +32,12 @@ export const importWordsSchema = z.object({
     .array(
       z.object({
         word: z.string().min(1).max(10).transform(normalizeWord),
-        meaning: z.string().min(1).max(500),
+        meaning: z.string().max(500).default(''),
         context: z.string().max(500).default(''),
         category: categorySchema,
         source: z.string().min(1).max(100).optional(),
         license: z.string().min(1).max(100).optional(),
+        pool: poolSchema.default('daily'),
       })
     )
     .min(1)

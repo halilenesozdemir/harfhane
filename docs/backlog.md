@@ -34,6 +34,11 @@ The web app carries code from many experiments; removed features such as challen
 `apps/backend/migrations/` (26 files) is replaced by `apps/backend/db/migrations/0001_baseline.sql`.
 - Delete the legacy folder at database cutover.
 - Point the root `scripts/` (which target `harfhane-db`) at the new pipeline, or retire them.
+  `schedule-new-words.mjs`, `schedule-daily-words.ts` and the generated `schedule-new-words.sql`
+  were deleted at the cutover binding switch (would have silently written to the now-dead
+  `harfhane-db`). `enrich-meanings.ts`, `auto-import.ts`, `import-curated.ts` and `seed-db.ts`
+  still hardcode `harfhane-db --remote` and were not touched — same risk, needs the same
+  retire-or-repoint decision before anyone runs them again.
 - Until then `eslint.config.js` ignores them (Plan 003 lints `apps/` and `packages/` only; without the ignore ESLint parses root `*.js` with defaults and fails), so `no-console` and unused-code rules do not reach them.
 
 ## Known bug fixed in passing
