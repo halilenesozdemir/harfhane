@@ -100,3 +100,56 @@ describe('getScheduleHealth Turkey day boundary', () => {
     expect(fiveLetterEntry?.runwayDays).toBe(1);
   });
 });
+
+describe('getScheduleHealth restock status', () => {
+  const TODAY = '2026-09-01';
+  const RESTOCK_WORD_COUNT = 120;
+  const SCHEDULED_RUNWAY_DAYS = 200;
+
+  async function insertDailyWord(word: string, length: number): Promise<number> {
+    const row = await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES (?, ?, ?, 'isim', ?, 'test', 'test', 'approved', 1, 1)
+       RETURNING id`
+    )
+      .bind(word, 'test anlamı', 'test bağlamı', length)
+      .first<{ id: number }>();
+    if (!row) throw new Error('word insert failed');
+    return row.id;
+  }
+
+  function addDays(date: string, days: number): string {
+    const cursor = new Date(`${date}T00:00:00Z`);
+    cursor.setUTCDate(cursor.getUTCDate() + days);
+    return cursor.toISOString().slice(0, 10);
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should match AE5: 120 eligible 5-letter words give getScheduleHealth a restock runway of 120 (008-AE5)', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(`${TODAY}T10:00:00Z`));
+
+    const fillerWordId = await insertDailyWord('FILLR', 5);
+    for (let day = 0; day < SCHEDULED_RUNWAY_DAYS; day++) {
+      await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+        .bind(fillerWordId, addDays(TODAY, day))
+        .run();
+    }
+
+    for (let i = 0; i < RESTOCK_WORD_COUNT; i++) {
+      const word = String(20000 + i)
+        .padStart(5, '0')
+        .replace(/\d/g, (d) => 'ABCDEFGHIJ'[Number(d)]!);
+      await insertDailyWord(word, 5);
+    }
+
+    const health = await getScheduleHealth(env.DB);
+    const fiveLetterEntry = health.find((entry) => entry.length === 5);
+    expect(fiveLetterEntry?.runwayDays).toBeGreaterThanOrEqual(180);
+    expect(fiveLetterEntry?.restockRunwayDays).toBe(RESTOCK_WORD_COUNT);
+    expect(fiveLetterEntry?.restockStatus).toBe('restock');
+  });
+});

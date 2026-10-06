@@ -27,13 +27,23 @@ async function typeAndSubmit(result: { current: ReturnType<typeof useGame> }, wo
 }
 
 describe('useGame', () => {
-  it('should restore a saved daily game when the app reopens', async () => {
-    const saved = { guesses: ['KALAY'], evaluations: [['correct', 'correct', 'correct', 'absent', 'absent']], currentGuess: '', gameStatus: 'playing', keyboardStatus: {} };
+  it('should restore both guesses on the board when the app restarts after two guesses (004-AE3)', async () => {
+    const saved = {
+      guesses: ['KALAY', 'KALIP'],
+      evaluations: [
+        ['correct', 'correct', 'correct', 'absent', 'absent'],
+        ['correct', 'correct', 'absent', 'absent', 'absent'],
+      ],
+      currentGuess: '',
+      gameStatus: 'playing',
+      keyboardStatus: {},
+    };
     const store = createMemoryStore({ [DAILY_KEY]: JSON.stringify(saved) });
     const api = createApi();
     const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
     await waitFor(() => expect(result.current.session.phase).toBe('ready'));
-    expect(result.current.session.game.guesses).toEqual(['KALAY']);
+    expect(result.current.session.game.guesses).toEqual(['KALAY', 'KALIP']);
+    expect(result.current.session.game.evaluations).toHaveLength(2);
   });
 
   it('should apply a valid guess and save the daily game', async () => {
