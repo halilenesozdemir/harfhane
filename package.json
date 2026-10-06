@@ -4,6 +4,9 @@
   "version": "3.0.0",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "dev": "pnpm --parallel --filter \"@harfhane/*\" run dev",
