@@ -5,6 +5,7 @@ const TEST_SECRETS = {
   JWT_SECRET: 'local-test-secret-not-real-0123456789abcdef',
   ADMIN_SECRET: 'local-test-admin-secret',
   GIT_SHA: 'test-git-sha-0123456789abcdef',
+  PLAYABLE_WORD_LENGTHS: '6,5',
 };
 
 export default defineWorkersConfig(async () => {

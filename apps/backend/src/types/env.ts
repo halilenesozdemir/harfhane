@@ -4,4 +4,5 @@ export interface Env {
   RESEND_API_KEY: string;
   ADMIN_ALERT_EMAIL?: string;
   GIT_SHA?: string;
+  PLAYABLE_WORD_LENGTHS?: string;
 }
