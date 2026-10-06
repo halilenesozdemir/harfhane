@@ -9,6 +9,7 @@ Turkish word game (daily and unlimited modes, duels, XP, badges) on web and Andr
 - `apps/backend` — Hono on Cloudflare Workers, D1. `apps/frontend` — React 19 + Vite PWA. `apps/mobile` — Expo Android.
 - `packages/shared` (`@harfhane/shared`) — types and game logic used by all three apps, including `normalizeChar` / `normalizeWord`.
 - `packages/ui-tokens` (`@harfhane/ui-tokens`) — design tokens: edit `tokens.json`, run `pnpm --filter @harfhane/ui-tokens run build`, commit the generated files (a test fails if they drift).
+- `GLOSSARY.md` — the domain terms plans, tests and code use (scheduled vs playable length, daily vs unlimited pool, Turkey day). Skills in `.claude/skills/`: `grilling` before a new plan, `domain-modeling` for terms, `diagnosing-bugs` for hard bugs.
 - `docs/roadmap.md` — plan order and what waits on the owner; read it before picking work. Plans in `docs/plans/`, evidence in `docs/research/`, ADRs in `docs/decisions/`, deferred work in `docs/backlog.md`. `docs/archive/` is history only.
 
 ## Commands

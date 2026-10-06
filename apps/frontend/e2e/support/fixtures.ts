@@ -27,6 +27,46 @@ export interface ApiStub {
   stubDailyWord(wordLength: number, stub: WordStub, gameNumber?: number): Promise<void>;
   stubRandomWord(wordLength: number, stubs: WordStub[]): Promise<void>;
   stubValidate(isValidWord: (word: string) => boolean): Promise<void>;
+  stubPlayableLengths(lengths: number[]): Promise<void>;
+  stubPlayableLengthsFailure(): Promise<void>;
+  stubPlayableLengthsDelayed(lengths: number[], delayMs: number): Promise<void>;
+}
+
+// Default: every scheduled length is playable, matching the world before
+// Plan 008 R1 so existing specs that navigate directly to /daily/4, /daily/6
+// or /unlimited/4 keep working without each one stubbing this endpoint.
+const DEFAULT_PLAYABLE_LENGTHS = [4, 5, 6];
+
+async function stubPlayableLengths(page: Page, lengths: number[]): Promise<void> {
+  await page.route('**/api/words/lengths', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { lengths } }),
+    });
+  });
+}
+
+async function stubPlayableLengthsFailure(page: Page): Promise<void> {
+  await page.route('**/api/words/lengths', async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'boom' } }),
+    });
+  });
+}
+
+// Proves the app waits for the real answer instead of guessing: the
+// response is delayed so a test can assert nothing was fetched for a
+// not-yet-confirmed length before it arrives.
+async function stubPlayableLengthsDelayed(page: Page, lengths: number[], delayMs: number): Promise<void> {
+  await page.route('**/api/words/lengths', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { lengths } }),
+    });
+  });
 }
 
 async function stubDailyWord(
@@ -96,6 +136,10 @@ export const test = base.extend<{ api: ApiStub }>({
         body: JSON.stringify({ error: { code: 'not_stubbed', message: 'e2e: unstubbed request' } }),
       });
     });
+    // Default playable-lengths stub (every scheduled length), registered
+    // after the catch-all so it wins; a test can still override it later
+    // with api.stubPlayableLengths / stubPlayableLengthsFailure.
+    await stubPlayableLengths(page, DEFAULT_PLAYABLE_LENGTHS);
     await use(page);
   },
   api: async ({ page }, use) => {
@@ -103,6 +147,9 @@ export const test = base.extend<{ api: ApiStub }>({
       stubDailyWord: (wordLength, stub, gameNumber) => stubDailyWord(page, wordLength, stub, gameNumber),
       stubRandomWord: (wordLength, stubs) => stubRandomWord(page, wordLength, stubs),
       stubValidate: (isValidWord) => stubValidate(page, isValidWord),
+      stubPlayableLengths: (lengths) => stubPlayableLengths(page, lengths),
+      stubPlayableLengthsFailure: () => stubPlayableLengthsFailure(page),
+      stubPlayableLengthsDelayed: (lengths, delayMs) => stubPlayableLengthsDelayed(page, lengths, delayMs),
     });
   },
 });

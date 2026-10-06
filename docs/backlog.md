@@ -126,3 +126,17 @@ and already removed end to end in #54.
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
   player bundle (`App.tsx`); `/admin` lacks `noindex`.
+- **Sitemap still lists hidden lengths.** `apps/frontend/scripts/generate-sitemap.mjs`'s `STATIC_ROUTES`
+  hard-codes `/daily/4`, `/daily/5` and `/daily/6` regardless of `PLAYABLE_WORD_LENGTHS` (Plan 008 R1); with
+  only 5 playable, the sitemap still advertises `/daily/4`/`/daily/6` to crawlers even though the app
+  redirects them away. Generate the sitemap's daily routes from the backend's playable lengths (or drop the
+  non-playable ones) once this is worth a build-time fetch.
+
+## Reusable factory (after Harfhane is stable)
+Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
+deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
+routine) should later be reusable for another product on the same stack (pnpm monorepo, Hono +
+Workers + D1, React + Vite, Expo). Do it once Harfhane has shipped and the gates have settled: write an
+ADR, map every file as factory or product, extract the factory layer into a GitHub template repo and
+`~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
+then, write new rules so the factory part stays separable from product rules.
