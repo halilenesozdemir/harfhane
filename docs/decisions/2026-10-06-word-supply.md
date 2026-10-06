@@ -40,9 +40,10 @@ Research: `docs/research/2026-10-06-word-supply-standards.md`.
 
 ## Consequences
 - Implementation lives in `docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`:
-  repeat policy → R3/KTD3, U6; unlimited pool → R2/KTD5, U7; allowed sources → Goal/KTD5; no
-  meaning/context → R5/R6, U4; the letter hint → R7, U9 (web), U10 (mobile). Plan 001/006 only
-  record the decisions (R8 and R8–R10 respectively, both marked superseded), not the code.
+  repeat policy → R3/KTD3, U6; unlimited pool → R2/KTD5, U5 (the `pool` column/migration), U7;
+  allowed sources → Goal/KTD5; no meaning/context → R5/R6, U4; the letter hint → R7, U9 (web),
+  U10 (mobile). Plan 001 R8 is *implemented by* Plan 008, not superseded — the requirement
+  still holds, the code just lives there; Plan 006 R8–R10 are marked superseded the same way.
 - This restocking KPI is distinct from the existing low-stock alert (Plan 006 R7/U3b), which is
   a shorter, remaining-stock trigger independent of runway; the 180-day KPI here is about
   starting the next *review batch* in good time, not alerting that stock is already low.

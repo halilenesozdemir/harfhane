@@ -38,7 +38,8 @@ data is held server-side — only the admin's own content and schedule data live
   lists in #37/#42, tournaments in #40. The database tables (`users`, `game_results`, `badges`,
   `user_xp`, `user_badges`, `push_subscriptions`, `streak_freezes`, `password_reset_tokens`,
   `duels`, `word_lists`, `word_list_words`, `list_likes`, `list_comments`,
-  `tournament_results`, …) stay in the schema until an owner-approved `0002` drop migration
-  (`docs/backlog.md`) — deleting the code does not drop the schema, and Invariant 4 requires
-  the owner for any remote D1 write, including applying that migration.
+  `tournament_results`, …) stay in the schema until an owner-approved drop migration
+  (`docs/backlog.md`, numbered after Plan 008's `0002_word_pools.sql` — not `0002` itself) —
+  deleting the code does not drop the schema, and Invariant 4 requires the owner for any
+  remote D1 write, including applying that migration.
 - `docs/roadmap.md` reorders so the first sale no longer waits on Plan 007 at all.

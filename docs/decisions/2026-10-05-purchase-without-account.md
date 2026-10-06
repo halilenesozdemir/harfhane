@@ -2,13 +2,16 @@
 
 Date: 2026-10-05 · Status: accepted
 
+**Scope note, 2026-10-06:** Plan 005 itself is deferred to Phase 5 (`docs/decisions/2026-10-06-free-launch.md`) — launch ships with no purchase and no accounts at all. This ADR still records the design for whichever monetization model Phase 5 picks if it keeps a purchase at all.
+
 ## Decision
 The Supporter purchase (Plan 005) does not require signing in. RevenueCat identifies the
-buyer by an anonymous app user id and restores the purchase through the Google Play account
-on the device, with no app-level account needed. The client reads entitlement state directly
-from the RevenueCat SDK; the backend `entitlements` table and webhook (Plan 005 U1–U3) move to
-post-launch, needed only once a server-side entitlement check is wanted. When accounts (Plan
-007) ship, a RevenueCat `logIn` alias on sign-in links the anonymous purchase to the account id.
+buyer by an anonymous app user id and restores the purchase through the Google Play account on
+the device — Play's own purchase-restore flow, not an app sign-in. The client reads entitlement
+state directly from the RevenueCat SDK; the backend `entitlements` table and webhook (Plan 005
+U1–U3) move to post-launch, needed only once a server-side entitlement check is wanted.
+Accounts are not planned to return; Plan 005 U8 (a RevenueCat `logIn` alias for a future
+account) is cancelled, not deferred.
 
 ## Reasons
 - The first sale (Plan 005) no longer needs to wait on Plan 007 sign-in; it can ship as soon
@@ -20,8 +23,10 @@ post-launch, needed only once a server-side entitlement check is wanted. When ac
 
 ## Consequences
 - Plan 005: KTD3 changes from "buying requires an account" to "anonymous app user id,
-  Play-account restore, `logIn` alias later." U1–U3 (entitlements table, webhook, `/me`
-  endpoint) move to post-launch; U8 (the `logIn` alias) is added for when Plan 007 ships.
+  Play-account purchase restore." U1–U3 (entitlements table, webhook, `/me` endpoint) move to
+  post-launch. U8 (a RevenueCat `logIn` alias for a future account) is cancelled — accounts are
+  not planned to return (`docs/backlog.md`); re-plan from scratch if that changes.
 - Plan 005 no longer depends on Plan 007; `docs/roadmap.md` reorders accordingly.
-- A player who reinstalls on a different Play account, or switches Play accounts, cannot
-  restore until they sign in and the `logIn` alias runs (Plan 005 U8) — accepted for MVP.
+- A player who switches Play accounts restores through Play's own purchase-restore flow on the
+  new account, the same as any other Play purchase — no app-level account or sign-in, now or
+  later.

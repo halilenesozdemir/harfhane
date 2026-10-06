@@ -1,43 +1,54 @@
 # Roadmap
 
-Goal: first Play Store sales (Track A) while daily content never runs out (Track B). See `docs/decisions/2026-10-04-parallel-tracks.md`.
+Goal: first Play Store release (Track A) while daily content never runs out (Track B). See `docs/decisions/2026-10-04-parallel-tracks.md` — Track A's original "first sale" framing is read as "first release" from `docs/decisions/2026-10-06-free-launch.md` onward; monetization is Phase 5, not part of reaching Track A's goal.
 
 This page orders the plans. Status of each unit lives in git and PRs, not here.
 
 Owner decisions made 2026-10-05:
-- Purchase does not need an account (`docs/decisions/2026-10-05-purchase-without-account.md`); the first sale no longer waits on Plan 007.
 - MVP has no accounts at all — no Google sign-in, JWT, push or reminder mail, no XP/badges/freeze/leaderboard (`docs/decisions/2026-10-05-mvp-scope-cut.md`). Plan 007 drops to the static privacy page only; its other units are postponed past MVP. This also removed lists, tournaments and duels from the product entirely, on web and mobile (not web-only).
-- Visibility is per word length, 5 letters first (Plan 001 R7, Plan 006 R5); the one-time `DB` binding switch (Plan 001 U4) runs once, the first time a length (5 letters) reaches 90 days — see `docs/decisions/2026-10-06-length-visibility.md` for the "scheduled" vs. "active/playable" split.
-- Launch sequencing (`docs/decisions/2026-10-05-launch-sequencing.md`): the Expo/Play owner steps stay last, on the owner's own timing; the content import + database cutover session runs after the web-cleanup pass, not before it.
+- Visibility is per word length, 5 letters first (Plan 001 R7, Plan 006 R5); the one-time `DB` binding switch (Plan 001 U4) runs once, the first time a length (5 letters) reaches 90 days. Opening a length (including 4 and 6 later) is a reviewed, one-line `PLAYABLE_WORD_LENGTHS` deploy (Plan 008 KTD1), not automatic — see `docs/decisions/2026-10-06-length-visibility.md` for the "scheduled" vs. "active/playable" split.
+- Launch sequencing (`docs/decisions/2026-10-05-launch-sequencing.md`): the Expo/Play owner steps stay last, on the owner's own timing; the content import + database cutover session runs after the "Web cleanup before the shared engine" backlog item, not before it.
+
+**Owner decision, 2026-10-06 (later): free launch, no monetization yet**
+(`docs/decisions/2026-10-06-free-launch.md`, supersedes the 2026-10-05 purchase-without-account
+decision as a launch commitment, though that decision's design still stands for whenever a
+purchase ships). The first release is free, with no purchase and no accounts at all. Plan 005
+(Supporter purchase) is **deferred** to a new Phase 5, not executed at launch; the only
+monetization prep done now is a reversible `useEntitlements()` abstraction and named-constant
+free/premium allowances, so a model can be picked from real usage data later without rework.
 
 Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 
 ## Order
 
 ### Phase 1 — finish development code
-- Close the open docs PRs (#45, #47, #51).
+- Close the remaining open docs PR (#51; #45 and #47 are merged).
 - Plan 008 U1–U7, U9–U10: playable lengths, word pools, the 3-year repeat cooldown, the 180-day restock runway, and the letter hint (`docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`).
-- Shared/docs leftovers cleanup (`docs/backlog.md`).
-- `0002` drop migration file: writing it is agent work; applying it to the remote database needs the owner (Invariant 4).
+- "Web cleanup before the shared engine" (`docs/backlog.md`) — the launch-sequencing ADR requires this done before Phase 2's content import.
+- Other shared/docs leftovers cleanup (`docs/backlog.md`).
+- The drop migration file (removed-feature tables, numbered after Plan 008's `0002_word_pools.sql` — not `0002` itself): writing it is agent work, done in this phase; applying it to the remote database needs the owner (Invariant 4) and does not block this phase.
 - Privacy page draft for the no-accounts product (007 U5), left unlinked until the owner approves the text (007 U6).
-- Rewrite Plan 005 for the account-free model (KTD2/KTD3, open questions — done in this pass).
+- Rewrite Plan 005 for the account-free model (KTD2/KTD3, open questions) — kept as a Phase 5 option, not executed now.
 
 ### Phase 2 — fill the new DB with clean words (import, 90 days, cutover)
-- 006 U4: land the word-review files (owner work, lands in PR #55).
+- 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` (Invariant 4), before the import below.
+- 006 U4: word-review files landed (#55).
 - 006 U5: label-generation script.
 - 001 U3 + 006 U6: import the 346 reviewed 5-letter words and auto-fill 90+ days (owner, remote D1, Invariant 4).
 - 001 U4: the one-time cutover (`DB` → `harfhane`), triggered once when 5 letters reaches 90 days.
-- 006 U7: label, review, import and schedule the 4- and 6-letter pools in parallel; each becomes visible automatically at 90+ days, no second cutover.
-- 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` before the import (Invariant 4).
+- 006 U7: label, review, import and schedule the 4- and 6-letter pools in parallel; each then needs its own reviewed `PLAYABLE_WORD_LENGTHS` deploy (Plan 008 KTD1) once it reaches 90+ days — no second DB cutover.
 
 ### Phase 3 — owner tests on Android emulator
 - Emulator test via `docs/guides/mobile-run.md`, against the production API.
 
-### Phase 4 — accounts (Expo, Play, RevenueCat), purchase wiring, closed test, first sale
-- 004 U9–U10: Expo account, `eas init`, first build; Play developer account, identity check, closed test.
-- 005 U2, U4, U5: RevenueCat webhook, mobile purchase/restore dev build, Supporter v1 unlock — U4/U5 need the 004 U9 dev build and a Play Console product.
-- 005 U6–U7: payments profile/tax info/listing privacy URL; first end-to-end purchase with a license tester.
-- Closed test, first sale.
+### Phase 4 — Expo/EAS, Play account, closed test, free release
+- 004 U9: Expo account, `eas init`, first build.
+- 004 U10: Play developer account, identity check, closed test, production access — ships free, no purchase, no accounts.
+
+### Phase 5 — monetization (post-launch)
+- Choose the model from real post-launch usage data: one-time Supporter purchase (Plan 005, kept as the leading option), a subscription, or opt-in rewarded ads (Invariant 8) — then re-plan before building it.
+- If picked, Plan 005 runs largely as drafted: U4–U5 (mobile purchase/restore, Supporter v1 unlock — themes + hint allowance) need a 004 U9 dev build and a Play Console product; U1–U3 (entitlements table, webhook, `/me`) stay post-launch backend work, not gating; U6–U7 (payments profile, first license-tester purchase) follow.
+- Accounts return only if the chosen model needs one (e.g. a subscription or cross-device sync) — not for a one-time Play-restored purchase.
 
 Plan 002 U6 (shadcn on web) and U9 (Tailwind 4) run after release, not in this order.
 
@@ -51,17 +62,18 @@ Agents cannot do these; each one unblocks the units listed.
 
 | Decision or account | Unblocks |
 |---------------------|----------|
-| Supporter price in TRY, included themes, free unlimited limit (if any) | 005 status → approved |
-| RevenueCat project | 005 U4 |
-| Privacy and KVKK text approval | 007 U6, 005 U6, Play listing |
 | Expo account, `eas init` | 004 U9 — Phase 4, owner's own timing |
-| Play developer account, identity check, 12 testers × 14 days | 004 U10, first sale — Phase 4 |
-| Land the word-review files from `feat/word-review`; commit review CSVs or not | 006 U4 |
+| Play developer account, identity check, 12 testers × 14 days | 004 U10, free release — Phase 4 |
 | Remote D1 imports and scheduling (Invariant 4) | 006 U6–U8, 001 U3 — Phase 2 |
 | 001 U4 binding switch (once, for 5 letters at 90 days) | Phase 2 |
+| Apply `0002_word_pools.sql` to remote `harfhane` (Invariant 4, Plan 008 U8) | Phase 2, before the import |
+| Open 4 and 6 letters via a reviewed `PLAYABLE_WORD_LENGTHS` deploy once each reaches 90 days (Plan 008 KTD1) | Phase 2 |
 | Android emulator set up and owner test session | Phase 3, `docs/guides/mobile-run.md` |
-| `0002` drop migration applied to the remote database (Invariant 4) | Phase 1 cleanup, `docs/backlog.md` |
+| Drop migration applied to the remote database (Invariant 4) | Phase 1 writes the file; applying it remotely is owner-paced and blocks nothing in Phase 1 (`docs/backlog.md`) |
+| Choose the Phase 5 monetization model; Supporter price in TRY if Plan 005 is picked | Phase 5 |
+| RevenueCat project, if Plan 005 is picked | Phase 5, 005 U4 |
+| Privacy and KVKK text approval | 007 U6, Play listing — Plan 005's own privacy text (U6) waits for Phase 5 |
 
 ## Research
 
-`docs/research/` holds the evidence behind plans 004–007, dated 2026-10-05. External facts (SDK versions, Play rules, prices) age quickly; re-check before acting on them.
+`docs/research/` holds the evidence behind plans 004–008, dated 2026-10-05/06. External facts (SDK versions, Play rules, prices) age quickly; re-check before acting on them.
