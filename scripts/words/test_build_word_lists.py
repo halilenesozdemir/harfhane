@@ -201,15 +201,20 @@ class BlocklistAdditionsTests(unittest.TestCase):
 
     def test_blocks_owner_rejected_words_as_exact_entries(self):
         # Owner decisions 2026-10-06: SEKS, ESKORT, RAKI, BİRA, VİSKİ, VOTKA,
-        # STOP, START and TALK are not answers.
+        # STOP, START, TALK, ŞARAP, ALKOL, İÇKİ, SARHOŞ, LİKÖR, KADEH, KADEHİ
+        # and DUBLE are not answers.
         for word in (
             "seks", "eskort", "rakı", "erotik", "bira", "viski", "votka",
-            "stop", "start", "talk",
+            "stop", "start", "talk", "şarap", "alkol", "içki", "sarhoş",
+            "likör", "kadeh", "kadehi", "duble",
         ):
             self.assertTrue(is_blocked(word, self.blocklist))
 
     def test_does_not_block_longer_words_sharing_an_owner_rejected_prefix(self):
-        for word in ("seksen", "seksek", "rakım", "rakip", "birader", "talkım"):
+        for word in (
+            "seksen", "seksek", "rakım", "rakip", "birader", "talkım",
+            "şarapçı", "alkolik", "dubleks", "içkin",
+        ):
             self.assertFalse(is_blocked(word, self.blocklist))
 
     def test_blocks_english_loanwords_that_slipped_past_the_margin(self):

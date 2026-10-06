@@ -168,3 +168,16 @@ class MainIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CommittedLabelFilesTests(unittest.TestCase):
+    def test_should_validate_cleanly_when_a_committed_label_file_is_checked_against_its_pool(self):
+        for pool_kind, label_pattern in vl.LABEL_FILES.items():
+            for length in (4, 5, 6):
+                label_path = os.path.join(vl.REVIEW_DIR, label_pattern.format(length=length))
+                if not os.path.exists(label_path):
+                    continue
+                pool_path = os.path.join(vl.REVIEW_DIR, vl.POOL_FILES[pool_kind].format(length=length))
+                report = validate(vl.load_labels(label_path), vl.load_lines(pool_path))
+                with self.subTest(label_file=os.path.basename(label_path)):
+                    self.assertFalse(has_blocking_errors(report), (report["errors"], report["missing"]))
