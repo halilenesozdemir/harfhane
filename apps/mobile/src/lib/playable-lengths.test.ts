@@ -118,6 +118,12 @@ describe('fetchPlayableLengths', () => {
     const api = createApi({ fetchPlayableLengths: vi.fn().mockResolvedValue({ lengths: [7, 0] }) });
     await expect(fetchPlayableLengths(api, store)).resolves.toEqual(DEFAULT_PLAYABLE_LENGTHS);
   });
+
+  it('should fall back to the default, not reject, when the response itself is undefined', async () => {
+    const store = createStore();
+    const api = createApi({ fetchPlayableLengths: vi.fn().mockResolvedValue(undefined as never) });
+    await expect(fetchPlayableLengths(api, store)).resolves.toEqual(DEFAULT_PLAYABLE_LENGTHS);
+  });
 });
 
 describe('getDefaultPlayableLength', () => {

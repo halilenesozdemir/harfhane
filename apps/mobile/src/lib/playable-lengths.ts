@@ -68,7 +68,7 @@ export async function fetchPlayableLengths(api: ApiClient, store: KeyValueStore)
     return fallbackToCacheOrDefault(store);
   }
 
-  const lengths = parseLengths(response.lengths);
+  const lengths = parseLengths(response?.lengths);
   if (!lengths) return fallbackToCacheOrDefault(store);
 
   try {
