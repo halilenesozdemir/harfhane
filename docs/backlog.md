@@ -53,12 +53,10 @@ Fixing `getTodayString`/`getTimeUntilMidnight`/`getGameNumber` in `packages/shar
 - Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
 - Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
 
-## Mobile U7 screens — navigation wiring and app version
-Plan 004 U7 (`apps/mobile/src/screens/{Home,HowToPlay,Stats,Settings}Screen.tsx`) built the screens without
-wiring navigation, per the unit's scope boundary.
-- The next unit must mount a `ThemeProvider` with a real `AsyncStorage`-backed `KeyValueStore` at the app root
-  and route `HomeScreen.onStart` into the game screen; `StatsScreen` needs its `stats`/`isUnlimited` props
-  loaded via `loadDailyStats`/`loadUnlimitedStats` from `src/stats/stats.ts`.
+## Mobile — app version line on SettingsScreen
+Navigation wiring (Plan 004 U7 follow-up) is done: `App.tsx` mounts a state-based router with the device
+`AsyncStorage`-backed store, `HomeScreen` opens How to play/Stats/Settings, and the Android hardware back
+button pops the stack.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
