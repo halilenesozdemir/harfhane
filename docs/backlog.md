@@ -60,6 +60,20 @@ button pops the stack.
 - `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
   `pnpm exec expo install expo-constants` if the version display is wanted.
 
+## Player-facing word queries only exclude `source = 'user'`, not the full approved/family-safe filter
+`findRandomWord`, `findWordById`, `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`) and
+`autoFillLength` (`admin-repository.ts`) now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
+mode, the challenge/duel endpoint, or the daily word (Invariant 1). This is a legacy-schema-compatible
+patch only: production still runs on `harfhane-db` (binding `DB`), which has a `source` column but no
+`status`/`family_safe` columns, so the full `status = 'approved' AND family_safe = 1` filter used by the
+`0001_baseline.sql` schema can't be applied there yet.
+- At the DB cutover (`docs/plans/2026-10-04-001-infra-clean-database-plan.md`, plan 001), replace
+  `source != 'user'` in these four queries with `status = 'approved' AND family_safe = 1` to match the
+  baseline schema's own invariant (`words_require_active_word` / the `is_active` CHECK already encode this
+  for new rows, but the read queries didn't, which was the bug this entry's fix closed for the legacy DB).
+- Guess-validation (`wordExists`) was intentionally left untouched — it must keep accepting `source = 'user'`
+  words so custom-list words remain guessable.
+
 ## Frontend style cleanup
 Seen while removing the tournament feature (2026-10-05); not fixed there to keep that diff scoped.
 - Arrow-function components that should be `function` declarations per `apps/frontend/CLAUDE.md`:

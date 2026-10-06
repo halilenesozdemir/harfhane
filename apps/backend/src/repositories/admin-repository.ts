@@ -299,7 +299,7 @@ async function autoFillLength(
 ): Promise<{ scheduled: number; skipped: number }> {
   const [existingResult, activeResult] = await db.batch([
     db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
-    db.prepare('SELECT id FROM words WHERE is_active = 1 AND length = ?').bind(length),
+    db.prepare("SELECT id FROM words WHERE is_active = 1 AND source != 'user' AND length = ?").bind(length),
   ]);
 
   const scheduledDates = new Set(
