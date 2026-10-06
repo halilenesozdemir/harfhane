@@ -2,6 +2,21 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
+## Baloo 2 on Tile and Key (Plan 011 U4, R4)
+`apps/mobile/src/ui/layout.ts` now exports `FONT_FAMILY_DISPLAY` (Baloo 2 ExtraBold, loaded via
+`@expo-google-fonts/baloo-2` in `App.tsx`). It is applied to the HomeScreen title/card titles, but
+Plan 011 assigns `Tile.tsx` and `Key.tsx` to the B/C unit owners, so this unit (D) did not touch
+them. Whoever owns the next Tile/Key change should set `fontFamily: FONT_FAMILY_DISPLAY` on the
+letter/label text styles there too, matching the web tokens' `font-display`.
+
+## og-image.svg still uses the old green brand colour (Plan 011 U4, R5 follow-up)
+`apps/frontend/public/og-image.svg` (and its built `apps/frontend/dist/og-image.svg`/`.png`) hardcode
+`#538d4e` (the pre-rebrand green) in multiple tile/text/line fills, instead of the current brand
+token (`rgb(194 65 12)` light / `rgb(232 98 42)` dark, see `packages/ui-tokens/tokens.json`). This
+unit fixed the web logo button (`Header.tsx`) and left the OG image alone, since redrawing a static
+asset is out of scope here (R5 said "don't redraw icons"). Whoever owns social-preview assets next
+should regenerate `og-image.svg`/`.png` with the brand token's colour.
+
 ## knip findings recorded instead of fixed (2026-10-06)
 From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
 reason; details here.
@@ -223,6 +238,13 @@ Workers + D1, React + Vite, Expo). Do it once Harfhane has shipped and the gates
 ADR, map every file as factory or product, extract the factory layer into a GitHub template repo and
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
+
+## Mobile share hint marker (Plan 011 U6, after PR #87 merges)
+`generateShareText` (`packages/shared/src/game/share.ts`) now takes an options object with
+`hintUsed` (R8/AE6: the share header gets a "· ipucu" suffix). Web passes it from `useHint`'s
+`hintUsed` in `apps/frontend/src/components/GamePage.tsx` / `GameOverModal.tsx`. The mobile
+game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
+wire mobile's own hint state through once #87 merges, matching the web wiring above.
 
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,

@@ -23,3 +23,10 @@ export const RADIUS = {
 } as const;
 
 export const CONTENT_MAX_WIDTH = 400;
+
+/**
+ * R4: Baloo 2 ExtraBold, matching the web tokens' `font-display`
+ * (`packages/ui-tokens/tokens.json`). Owned here so Tile and Key can adopt
+ * it without this agent editing those files (see PR follow-up).
+ */
+export const FONT_FAMILY_DISPLAY = 'Baloo2_800ExtraBold';
