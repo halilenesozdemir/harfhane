@@ -33,21 +33,34 @@ jobs:
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: fd32026d220617d20fb552d13fb82abd
     steps:
       - uses: actions/checkout@v4
 
       - name: Wait for CI to pass on this commit
         run: |
           set -euo pipefail
-          FIND_TIMEOUT=900
+          # Budgets kept under the job's 30-minute timeout with margin for
+          # the remaining steps (install, build, deploy, smoke test).
+          FIND_TIMEOUT=480
+          WATCH_TIMEOUT=900
           INTERVAL=10
           ELAPSED=0
           RUN_ID=""
+          FIND_ERROR_RETRIES=5
+          find_errors=0
           echo "Looking for a CI run on $GITHUB_SHA..."
           while [ -z "$RUN_ID" ]; do
-            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --branch main --json databaseId --jq '.[0].databaseId // empty')
+            if ! RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow CI --commit "$GITHUB_SHA" --branch main --json databaseId --jq '.[0].databaseId // empty'); then
+              find_errors=$((find_errors + 1))
+              echo "::warning::gh run list failed (attempt $find_errors/$FIND_ERROR_RETRIES)"
+              if [ "$find_errors" -ge "$FIND_ERROR_RETRIES" ]; then
+                echo "::error::gh run list failed $FIND_ERROR_RETRIES times in a row"
+                exit 1
+              fi
+              RUN_ID=""
+            else
+              find_errors=0
+            fi
             if [ -n "$RUN_ID" ]; then
               break
             fi
@@ -59,7 +72,7 @@ jobs:
             ELAPSED=$((ELAPSED + INTERVAL))
           done
           echo "Found CI run $RUN_ID for $GITHUB_SHA — waiting for it to finish..."
-          if ! timeout 1200 gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status; then
+          if ! timeout "$WATCH_TIMEOUT" gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status; then
             echo "::error::CI run $RUN_ID for commit $GITHUB_SHA did not conclude with success"
             exit 1
           fi
@@ -80,31 +93,64 @@ jobs:
       - name: Capture current deployed version
         id: predeploy
         working-directory: apps/backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: fd32026d220617d20fb552d13fb82abd
         run: |
           set -euo pipefail
-          CURRENT_VERSION=$(pnpm exec wrangler versions list --json | jq -r '.[0].id // empty')
+          # `wrangler versions list --json` is sorted oldest-first and does not
+          # indicate which version is actually receiving traffic. The active
+          # version(s) come from `wrangler deployments status --json`, whose
+          # output is the single latest deployment object with a `versions`
+          # array of {version_id, percentage} (verified in
+          # apps/backend/node_modules/wrangler/wrangler-dist/cli.js,
+          # versionsDeploymentsStatusHandler). Pick the version with the
+          # highest traffic percentage as "currently active".
+          CURRENT_VERSION=$(pnpm exec wrangler deployments status --json | jq -r '(.versions // []) | max_by(.percentage) | .version_id // empty')
           echo "Current live version: ${CURRENT_VERSION:-<none>}"
           echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to Cloudflare Workers
         working-directory: apps/backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: fd32026d220617d20fb552d13fb82abd
         run: pnpm exec wrangler deploy --var GIT_SHA:"$GITHUB_SHA"
 
       - name: Smoke test production
         id: smoke
         run: |
           set -euo pipefail
-          BODY=$(curl -sS --retry 5 --retry-delay 5 --retry-all-errors --max-time 15 "https://api.harfhane.app/api/health")
-          echo "Response: $BODY"
-          VERSION=$(echo "$BODY" | jq -r '.data.version // empty')
+          # Cloudflare's edge can keep serving the previous version for a few
+          # seconds after deploy. `curl --retry` only retries on transport
+          # errors or non-2xx, so a 200 from the OLD version would pass
+          # immediately and false-green (or, on a flaky edge, false-red) the
+          # smoke test. Poll until the reported version matches GITHUB_SHA or
+          # the attempt budget is exhausted.
+          POLL_ATTEMPTS=10
+          POLL_DELAY=6
+          VERSION=""
+          for attempt in $(seq 1 "$POLL_ATTEMPTS"); do
+            BODY=$(curl -sS --max-time 15 "https://api.harfhane.app/api/health" || true)
+            VERSION=$(echo "$BODY" | jq -r '.data.version // empty' 2>/dev/null || true)
+            echo "Attempt $attempt/$POLL_ATTEMPTS: version='$VERSION'"
+            if [ "$VERSION" = "$GITHUB_SHA" ]; then
+              echo "Response: $BODY"
+              break
+            fi
+            sleep "$POLL_DELAY"
+          done
           if [ "$VERSION" != "$GITHUB_SHA" ]; then
-            echo "::error::Smoke test failed: expected version $GITHUB_SHA, got '$VERSION'"
+            echo "::error::Smoke test failed: expected version $GITHUB_SHA, got '$VERSION' after $POLL_ATTEMPTS attempts"
             exit 1
           fi
 
       - name: Roll back failed deploy
         if: failure() && steps.smoke.conclusion == 'failure'
         working-directory: apps/backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: fd32026d220617d20fb552d13fb82abd
         run: |
           set -euo pipefail
           PREV_VERSION="${{ steps.predeploy.outputs.version }}"

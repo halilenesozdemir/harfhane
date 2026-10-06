@@ -6,8 +6,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# On main, deploy-*.yml waits for the CI run matching its exact commit SHA.
+# A shared-per-ref group would let a newer queued push cancel an older
+# pending run on main, leaving that commit's deploy waiting on a run that
+# was cancelled instead of concluding — so main gets a unique group per
+# commit (never cancelled); PRs keep one group per ref with cancellation.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
