@@ -31,7 +31,7 @@ export function HintControl({ canReveal, hints, isUsed, onReveal }: HintControlP
       <View
         testID="hint-text"
         accessibilityLiveRegion="polite"
-        style={[styles.pill, { backgroundColor: colors.surface, borderColor: colors.brand }]}
+        style={[styles.pill, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
       >
         <Text style={[styles.pillLabel, { color: colors.text }]}>{hints.map(hintLineLabel).join(', ')}</Text>
       </View>

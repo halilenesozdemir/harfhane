@@ -39,10 +39,18 @@ const INITIAL_SETTINGS: StoredSettings = { preference: 'system', isHighContrast:
 
 type TouchedSettings = { preference: boolean; isHighContrast: boolean };
 
+// A null-coalesced default so a rejecting read (corrupt storage, I/O
+// error) still resolves to "no stored value", not a permanently pending
+// promise: Promise.all would otherwise never settle, isLoaded would never
+// become true, and the splash screen App.tsx holds on it would never hide.
+function readStoredValueSafely(store: KeyValueStore, key: string): Promise<string | null> {
+  return store.getItem(key).catch(() => null);
+}
+
 function useLoadSettings(store: KeyValueStore, touched: { readonly current: TouchedSettings }, setSettings: (update: (current: StoredSettings) => StoredSettings) => void) {
   useEffect(() => {
     let isCurrent = true;
-    void Promise.all([store.getItem(THEME_PREFERENCE_KEY), store.getItem(HIGH_CONTRAST_KEY)]).then(([rawPreference, rawContrast]) => {
+    void Promise.all([readStoredValueSafely(store, THEME_PREFERENCE_KEY), readStoredValueSafely(store, HIGH_CONTRAST_KEY)]).then(([rawPreference, rawContrast]) => {
       if (!isCurrent) return;
       setSettings((current) => ({
         preference: touched.current.preference ? current.preference : parsePreference(rawPreference),
