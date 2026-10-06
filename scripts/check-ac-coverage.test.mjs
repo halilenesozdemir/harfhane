@@ -647,6 +647,279 @@ test("should recognize an 'async def test_...' Python function as a tagged test"
   }
 });
 
+test("should recognize a tag in an it.each(array)('name', fn) call", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `it.each([1, 2, 3])('should handle %i ${AE1_TAG}', (n) => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should recognize a tag in a test.each`table`('name') call", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      "test.each`a | b\n${1} | ${2}`('should handle ${a} and ${b} " + AE1_TAG + "', ({ a, b }) => {});",
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should recognize a tag on an it.each(...) call combined with .only", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `it.only.each([1, 2])('should handle %i ${AE1_TAG}', (n) => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should recognize a tag on a test.concurrent(...) call", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `test.concurrent('should run concurrently ${AE1_TAG}', async () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a quote inside a regex literal as hiding a following comment that contains a fake test call", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `const pattern = /["]/;\n// it('fake ${AE1_TAG}')\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count an apostrophe in JSX text as hiding a following comment that contains a fake test call", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `const el = <p>Harfhane'ye hoş geldin</p>;\n// it('fake ${AE1_TAG}')\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not treat an escaped quote inside a single-quoted string as ending the string early", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `const s = 'it\\'s // x';\n// it('fake ${AE1_TAG}')\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not treat '//' inside a template literal as a comment", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `const url = \`https://example.com // not a comment\`;\ntest('should fail when an AE has no test ${AE1_TAG}', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a test inside a describe.skip(...) block as covering its tag", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `describe.skip('suite', () => {\n  it('should fail when an AE has no test ${AE1_TAG}', () => {});\n});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a test inside a describe.todo(...) block as covering its tag", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `describe.todo('suite', () => {\n  it('should fail when an AE has no test ${AE1_TAG}', () => {});\n});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should still count a tag on a test outside a describe.skip(...) block in the same file", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `describe.skip('suite', () => {\n  it('should do something skipped', () => {});\n});\ntest('should fail when an AE has no test ${AE1_TAG}', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a Python test decorated with @pytest.mark.skip", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      "@pytest.mark.skip(reason='not ready')\ndef test_should_pass_when_label_valid_009_AE1():\n    pass\n",
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a Python test decorated with @unittest.skip", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      '@unittest.skip("not ready")\ndef test_should_pass_when_label_valid_009_AE1():\n    pass\n',
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not use a later unrelated triple-quoted string as a test's docstring once the first non-empty line was not one", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      `def test_should_pass_when_label_valid():\n    x = 1\n    """${AE1_TAG}"""\n    pass\n`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should find a tag in a .spec.ts test file", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.spec.ts"),
+      `test('should fail when an AE has no test ${AE1_TAG}', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("should exit 1 and print the missing AE id when run as a CLI, even through a symlinked script path (009-AE1)", () => {
   const { rootDir, plansDir } = makeFixtureDirs();
   try {

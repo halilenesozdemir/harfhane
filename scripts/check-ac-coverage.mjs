@@ -187,6 +187,18 @@ function stripJsComments(content) {
     }
     if (state === "single" || state === "double" || state === "template") {
       const quote = state === "single" ? "'" : state === "double" ? '"' : "`";
+      // A single/double-quoted JS string cannot contain a literal newline, so
+      // a quote character that is actually inside a regex literal or JSX
+      // text (e.g. "Harfhane'ye") never really opened a string: hitting a
+      // newline first means the "string" state was a false positive, and it
+      // must not swallow a real comment on the following line(s). A
+      // template literal can genuinely span lines, so it is exempt.
+      if (ch === "\n" && state !== "template") {
+        state = "code";
+        result += ch;
+        i++;
+        continue;
+      }
       if (ch === "\\") {
         result += ch + (next ?? "");
         i += 2;
@@ -228,15 +240,68 @@ function stripJsComments(content) {
 // test(...) call, on top of the identifier-boundary exclusion a plain `\b`
 // already gave. A comment or an unrelated string elsewhere in the file is
 // not a test name and must not count (R1/KTD1 say "test name", not "file").
+// The modifier chain also tolerates a `.each(...)` or `` .each`...` ``
+// segment (e.g. `it.each([1, 2])('...', fn)` or `` test.each`...`('...', fn) ``)
+// interleaved with plain modifiers like `.only`/`.concurrent`, since the
+// final call that actually carries the test name is the one after it.
 const JS_TEST_CALL_PATTERN =
-  /(?<![.\w])(?:it|test)((?:\.\w+)*)\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
+  /(?<![.\w])(?:it|test)((?:\.\w+(?:\((?:[^()]|\([^()]*\))*\)|`(?:[^`\\]|\\.)*`)?)*)\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
 
 // A skipped or pending test (.skip, .todo) proves nothing: it does not run.
 const SKIPPED_MODIFIER_PATTERN = /\.(skip|todo)\b/;
 
+// A whole suite skipped with describe.skip(...)/describe.todo(...) proves
+// nothing either: none of the tests inside it run. The simplest reliable
+// scope for "inside" is the call's own balanced parens, found by depth
+// counting from the opening "(" right after the skip/todo modifier.
+const SKIPPED_DESCRIBE_PATTERN = /\bdescribe\.(?:skip|todo)\s*\(/g;
+
+function findMatchingParenIndex(text, openIndex) {
+  let depth = 0;
+  for (let i = openIndex; i < text.length; i++) {
+    if (text[i] === "(") depth++;
+    else if (text[i] === ")") {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function blankRangePreservingNewlines(text, start, end) {
+  let out = "";
+  for (let i = start; i < end; i++) out += text[i] === "\n" ? "\n" : " ";
+  return out;
+}
+
+// Blanks out (replaces with spaces, keeping line breaks) the body of every
+// describe.skip(...)/describe.todo(...) call so no test call textually
+// "inside" it is later matched by JS_TEST_CALL_PATTERN. A nested
+// describe.skip inside another one is blanked along with its parent in the
+// same pass, so it never needs separate handling.
+function removeSkippedDescribeBlocks(content) {
+  let result = content;
+  SKIPPED_DESCRIBE_PATTERN.lastIndex = 0;
+  let match = SKIPPED_DESCRIBE_PATTERN.exec(result);
+  while (match) {
+    const openParenIndex = match.index + match[0].length - 1;
+    const closeParenIndex = findMatchingParenIndex(result, openParenIndex);
+    if (closeParenIndex === -1) {
+      match = SKIPPED_DESCRIBE_PATTERN.exec(result);
+      continue;
+    }
+    const blanked = blankRangePreservingNewlines(result, match.index, closeParenIndex + 1);
+    result = result.slice(0, match.index) + blanked + result.slice(closeParenIndex + 1);
+    SKIPPED_DESCRIBE_PATTERN.lastIndex = closeParenIndex + 1;
+    match = SKIPPED_DESCRIBE_PATTERN.exec(result);
+  }
+  return result;
+}
+
 function extractJsTestNameTags(content) {
   const tags = new Set();
-  for (const match of stripJsComments(content).matchAll(JS_TEST_CALL_PATTERN)) {
+  const scannable = removeSkippedDescribeBlocks(stripJsComments(content));
+  for (const match of scannable.matchAll(JS_TEST_CALL_PATTERN)) {
     if (SKIPPED_MODIFIER_PATTERN.test(match[1])) continue;
     const name = match[2].slice(1, -1);
     for (const tag of findAllTags(name)) tags.add(tag);
@@ -311,15 +376,34 @@ function stripPyComments(content) {
 const PY_DEF_PATTERN = /^[ \t]*(?:async\s+)?def\s+(test_[A-Za-z0-9_]*)\s*\(/gm;
 const PY_NAME_TAG_PATTERN = /_(\d+)_AE(\d+)\b/;
 
+// @pytest.mark.skip / @unittest.skip (with or without arguments) mark a
+// test that never runs, so it proves nothing. The decorator line(s)
+// immediately above the def (skipping only truly blank lines) are checked;
+// a non-decorator line breaks the search, since it means this def has no
+// more decorators to inspect.
+const PY_SKIP_DECORATOR_PATTERN = /^@(?:pytest\.mark\.skip|unittest\.skip)\b/;
+
+function hasPySkipDecorator(lines, defLineNumber) {
+  for (let i = defLineNumber - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim();
+    if (trimmed === "") continue;
+    if (!trimmed.startsWith("@")) return false;
+    if (PY_SKIP_DECORATOR_PATTERN.test(trimmed)) return true;
+  }
+  return false;
+}
+
 function extractPythonTestNameTags(content) {
   const stripped = stripPyComments(content);
   const tags = new Set();
   const lines = stripped.split("\n");
   for (const match of stripped.matchAll(PY_DEF_PATTERN)) {
+    const defLineNumber = stripped.slice(0, match.index).split("\n").length - 1;
+    if (hasPySkipDecorator(lines, defLineNumber)) continue;
+
     const nameMatch = PY_NAME_TAG_PATTERN.exec(match[1]);
     if (nameMatch) tags.add(`${nameMatch[1]}-AE${nameMatch[2]}`);
 
-    const defLineNumber = stripped.slice(0, match.index).split("\n").length - 1;
     for (let i = defLineNumber + 1; i < lines.length; i++) {
       const trimmed = lines[i].trim();
       if (trimmed === "") continue;
