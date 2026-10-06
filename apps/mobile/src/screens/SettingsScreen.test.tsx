@@ -5,6 +5,16 @@ import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
 import { renderWithTheme } from '../test-utils/render-with-theme';
 
+const mockExpoConfig: { version?: string } = { version: '1.2.3' };
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: {
+    get expoConfig() {
+      return mockExpoConfig;
+    },
+  },
+}));
+
 function ColorProbe() {
   const { colors } = useTheme();
   return <Text testID="probe-bg">{colors.bg}</Text>;
@@ -38,5 +48,17 @@ describe('SettingsScreen', () => {
       fireEvent.press(screen.getByLabelText('Kapat'));
     });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show the app version when the Expo config has one', async () => {
+    mockExpoConfig.version = '1.2.3';
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByText('Sürüm 1.2.3')).toBeTruthy();
+  });
+
+  it('should hide the version line when the Expo config has no version', async () => {
+    mockExpoConfig.version = undefined;
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.queryByText(/^Sürüm/)).toBeNull();
   });
 });

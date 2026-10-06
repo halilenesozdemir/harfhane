@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import Constants from 'expo-constants';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
@@ -21,6 +22,7 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
 
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
   const { colors, preference, setPreference, isHighContrast, setHighContrast } = useTheme();
+  const appVersion = Constants.expoConfig?.version;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -57,6 +59,10 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
       >
         <Text style={[styles.closeLabel, { color: colors.correctFg }]}>Kapat</Text>
       </Pressable>
+
+      {appVersion ? (
+        <Text style={[styles.version, { color: colors.textMuted }]}>Sürüm {appVersion}</Text>
+      ) : null}
     </View>
   );
 }
@@ -135,5 +141,9 @@ const styles = StyleSheet.create({
   closeLabel: {
     fontSize: FONT_SIZE.bodyLarge,
     fontWeight: '700',
+  },
+  version: {
+    fontSize: FONT_SIZE.caption,
+    textAlign: 'center',
   },
 });
