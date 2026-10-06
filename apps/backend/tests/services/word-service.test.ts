@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
-import { getDailyWord, getRandomWord, validateWord } from '../../src/services/word-service';
+import { getDailyWord, getPlayableLengths, getRandomWord, validateWord } from '../../src/services/word-service';
 import { ApiError } from '../../src/errors/api-error';
 import { applySchema, seedTestData } from '../helpers/db';
 
@@ -78,5 +78,15 @@ describe('validateWord', () => {
   it('normalises lowercase input', async () => {
     const result = await validateWord(env.DB, 'kalem');
     expect(result.isValid).toBe(true);
+  });
+});
+
+describe('getPlayableLengths', () => {
+  it('returns the parsed lengths from the var', () => {
+    expect(getPlayableLengths('4,6')).toEqual({ lengths: [4, 6] });
+  });
+
+  it('falls back to [5] when the var is missing', () => {
+    expect(getPlayableLengths(undefined)).toEqual({ lengths: [5] });
   });
 });

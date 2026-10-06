@@ -1,7 +1,13 @@
 import { getTodayString } from '@harfhane/shared';
-import type { DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@harfhane/shared';
+import type {
+  DailyWordResponse,
+  PlayableLengthsResponse,
+  RandomWordResponse,
+  ValidateWordResponse,
+} from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
+import { parsePlayableLengths } from '../utils/playable-lengths';
 import {
   findDailyWord,
   findRandomWord,
@@ -42,6 +48,10 @@ export async function getWordById(
   const result = await findWordById(db, wordId);
   if (!result) throw NOT_FOUND('Word');
   return { word: result.entry, wordId: result.id };
+}
+
+export function getPlayableLengths(playableWordLengths: string | undefined): PlayableLengthsResponse {
+  return { lengths: parsePlayableLengths(playableWordLengths) };
 }
 
 export async function validateWord(
