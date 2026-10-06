@@ -23,7 +23,7 @@ function isWordLength(value: number): value is WordLength {
 }
 
 function toPlayableLengths(data: PlayableLengthsResponse | undefined): readonly WordLength[] {
-  if (!data) return DEFAULT_PLAYABLE_LENGTHS;
+  if (!data || !Array.isArray(data.lengths)) return DEFAULT_PLAYABLE_LENGTHS;
 
   const playable = data.lengths.filter(isWordLength);
   return playable.length > 0 ? playable : DEFAULT_PLAYABLE_LENGTHS;

@@ -23,8 +23,9 @@ test('(008-AE1) home page hides the unlimited length picker when only one length
   await page.goto('/');
 
   await expect(page.getByRole('button', { name: 'Günlük Oyun' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '4 harf' })).not.toBeVisible();
-  await expect(page.getByRole('button', { name: '6 harf' })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: '4 harf', exact: true })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: '5 harf', exact: true })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: '6 harf', exact: true })).not.toBeVisible();
 });
 
 test('(008-AE1) home page shows exactly the playable lengths, hiding the others', async ({ page, api }) => {
@@ -65,6 +66,41 @@ test('(008-AE1) a delayed playable-lengths response blocks fetching the unconfir
   expect(dailyRequestLengths).toEqual([5]);
 });
 
+const DEFAULT_LENGTH_CASES = [
+  { stub: [4, 5, 6], expectedDefault: 5 },
+  { stub: [4, 6], expectedDefault: 4 },
+] as const;
+
+for (const { stub, expectedDefault } of DEFAULT_LENGTH_CASES) {
+  test(`(008-AE1) clicking Günlük Oyun starts length ${expectedDefault} when playable=[${stub.join(',')}]`, async ({ page, api }) => {
+    await api.stubPlayableLengths([...stub]);
+    await api.stubDailyWord(expectedDefault, { word: 'KALEM' });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Günlük Oyun' }).click();
+
+    await expect(page).toHaveURL(`/daily/${expectedDefault}`);
+  });
+
+  test(`(008-AE1) a bare /daily plays length ${expectedDefault} when playable=[${stub.join(',')}]`, async ({ page, api }) => {
+    await api.stubPlayableLengths([...stub]);
+    await api.stubDailyWord(expectedDefault, { word: 'KALEM' });
+
+    await page.goto('/daily');
+
+    await expect(page.getByTestId('tile')).toHaveCount(6 * expectedDefault);
+  });
+
+  test(`(008-AE1) /daily/7 redirects to length ${expectedDefault} when playable=[${stub.join(',')}]`, async ({ page, api }) => {
+    await api.stubPlayableLengths([...stub]);
+    await api.stubDailyWord(expectedDefault, { word: 'KALEM' });
+
+    await page.goto('/daily/7');
+
+    await expect(page).toHaveURL(`/daily/${expectedDefault}`);
+  });
+}
+
 test('(008-AE2) a failed lengths request falls back to 5 and still starts the daily game', async ({ page, api }) => {
   await api.stubPlayableLengthsFailure();
   await api.stubDailyWord(5, { word: 'KALEM' });
@@ -73,4 +109,15 @@ test('(008-AE2) a failed lengths request falls back to 5 and still starts the da
 
   await expect(page).toHaveURL('/daily/5');
   await expect(page.getByRole('banner').getByText('Günlük')).toBeVisible();
+});
+
+test('(008-AE2) a bare /daily with a failing lengths request plays the 5-letter game promptly', async ({ page, api }) => {
+  await api.stubPlayableLengthsFailure();
+  await api.stubDailyWord(5, { word: 'KALEM' });
+
+  await page.goto('/daily');
+
+  // retry: false must keep the fallback fast; a retrying query would still
+  // resolve eventually but well past this short timeout.
+  await expect(page.getByTestId('tile')).toHaveCount(6 * 5, { timeout: 3000 });
 });

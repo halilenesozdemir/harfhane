@@ -72,4 +72,17 @@ describe('DesktopShell', () => {
     expect(screen.queryByRole('button', { name: '4' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '5' })).not.toBeInTheDocument();
   });
+
+  it('(008-AE1) offers only the playable lengths, hiding the rest', () => {
+    render(
+      <MemoryRouter>
+        <DesktopShell mode="daily" wordLength={4} playableLengths={[4, 5]} stats={dailyStats} onGoHome={vi.fn()}>
+          <div>Oyun alanı</div>
+        </DesktopShell>
+      </MemoryRouter>
+    );
+    expect(screen.getAllByRole('button', { name: '4' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: '5' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: '6' })).not.toBeInTheDocument();
+  });
 });

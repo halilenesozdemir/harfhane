@@ -49,6 +49,14 @@ describe('usePlayableLengths', () => {
 
     await waitFor(() => expect(result.current).toEqual([5]));
   });
+
+  it('falls back to [5], without throwing, when the response has no lengths field', async () => {
+    vi.spyOn(api, 'fetchPlayableLengths').mockResolvedValue({} as never);
+
+    const { result } = renderWithClient(() => usePlayableLengths());
+
+    await waitFor(() => expect(result.current).toEqual([5]));
+  });
 });
 
 describe('getDefaultPlayableLength', () => {
