@@ -30,14 +30,6 @@ The web app carries code from many experiments; removed features such as challen
 ## Known bug fixed in passing
 `findOrCreateWord` inserted user words with `category = NULL` and no `length`. This violated `NOT NULL` and stored 6-letter words as length 5. The baseline schema and repository now handle both.
 
-## UTC-date usage outside the Turkey-day fix (2026-10-05)
-Fixing `getTodayString`/`getTimeUntilMidnight`/`getGameNumber` in `packages/shared/src/game/time.ts` (branch `fix/turkey-day-boundary`) surfaced other backend code still keying "today" off the plain UTC date instead of the Turkey calendar day, now that clients save game results under the Turkey date (`useGameStats.ts`):
-- `apps/backend/src/routes/profile.ts` (`:13`, `:36`) — `/me` and `/freeze` can disagree with a just-played result between 21:00–24:00 UTC (`playedToday` false right after a win; a freeze token usable when it shouldn't be).
-- `apps/backend/src/index.ts:95` — the scheduled reminder picks the daily word / target users by UTC day.
-- `apps/backend/src/services/admin-service.ts:22` and `apps/backend/src/services/schedule-health-service.ts:19` — same UTC-day pattern.
-- `apps/backend/src/routes/lists.ts:98` already uses `Europe/Istanbul` correctly — a model for the fix.
-- Fix: route these through the now-shared `getTodayString()` (or equivalent Turkey-aware helper) in a follow-up unit; add a backend test asserting `getDailyWord()`'s no-args path matches `getTodayString()` at the 21:00 UTC boundary.
-
 ## Legacy docs review (2026-10-04)
 - `products.md`: the 854-line PRD from the original product. It still describes the old word source and long-finished phases.
   - Recommendation: replace with a short product brief that points to `docs/plans/`, or move it to `docs/archive/`.
