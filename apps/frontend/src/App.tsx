@@ -7,7 +7,7 @@ import SplashScreen from './components/SplashScreen';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import { PageMeta } from './components/page-meta';
-import { usePlayableLengths, usePlayableLengthsQuery } from './hooks/usePlayableLengths';
+import { getDefaultPlayableLength, usePlayableLengths, usePlayableLengthsQuery } from './hooks/usePlayableLengths';
 import type { GameMode, WordLength } from './types';
 
 const CHUNK_RELOAD_KEY = 'harfhane:chunk-reload';
@@ -52,8 +52,11 @@ const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkE
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
-const DEFAULT_WORD_LENGTH: WordLength = 5;
 const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
+// The same blank screen App.tsx's own Suspense fallback uses, shown instead
+// of mounting GamePage for a length whose playability isn't confirmed yet
+// (AE2's loading state) — avoids fetching/caching the hidden length's answer.
+const BLANK_FALLBACK = <div className="min-h-screen bg-bg-primary" />;
 
 function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
   const { length } = useParams<{ length?: string }>();
@@ -63,18 +66,25 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
   const parsed = Number(length);
   const isScheduled = (SCHEDULED_WORD_LENGTHS as readonly number[]).includes(parsed);
   const isPlayable = (playableLengths as readonly number[]).includes(parsed);
-  const fallbackLength = playableLengths[0] ?? DEFAULT_WORD_LENGTH;
+  const fallbackLength = getDefaultPlayableLength(playableLengths);
 
   // A length outside 4/5/6 is never valid; redirect right away.
   if (length !== undefined && !isScheduled) {
     return <Navigate to={`/${mode}/${fallbackLength}`} replace />;
   }
 
-  // AE1: once the playable-lengths answer is in, a scheduled-but-not-playable
-  // length redirects to the default one. Waiting for lengthsLoading avoids
-  // redirecting on the fallback [5] before the real list has arrived.
-  if (length !== undefined && !lengthsLoading && !isPlayable) {
-    return <Navigate to={`/${mode}/${fallbackLength}`} replace />;
+  const requestedIsConfirmedUnplayable = length !== undefined && !isPlayable;
+  // No length was requested (the real default isn't known yet), or a
+  // scheduled length isn't (yet known to be) playable: never mount GamePage
+  // on a guess — that would fetch and cache that length's answer before
+  // we're sure it's allowed, or flash the loading placeholder's default
+  // before correcting to the real one (AE1/AE2). Blank screen while the
+  // real answer loads; once it resolves, render or redirect.
+  if (length === undefined || requestedIsConfirmedUnplayable) {
+    if (lengthsLoading) return BLANK_FALLBACK;
+    if (requestedIsConfirmedUnplayable) {
+      return <Navigate to={`/${mode}/${fallbackLength}`} replace />;
+    }
   }
 
   const wordLength: WordLength = length === undefined ? fallbackLength : (parsed as WordLength);

@@ -6,6 +6,18 @@ import type { WordLength } from '../types';
 /** AE2: the backend fallback length, used while loading and on request failure. */
 export const DEFAULT_PLAYABLE_LENGTHS: readonly WordLength[] = [5];
 
+const PREFERRED_WORD_LENGTH: WordLength = 5;
+
+/**
+ * The length to use when none was explicitly picked: 5 when it's playable
+ * (matches the pre-feature default), otherwise the first playable length.
+ * Shared with the mobile app's equivalent rule (Plan 008 U3).
+ */
+export function getDefaultPlayableLength(playableLengths: readonly WordLength[]): WordLength {
+  if (playableLengths.includes(PREFERRED_WORD_LENGTH)) return PREFERRED_WORD_LENGTH;
+  return playableLengths[0] ?? PREFERRED_WORD_LENGTH;
+}
+
 function isWordLength(value: number): value is WordLength {
   return value === 4 || value === 5 || value === 6;
 }

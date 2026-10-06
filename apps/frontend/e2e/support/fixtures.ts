@@ -29,6 +29,7 @@ export interface ApiStub {
   stubValidate(isValidWord: (word: string) => boolean): Promise<void>;
   stubPlayableLengths(lengths: number[]): Promise<void>;
   stubPlayableLengthsFailure(): Promise<void>;
+  stubPlayableLengthsDelayed(lengths: number[], delayMs: number): Promise<void>;
 }
 
 // Default: every scheduled length is playable, matching the world before
@@ -51,6 +52,19 @@ async function stubPlayableLengthsFailure(page: Page): Promise<void> {
       status: 500,
       contentType: 'application/json',
       body: JSON.stringify({ error: { code: 'INTERNAL_ERROR', message: 'boom' } }),
+    });
+  });
+}
+
+// Proves the app waits for the real answer instead of guessing: the
+// response is delayed so a test can assert nothing was fetched for a
+// not-yet-confirmed length before it arrives.
+async function stubPlayableLengthsDelayed(page: Page, lengths: number[], delayMs: number): Promise<void> {
+  await page.route('**/api/words/lengths', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { lengths } }),
     });
   });
 }
@@ -135,6 +149,7 @@ export const test = base.extend<{ api: ApiStub }>({
       stubValidate: (isValidWord) => stubValidate(page, isValidWord),
       stubPlayableLengths: (lengths) => stubPlayableLengths(page, lengths),
       stubPlayableLengthsFailure: () => stubPlayableLengthsFailure(page),
+      stubPlayableLengthsDelayed: (lengths, delayMs) => stubPlayableLengthsDelayed(page, lengths, delayMs),
     });
   },
 });

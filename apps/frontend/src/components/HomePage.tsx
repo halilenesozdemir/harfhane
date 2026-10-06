@@ -2,16 +2,14 @@ import { useState } from "react";
 import { Calendar, Infinity as InfinityIcon, Settings, HelpCircle } from "lucide-react";
 import HowToPlayModal from "./HowToPlayModal";
 import SettingsModal from "./SettingsModal";
-import { usePlayableLengths } from "../hooks/usePlayableLengths";
+import { getDefaultPlayableLength, usePlayableLengths } from "../hooks/usePlayableLengths";
 import type { HomePageProps, WordLength } from "../types";
-
-const DEFAULT_WORD_LENGTH: WordLength = 5;
 
 const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   const playableLengths = usePlayableLengths();
-  const dailyLength = playableLengths[0] ?? DEFAULT_WORD_LENGTH;
+  const dailyLength = getDefaultPlayableLength(playableLengths);
   // null means "no explicit pick yet"; falls back to dailyLength, and also
   // whenever a previous pick stops being playable (derived, not an effect).
   const [pickedLength, setPickedLength] = useState<WordLength | null>(null);

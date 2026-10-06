@@ -17,9 +17,7 @@ for (const legacyPath of ['/lists', '/play/eski-liste', '/tournament']) {
   });
 }
 
-// AE1: with only length 5 playable, the home page offers no length picker
-// and /daily/6 redirects to /daily/5.
-test('home page hides the unlimited length picker when only one length is playable', async ({ page, api }) => {
+test('(008-AE1) home page hides the unlimited length picker when only one length is playable', async ({ page, api }) => {
   await api.stubPlayableLengths([5]);
 
   await page.goto('/');
@@ -29,7 +27,17 @@ test('home page hides the unlimited length picker when only one length is playab
   await expect(page.getByRole('button', { name: '6 harf' })).not.toBeVisible();
 });
 
-test('/daily/6 redirects to /daily/5 when 6 is not playable', async ({ page, api }) => {
+test('(008-AE1) home page shows exactly the playable lengths, hiding the others', async ({ page, api }) => {
+  await api.stubPlayableLengths([4, 5]);
+
+  await page.goto('/');
+
+  await expect(page.getByRole('button', { name: '4 harf', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '5 harf', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '6 harf', exact: true })).not.toBeVisible();
+});
+
+test('(008-AE1) /daily/6 redirects to /daily/5 when 6 is not playable', async ({ page, api }) => {
   await api.stubPlayableLengths([5]);
   await api.stubDailyWord(5, { word: 'KALEM' });
 
@@ -38,8 +46,26 @@ test('/daily/6 redirects to /daily/5 when 6 is not playable', async ({ page, api
   await expect(page).toHaveURL('/daily/5');
 });
 
-// AE2: when the lengths request fails, clients fall back to [5] and still start a game.
-test('a failed lengths request falls back to 5 and still starts the daily game', async ({ page, api }) => {
+test('(008-AE1) a delayed playable-lengths response blocks fetching the unconfirmed length before redirecting', async ({ page, api }) => {
+  const dailyRequestLengths: number[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith('/words/daily')) {
+      dailyRequestLengths.push(Number(url.searchParams.get('length') ?? '5'));
+    }
+  });
+  await api.stubPlayableLengthsDelayed([5], 500);
+  await api.stubDailyWord(5, { word: 'KALEM' });
+
+  await page.goto('/daily/6');
+  await page.waitForTimeout(150);
+  expect(dailyRequestLengths).toEqual([]);
+
+  await expect(page).toHaveURL('/daily/5', { timeout: 5000 });
+  expect(dailyRequestLengths).toEqual([5]);
+});
+
+test('(008-AE2) a failed lengths request falls back to 5 and still starts the daily game', async ({ page, api }) => {
   await api.stubPlayableLengthsFailure();
   await api.stubDailyWord(5, { word: 'KALEM' });
 
