@@ -22,6 +22,7 @@ Players get a daily puzzle that never runs out, and every word in it is approved
 - R5. ~~User-submitted list words keep working, but they can never become daily words.~~ **Removed, 2026-10-05: lists (`word_lists`, `word_list_words`, `list_likes`, `list_comments`) were cut from the product entirely (#37, #42); there is no user-submitted list content left to carry forward.**
 - R6. Answer words and the guess list come from open-license sources. No TDK data is used.
 - R7. **Owner decision, 2026-10-05: cutover is per word length, not all-or-nothing.** A length is *active/playable* once it has 90+ days of approved, family-safe schedule; 5 letters goes first. Lengths without 90+ days stay hidden in clients until stocked. "Active/playable" is data-driven per length, replacing the fixed `ACTIVE_WORD_LENGTHS`/`VALID_LENGTHS` lists — see U7. This is distinct from *scheduled* lengths (always 4, 5 and 6; Plan 006 R2), which the cron keeps stocked whether or not they are visible yet (`docs/decisions/2026-10-06-length-visibility.md`).
+- R8. **Owner decision, 2026-10-06: repeat policy.** An approved answer may repeat within its own word length only after 3 years since it was last scheduled for that length (`docs/decisions/2026-10-06-word-supply.md`).
 
 ## Acceptance examples
 - AE1 (R3). Given a draft word, when `is_active` is set to 1 without approval, then the insert or update fails.
@@ -54,6 +55,7 @@ Players get a daily puzzle that never runs out, and every word in it is approved
 - U5. ~~Migrate the 12 legacy users only if wanted.~~ **Cancelled, 2026-10-05: no accounts at all for MVP** (`docs/decisions/2026-10-05-mvp-scope-cut.md`); legacy user rows are not migrated.
 - U6. **Retire `harfhane-db`.** Delete it after one stable week, with explicit owner approval. Deletion is irreversible.
 - U7. **Client length visibility (R7).** The backend reports the list of active/playable lengths from existing word/schedule data (no separate config table needed). `apps/frontend/src/App.tsx`'s hard-coded `VALID_LENGTHS` and the mobile `HomeScreen`/stats screens' hard-coded length list both read that list instead of a fixed `[4, 5, 6]`, so a hidden length never shows as playable before it has 90+ days stocked.
+- U8. **Repeat-policy guard (R8).** Scheduling an answer for a length checks it was not already scheduled for that same length within the last 3 years; reject or skip it otherwise. Test with a fixture answer used just under and just over the 3-year boundary.
 
 ## Scope boundaries
 Out of scope: Connections content and payments (`entitlements` table). Both get their own plans.

@@ -20,6 +20,9 @@ Research: `docs/research/2026-10-05-content-continuity.md`.
 - R5. At least 90 approved days per active length before the Plan 001 cutover for that length (owner decision, 2026-10-05: cutover is per length, 5 letters first; see Plan 001 R7).
 - R6. A daily cron tops the schedule up to 90 days from approved, family-safe stock for each *scheduled* length (4, 5, 6 — including lengths still hidden from players; see R2). (owner decision, 2026-10-05)
 - R7. Low-stock alerts fire on remaining approved stock dropping below a threshold, not only on projected runway. (owner decision, 2026-10-05)
+- R8. **Owner decision, 2026-10-06.** Unlimited mode draws from its own, larger answer pool with a lower zipf floor than the daily pool (exact floor TBD by the implementing unit); the daily pool keeps zipf≥3.0 and owner review (`docs/decisions/2026-10-06-word-supply.md`).
+- R9. **Owner decision, 2026-10-06.** Pool sources stay `hunspell-tr` and `wordfreq`/CC BY frequency lists (frequency signal only); Wiktionary/other CC BY-SA sources are not used; TDK and TS Corpus stay excluded (Invariant 3).
+- R10. **Owner decision, 2026-10-06.** Restocking KPI: track "approved unscheduled stock" per length; start a new review batch once it drops below 180 days — distinct from R7's lower, shorter-horizon low-stock alert.
 
 ## Acceptance examples
 - AE1 (R1). Given an admin import of two words, then both rows have non-null `source` and `license`, `status = 'approved'` and `family_safe = 1`.
@@ -44,3 +47,6 @@ Research: `docs/research/2026-10-05-content-continuity.md`.
 - U6. *Owner:* import 346 reviewed 5-letter words and auto-fill 90+ days on the new database (remote D1, Invariant 4), then run the one-time Plan 001 U4 binding switch (`DB` → `harfhane`), triggered once, by 5 letters reaching 90 days. (R5)
 - U7. Label and review 4- and 6-letter pools in parallel; *owner* imports and schedules them (remote D1, Invariant 4). Plan 001 U4 already ran in U6 and does not run again — once a length reaches 90+ days it becomes visible/playable automatically (Plan 001 R7, the client length-visibility unit). (R5)
 - U8. *Owner:* confirm each length's 90+ day stock. This only flips that length's visibility flag (Plan 001 R7) — no further Plan 001 U4 binding switch, which already happened once in U6. (R5)
+- U9. Unlimited-mode answer pool: a separate, larger candidate pool with a lower zipf floor (implementer picks the exact floor); random-word selection for unlimited mode reads from it instead of the daily pool. (R8)
+- U10. Restrict the word pipeline (`scripts/words/`) to the allowed sources (`hunspell-tr`, `wordfreq`/CC BY frequency lists); confirm no Wiktionary/CC BY-SA or TDK/TS Corpus ingestion exists. (R9)
+- U11. Restocking KPI: track approved-unscheduled-stock per length in the admin/cron and trigger a new review batch below 180 days, independent of R7's low-stock alert. (R10)
