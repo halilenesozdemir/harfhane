@@ -13,6 +13,7 @@ export interface KeyProps {
   readonly accessibilityLabel: string;
   readonly isWide?: boolean;
   readonly onPress: (value: string) => void;
+  readonly testID?: string;
 }
 
 const KEY_HEIGHT = 46;
@@ -32,7 +33,7 @@ function getKeyColors(status: TileStatus, colors: ThemeColors) {
   return { backgroundColor: colors.keyBg, color: colors.keyFg, depthColor: colors.keyDepth };
 }
 
-export function Key({ label, value, status, accessibilityLabel, isWide = false, onPress }: KeyProps) {
+export function Key({ label, value, status, accessibilityLabel, isWide = false, onPress, testID }: KeyProps) {
   const { colors } = useTheme();
   const [isPressed, setIsPressed] = useState(false);
   const { backgroundColor, color, depthColor } = getKeyColors(status, colors);
@@ -42,6 +43,7 @@ export function Key({ label, value, status, accessibilityLabel, isWide = false, 
 
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPressIn={handlePressIn}

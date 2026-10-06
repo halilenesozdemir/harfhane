@@ -51,6 +51,7 @@ export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: Keybo
           {row.map((value) => (
             <Key
               key={value}
+              testID={`key-${value}`}
               label={getKeyLabel(value)}
               value={value}
               status={keyboardStatus[value] ?? null}

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react-native';
+import { screen, waitFor, within } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Tile } from './Tile';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -36,5 +36,29 @@ describe('Tile', () => {
   it('should label an empty tile as boş', async () => {
     await renderWithTheme(<Tile letter="" status={null} isFilled={false} />);
     expect(screen.getByLabelText('boş')).toBeTruthy();
+  });
+
+  it('should use a dashed brand border and a faded letter when the tile is a hint placeholder', async () => {
+    await renderWithTheme(<Tile letter="L" status={null} isFilled={false} isHint />);
+    const tile = screen.getByLabelText('L, ipucu');
+    const style = flattenStyle(tile.props.style);
+    expect(style.borderColor).toBe(themes.light.brand);
+    expect(style.borderStyle).toBe('dashed');
+    expect(style.backgroundColor).not.toBe(themes.light.correct);
+    expect(style.backgroundColor).not.toBe(themes.light.present);
+    const letterStyle = flattenStyle(within(tile).getByText('L').props.style);
+    expect(letterStyle.opacity).toBe(0.75);
+  });
+
+  it('should show a typed letter at full opacity once it replaces the hint placeholder', async () => {
+    await renderWithTheme(<Tile letter="K" status={null} isFilled isHint={false} />);
+    const letterStyle = flattenStyle(within(screen.getByLabelText('K')).getByText('K').props.style);
+    expect(letterStyle.opacity).toBeUndefined();
+  });
+
+  it('should set an explicit solid border when the tile is not a hint', async () => {
+    // Android keeps a previously applied dashed border unless the style is set back explicitly.
+    await renderWithTheme(<Tile letter="D" status={null} isFilled isHint={false} />);
+    expect(flattenStyle(screen.getByLabelText('D').props.style).borderStyle).toBe('solid');
   });
 });

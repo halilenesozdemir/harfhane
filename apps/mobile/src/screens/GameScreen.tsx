@@ -1,11 +1,14 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameGrid } from '../components/GameGrid';
+import { HintControl } from '../components/HintControl';
 import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
 import { useGame } from '../game/useGame';
+import { useHint } from '../game/useHint';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
+import type { UseHintResult } from '../game/useHint';
 import type { GameMode, GameSession } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
@@ -43,15 +46,26 @@ interface GameBoardProps {
   readonly session: GameSession;
   readonly mode: GameMode;
   readonly game: ReturnType<typeof useGame>;
+  readonly hint: UseHintResult;
   readonly colors: ThemeColors;
 }
 
-function GameBoard({ session, mode, game, colors }: GameBoardProps) {
+function GameBoard({ session, mode, game, hint, colors }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   return (
     <>
-      <GameGrid guesses={session.game.guesses} evaluations={session.game.evaluations} currentGuess={session.game.currentGuess} wordLength={session.solution.length} />
+      <GameGrid
+        guesses={session.game.guesses}
+        evaluations={session.game.evaluations}
+        currentGuess={session.game.currentGuess}
+        wordLength={session.solution.length}
+        hints={hint.hints}
+        isPlaying={!isFinished}
+      />
       <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
+      {mode === 'daily' && !isFinished && (
+        <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
+      )}
       {mode === 'unlimited' && isFinished && <ActionButton label="Yeni kelime" onPress={game.startNewGame} colors={colors} />}
       <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={game.onSubmit} />
     </>
@@ -61,10 +75,11 @@ function GameBoard({ session, mode, game, colors }: GameBoardProps) {
 interface GameBodyProps {
   readonly mode: GameMode;
   readonly game: ReturnType<typeof useGame>;
+  readonly hint: UseHintResult;
   readonly colors: ThemeColors;
 }
 
-function GameBody({ mode, game, colors }: GameBodyProps) {
+function GameBody({ mode, game, hint, colors }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -75,13 +90,21 @@ function GameBody({ mode, game, colors }: GameBodyProps) {
       </View>
     );
   }
-  return <GameBoard session={session} mode={mode} game={game} colors={colors} />;
+  return <GameBoard session={session} mode={mode} game={game} hint={hint} colors={colors} />;
 }
 
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store, today });
   useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const hint = useHint({
+    store,
+    mode,
+    wordLength,
+    dailyDate: game.session.dailyDate,
+    solution: game.session.solution,
+    guesses: game.session.game.guesses,
+  });
   return (
     <View style={[styles.screen, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
@@ -90,7 +113,7 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
         </Pressable>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{`${MODE_TITLES[mode]} · ${wordLength} harf`}</Text>
       </View>
-      <GameBody mode={mode} game={game} colors={colors} />
+      <GameBody mode={mode} game={game} hint={hint} colors={colors} />
     </View>
   );
 }

@@ -25,11 +25,6 @@ reason; details here.
   `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
   already covered by the "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc`
   ignores them rather than reinstalling dependencies for scripts pending a retire-or-repoint decision.
-- `packages/shared/src/game/index.ts`'s hint re-exports (`FREE_DAILY_HINTS`, `FREE_UNLIMITED_HINTS`,
-  `SUPPORTER_DAILY_HINTS`, `SUPPORTER_UNLIMITED_HINTS`, `hintAllowance`, `pickHint`, `HintMode`,
-  `LetterHint`) are tagged `@deferred` because neither consumer has merged yet (open PRs #80 web,
-  #82 mobile). Drop the `@deferred` tag once either lands — `knip` will then see a real caller and
-  the tag becomes redundant (and `knip` reports an unused-tag hint if left in place).
 
 ## Anonymous player analytics (2026-10-06)
 Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
