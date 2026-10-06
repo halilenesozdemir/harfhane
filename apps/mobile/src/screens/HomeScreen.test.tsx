@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { act, fireEvent, screen } from '@testing-library/react-native';
+import { themes } from '@harfhane/ui-tokens';
 import { DEFAULT_WORD_LENGTH, HomeScreen } from './HomeScreen';
-import { renderWithTheme } from '../test-utils/render-with-theme';
+import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import type { HomeScreenProps } from './HomeScreen';
 import type { WordLength } from '../stats/stats';
 
@@ -37,6 +38,33 @@ describe('HomeScreen', () => {
     await renderWithTheme(<ControlledHomeScreen />);
     for (const letter of ['H', 'A', 'R', 'F']) {
       expect(screen.getByText(letter)).toBeTruthy();
+    }
+  });
+
+  it('(011-R5) should colour each title tile letter with the fg token matching its own background', async () => {
+    await renderWithTheme(<ControlledHomeScreen />);
+    // H and R sit on a correct (green) tile; A and F sit on a present (yellow) tile.
+    // present's background is light, so its fg token must be the dark one, not correctFg's white.
+    for (const letter of ['H', 'R']) {
+      expect(flattenStyle(screen.getByText(letter).props.style).color).toBe(themes.light.correctFg);
+    }
+    for (const letter of ['A', 'F']) {
+      expect(flattenStyle(screen.getByText(letter).props.style).color).toBe(themes.light.presentFg);
+    }
+  });
+
+  it('(011-R5) should expose the title row as a single header to assistive tech', async () => {
+    await renderWithTheme(<ControlledHomeScreen />);
+    const titleRow = screen.getByTestId('home-title-row');
+    expect(titleRow.props.accessible).toBe(true);
+    expect(titleRow.props.accessibilityRole).toBe('header');
+    expect(titleRow.props.accessibilityLabel).toBe('HARFHANE');
+  });
+
+  it('(011-R5) should cap the title letters from growing past the tile on a large system font', async () => {
+    await renderWithTheme(<ControlledHomeScreen />);
+    for (const letter of ['H', 'A', 'R', 'F']) {
+      expect(screen.getByText(letter).props.maxFontSizeMultiplier).toBeLessThanOrEqual(1.3);
     }
   });
 

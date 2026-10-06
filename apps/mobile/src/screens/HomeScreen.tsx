@@ -28,18 +28,39 @@ const LENGTH_OPTION_HEIGHT = 36;
 const TITLE_LETTERS = ['H', 'A', 'R', 'F'] as const;
 const TITLE_TILE_SIZE = 40;
 const TITLE_ACCESSIBILITY_LABEL = 'HARFHANE';
+// Caps how far the title letters scale with the system font setting so they
+// never overflow the fixed-size tile.
+const TITLE_MAX_FONT_SIZE_MULTIPLIER = 1.2;
 
 function titleTileColor(colors: ThemeColors, index: number): string {
   return index % 2 === 0 ? colors.correct : colors.present;
 }
 
+// Each tile's text uses the fg token for its own background, not a single
+// shared one: correct's fg is white, present's is a dark token, since
+// present's background is light (WCAG contrast, not a cosmetic choice).
+function titleTileFg(colors: ThemeColors, index: number): string {
+  return index % 2 === 0 ? colors.correctFg : colors.presentFg;
+}
+
 function HomeTitle() {
   const { colors } = useTheme();
   return (
-    <View style={styles.titleRow} accessibilityLabel={TITLE_ACCESSIBILITY_LABEL} testID="home-title-row">
+    <View
+      style={styles.titleRow}
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={TITLE_ACCESSIBILITY_LABEL}
+      testID="home-title-row"
+    >
       {TITLE_LETTERS.map((letter, index) => (
         <View key={letter} style={[styles.titleTile, { backgroundColor: titleTileColor(colors, index) }]}>
-          <Text style={[styles.titleTileLabel, { color: colors.correctFg }]}>{letter}</Text>
+          <Text
+            style={[styles.titleTileLabel, { color: titleTileFg(colors, index) }]}
+            maxFontSizeMultiplier={TITLE_MAX_FONT_SIZE_MULTIPLIER}
+          >
+            {letter}
+          </Text>
         </View>
       ))}
     </View>
