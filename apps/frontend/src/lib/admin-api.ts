@@ -148,8 +148,6 @@ export function importWords(
 export interface AdminStats {
   words: { total: number; active: number; inactive: number };
   daily: { today: string | null; scheduledNext30: number; unscheduledNext30: number };
-  users: { total: number };
-  games: { totalPlayed: number; playedToday: number };
 }
 
 export function getAdminStats(secret: string): Promise<AdminStats> {
@@ -178,29 +176,3 @@ export function autoFillSchedule(
   });
 }
 
-export interface WordStatRow {
-  word: string;
-  meaning: string;
-  total_played: number;
-  total_won: number;
-  win_rate: number;
-  avg_guesses: number | null;
-}
-
-export function getWordStats(secret: string, sort: 'played' | 'win_rate' = 'played'): Promise<WordStatRow[]> {
-  return adminRequest<WordStatRow[]>(`/word-stats?sort=${sort}`, secret);
-}
-
-export interface AdminUserRow {
-  id: number;
-  username: string;
-  email: string;
-  created_at: string;
-  total_played: number;
-  total_won: number;
-  last_played: string | null;
-}
-
-export function getAdminUsers(secret: string): Promise<AdminUserRow[]> {
-  return adminRequest<AdminUserRow[]>('/users', secret);
-}

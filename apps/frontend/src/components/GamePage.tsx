@@ -8,15 +8,11 @@ import HowToPlayModal from './HowToPlayModal';
 import StatsModal from './StatsModal';
 import GameOverModal from './GameOverModal';
 import SettingsModal from './SettingsModal';
-import AuthModal from './AuthModal';
-import LeaderboardModal from './LeaderboardModal';
-import ProfileModal from './ProfileModal';
 import GameLoadingScreen from './GameLoadingScreen';
 import GameErrorScreen from './GameErrorScreen';
 import GameHint from './GameHint';
 import { useGameState } from '../hooks/useGameState';
 import { useGameModals } from '../hooks/useGameModals';
-import { useAuth } from '../context/AuthContext';
 import { useSessionChallenge } from '../hooks/useSessionChallenge';
 import { useHint } from '../hooks/useHint';
 import WinConfetti from './WinConfetti';
@@ -33,11 +29,10 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
     guesses, evaluations, currentGuess, gameStatus, keyboardStatus,
     solution, solutionEntry, gameNumber, stats, isRevealing,
     isLoading, isError, shakeRow, message, hasSeenHelp,
-    isUnlimited, lastXPResult,
+    isUnlimited,
     addLetter, removeLetter, submitGuess, setHasSeenHelp, startNewGame,
   } = useGameState(mode, wordLength);
 
-  const { token } = useAuth();
   const sessionChallenge = useSessionChallenge();
   const { hintText, hintUsed, revealHint } = useHint(solutionEntry, wordLength, isUnlimited);
 
@@ -88,9 +83,6 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
           onHelpClick={modals.openHelp}
           onStatsClick={modals.openStats}
           onSettingsClick={modals.openSettings}
-          onLeaderboardClick={modals.openLeaderboard}
-          onAuthClick={modals.openAuth}
-          onProfileClick={modals.openProfile}
           modeLabel={modeLabel}
         />
         <Toast message={message} />
@@ -133,18 +125,12 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
           gameNumber={gameNumber}
           stats={stats}
           isUnlimited={isUnlimited}
-          isAuthenticated={!!token}
           onPlayAgain={handlePlayAgain}
           onGoHome={handleGoHome}
-          onAuthClick={modals.openAuth}
-          xpResult={lastXPResult}
           sessionChallenge={isUnlimited ? sessionChallenge : undefined}
           challengeUrl={challengeUrl}
         />
         <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />
-        <AuthModal isOpen={modals.showAuth} onClose={modals.closeAuth} />
-        <LeaderboardModal isOpen={modals.showLeaderboard} onClose={modals.closeLeaderboard} />
-        <ProfileModal isOpen={modals.showProfile} onClose={modals.closeProfile} />
       </div>
     </DesktopShell>
   );

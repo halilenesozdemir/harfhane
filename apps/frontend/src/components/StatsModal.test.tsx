@@ -1,6 +1,4 @@
 import { render, screen, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../context/AuthContext';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import StatsModal from './StatsModal';
 import type { DailyStats } from '../types';
@@ -16,11 +14,7 @@ const STATS: DailyStats = {
 
 function renderModal(isOpen: boolean) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
-      <AuthProvider>
-        <StatsModal isOpen={isOpen} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
-      </AuthProvider>
-    </QueryClientProvider>
+    <StatsModal isOpen={isOpen} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
   );
 }
 
@@ -55,18 +49,10 @@ describe('StatsModal', () => {
     expect(screen.getByText('7')).toBeInTheDocument();
 
     rerender(
-      <QueryClientProvider client={new QueryClient()}>
-        <AuthProvider>
-          <StatsModal isOpen={false} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
-        </AuthProvider>
-      </QueryClientProvider>
+      <StatsModal isOpen={false} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
     );
     rerender(
-      <QueryClientProvider client={new QueryClient()}>
-        <AuthProvider>
-          <StatsModal isOpen={true} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
-        </AuthProvider>
-      </QueryClientProvider>
+      <StatsModal isOpen={true} onClose={vi.fn()} stats={STATS} lastGuessCount={6} gameStatus="won" isUnlimited={false} />
     );
 
     expect(screen.queryByText('7')).not.toBeInTheDocument();
