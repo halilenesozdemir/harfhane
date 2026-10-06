@@ -60,6 +60,43 @@ test('an invalid word shows an error toast instead of being submitted', async ({
   await expect(tile(page, 5, 0, 0)).toHaveAttribute('data-status', 'filled');
 });
 
+test('revealing the hint shows a letter pill and marks the board tile', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+
+  const hintButton = page.getByRole('button', { name: 'İpucu göster' });
+  await expect(hintButton).toBeVisible();
+  await hintButton.click();
+
+  await expect(page.getByText(/\d\. harf: [A-ZÇĞİÖŞÜ]/)).toBeVisible();
+  const hintedTile = page.locator('[data-hint="true"]');
+  await expect(hintedTile).toHaveCount(1);
+
+  // Once a hint is revealed, the pill replaces the button entirely (no second
+  // press is possible because there is no button left to press).
+  await expect(hintButton).not.toBeVisible();
+});
+
+test('a hint survives a reload without granting a fresh one', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  const pill = page.getByText(/\d\. harf: [A-ZÇĞİÖŞÜ]/);
+  const pillTextBefore = await pill.textContent();
+
+  await page.reload();
+
+  await expect(page.getByText(pillTextBefore!)).toBeVisible();
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
+});
+
 test('a finished daily game survives a reload', async ({ page, api }) => {
   const solution = 'MASA';
   await api.stubDailyWord(4, { word: solution });
