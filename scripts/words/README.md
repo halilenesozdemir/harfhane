@@ -24,13 +24,21 @@ produces the same output files under `data/words/`.
 - `candidates.py`: zipf-frequency filter, mastar (`-mak`/`-mek`) exclusion, family-safety
   blocklist, the `needs_review` heuristic, and `is_likely_english` (an English loanword
   filter: `ENGLISH_ZIPF_MARGIN = 1.5`, flagging a word whose English `wordfreq` zipf
-  score is at least that much higher than its Turkish one).
+  score is at least that much higher than its Turkish one). The margin alone misflags a
+  handful of real Turkish words as English; `turkish_allowlist.txt` (exact match, checked
+  before the margin) is the escape hatch for those — see "Quality notes" below.
 - `build_word_lists.py`: orchestrates the above and writes `data/words/`.
 - `blocklist.txt`: short, hand-curated list of explicit/vulgar roots, prefix-matched
   against candidates unless the line is prefixed with `=`, which blocks only that exact
   word (for an entry whose plain spelling also has an unrelated, legitimate meaning as a
   longer word's prefix — e.g. `=kaşar` blocks the slang word "kaşar" but not "kaşarlı",
   a type of cheese). Do not quote its contents in reports, PRs or commit messages.
+- `turkish_allowlist.txt`: short, hand-curated, exact-match list of real Turkish words
+  that `is_likely_english` would otherwise drop (e.g. "fire", "step", "sure", "moment" —
+  all far more common in English in absolute `wordfreq` terms, but genuine Turkish words).
+  Checked before the English/Turkish margin, so these always survive regardless of the
+  margin value. Add to it only when a specific false positive is confirmed, not
+  speculatively.
 - `test_build_word_lists.py`: unittest suite (run with `python3 -m unittest` from this
   directory).
 
@@ -94,20 +102,34 @@ independent words — not just inflected junk:
 Heuristics like these cannot make the unlimited pool family-safe or lexically clean on their
 own — the real gate for unlimited-pool quality is **model labels + the eval gate (Plan 010
 U5/U6) + the blocklist**, not a bigger suffix list. So this pipeline is kept deliberately
-conservative: it must never remove a good word, even if that means some verb forms, proper
-nouns and non-English loanwords still get through to be caught by labelling/review instead.
-`valid-N.txt` (the player-facing guess dictionary, every length) and the daily pool/review
-files are confirmed byte-identical to `main` — this pass changes nothing there.
+conservative: a filter change must not remove a good word without an explicit, tested
+exception for it, even if that means some verb forms, proper nouns and non-English loanwords
+still get through to be caught by labelling/review instead. `valid-N.txt` (the player-facing
+guess dictionary, every length) and the daily pool/review files are confirmed byte-identical
+to `main` — this pass changes nothing there.
 
-What this pass does keep: the English-loanword filter (`is_likely_english`) tested clean (no
-Turkish false positives found), and the `blocklist.txt` additions found by manually scanning
-the generated pool files (not reproduced here — see the file's own note), covering explicit
+The English-loanword filter (`is_likely_english`) is not clean on its own: a later review
+found it wrongly dropping real Turkish words (FİRE, STEP, SURE, MOMENT — all words that score
+higher in absolute English `wordfreq` terms than Turkish, but are genuine Turkish vocabulary).
+Rather than loosen `ENGLISH_ZIPF_MARGIN` (which would let more real English loanwords back
+in), these four were added to `turkish_allowlist.txt`, an exact-match list checked before the
+margin runs; each is covered by a test asserting it survives. The same review found two
+English words slipping *past* the filter the other way — BİRD and LAMB — added to
+`blocklist.txt` as exact (`=`) entries rather than by lowering the margin, which would have
+reopened the false-positive problem above.
+
+What this pass also keeps: the `blocklist.txt` additions found by manually scanning the
+generated pool files (not reproduced here — see the file's own note), covering explicit
 sexual/anatomical terms, a racial slur, prostitution/adultery terms, a crude imperative, two
-"pervert" words and several drug names. The anti-gay slur category was already covered by the
-pre-existing `ibne`/`puşt` entries. Two ambiguous drug-adjacent words ("afyon"/"haşhaş") were
-deliberately left unblocked: both are far more commonly used for their legitimate meanings in
-Turkish (a province name; poppy seed as a food topping) than for the drug, so blocking them
-would violate the "never remove a good word" rule above.
+"pervert" words and several drug names. The anti-gay slur category was only partly covered by
+the pre-existing `ibne`/`puşt` entries: a later review found HOMO had slipped into the
+unlimited pool and added it as an exact (`=homo`) entry, along with two sexual terms (SEKSE,
+SEVİŞ, as `=sekse`/`=seviş`) that had also slipped through — all three as exact matches so
+that unrelated longer words sharing the same prefix (SEKSEN, HOMOJEN) are not blocked. Two
+ambiguous drug-adjacent words ("afyon"/"haşhaş") were deliberately left unblocked: both are
+far more commonly used for their legitimate meanings in Turkish (a province name; poppy seed
+as a food topping) than for the drug, so blocking them would remove a good word for most of
+its uses.
 
 **The unlimited pool must not be imported into the game until Plan 010 U5/U6 (the label eval
 gate) has passed.** Heuristic filtering alone is not a family-safety gate.

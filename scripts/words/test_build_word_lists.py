@@ -1,11 +1,16 @@
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
 from turkish import tr_lower, tr_upper, is_turkish_alphabet
 from inflection import is_inflected_form
-from candidates import is_likely_english
+from candidates import is_likely_english, is_blocked, load_blocklist, load_allowlist
 import build_word_lists as bwl
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BLOCKLIST_PATH = os.path.join(SCRIPT_DIR, "blocklist.txt")
+ALLOWLIST_PATH = os.path.join(SCRIPT_DIR, "turkish_allowlist.txt")
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "words")
 
@@ -94,6 +99,36 @@ class EnglishLoanwordHeuristicTests(unittest.TestCase):
         with patch("candidates.zipf_frequency", self._fake_zipf(scores)):
             self.assertTrue(is_likely_english("edge"))
 
+    def test_allowlist_overrides_a_word_that_would_otherwise_be_flagged(self):
+        from candidates import ENGLISH_ZIPF_MARGIN
+
+        scores = {"fire": {"en": 3.0 + ENGLISH_ZIPF_MARGIN, "tr": 3.0}}
+        with patch("candidates.zipf_frequency", self._fake_zipf(scores)):
+            self.assertTrue(is_likely_english("fire"))
+            self.assertFalse(is_likely_english("fire", allowlist={"fire"}))
+
+
+class TurkishWordsMisflaggedAsEnglishTests(unittest.TestCase):
+    # Real wordfreq scores (no mocking): FİRE, STEP, SURE and MOMENT are real,
+    # commonly used Turkish words that the English-loanword margin wrongly
+    # flags on their own; the allowlist (turkish_allowlist.txt) must keep them.
+    def setUp(self):
+        self.allowlist = load_allowlist(ALLOWLIST_PATH)
+
+    def test_allowlist_contains_the_known_misflagged_words(self):
+        for word in ("fire", "step", "sure", "moment"):
+            self.assertIn(word, self.allowlist)
+
+    def test_each_known_word_survives_with_the_allowlist_applied(self):
+        for word in ("fire", "step", "sure", "moment"):
+            self.assertFalse(is_likely_english(word, self.allowlist))
+
+    def test_each_known_word_would_be_flagged_without_the_allowlist(self):
+        # Guards against the allowlist becoming a no-op if the margin changes:
+        # these words must actually need the allowlist, not merely tolerate it.
+        for word in ("fire", "step", "sure", "moment"):
+            self.assertTrue(is_likely_english(word))
+
 
 class BlocklistExactMatchTests(unittest.TestCase):
     def test_exact_match_entry_blocks_only_the_exact_word(self):
@@ -113,21 +148,75 @@ class BlocklistExactMatchTests(unittest.TestCase):
         self.assertTrue(is_blocked("sokaklı", {"sokak"}))
 
 
+class LoadBlocklistFileTests(unittest.TestCase):
+    # A mutant that drops the "=" exact-match handling in load_blocklist (e.g.
+    # by stripping the prefix character without preserving its meaning) must
+    # be caught: loading from a real file has to keep exact-match semantics,
+    # not just the in-memory set construction tested above.
+    def test_reads_exact_match_entries_from_a_file(self):
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", encoding="utf-8", delete=False
+        ) as handle:
+            handle.write("# comment\n=kaşar\nsokak\n")
+            path = handle.name
+        try:
+            blocklist = load_blocklist(path)
+        finally:
+            os.remove(path)
+
+        self.assertTrue(is_blocked("kaşar", blocklist))
+        self.assertFalse(is_blocked("kaşarlı", blocklist))
+        self.assertTrue(is_blocked("sokaklı", blocklist))
+
+
+class BlocklistAdditionsTests(unittest.TestCase):
+    # Real blocklist.txt file: exact-match entries added for words that
+    # slipped through the family-safety and English-loanword filters.
+    def setUp(self):
+        self.blocklist = load_blocklist(BLOCKLIST_PATH)
+
+    def test_blocks_sexual_and_slur_words_added_as_exact_entries(self):
+        for word in ("sekse", "seviş", "homo"):
+            self.assertTrue(is_blocked(word, self.blocklist))
+
+    def test_does_not_block_unrelated_longer_words_sharing_that_prefix(self):
+        # "seksen" (sixty) and "homojen" (homogeneous) are unrelated,
+        # legitimate words; a prefix entry would wrongly block them too.
+        self.assertFalse(is_blocked("seksen", self.blocklist))
+        self.assertFalse(is_blocked("homojen", self.blocklist))
+
+    def test_blocks_english_loanwords_that_slipped_past_the_margin(self):
+        for word in ("bird", "lamb"):
+            self.assertTrue(is_blocked(word, self.blocklist))
+
+
 class BuildCandidateRowsEnglishFilterTests(unittest.TestCase):
     # Exercises build_word_lists.build_candidate_rows directly (not just
     # candidates.is_likely_english in isolation), so a mutant that drops the
     # is_likely_english check from the candidate pipeline itself is caught.
     def test_excludes_a_word_flagged_as_english(self):
         valid_words = {"masa": ()}
-        with patch.object(bwl, "is_likely_english", lambda word: word == "masa"):
+        with patch.object(
+            bwl, "is_likely_english", lambda word, allowlist=frozenset(): word == "masa"
+        ):
             rows = bwl.build_candidate_rows(valid_words, blocklist=set())
         self.assertEqual(rows, [])
 
     def test_keeps_a_word_not_flagged_as_english(self):
         valid_words = {"masa": ()}
-        with patch.object(bwl, "is_likely_english", lambda word: False):
+        with patch.object(bwl, "is_likely_english", lambda word, allowlist=frozenset(): False):
             rows = bwl.build_candidate_rows(valid_words, blocklist=set())
         self.assertEqual([row["word"] for row in rows], ["MASA"])
+
+    def test_allowlist_is_passed_through_to_the_english_heuristic(self):
+        valid_words = {"masa": ()}
+        with patch.object(
+            bwl,
+            "is_likely_english",
+            lambda word, allowlist=frozenset(): word in allowlist,
+        ):
+            rows = bwl.build_candidate_rows(valid_words, blocklist=set(), allowlist={"masa"})
+        self.assertEqual(rows, [])
 
 
 class GeneratedOutputTests(unittest.TestCase):
