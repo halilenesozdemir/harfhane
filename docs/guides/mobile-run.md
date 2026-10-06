@@ -43,3 +43,40 @@ Her denemede:
 - Kod değişince uygulama kendiliğinden yenilenir. Yenilemek için emülatörde **R R**, menü için **Ctrl+M**.
 - Kayıtlı oyun ve tema emülatörün içinde tutulur; sıfırlamak için Expo Go'nun verisini temizle.
 - Takılırsa: `pnpm exec expo start --clear` önbelleği temizler; `pnpm exec expo-doctor` bağımlılık sorunlarını gösterir.
+
+## Maestro uçtan uca akışları (Android, yerel)
+
+Plan 009 R5: `apps/mobile/.maestro/` içindeki akışlar emülatörde gerçek Expo Go üzerinden çalışır.
+CI'da yok (Android emülatörü CI'da yavaş; Phase 4'te EAS Workflows ile tekrar değerlendirilecek).
+
+Bir kez yapılacak kurulum:
+
+```bash
+brew tap mobile-dev-inc/tap
+brew install maestro
+```
+
+Her denemede:
+
+1. Emülatörü başlat (Device Manager'dan, ör. `harfhane_pixel`).
+2. Metro'yu worktree'den başlat (`expo start` zaten çalışıyorsa önce öldür):
+   ```bash
+   pkill -f "expo start"
+   cd apps/mobile && CI=1 pnpm exec expo start --port 8081 --clear
+   ```
+3. Yeni bir terminalde cihazı Metro'ya bağla:
+   ```bash
+   $ANDROID_HOME/platform-tools/adb reverse tcp:8081 tcp:8081
+   ```
+4. Akışları çalıştır:
+   ```bash
+   maestro test apps/mobile/.maestro
+   ```
+   (Veya kökten: `pnpm run test:maestro`.)
+
+Akışlar `exp://127.0.0.1:8081` adresini açarak uygulamayı Expo Go içinde başlatır; paylaşılan
+`subflows/open-fresh.yaml` Expo Go'nun ilk bağlantıda gösterdiği geliştirici menüsü sayfasını
+kapatıp ana ekrana geçer. Günlük oyun akışı, günün gerçek kelimesini canlı API'den alır; akış bu
+kelimeyi bilemediği için sözlükte geçerli altı farklı kelimeyle oynar ve kaybetmeyi de oyunun
+sonuna ulaşmış sayar — yerel bir backend ve tohum veri kurmaktan daha basit ve güvenilir bir
+seçim. Hiçbir akış uzak bir veritabanına yazmaz.

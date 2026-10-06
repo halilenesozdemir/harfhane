@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+# Daily mode's hint control: revealing a hint turns the button into a pill reading
+# "N. harf: X" and shows a dashed placeholder tile for the revealed position.
+- runFlow: subflows/open-fresh.yaml
+- tapOn: "Günlük Oyun"
+- extendedWaitUntil:
+    visible:
+      id: "tile-0-0"
+    timeout: 15000
+
+- assertVisible: { id: "hint-button" }
+- tapOn: { id: "hint-button" }
+- assertVisible: ".*harf:.*"
+- assertVisible: ".*ipucu.*"
+- assertNotVisible: { id: "hint-button" }

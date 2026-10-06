@@ -1,0 +1,10 @@
+appId: host.exp.exponent
+---
+# Home screen renders its title, both game-mode cards and the menu links.
+- runFlow: subflows/open-fresh.yaml
+- assertVisible: "HARFHANE"
+- assertVisible: "Günlük Oyun"
+- assertVisible: "Sınırsız Mod"
+- assertVisible: "Nasıl oynanır"
+- assertVisible: "İstatistikler"
+- assertVisible: "Ayarlar"

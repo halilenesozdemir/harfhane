@@ -1,0 +1,12 @@
+appId: host.exp.exponent
+---
+# Settings screen's theme switch applies without crashing and the rest of the screen stays usable.
+- runFlow: subflows/open-fresh.yaml
+- tapOn: "Ayarlar"
+- extendedWaitUntil:
+    visible: "Ayarlar"
+    timeout: 15000
+- tapOn: "Koyu Tema"
+- assertVisible: "Yüksek kontrast (renk körlüğü dostu)"
+- tapOn: "Kapat"
+- assertVisible: "HARFHANE"

@@ -1,0 +1,18 @@
+appId: host.exp.exponent
+---
+# Launches Expo Go with a clean app state and opens the Metro bundle for this project.
+# Expo Go shows a one-time developer-menu bottom sheet on a fresh connection; "Continue" opens
+# the full dev menu panel instead of dismissing it, so a hardware back closes that panel too.
+- launchApp:
+    clearState: true
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 15000
+- tapOn:
+    text: "Continue"
+    optional: true
+- back
+- extendedWaitUntil:
+    visible: "HARFHANE"
+    timeout: 15000
