@@ -6,5 +6,6 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^react-native-safe-area-context$': '<rootDir>/jest/rn-safe-area-context-mock.js',
+    '^lucide-react-native$': '<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
   },
 };
