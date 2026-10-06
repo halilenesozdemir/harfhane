@@ -479,6 +479,174 @@ test("should not flag a pending id as unknown when it matches a real approved pl
   }
 });
 
+// Round-4 hardening: scanner should not be fooled by commented-out code,
+// skipped/pending tests, RegExp.prototype.test( calls, or describe( suite
+// names, and should recognize multiple tags on one test and async Python
+// tests.
+const AE2_TAG = "(" + "009-AE2" + ")";
+
+const PLAN_009_TWO_AE_PLAN = `---
+title: Fixture plan
+type: test
+date: 2026-10-06
+status: approved
+---
+
+# Fixture plan
+
+## Requirements
+- R1. Two acceptance examples, each referenced by its own test name.
+
+## Acceptance examples
+- AE1 (R1). First acceptance example.
+- AE2 (R1). Second acceptance example.
+`;
+
+test("should not count a tag inside a commented-out single-line it() call as covering it", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `// it('should fail when an AE has no test ${AE1_TAG}', () => {});\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a tag inside a block-commented it() call as covering it", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `/*\nit('should fail when an AE has no test ${AE1_TAG}', () => {});\n*/\ntest('should do something unrelated', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a tag on an it.skip test as covering it", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `it.skip('should fail when an AE has no test ${AE1_TAG}', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a tag on a test.todo test as covering it", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `test.todo('should fail when an AE has no test ${AE1_TAG}');`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a RegExp.prototype.test( call as a test name", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `const pattern = /x/;\nif (pattern.test('${AE1_TAG}')) { doSomething(); }`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should not count a describe( block's own name as tagging an AE", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `describe('covers ${AE1_TAG}', () => {\n  it('does something else', () => {});\n});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing.map((m) => m.tag), ["009-AE1"]);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should find multiple AE tags inside a single test name", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_TWO_AE_PLAN);
+    mkdirSync(join(rootDir, "scripts"), { recursive: true });
+    writeFileSync(
+      join(rootDir, "scripts", "traceability.test.ts"),
+      `test('covers both ${AE1_TAG} and ${AE2_TAG}', () => {});`,
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("should recognize an 'async def test_...' Python function as a tagged test", () => {
+  const { rootDir, plansDir, allowlistPath } = makeFixtureDirs();
+  try {
+    writeFileSync(join(plansDir, "2026-10-06-009-fixture-plan.md"), PLAN_009_AE1_PLAN);
+    const scriptsDir = join(rootDir, "scripts", "words");
+    mkdirSync(scriptsDir, { recursive: true });
+    writeFileSync(
+      join(scriptsDir, "test_validate_labels.py"),
+      "async def test_should_pass_when_label_valid_009_AE1():\n    pass\n",
+    );
+
+    const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+
+    assert.deepEqual(missing, []);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("should exit 1 and print the missing AE id when run as a CLI, even through a symlinked script path (009-AE1)", () => {
   const { rootDir, plansDir } = makeFixtureDirs();
   try {

@@ -146,24 +146,159 @@ function collectRequiredTags(plansDir) {
   return tags;
 }
 
-// The tag, as it appears inside an actual test-name string: "(<plan>-AE<n>)".
-const TAG_IN_NAME_PATTERN = /\((\d+-AE\d+)\)/;
+// The tag(s), as they appear inside an actual test-name string:
+// "(<plan>-AE<n>)". A name may carry more than one (matchAll, not exec).
+const TAG_IN_NAME_PATTERN = /\((\d+-AE\d+)\)/g;
 
-// JS/TS: the first argument of a call to it(/test(/describe( (and their
-// .only/.skip/.each variants), in any of the three quote styles. A comment
-// or an unrelated string elsewhere in the file is not a test name and must
-// not count (R1/KTD1 say "test name", not "file").
+function findAllTags(text) {
+  return [...text.matchAll(TAG_IN_NAME_PATTERN)].map((match) => match[1]);
+}
+
+// Strip JS/TS comments (// and /* */) before scanning for test calls, so a
+// commented-out call that textually looks like `it('... (<plan>-AEn)', ...)`
+// is not mistaken for a real, running test. String/template literal content
+// (where "//" or "/*" may legitimately appear, e.g. in a URL) is preserved.
+function stripJsComments(content) {
+  let result = "";
+  let state = "code"; // code | single | double | template | line | block
+  for (let i = 0; i < content.length; ) {
+    const ch = content[i];
+    const next = content[i + 1];
+    if (state === "line") {
+      if (ch === "\n") {
+        state = "code";
+        result += ch;
+      } else {
+        result += " ";
+      }
+      i++;
+      continue;
+    }
+    if (state === "block") {
+      if (ch === "*" && next === "/") {
+        state = "code";
+        result += "  ";
+        i += 2;
+        continue;
+      }
+      result += ch === "\n" ? "\n" : " ";
+      i++;
+      continue;
+    }
+    if (state === "single" || state === "double" || state === "template") {
+      const quote = state === "single" ? "'" : state === "double" ? '"' : "`";
+      if (ch === "\\") {
+        result += ch + (next ?? "");
+        i += 2;
+        continue;
+      }
+      result += ch;
+      if (ch === quote) state = "code";
+      i++;
+      continue;
+    }
+    if (ch === "/" && next === "/") {
+      state = "line";
+      result += "  ";
+      i += 2;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      state = "block";
+      result += "  ";
+      i += 2;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === "`") {
+      state = ch === "'" ? "single" : ch === '"' ? "double" : "template";
+      result += ch;
+      i++;
+      continue;
+    }
+    result += ch;
+    i++;
+  }
+  return result;
+}
+
+// JS/TS: the first argument of a call to it(/test( (and their .only/.each/…
+// variants), in any of the three quote styles. describe( is a suite label,
+// not a test, so it is deliberately excluded. The negative lookbehind keeps
+// `pattern.test(str)` (RegExp.prototype.test) from being mistaken for a
+// test(...) call, on top of the identifier-boundary exclusion a plain `\b`
+// already gave. A comment or an unrelated string elsewhere in the file is
+// not a test name and must not count (R1/KTD1 say "test name", not "file").
 const JS_TEST_CALL_PATTERN =
-  /\b(?:it|test|describe)(?:\.\w+)*\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
+  /(?<![.\w])(?:it|test)((?:\.\w+)*)\s*\(\s*(`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")/g;
+
+// A skipped or pending test (.skip, .todo) proves nothing: it does not run.
+const SKIPPED_MODIFIER_PATTERN = /\.(skip|todo)\b/;
 
 function extractJsTestNameTags(content) {
   const tags = new Set();
-  for (const match of content.matchAll(JS_TEST_CALL_PATTERN)) {
-    const name = match[1].slice(1, -1);
-    const tagMatch = TAG_IN_NAME_PATTERN.exec(name);
-    if (tagMatch) tags.add(tagMatch[1]);
+  for (const match of stripJsComments(content).matchAll(JS_TEST_CALL_PATTERN)) {
+    if (SKIPPED_MODIFIER_PATTERN.test(match[1])) continue;
+    const name = match[2].slice(1, -1);
+    for (const tag of findAllTags(name)) tags.add(tag);
   }
   return tags;
+}
+
+// Strip Python `#` comments before scanning, mirroring stripJsComments: a
+// commented-out def/docstring line must not count, and content inside a
+// string (including a triple-quoted docstring, where "#" may appear as
+// ordinary text) is preserved.
+function stripPyComments(content) {
+  let result = "";
+  let state = "code"; // code | single | double | triple_single | triple_double
+  for (let i = 0; i < content.length; ) {
+    const three = content.slice(i, i + 3);
+    if (state === "triple_single" || state === "triple_double") {
+      const marker = state === "triple_single" ? "'''" : '"""';
+      if (three === marker) {
+        result += marker;
+        state = "code";
+        i += 3;
+        continue;
+      }
+      result += content[i];
+      i++;
+      continue;
+    }
+    if (state === "single" || state === "double") {
+      const quote = state === "single" ? "'" : '"';
+      const ch = content[i];
+      if (ch === "\\") {
+        result += ch + (content[i + 1] ?? "");
+        i += 2;
+        continue;
+      }
+      result += ch;
+      if (ch === quote) state = "code";
+      i++;
+      continue;
+    }
+    if (three === "'''" || three === '"""') {
+      state = three === "'''" ? "triple_single" : "triple_double";
+      result += three;
+      i += 3;
+      continue;
+    }
+    const ch = content[i];
+    if (ch === "'" || ch === '"') {
+      state = ch === "'" ? "single" : "double";
+      result += ch;
+      i++;
+      continue;
+    }
+    if (ch === "#") {
+      while (i < content.length && content[i] !== "\n") i++;
+      continue;
+    }
+    result += ch;
+    i++;
+  }
+  return result;
 }
 
 // Python: a test's "name" is its function name, or the first line of its
@@ -171,25 +306,26 @@ function extractJsTestNameTags(content) {
 // existing tagged Python test in this repo yet to be compatible with, so
 // this establishes the convention: the id in the name is written without
 // parens/hyphen as "_<plan>_AE<n>" (a valid identifier suffix), or the
-// docstring's first line uses the normal "(<plan>-AE<n>)" form.
-const PY_DEF_PATTERN = /^[ \t]*def\s+(test_[A-Za-z0-9_]*)\s*\(/gm;
+// docstring's first line uses the normal "(<plan>-AE<n>)" form. `async def`
+// tests (pytest-asyncio etc.) are recognized the same way as plain `def`.
+const PY_DEF_PATTERN = /^[ \t]*(?:async\s+)?def\s+(test_[A-Za-z0-9_]*)\s*\(/gm;
 const PY_NAME_TAG_PATTERN = /_(\d+)_AE(\d+)\b/;
 
 function extractPythonTestNameTags(content) {
+  const stripped = stripPyComments(content);
   const tags = new Set();
-  const lines = content.split("\n");
-  for (const match of content.matchAll(PY_DEF_PATTERN)) {
+  const lines = stripped.split("\n");
+  for (const match of stripped.matchAll(PY_DEF_PATTERN)) {
     const nameMatch = PY_NAME_TAG_PATTERN.exec(match[1]);
     if (nameMatch) tags.add(`${nameMatch[1]}-AE${nameMatch[2]}`);
 
-    const defLineNumber = content.slice(0, match.index).split("\n").length - 1;
+    const defLineNumber = stripped.slice(0, match.index).split("\n").length - 1;
     for (let i = defLineNumber + 1; i < lines.length; i++) {
       const trimmed = lines[i].trim();
       if (trimmed === "") continue;
       const docMatch = trimmed.match(/^(?:"""|''')(.*)$/);
       if (docMatch) {
-        const tagMatch = TAG_IN_NAME_PATTERN.exec(docMatch[1]);
-        if (tagMatch) tags.add(tagMatch[1]);
+        for (const tag of findAllTags(docMatch[1])) tags.add(tag);
       }
       break;
     }

@@ -153,6 +153,15 @@ and already removed end to end in #54.
   whether hidden-length stats need their own access point (e.g. still reachable once a length
   reopens) or a cleanup policy.
 
+## AC coverage check: source scanning is a stopgap
+`scripts/check-ac-coverage.mjs` finds AE tags by regex-scanning test file source (JS/TS call
+arguments, Python `def`/docstrings) rather than asking the test runner what tests actually exist
+and ran. This is a parser, not a real one, so it can still be fooled by shapes it doesn't model
+(e.g. a tag built from string concatenation, a dynamically generated test name, a test file the
+runner excludes by config). Move the check to runner-collected test names instead (vitest's/
+pytest's own test list, e.g. `vitest list --json` / `pytest --collect-only -q`) so it checks what
+actually runs, not what the source merely looks like.
+
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
 deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
