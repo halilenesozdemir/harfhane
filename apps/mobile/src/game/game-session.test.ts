@@ -4,7 +4,14 @@ import { createSession, reduceSession, submitBlocker } from './game-session';
 import type { GameSession, SessionAction } from './game-session';
 
 function readySession(): GameSession {
-  return reduceSession(createSession(), { type: 'loaded', solution: 'KALEM', wordId: 7, game: createInitialState(), storageKey: 'key-5' });
+  return reduceSession(createSession(), {
+    type: 'loaded',
+    solution: 'KALEM',
+    wordId: 7,
+    game: createInitialState(),
+    storageKey: 'key-5',
+    dailyDate: '2026-10-05',
+  });
 }
 
 function apply(session: GameSession, actions: readonly SessionAction[]): GameSession {
@@ -67,6 +74,10 @@ describe('pending submissions', () => {
 
   it('should keep the storage key chosen when the word loaded', () => {
     expect(readySession().storageKey).toBe('key-5');
+  });
+
+  it('should keep the date the word loaded on, separate from when the game finishes', () => {
+    expect(readySession().dailyDate).toBe('2026-10-05');
   });
 });
 

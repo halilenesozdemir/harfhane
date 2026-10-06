@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from '../helpers/db';
 import {
@@ -43,5 +43,46 @@ describe('checkScheduleHealthAndAlert', () => {
     await expect(
       checkScheduleHealthAndAlert(env.DB, 'fake-resend-key', undefined)
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('getScheduleHealth Turkey day boundary', () => {
+  async function seedScheduledDay(): Promise<void> {
+    await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES ('BOYUT', 'ölçü', 'boyutu ölç', 'isim', 5, 'test', 'test', 'approved', 1, 1)`
+    ).run();
+    const word = await env.DB
+      .prepare("SELECT id FROM words WHERE word = 'BOYUT'")
+      .first<{ id: number }>();
+    await env.DB.prepare(
+      'INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)'
+    ).bind(word!.id, '2026-06-15').run();
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('measures runway in game days just before the Turkey midnight crossover', async () => {
+    await seedScheduledDay();
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T20:59:00Z'));
+
+    const health = await getScheduleHealth(env.DB);
+    const fiveLetterEntry = health.find((entry) => entry.length === 5);
+    expect(fiveLetterEntry?.runwayDays).toBe(0);
+  });
+
+  it('counts the newly scheduled day in the runway right at the 21:00 UTC crossover', async () => {
+    await seedScheduledDay();
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T21:00:00Z'));
+
+    const health = await getScheduleHealth(env.DB);
+    const fiveLetterEntry = health.find((entry) => entry.length === 5);
+    expect(fiveLetterEntry?.runwayDays).toBe(1);
   });
 });

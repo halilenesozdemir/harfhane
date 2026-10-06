@@ -1,7 +1,8 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import type { ApiClient } from '../lib/api';
 import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
 import { GameScreen } from './GameScreen';
+import { loadDailyStats } from '../stats/stats';
 
 const today = () => '2026-10-05';
 
@@ -35,6 +36,19 @@ describe('GameScreen', () => {
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'Gönder']);
     expect(await screen.findByText('Yeni kelime')).toBeTruthy();
+  });
+
+  it('should record the daily result in stats when the game finishes', async () => {
+    const store = createMemoryStore();
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'Gönder']);
+    await screen.findByText('Muhteşem!');
+    await waitFor(async () => {
+      const stats = await loadDailyStats(store, 5);
+      expect(stats.gamesPlayed).toBe(1);
+      expect(stats.gamesWon).toBe(1);
+    });
   });
 
   it('should go back when the back button is pressed', async () => {

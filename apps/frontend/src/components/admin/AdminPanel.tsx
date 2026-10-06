@@ -1,25 +1,21 @@
 import { useState } from 'react';
-import { LayoutDashboard, LayoutList, CalendarDays, Upload, LogOut, BarChart2, Users } from 'lucide-react';
+import { LayoutDashboard, LayoutList, CalendarDays, Upload, LogOut } from 'lucide-react';
 import Dashboard from './Dashboard';
 import WordsManager from './WordsManager';
 import DailyScheduler from './DailyScheduler';
 import ImportWords from './ImportWords';
-import WordStats from './WordStats';
-import UserList from './UserList';
 
 interface AdminPanelProps {
   secret: string;
   onLogout: () => void;
 }
 
-type Tab = 'overview' | 'words' | 'daily' | 'stats' | 'users' | 'import';
+type Tab = 'overview' | 'words' | 'daily' | 'import';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Genel Bakış', icon: <LayoutDashboard size={16} /> },
   { id: 'words', label: 'Kelimeler', icon: <LayoutList size={16} /> },
   { id: 'daily', label: 'Günlük Program', icon: <CalendarDays size={16} /> },
-  { id: 'stats', label: 'İstatistikler', icon: <BarChart2 size={16} /> },
-  { id: 'users', label: 'Kullanıcılar', icon: <Users size={16} /> },
   { id: 'import', label: 'İçe Aktar', icon: <Upload size={16} /> },
 ];
 
@@ -63,8 +59,6 @@ export default function AdminPanel({ secret, onLogout }: AdminPanelProps): React
         {tab === 'overview' && <Dashboard secret={secret} />}
         {tab === 'words' && <WordsManager secret={secret} />}
         {tab === 'daily' && <DailyScheduler secret={secret} />}
-        {tab === 'stats' && <WordStats secret={secret} />}
-        {tab === 'users' && <UserList secret={secret} />}
         {tab === 'import' && <ImportWords secret={secret} />}
       </div>
     </div>
