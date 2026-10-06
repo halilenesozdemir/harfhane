@@ -11,12 +11,13 @@
 #   2. Applies both migrations to a throwaway local D1 database (fresh persist dir each run).
 #   3. Imports data/words/seed/valid_words.sql and data/words/seed/daily_words_5.sql
 #      (idempotent: INSERT OR IGNORE).
-#   4. Runs the admin auto-fill for 90 days as a SQL equivalent of
-#      `adminAutoFillSchedule` (apps/backend/src/repositories/admin-repository.ts): same
-#      date range (today..today+90, Turkey day), same "approved, family-safe, active,
-#      daily-pool, length 5" eligibility, picked in random order with no repeats in the
-#      fill. This is a SQL stand-in, not the real TS code path (PR #63's cooldown/no-cycle
-#      logic is not exercised here — see "Not verified" in the PR body).
+#   4. Regenerates the 90-day schedule with `export_seed_sql.render_schedule_sql`, using
+#      tomorrow's real Turkey date as the start date (the committed
+#      data/words/seed/schedule_5.sql is never touched — this writes to a scratch copy),
+#      then imports that file exactly the way the runbook applies it for real:
+#      `wrangler d1 execute --file`, never by calling the live admin auto-fill endpoint
+#      (which would run against whatever database the deployed Worker is bound to —
+#      the legacy harfhane-db, before the binding-switch PR merges).
 #   5. Prints per-length counts and asserts the Phase 2 acceptance checks below. Exits
 #      non-zero on the first failed assertion.
 set -euo pipefail
@@ -28,7 +29,9 @@ SEED_DIR="$REPO_ROOT/data/words/seed"
 WORD_POOLS_REF="${WORD_POOLS_REF:-origin/feat/word-pools}"
 TARGET_LENGTH=5
 TOPUP_DAYS=90
-DB_NAME="harfhane" # matches the DB_NEXT binding's database_name in apps/backend/wrangler.toml
+# Matches the `harfhane` database_name declared in apps/backend/wrangler.toml — the
+# post-switch DB binding (pre-switch, the same database_name was bound as DB_NEXT).
+DB_NAME="harfhane"
 
 SCRATCH_DIR="${REHEARSAL_SCRATCH_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/harfhane-cutover-rehearsal.XXXXXX")}"
 PERSIST_DIR="$SCRATCH_DIR/d1-local"
@@ -100,32 +103,19 @@ TOMORROW_TURKEY="$(python3 -c "
 import datetime
 print((datetime.date.fromisoformat('$TODAY_TURKEY') + datetime.timedelta(days=1)).isoformat())
 ")"
-log "Turkey today: $TODAY_TURKEY, auto-filling $TARGET_LENGTH-letter days through today+$TOPUP_DAYS"
+log "regenerating a $TOPUP_DAYS-day schedule starting tomorrow ($TOMORROW_TURKEY) into the scratch dir"
+SCHEDULE_SCRATCH_SQL="$SCRATCH_DIR/schedule_5.sql"
+python3 -c "
+import sys
+sys.path.insert(0, '$REPO_ROOT/scripts/words')
+import export_seed_sql as seed
 
-run_d1_command "
-WITH RECURSIVE fill_dates(n, d) AS (
-  SELECT 0, date('$TODAY_TURKEY')
-  UNION ALL
-  SELECT n + 1, date(d, '+1 day') FROM fill_dates WHERE n < $TOPUP_DAYS
-),
-unscheduled_dates AS (
-  SELECT d FROM fill_dates
-  WHERE d NOT IN (SELECT date FROM daily_words WHERE length = $TARGET_LENGTH)
-),
-eligible_words AS (
-  SELECT id, ROW_NUMBER() OVER (ORDER BY RANDOM()) - 1 AS rn
-  FROM words
-  WHERE is_active = 1 AND status = 'approved' AND family_safe = 1
-    AND pool = 'daily' AND length = $TARGET_LENGTH
-    AND id NOT IN (SELECT word_id FROM daily_words WHERE length = $TARGET_LENGTH)
-),
-ranked_dates AS (
-  SELECT d, ROW_NUMBER() OVER (ORDER BY d) - 1 AS rn FROM unscheduled_dates
-)
-INSERT OR IGNORE INTO daily_words (word_id, date, length)
-SELECT eligible_words.id, ranked_dates.d, $TARGET_LENGTH
-FROM ranked_dates JOIN eligible_words ON eligible_words.rn = ranked_dates.rn;
+content = seed.render_schedule_sql(start_date='$TOMORROW_TURKEY', days=$TOPUP_DAYS)
+with open('$SCHEDULE_SCRATCH_SQL', 'w', encoding='utf-8') as handle:
+    handle.write(content)
 "
+log "importing the regenerated schedule (committed data/words/seed/schedule_5.sql is untouched)"
+run_d1_file "$SCHEDULE_SCRATCH_SQL"
 
 json_field() {
   # Extracts one field from `[{"results":[{"<key>":...}], ...}]`.

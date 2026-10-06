@@ -5,18 +5,29 @@ Writes:
 - `data/words/seed/daily_words_5.sql` — the 346 owner-reviewed 5-letter answer words
   from `data/words/review/review-5.csv`, as approved, family-safe, active, daily-pool
   `words` rows.
+- `data/words/seed/schedule_5.sql`    — 90 daily_words rows, one per date from
+  `SCHEDULE_START_DATE`, each naming its word (joined by word text, since no row ids
+  exist until `daily_words_5.sql` has been imported). Applied directly with
+  `wrangler d1 execute --remote --file`, never by calling the live admin auto-fill
+  endpoint — that endpoint runs against whatever database the deployed Worker is
+  currently bound to, which before the cutover is still the legacy `harfhane-db`.
+  `SCHEDULE_START_DATE` is a fixed date, not "tomorrow" computed at import time, so this
+  file is deterministic and reviewable; regenerate it with `--start-date` right before
+  the real cutover run (`docs/guides/db-cutover-runbook.md`).
 
-Both files use `INSERT OR IGNORE`, so re-running an already-applied file is a no-op, and
-chunk statements to stay well under D1's per-statement limit (100 KiB; see
+All three files use `INSERT OR IGNORE`, so re-running an already-applied file is a no-op,
+and chunk statements to stay well under D1's per-statement limit (100 KiB; see
 `docs/guides/db-cutover-runbook.md` for the source). Run directly to (re)write the files:
 
-    python3 scripts/words/export_seed_sql.py
+    python3 scripts/words/export_seed_sql.py [--start-date YYYY-MM-DD]
 
 Turkish case conversion goes through `turkish.py` only; `str.upper()`/`str.lower()` on
 Turkish text mishandle `i`/`İ` and `ı`/`I` (see `AGENTS.md`).
 """
 
+import argparse
 import csv
+import datetime
 import os
 
 from turkish import tr_upper
@@ -29,10 +40,19 @@ REVIEW_DIR = os.path.join(WORDS_DIR, "review")
 
 VALID_WORDS_SQL_PATH = os.path.join(SEED_DIR, "valid_words.sql")
 DAILY_WORDS_5_SQL_PATH = os.path.join(SEED_DIR, "daily_words_5.sql")
+SCHEDULE_5_SQL_PATH = os.path.join(SEED_DIR, "schedule_5.sql")
 REVIEW_5_CSV_PATH = os.path.join(REVIEW_DIR, "review-5.csv")
 
 VALID_LENGTHS = (4, 5, 6)
 REVIEW_LENGTH = 5
+SCHEDULE_TOPUP_DAYS = 90
+
+# Committed, fixed date — NOT "tomorrow" computed at generation time, so the file is
+# deterministic and its diff is reviewable. Regenerate with `--start-date <tomorrow's
+# Turkey date>` immediately before running docs/guides/db-cutover-runbook.md step 4,
+# since a schedule generated for a past date would collide with nothing and import
+# with 0 effect (INSERT OR IGNORE against dates nobody is asking for).
+SCHEDULE_START_DATE = "2026-10-07"
 
 # https://developers.cloudflare.com/d1/platform/limits/ — "Maximum SQL statement
 # length": 100,000 bytes. Chunk well under that so one row's worth of slack never
@@ -120,6 +140,41 @@ def chunk_daily_words_statements(rows: list, chunk_size: int = CHUNK_SIZE) -> li
     return statements
 
 
+def build_daily_schedule(words: list, start_date: str, days: int = SCHEDULE_TOPUP_DAYS) -> list:
+    """Assign the first `days` words (in their given, deterministic order) to `days`
+    consecutive dates starting at `start_date`. Each word is used at most once, so the
+    result never repeats a word — raises if fewer than `days` distinct words exist."""
+    if len(words) < days:
+        raise ValueError(f"need at least {days} words to schedule {days} days, got {len(words)}")
+    cursor = datetime.date.fromisoformat(start_date)
+    return [
+        (words[i], (cursor + datetime.timedelta(days=i)).isoformat())
+        for i in range(days)
+    ]
+
+
+def chunk_schedule_statements(pairs: list, length: int = REVIEW_LENGTH, chunk_size: int = CHUNK_SIZE) -> list:
+    """Each statement joins a (word, date) VALUES table to `words` by word text — no row
+    id is assumed to exist yet when this file is written, only once `daily_words_5.sql`
+    has actually been imported. The pool/approval/length filter must live in WHERE, not
+    ANDed onto the JOIN's ON clause: confirmed by hand that D1-local silently inserts 0
+    rows for the equivalent INSERT...SELECT when those conditions sit in ON, even though
+    the same conditions in a plain SELECT (or in WHERE here) return the matching rows."""
+    statements = []
+    for start in range(0, len(pairs), chunk_size):
+        chunk = pairs[start : start + chunk_size]
+        values = ",\n".join(f"({sql_quote(word)}, {sql_quote(date)})" for word, date in chunk)
+        statements.append(
+            "INSERT OR IGNORE INTO daily_words (word_id, date, length)\n"
+            "SELECT w.id, v.column2, {length}\n"
+            "FROM (VALUES\n{values}\n) AS v\n"
+            "JOIN words w ON w.word = v.column1\n"
+            "WHERE w.pool = 'daily' AND w.status = 'approved' AND w.family_safe = 1"
+            " AND w.is_active = 1 AND w.length = {length};".format(length=length, values=values)
+        )
+    return statements
+
+
 def render_seed_content(header: str, statements: list) -> str:
     return header + "\n\n" + "\n\n".join(statements) + "\n"
 
@@ -149,6 +204,28 @@ def _daily_words_header(row_count: int) -> str:
     )
 
 
+def _schedule_header(start_date: str, days: int) -> str:
+    return (
+        "-- Generated by scripts/words/export_seed_sql.py --start-date {start_date}.\n"
+        "-- Do not hand-edit; regenerate instead.\n"
+        f"-- {days} daily_words rows, one per date from {{start_date}}, for the 5-letter\n"
+        "-- schedule (Plan 001 U3/U4, Plan 006 U6). Apply with `wrangler d1 execute\n"
+        "-- harfhane --remote --file` directly — never by calling the live admin\n"
+        "-- auto-fill endpoint, which runs against whatever database the deployed Worker\n"
+        "-- is bound to (still harfhane-db before the binding-switch PR merges). Each\n"
+        "-- statement joins by word text (no row id exists until daily_words_5.sql has\n"
+        "-- been imported) and only matches an approved, family-safe, active, daily-pool\n"
+        "-- 5-letter row, so it is safe to re-run: INSERT OR IGNORE."
+    ).format(start_date=start_date)
+
+
+def render_schedule_sql(start_date: str = SCHEDULE_START_DATE, days: int = SCHEDULE_TOPUP_DAYS) -> str:
+    review_rows = read_daily_review_rows(REVIEW_5_CSV_PATH)
+    words = [word for word, _length, _category in review_rows]
+    pairs = build_daily_schedule(words, start_date, days)
+    return render_seed_content(_schedule_header(start_date, days), chunk_schedule_statements(pairs))
+
+
 def render_valid_words_sql() -> str:
     rows = []
     for length in VALID_LENGTHS:
@@ -161,7 +238,19 @@ def render_daily_words_sql() -> str:
     return render_seed_content(_daily_words_header(len(rows)), chunk_daily_words_statements(rows))
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--start-date",
+        default=SCHEDULE_START_DATE,
+        help="first date of schedule_5.sql (YYYY-MM-DD); default is the committed constant",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+
     rows = []
     for length in VALID_LENGTHS:
         rows.extend(load_valid_words(length))
@@ -171,8 +260,18 @@ def main() -> None:
     write_seed_file(
         DAILY_WORDS_5_SQL_PATH, _daily_words_header(len(daily_rows)), chunk_daily_words_statements(daily_rows)
     )
+
+    words = [word for word, _length, _category in daily_rows]
+    pairs = build_daily_schedule(words, args.start_date, SCHEDULE_TOPUP_DAYS)
+    write_seed_file(
+        SCHEDULE_5_SQL_PATH,
+        _schedule_header(args.start_date, SCHEDULE_TOPUP_DAYS),
+        chunk_schedule_statements(pairs),
+    )
+
     print(f"wrote {VALID_WORDS_SQL_PATH}")
     print(f"wrote {DAILY_WORDS_5_SQL_PATH}")
+    print(f"wrote {SCHEDULE_5_SQL_PATH} (start date {args.start_date})")
 
 
 if __name__ == "__main__":
