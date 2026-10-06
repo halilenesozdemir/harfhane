@@ -2,6 +2,31 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
+## knip findings recorded instead of fixed (2026-10-06)
+From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
+reason; details here.
+- `apps/backend/src/errors/api-error.ts`: `INTERNAL`, `UNAUTHORIZED` and `FORBIDDEN` are part of the
+  `ApiError` vocabulary but no route throws them yet — `apps/backend/src/middleware/admin-auth.ts`
+  hand-rolls its own 401 JSON instead of calling `UNAUTHORIZED()`. Either wire routes/middleware to
+  use the full vocabulary or delete the unused members.
+- `apps/frontend/src/utils/registerSW.ts`: `hasPendingUpdate`/`applyPendingUpdate` and the
+  `sw-update-available` `CustomEvent` they support have no listener anywhere in the frontend. The
+  app silently waits for the hourly background `registration.update()` instead of ever prompting
+  the user to reload for a new service worker version. Decide whether to build the update-prompt UI
+  or remove this half-built path.
+- `apps/mobile/app.json` implies `expo-updates` (OTA updates default-enabled) and `expo-system-ui`
+  (`userInterfaceStyle: "automatic"`) but neither is an installed dependency. Decide whether the
+  mobile app wants OTA updates (Faz 2/3) and install `expo-updates` if so; `expo-system-ui` should
+  likely just be installed to match the existing `userInterfaceStyle` config.
+- `apps/backend/src/routes/words.ts:51` (`GET /words/challenge/:wordId`) has no frontend caller now
+  that the dead `useChallengeWord` hook is gone (challenge mode was removed per the "Web cleanup
+  before the shared engine" backlog item below, but this one endpoint was missed). Decide whether to
+  delete the route too.
+- `scripts/scrape-words.ts` (missing `node-html-parser` dependency) and
+  `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
+  already covered by the "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc`
+  ignores them rather than reinstalling dependencies for scripts pending a retire-or-repoint decision.
+
 ## Anonymous player analytics (2026-10-06)
 Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
 end for the MVP (owner decision 2026-10-05: no accounts). Every player is now anonymous and `game_results` is no
