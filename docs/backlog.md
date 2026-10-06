@@ -9,6 +9,14 @@ Plan 011 assigns `Tile.tsx` and `Key.tsx` to the B/C unit owners, so this unit (
 them. Whoever owns the next Tile/Key change should set `fontFamily: FONT_FAMILY_DISPLAY` on the
 letter/label text styles there too, matching the web tokens' `font-display`.
 
+## og-image.svg still uses the old green brand colour (Plan 011 U4, R5 follow-up)
+`apps/frontend/public/og-image.svg` (and its built `apps/frontend/dist/og-image.svg`/`.png`) hardcode
+`#538d4e` (the pre-rebrand green) in multiple tile/text/line fills, instead of the current brand
+token (`rgb(194 65 12)` light / `rgb(232 98 42)` dark, see `packages/ui-tokens/tokens.json`). This
+unit fixed the web logo button (`Header.tsx`) and left the OG image alone, since redrawing a static
+asset is out of scope here (R5 said "don't redraw icons"). Whoever owns social-preview assets next
+should regenerate `og-image.svg`/`.png` with the brand token's colour.
+
 ## knip findings recorded instead of fixed (2026-10-06)
 From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
 reason; details here.
