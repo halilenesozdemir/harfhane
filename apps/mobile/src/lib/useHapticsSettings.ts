@@ -1,30 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { deviceStore } from '../game/device-store';
 import type { KeyValueStore } from '../game/game-storage';
 
 export const HAPTICS_ENABLED_KEY = 'harfhane:haptics';
 const DEFAULT_HAPTICS_ENABLED = true;
-
-const NOOP_STORE: KeyValueStore = {
-  getItem: async () => null,
-  setItem: async () => undefined,
-};
-
-/**
- * `deviceStore` wraps the native AsyncStorage module, which throws merely from being
- * imported in an environment that never linked it (e.g. a render test for a screen that
- * doesn't inject a store). Resolving it lazily behind a try/catch, once at module load,
- * lets every caller here import this hook safely regardless of that environment.
- */
-function resolveDefaultStore(): KeyValueStore {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return (require('../game/device-store') as { deviceStore: KeyValueStore }).deviceStore;
-  } catch {
-    return NOOP_STORE;
-  }
-}
-
-const DEFAULT_STORE = resolveDefaultStore();
 
 export function parseHapticsEnabled(raw: string | null): boolean {
   if (raw === null) return DEFAULT_HAPTICS_ENABLED;
@@ -41,16 +20,18 @@ export interface HapticsSettings {
 }
 
 /**
- * Reads and persists the "Titreşim" (haptics) preference. Defaults to on while the stored
- * value loads, and falls back to `deviceStore` so callers need no new prop wiring.
+ * Reads and persists the "Titreşim" (haptics) preference, falling back to `deviceStore` so
+ * callers need no new prop wiring. Reports `isEnabled: false` until the stored value has
+ * loaded (default on), so a game loaded with haptics off can never buzz once before that
+ * arrives.
  */
-export function useHapticsSettings(store: KeyValueStore = DEFAULT_STORE): HapticsSettings {
-  const [isEnabled, setIsEnabled] = useState(DEFAULT_HAPTICS_ENABLED);
+export function useHapticsSettings(store: KeyValueStore = deviceStore): HapticsSettings {
+  const [state, setState] = useState({ isEnabled: false, isLoaded: false });
 
   useEffect(() => {
     let isCurrent = true;
     void store.getItem(HAPTICS_ENABLED_KEY).then((raw) => {
-      if (isCurrent) setIsEnabled(parseHapticsEnabled(raw));
+      if (isCurrent) setState({ isEnabled: parseHapticsEnabled(raw), isLoaded: true });
     });
     return () => {
       isCurrent = false;
@@ -59,11 +40,11 @@ export function useHapticsSettings(store: KeyValueStore = DEFAULT_STORE): Haptic
 
   const setEnabled = useCallback(
     (next: boolean) => {
-      setIsEnabled(next);
+      setState({ isEnabled: next, isLoaded: true });
       void store.setItem(HAPTICS_ENABLED_KEY, JSON.stringify(next));
     },
     [store],
   );
 
-  return { isEnabled, setEnabled };
+  return { isEnabled: state.isEnabled, setEnabled };
 }

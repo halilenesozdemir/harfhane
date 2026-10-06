@@ -2,11 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createMemoryStore } from '../test-utils/render-with-theme';
 import { HAPTICS_ENABLED_KEY, parseHapticsEnabled, useHapticsSettings } from './useHapticsSettings';
 
-// Every test passes its own memory store, but the hook module still imports the real
-// deviceStore for its default parameter, so it needs a mock to avoid touching native AsyncStorage.
-jest.mock('../game/device-store', () => ({
-  deviceStore: { getItem: () => Promise.resolve(null), setItem: () => Promise.resolve() },
-}));
+// Every test below passes its own memory store, but the hook module still statically
+// imports the real deviceStore for its default parameter. device-store.ts itself now
+// falls back to a no-op store when the native module isn't linked, so no mock is needed
+// here purely to avoid touching native AsyncStorage (see device-store.ts).
 
 describe('parseHapticsEnabled', () => {
   it('should default to on when nothing is stored', () => {
@@ -23,10 +22,25 @@ describe('parseHapticsEnabled', () => {
 });
 
 describe('useHapticsSettings', () => {
-  it('should default to enabled before the stored value loads', async () => {
+  it('should treat haptics as off before the stored value loads, even though the default is on', async () => {
+    let resolveGetItem!: (value: string | null) => void;
+    const store = {
+      getItem: () => new Promise<string | null>((resolve) => { resolveGetItem = resolve; }),
+      setItem: async () => undefined,
+    };
+    const { result } = await renderHook(() => useHapticsSettings(store));
+    expect(result.current.isEnabled).toBe(false);
+    await act(async () => {
+      resolveGetItem(null);
+      await Promise.resolve();
+    });
+    expect(result.current.isEnabled).toBe(true);
+  });
+
+  it('should load a stored enabled preference once it resolves', async () => {
     const store = createMemoryStore();
     const { result } = await renderHook(() => useHapticsSettings(store));
-    expect(result.current.isEnabled).toBe(true);
+    await waitFor(() => expect(result.current.isEnabled).toBe(true));
   });
 
   it('should load a stored disabled preference', async () => {
