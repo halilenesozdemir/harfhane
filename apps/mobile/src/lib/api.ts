@@ -1,4 +1,10 @@
-import type { ApiError, DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@harfhane/shared';
+import type {
+  ApiError,
+  DailyWordResponse,
+  PlayableLengthsResponse,
+  RandomWordResponse,
+  ValidateWordResponse,
+} from '@harfhane/shared';
 
 const DEFAULT_API_URL = 'https://api.harfhane.app/api';
 const DEFAULT_WORD_LENGTH = 5;
@@ -25,6 +31,7 @@ export interface ApiClient {
   fetchDailyWord(length: number): Promise<DailyWordResponse>;
   fetchRandomWord(length: number): Promise<RandomWordResponse>;
   validateWord(word: string): Promise<ValidateWordResponse>;
+  fetchPlayableLengths(): Promise<PlayableLengthsResponse>;
 }
 
 function lengthQuery(length: number): string {
@@ -56,6 +63,7 @@ export function createApiClient({ baseUrl = DEFAULT_API_URL, fetchImpl = fetch }
     fetchDailyWord: (length) => request<DailyWordResponse>(`/words/daily${lengthQuery(length)}`),
     fetchRandomWord: (length) => request<RandomWordResponse>(`/words/random${lengthQuery(length)}`),
     validateWord: (word) => request<ValidateWordResponse>('/words/validate', { method: 'POST', body: JSON.stringify({ word }) }),
+    fetchPlayableLengths: () => request<PlayableLengthsResponse>('/words/lengths'),
   };
 }
 
