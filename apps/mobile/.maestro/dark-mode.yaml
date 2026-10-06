@@ -1,0 +1,15 @@
+appId: host.exp.exponent
+---
+# Settings screen's theme switch actually applies, not just doesn't crash: the "Koyu Tema"
+# segment becomes selected and the rest of the screen stays usable.
+- runFlow: subflows/open-fresh.yaml
+- tapOn: "Ayarlar"
+- extendedWaitUntil:
+    visible: "Yüksek kontrast"
+    timeout: 15000
+- tapOn: "Koyu Tema"
+- assertVisible:
+    text: "Koyu Tema"
+    selected: true
+- tapOn: "Kapat"
+- assertVisible: "Sınırsız Mod"

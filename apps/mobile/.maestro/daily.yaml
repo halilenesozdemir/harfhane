@@ -1,0 +1,71 @@
+appId: host.exp.exponent
+name: "Daily game to the end and Android back returns home (009-AE4)"
+---
+# 009-AE4: plays the daily game to the end (six valid guesses; a loss is an acceptable end state
+# since the live daily word is unknown to this flow) and checks that the Android back button
+# returns to the home screen afterwards.
+- runFlow: subflows/open-fresh.yaml
+- tapOn: "Günlük Oyun"
+- extendedWaitUntil:
+    visible:
+      id: "tile-0-0"
+    timeout: 15000
+- assertVisible: { id: "hint-button" }
+
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-P" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-0-0", text: "K, .*" }, timeout: 15000 }
+
+- tapOn: { id: "key-D" }
+- tapOn: { id: "key-E" }
+- tapOn: { id: "key-M" }
+- tapOn: { id: "key-E" }
+- tapOn: { id: "key-T" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-1-0", text: "D, .*" }, timeout: 15000 }
+
+- tapOn: { id: "key-S" }
+- tapOn: { id: "key-O" }
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-2-0", text: "S, .*" }, timeout: 15000 }
+
+- tapOn: { id: "key-T" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-B" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-3-0", text: "T, .*" }, timeout: 15000 }
+
+- tapOn: { id: "key-M" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-S" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-L" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-4-0", text: "M, .*" }, timeout: 15000 }
+
+- tapOn: { id: "key-B" }
+- tapOn: { id: "key-A" }
+- tapOn: { id: "key-L" }
+- tapOn: { id: "key-I" }
+- tapOn: { id: "key-K" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-5-0", text: "B, .*" }, timeout: 15000 }
+
+# The hint control only renders while mode is daily and the game is still playing, so its
+# disappearance plus the finished-game message together prove the game reached an end state
+# (win or loss) without depending on the live daily word.
+- extendedWaitUntil: { notVisible: { id: "hint-button" }, timeout: 15000 }
+- assertVisible: "(Kelime: .*|Muhteşem!|Harika!|Güzel!|İyi!|Fena değil!|Kıl payı!)"
+
+- back
+- assertVisible: "Sınırsız Mod"
+- assertNotVisible: { id: "key-ENTER" }
