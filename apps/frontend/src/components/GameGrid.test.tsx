@@ -18,7 +18,7 @@ function renderGrid(overrides: Partial<GameGridProps> = {}) {
 }
 
 describe('GameGrid', () => {
-  it('should mark the hint tile on the board and ignore a repeated reveal when the free allowance is used (008-AE7)', () => {
+  it('should mark the hint tile on the board with its revealed letter (008-AE7)', () => {
     renderGrid({ hint: { position: 2, letter: 'L' } });
 
     const tiles = screen.getAllByTestId('tile');
@@ -27,8 +27,6 @@ describe('GameGrid', () => {
     expect(hintTile).toHaveAttribute('data-hint', 'true');
     expect(hintTile).toHaveTextContent('L');
 
-    // A second render with the same hint (simulating a repeated reveal that is a no-op upstream)
-    // still shows exactly one hinted tile, proving the board does not duplicate or move the hint.
     const hintedTiles = tiles.filter((tile) => tile.getAttribute('data-hint') === 'true');
     expect(hintedTiles).toHaveLength(1);
   });
