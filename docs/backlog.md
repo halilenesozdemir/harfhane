@@ -126,6 +126,11 @@ and already removed end to end in #54.
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
   player bundle (`App.tsx`); `/admin` lacks `noindex`.
+- **Sitemap still lists hidden lengths.** `apps/frontend/scripts/generate-sitemap.mjs`'s `STATIC_ROUTES`
+  hard-codes `/daily/4`, `/daily/5` and `/daily/6` regardless of `PLAYABLE_WORD_LENGTHS` (Plan 008 R1); with
+  only 5 playable, the sitemap still advertises `/daily/4`/`/daily/6` to crawlers even though the app
+  redirects them away. Generate the sitemap's daily routes from the backend's playable lengths (or drop the
+  non-playable ones) once this is worth a build-time fetch.
 
 ## Plan 008 U2/U3 follow-ups (playable lengths, 2026-10-06)
 - **Lengths refresh only on cold start.** Both `apps/frontend/src/hooks/usePlayableLengths.ts`

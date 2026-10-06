@@ -21,10 +21,16 @@ import type { GameMode, WordLength } from '../types';
 interface GamePageProps {
   mode: GameMode;
   wordLength: WordLength;
+  playableLengths?: readonly WordLength[];
   onGoHome: () => void;
 }
 
-export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps): React.JSX.Element {
+export default function GamePage({
+  mode,
+  wordLength,
+  playableLengths,
+  onGoHome,
+}: GamePageProps): React.JSX.Element {
   const {
     guesses, evaluations, currentGuess, gameStatus, keyboardStatus,
     solution, solutionEntry, gameNumber, stats, isRevealing,
@@ -75,7 +81,13 @@ export default function GamePage({ mode, wordLength, onGoHome }: GamePageProps):
   const modeLabel = isUnlimited ? 'Sınırsız' : 'Günlük';
 
   return (
-    <DesktopShell mode={mode} wordLength={wordLength} stats={stats} onGoHome={handleGoHome}>
+    <DesktopShell
+      mode={mode}
+      wordLength={wordLength}
+      playableLengths={playableLengths}
+      stats={stats}
+      onGoHome={handleGoHome}
+    >
       <div className="min-h-screen bg-bg-primary flex flex-col lg:min-h-0">
         <WinConfetti active={gameStatus === 'won' && !modals.showGameOver} />
         <Header

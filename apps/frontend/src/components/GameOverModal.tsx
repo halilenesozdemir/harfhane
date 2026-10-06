@@ -25,7 +25,6 @@ function GameOverModal({
   onClose,
   gameStatus,
   solution,
-  solutionEntry,
   guesses,
   evaluations,
   gameNumber,
@@ -106,34 +105,6 @@ function GameOverModal({
             </div>
           )}
         </div>
-
-        {solutionEntry && (
-          <div className="bg-bg-primary p-4 rounded-lg border border-border-color">
-            <div className="space-y-2">
-              <div>
-                <span className="text-sm text-text-secondary">Anlam:</span>
-                <p className="text-text-primary font-medium">
-                  {solutionEntry.meaning}
-                </p>
-              </div>
-              {solutionEntry.context && (
-                <div>
-                  <span className="text-sm text-text-secondary">
-                    Bağlam:
-                  </span>
-                  <p className="text-text-primary text-sm italic">
-                    "{solutionEntry.context}"
-                  </p>
-                </div>
-              )}
-              <div>
-                <span className="inline-block px-2 py-1 bg-tile-empty text-text-primary text-xs rounded">
-                  {solutionEntry.category}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="grid grid-cols-4 gap-2 py-4 border-t border-border-color">
           <StatBox value={stats.gamesPlayed} label="Oyun" />
