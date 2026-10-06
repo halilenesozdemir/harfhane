@@ -68,4 +68,59 @@ describe('findScheduleRunway', () => {
     const entry = result.find((r) => r.length === 5);
     expect(entry?.unscheduledStock).toBe(0);
   });
+
+  it('should not raise unscheduledStock when an approved word belongs to the unlimited pool', async () => {
+    await env.DB
+      .prepare(
+        `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)
+         VALUES ('UNLIM', 'test anlamı', 'test bağlamı', 'isim', 5, 'test', 'test', 'approved', 1, 1, 'unlimited')`
+      )
+      .run();
+
+    const result = await findScheduleRunway(env.DB, TODAY);
+    const entry = result.find((r) => r.length === 5);
+    expect(entry?.unscheduledStock).toBe(0);
+  });
+});
+
+describe('findScheduleRunway restock runway (R4, AE5)', () => {
+  async function restockFor(length: number): Promise<number> {
+    const result = await findScheduleRunway(env.DB, TODAY);
+    return result.find((r) => r.length === length)!.restockRunwayDays;
+  }
+
+  it('should count a never-used word as restock-eligible', async () => {
+    const before = await restockFor(6);
+    await insertWord('NEVUSA', 6);
+    expect(await restockFor(6)).toBe(before + 1);
+  });
+
+  it('should not count a word used within the cooldown window, before or after today, as restock-eligible', async () => {
+    const recentWord = await insertWord('RESTAA', 6);
+    await scheduleDay(recentWord, '2025-01-01', 6);
+    const futureWord = await insertWord('RESTBA', 6);
+    await scheduleDay(futureWord, '2027-01-01', 6);
+    const baseline = await restockFor(6);
+
+    await insertWord('RESTCA', 6);
+    expect(await restockFor(6)).toBe(baseline + 1);
+  });
+
+  it('should count a word used more than the cooldown window ago as restock-eligible', async () => {
+    const before = await restockFor(6);
+    const oldWord = await insertWord('RESTDA', 6);
+    await scheduleDay(oldWord, '2020-01-01', 6);
+    expect(await restockFor(6)).toBe(before + 1);
+  });
+
+  it('should match AE5: 120 eligible 5-letter words give a restock runway of 120', async () => {
+    for (let i = 0; i < 120; i++) {
+      const word = String(1000 + i).padStart(5, '0').replace(/\d/g, (d) => 'ABCDEFGHIJ'[Number(d)]!);
+      await insertWord(word, 5);
+    }
+
+    const result = await findScheduleRunway(env.DB, TODAY);
+    const entry = result.find((r) => r.length === 5);
+    expect(entry?.restockRunwayDays).toBe(120);
+  });
 });

@@ -1,11 +1,12 @@
 import type { Env } from '../types/env';
-import { ACTIVE_WORD_LENGTHS, type ActiveWordLength } from '../constants/schedule';
+import { SCHEDULED_WORD_LENGTHS, type ScheduledWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
 
 export interface ScheduleHealthRow {
-  length: ActiveWordLength;
+  length: ScheduledWordLength;
   runwayDays: number;
   lastScheduledDate: string | null;
   unscheduledStock: number;
+  restockRunwayDays: number;
 }
 
 interface ScheduledDateRow {
@@ -36,10 +37,32 @@ async function fetchUnscheduledStock(db: Env['DB'], length: number): Promise<num
   const row = await db
     .prepare(
       `SELECT COUNT(*) as count FROM words
-       WHERE is_active = 1 AND status = 'approved' AND length = ?
+       WHERE is_active = 1 AND status = 'approved' AND pool = 'daily' AND length = ?
          AND id NOT IN (SELECT word_id FROM daily_words WHERE length = ?)`
     )
     .bind(length, length)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+function subtractDays(date: string, days: number): string {
+  const cursor = new Date(`${date}T00:00:00Z`);
+  cursor.setUTCDate(cursor.getUTCDate() - days);
+  return cursor.toISOString().slice(0, 10);
+}
+
+/** Approved, active, daily-pool words of this length that R3's cooldown still allows to be
+ * scheduled from `today` onward: never used, or last used more than the cooldown ago. */
+async function fetchRestockRunwayDays(db: Env['DB'], length: number, today: string): Promise<number> {
+  const threshold = subtractDays(today, ANSWER_REPEAT_COOLDOWN_DAYS);
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) as count FROM words
+       WHERE is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily'
+         AND source != 'user' AND length = ?
+         AND id NOT IN (SELECT word_id FROM daily_words WHERE length = ? AND date >= ?)`
+    )
+    .bind(length, length, threshold)
     .first<{ count: number }>();
   return row?.count ?? 0;
 }
@@ -62,12 +85,13 @@ export async function findScheduleRunway(
   const byLength = groupDatesByLength(scheduledRows);
 
   const results: ScheduleHealthRow[] = [];
-  for (const length of ACTIVE_WORD_LENGTHS) {
+  for (const length of SCHEDULED_WORD_LENGTHS) {
     const dates = byLength.get(length) ?? [];
     const runwayDays = countConsecutiveRunway(dates, today);
     const lastScheduledDate = dates.length > 0 ? dates[dates.length - 1]! : null;
     const unscheduledStock = await fetchUnscheduledStock(db, length);
-    results.push({ length, runwayDays, lastScheduledDate, unscheduledStock });
+    const restockRunwayDays = await fetchRestockRunwayDays(db, length, today);
+    results.push({ length, runwayDays, lastScheduledDate, unscheduledStock, restockRunwayDays });
   }
   return results;
 }

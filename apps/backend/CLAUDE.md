@@ -15,7 +15,7 @@ Hono on Cloudflare Workers with D1. Tests run in the Workers runtime via `@cloud
 
 - Schema changes go in a new numbered file in `db/migrations/` (`0002_<topic>.sql`, …). `0001_baseline.sql` is applied to `harfhane`; never edit an applied migration. Tests load the folder through `vitest.config.ts` and `tests/helpers/db.ts`.
 - The legacy `migrations/` folder belongs to the old `harfhane-db` and is history only; do not add to it or delete it (cutover in `docs/plans/2026-10-04-001-infra-clean-database-plan.md`).
-- Bindings in `wrangler.toml`: `DB` = `harfhane-db` (legacy, still serves production until cutover); `DB_NEXT` = `harfhane` (target schema, `migrations_dir = db/migrations`).
+- Bindings in `wrangler.toml`: `DB` = `harfhane` (`migrations_dir = db/migrations`), since the Plan 001 U4 cutover. The legacy `harfhane-db` is no longer bound; it stays until Plan 001 U6 retires it (owner-approved, irreversible).
 
 ## Gotchas
 
