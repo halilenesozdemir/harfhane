@@ -1,6 +1,12 @@
+import { useCallback } from 'react';
+import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { CornerDownLeft, Delete } from 'lucide-react-native';
 import type { TileStatus } from '@harfhane/shared';
+import { keyTap } from '../lib/haptics';
+import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { Key } from './Key';
+import type { KeyIconProps } from './Key';
 
 export interface KeyboardProps {
   readonly keyboardStatus: Readonly<Record<string, TileStatus>>;
@@ -11,25 +17,22 @@ export interface KeyboardProps {
 
 const ENTER_KEY = 'ENTER';
 const BACKSPACE_KEY = 'BACKSPACE';
-const BACKSPACE_LABEL = '⌫';
-const ENTER_LABEL = 'ENTER';
 const ENTER_ACCESSIBILITY_LABEL = 'Gönder';
 const BACKSPACE_ACCESSIBILITY_LABEL = 'Sil';
 const KEYBOARD_ROW_GAP = 6;
 const KEYBOARD_KEY_GAP = 4;
 const KEYBOARD_SIDE_PADDING = 4;
 
+const KEY_ICONS: Readonly<Record<string, ComponentType<KeyIconProps>>> = {
+  [ENTER_KEY]: CornerDownLeft,
+  [BACKSPACE_KEY]: Delete,
+};
+
 const KEYBOARD_ROWS: readonly (readonly string[])[] = [
   ['E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Ğ', 'Ü'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ş', 'İ'],
   [ENTER_KEY, 'Z', 'C', 'V', 'B', 'N', 'M', 'Ö', 'Ç', BACKSPACE_KEY],
 ];
-
-function getKeyLabel(value: string): string {
-  if (value === BACKSPACE_KEY) return BACKSPACE_LABEL;
-  if (value === ENTER_KEY) return ENTER_LABEL;
-  return value;
-}
 
 function getKeyAccessibilityLabel(value: string): string {
   if (value === ENTER_KEY) return ENTER_ACCESSIBILITY_LABEL;
@@ -38,11 +41,17 @@ function getKeyAccessibilityLabel(value: string): string {
 }
 
 export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: KeyboardProps) {
-  function handlePress(value: string): void {
-    if (value === ENTER_KEY) return onSubmit();
-    if (value === BACKSPACE_KEY) return onDelete();
-    onLetter(value);
-  }
+  const { isEnabled: isHapticsEnabled } = useHapticsSettings();
+
+  const handlePress = useCallback(
+    (value: string) => {
+      void keyTap(isHapticsEnabled);
+      if (value === ENTER_KEY) return onSubmit();
+      if (value === BACKSPACE_KEY) return onDelete();
+      onLetter(value);
+    },
+    [isHapticsEnabled, onDelete, onLetter, onSubmit],
+  );
 
   return (
     <View style={styles.keyboard}>
@@ -52,11 +61,12 @@ export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: Keybo
             <Key
               key={value}
               testID={`key-${value}`}
-              label={getKeyLabel(value)}
+              label={value}
               value={value}
               status={keyboardStatus[value] ?? null}
               accessibilityLabel={getKeyAccessibilityLabel(value)}
               isWide={value === ENTER_KEY || value === BACKSPACE_KEY}
+              icon={KEY_ICONS[value]}
               onPress={handlePress}
             />
           ))}
