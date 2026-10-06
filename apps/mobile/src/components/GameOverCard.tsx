@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { generateShareText, getTimeUntilMidnight } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
@@ -22,6 +22,7 @@ export interface GameOverCardProps {
   readonly dailyDate: string | null;
   readonly store: KeyValueStore;
   readonly today?: () => string;
+  readonly now?: () => Date;
   readonly onNewGame: () => void;
 }
 
@@ -54,8 +55,17 @@ function useDisplayDistribution(
   useEffect(() => {
     let isCurrent = true;
     const won = gameStatus === 'won';
+    // Reopening an already-finished daily game (Geri, then back in) remounts this card after
+    // useResultRecorder already saved the result once. Recording it again here would double-count
+    // the just-played guess count's bar, so a daily game whose stored lastPlayedDate already
+    // matches this one is shown as-is, not re-added. Unlimited has no persisted "reopen a
+    // finished game" path (a fresh mount always starts a brand-new word), so it always adds —
+    // there is nothing stored yet to double-count against.
     const load = mode === 'daily'
-      ? loadDailyStats(store, wordLength).then((stats) => recordDailyResult(stats, won, guessCount, dailyDate ?? today()).guessDistribution)
+      ? loadDailyStats(store, wordLength).then((stats) => {
+          const date = dailyDate ?? today();
+          return stats.lastPlayedDate === date ? stats.guessDistribution : recordDailyResult(stats, won, guessCount, date).guessDistribution;
+        })
       : loadUnlimitedStats(store, wordLength).then((stats) => recordUnlimitedResult(stats, won, guessCount).guessDistribution);
     load.then((value) => isCurrent && setDistribution(value));
     return () => {
@@ -121,20 +131,32 @@ function Distribution({ distribution, gameStatus, guessCount }: DistributionProp
   );
 }
 
-function useCountdown(isEnabled: boolean): string {
-  const [countdown, setCountdown] = useState(() => getTimeUntilMidnight());
+function useCountdown(isEnabled: boolean, now: () => Date): string {
+  const [countdown, setCountdown] = useState(() => getTimeUntilMidnight(now()));
   useEffect(() => {
     if (!isEnabled) return undefined;
-    const timer = setInterval(() => setCountdown(getTimeUntilMidnight()), COUNTDOWN_UPDATE_INTERVAL_MS);
+    const timer = setInterval(() => setCountdown(getTimeUntilMidnight(now())), COUNTDOWN_UPDATE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [isEnabled]);
+  }, [isEnabled, now]);
   return `${countdown.hours}:${countdown.minutes}:${countdown.seconds}`;
 }
 
-// A stable module-level reference: a fresh arrow function as the default parameter value would
-// be re-created on every render, forever changing the useDisplayDistribution effect's dependency.
+function useResultAnnouncement(title: string): void {
+  useEffect(() => {
+    // accessibilityLiveRegion (set on the title Text below) covers Android TalkBack; this also
+    // reaches iOS VoiceOver, which does not read React Native's liveRegion prop.
+    AccessibilityInfo.announceForAccessibility(title);
+  }, [title]);
+}
+
+// Stable module-level references: a fresh arrow function as a default parameter value would be
+// re-created on every render, forever changing an effect's dependency array.
 function defaultToday(): string {
   return new Date().toISOString().split('T')[0]!;
+}
+
+function defaultNow(): Date {
+  return new Date();
 }
 
 async function shareResult(shareText: string): Promise<void> {
@@ -156,6 +178,7 @@ export function GameOverCard({
   dailyDate,
   store,
   today = defaultToday,
+  now = defaultNow,
   onNewGame,
 }: GameOverCardProps) {
   const { colors } = useTheme();
@@ -163,7 +186,8 @@ export function GameOverCard({
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today);
-  const countdown = useCountdown(mode === 'daily');
+  const countdown = useCountdown(mode === 'daily', now);
+  useResultAnnouncement(title);
 
   const modeText = mode === 'unlimited' ? UNLIMITED_MODE_TEXT : `#${dailyGameNumber(dailyDate ?? today())}`;
   const shareText = generateShareText(
@@ -174,11 +198,19 @@ export function GameOverCard({
   );
 
   return (
-    <View testID="gameover-card" style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-      {gameStatus === 'lost' && (
-        <Text style={[styles.answer, { color: colors.correctText }]}>{`${ANSWER_LABEL}: ${solution}`}</Text>
-      )}
+    <ScrollView
+      testID="gameover-card"
+      style={[styles.cardScroll, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+      contentContainerStyle={styles.card}
+    >
+      <Text
+        accessibilityRole="header"
+        accessibilityLiveRegion="polite"
+        style={[styles.title, { color: colors.text }]}
+      >
+        {title}
+      </Text>
+      <Text style={[styles.answer, { color: colors.correctText }]}>{`${ANSWER_LABEL}: ${solution}`}</Text>
       {distribution !== null && <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />}
       <Pressable
         testID="gameover-share"
@@ -205,12 +237,17 @@ export function GameOverCard({
           <Text style={[styles.newWordLabel, { color: colors.presentFg }]}>{NEW_WORD_LABEL}</Text>
         </Pressable>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: RADIUS.lg, padding: SPACING.lg, gap: SPACING.md, alignItems: 'stretch' },
+  // A ScrollView (not a plain View): on a small screen (e.g. 360x640 dp) the card's own content
+  // can be taller than the space left under the grid, so it must scroll internally — bounded by
+  // flex: 1 from the parent box GameScreen.tsx gives this element — rather than push the share
+  // and "Yeni kelime" buttons off-screen.
+  cardScroll: { flex: 1, borderWidth: 1, borderRadius: RADIUS.lg },
+  card: { padding: SPACING.lg, gap: SPACING.md, alignItems: 'stretch' },
   title: { fontSize: FONT_SIZE.title, fontWeight: '800', textAlign: 'center' },
   answer: { fontSize: FONT_SIZE.bodyLarge, fontWeight: '700', textAlign: 'center' },
   distribution: { gap: SPACING.xs },

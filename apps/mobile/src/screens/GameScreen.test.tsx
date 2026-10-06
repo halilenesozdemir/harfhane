@@ -38,15 +38,23 @@ describe('GameScreen', () => {
     expect(await screen.findByText(expectedTitle)).toBeTruthy();
     expect(await screen.findByTestId('gameover-share')).toBeTruthy();
     expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+    expect(screen.queryByTestId('key-ENTER')).toBeNull();
   });
 
-  it('should offer a new word in the game-over card when an unlimited game is over', async () => {
-    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+  it('should offer a new word in the game-over card when an unlimited game is over, and fetch a fresh word when pressed', async () => {
+    const api = createApi();
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
     expect(await screen.findByTestId('gameover-card')).toBeTruthy();
     expect(screen.queryByTestId('gameover-countdown')).toBeNull();
-    fireEvent.press(await screen.findByTestId('gameover-new-word'));
+    expect(screen.queryByTestId('key-ENTER')).toBeNull();
+    expect(api.fetchRandomWord).toHaveBeenCalledTimes(1);
+
+    await act(async () => fireEvent.press(await screen.findByTestId('gameover-new-word')));
+    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
+    expect(screen.queryByTestId('gameover-card')).toBeNull();
+    expect(await screen.findByTestId('tile-0-0')).toBeTruthy();
   });
 
   it('should record the daily result in stats when the game finishes', async () => {
