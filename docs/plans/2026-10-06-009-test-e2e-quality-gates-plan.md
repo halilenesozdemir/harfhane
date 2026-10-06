@@ -29,8 +29,10 @@ and the test tooling below may be added as dev dependencies.
   restore after app restart, dark mode. They run locally and in EAS when that exists; not in CI.
 - R6. Core game logic in `packages/shared` (`normalizeWord`, `normalizeChar`, guess evaluation,
   share text, Turkey-day helpers) has property tests.
-- R7. `packages/shared` has a mutation-testing baseline; CI reports the score when shared code
-  changes and fails if it drops below the recorded baseline.
+- R7. Mutation testing gates `packages/shared` and the backend `services/` and `repositories/`
+  layers from the start: on every PR, Stryker mutates only the files that PR changes in those
+  paths and CI fails when their score is below the threshold (owner decision 2026-10-06:
+  constraints first, scoped so old code is not retrofitted).
 - R8. Dead code and layer violations are caught in CI: unused files/exports/dependencies, and
   backend imports that skip `routes → services → repositories` or apps imported from `packages/*`.
 - R9. A flaky-test policy exists: a test that fails intermittently is quarantined with a backlog
@@ -49,8 +51,9 @@ and the test tooling below may be added as dev dependencies.
   button returns to the home screen.
 - AE5 (R6). For any string, `normalizeWord(normalizeWord(s)) === normalizeWord(s)`, and every
   dotted/dotless i maps per Turkish rules.
-- AE6 (R7). Given a change in `packages/shared`, CI prints the mutation score and fails when it is
-  below the baseline in `packages/shared/stryker-baseline.json`.
+- AE6 (R7). Given a PR that changes `packages/shared/src/game/evaluate.ts` and a test suite that
+  lets a duplicate-letter mutant survive, CI prints the mutation score of the changed file and
+  fails because it is below the threshold.
 
 ## Key technical decisions
 - KTD1. Traceability check is a small Node script (`scripts/check-ac-coverage.mjs`) that reads
@@ -62,8 +65,11 @@ and the test tooling below may be added as dev dependencies.
   Vitest runner) scoped to `packages/shared`, `knip`, `dependency-cruiser`, Maestro CLI (not an npm
   dependency; documented in `docs/guides/mobile-run.md`). Check each package's current version and
   Vitest compatibility before adding.
-- KTD4. Mutation testing runs only when `packages/shared/**` changes (CI `paths` filter) so it does
-  not tax every PR.
+- KTD4. Mutation testing runs only on changed files under `packages/shared/src` and
+  `apps/backend/src/{services,repositories}` (Stryker `--mutate` from the PR diff, incremental
+  cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
+  mutants run in the Workers Vitest pool; check Stryker's runner support for it and fall back to a
+  plain Vitest config for repositories if needed.
 - KTD5. Mobile `testID`s are added where Maestro needs stable selectors; no visible UI change.
 
 ## Units
@@ -78,7 +84,8 @@ C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/*
 - U3 (B, after U2). `real-backend` Playwright project and CI job with a local seed. (R4, AE3)
 - U4 (C). Maestro flows for R5, `testID`s, run guide. (R5, AE4)
 - U5 (D). fast-check property tests for shared logic. (R6, AE5)
-- U6 (D, after U5). Stryker baseline and CI job. (R7, AE6)
+- U6 (D, after U5). Stryker for shared and backend services/repositories, changed-files CI gate,
+  first full-run report in the PR body. (R7, AE6)
 - U7 (A, after U1). knip and dependency-cruiser in CI, fix or record what they find. (R8)
 - U8 (A, last). Phase 1 exit run: all gates, report in `docs/research/`, failures fixed or put in
   `docs/backlog.md`. (R10)
