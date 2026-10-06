@@ -185,6 +185,15 @@ class BlocklistAdditionsTests(unittest.TestCase):
         self.assertFalse(is_blocked("seksen", self.blocklist))
         self.assertFalse(is_blocked("homojen", self.blocklist))
 
+    def test_blocks_owner_rejected_words_as_exact_entries(self):
+        # Owner decision 2026-10-06: SEKS, ESKORT and RAKI are not answers.
+        for word in ("seks", "eskort", "rakı"):
+            self.assertTrue(is_blocked(word, self.blocklist))
+
+    def test_does_not_block_longer_words_sharing_an_owner_rejected_prefix(self):
+        for word in ("seksen", "seksek", "rakım", "rakip"):
+            self.assertFalse(is_blocked(word, self.blocklist))
+
     def test_blocks_english_loanwords_that_slipped_past_the_margin(self):
         for word in ("bird", "lamb"):
             self.assertTrue(is_blocked(word, self.blocklist))
