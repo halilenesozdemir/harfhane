@@ -58,7 +58,8 @@ Owner decisions, 2026-10-06:
 - R9. Mobile screens follow `docs/design/mobile-ui-standard.md` (proposed 2026-10-07 after owner
   feedback that splash, home and the game header look cheap and web-like): a shared top bar with
   an icon back button labelled "Geri" and a compact centred title, home actions as icon buttons
-  instead of text links, depth cards with today's status (streak, played or not, countdown), a 3D
+  instead of text links, a streak chip in the home top bar and depth mode cards with today's status (played or not,
+  countdown), a 3D
   tile splash icon with a short reduce-motion-aware intro. Spec: `docs/design/mobile-redesign-spec.md`.
 
 ## Acceptance examples
@@ -74,7 +75,8 @@ Owner decisions, 2026-10-06:
   with "· ipucu"; without a hint it does not.
 - AE5 (R7). Given a fresh install, the first launch shows How to play; after closing it, the
   next launch shows the home screen.
-- AE7 (R9). Given the home screen, "Nasıl oynanır", "İstatistikleri aç" and "Ayarları aç" are
+- AE7 (R9). Given the home screen, "Nasıl oynanır sayfasını aç", "İstatistikleri aç" and
+  "Ayarları aç" are
   icon buttons with those accessibility labels and hit areas of at least 48 dp; given a daily
   5-letter game, the game screen shows an icon back button labelled "Geri" and a header "Günlük"
   with a separate "5 harf" chip, not the string "Günlük · 5 harf".
@@ -102,15 +104,19 @@ redesign once A-D's open PRs have merged.
   (R5, R6, AE4)
 - U5 (D, after U4). First-launch How to play. (R7, AE5)
 - U6 (A, after U1). `generateShareText` takes a hint flag; web and mobile pass it. (R8, AE6)
-- U7 (E, proposed, needs owner approval; after #87, #88 and #89 merge). Mobile UI standard
-  redesign: `ui/` primitives and layout constants, top bar on Game, Stats, How to play and
-  Settings, home redesign with today's status, splash tile assets and launch intro. (R9, AE7)
-  Owns `apps/mobile/src/ui/**`, `apps/mobile/src/home/**`, `apps/mobile/src/screens/**`,
-  `apps/mobile/src/components/LaunchIntro.tsx`, `apps/mobile/src/components/GameOverCard.tsx`
-  (button/card adoption only), `apps/mobile/App.tsx` (intro wiring), `apps/mobile/app.json` and
-  `apps/mobile/assets/**`. Ships as three PRs to stay under the PR limits: U7a primitives + top
-  bars, U7b home + today status, U7c splash assets + intro. Runs after U2 or coordinates with it
-  on `GameScreen.tsx`.
+- U7 (E, proposed, needs owner approval). Mobile UI standard redesign (R9, AE7). Starts only
+  after U1-U6 have all merged (#87, #88, #89 and the not-yet-started U2, U5, U6), because it
+  touches `GameScreen.tsx` (U2), `HowToPlayScreen.tsx` and `App.tsx` (U5) and `GameOverCard.tsx`
+  (U1, U6). Ships as four PRs, strictly one after another (each stays under 15 files):
+  - U7a: `apps/mobile/src/ui/layout.ts` constants and `apps/mobile/src/ui/{IconButton,TopBar,
+    Button,Card}.tsx` with tests.
+  - U7b: top bar and buttons on `GameScreen`, `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`
+    and `GameOverCard` (including the bar-count contrast fix), with their tests.
+  - U7c: `HomeScreen` redesign and `apps/mobile/src/home/today-status.ts` (displayed streak,
+    today's state, midnight refresh); Stats uses the same displayed streak. AE7: game half tested in U7b, home half here.
+  - U7d: `apps/mobile/scripts/generate-brand-assets.mjs`, regenerated `apps/mobile/assets/*.png`,
+    `apps/mobile/app.json` `imageWidth`, `apps/mobile/src/components/LaunchIntro.tsx`, its wiring
+    in `App.tsx` and the hero `onLayout` hook in `HomeScreen.tsx` (after U7c).
 
 ## Not in this plan
 Streak calendar, hard mode, local achievements, share image, sound, themed weeks, timed mode,

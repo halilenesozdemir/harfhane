@@ -59,7 +59,7 @@ Display font: Baloo 2 ExtraBold (`FONT_FAMILY_DISPLAY = 'Baloo2_800ExtraBold'`, 
 - **T1 [L]** A style with `fontFamily: FONT_FAMILY_DISPLAY` sets no `fontWeight` (Android picks a
   fallback face when a weight is combined with a single-weight custom family).
 - **T2 [L]** No `textTransform: 'uppercase'` and no `.toUpperCase()` / `.toLowerCase()` on
-  Turkish text; write literal strings ("TAHMİN DAĞILIMI") or use `normalizeWord()`.
+  Turkish text; write the literal string in the case you need (sentence case per TR2) or use `normalizeWord()`.
 - **T3 [R]** Text scales with the system font size. Only letters inside fixed-size game controls
   (tiles, keys, hero tiles) may cap scaling, with `maxFontSizeMultiplier={1.2}`. The top bar
   title uses `maxFontSizeMultiplier={1.3}` and `numberOfLines={1}`.
@@ -95,11 +95,15 @@ Scale: 4 · 8 · 12 · 16 · 20 · 24 · 32 (`SPACING.xs` … `SPACING.xxxl`).
 - **C1 [T]** A foreground always comes from the matching `*Fg` of its fill: `presentFg` on
   `present`, never `correctFg` on `present`. (PR #89's hero row uses `correctFg` on every tile:
   white on `present` is 1.9:1 and fails; fix in #89 or in U7.)
-- **C2 [T]** Contrast, measured from tokens by a test over both themes:
+- **C2 [T]** Contrast, measured from tokens by a test over all four variants `getThemeColors`
+  returns (light, dark, each with and without high contrast):
   normal text ≥ 4.5:1, large text (≥ 18.66 dp bold or ≥ 24 dp) and icons ≥ 3:1 (WCAG 2.1
   1.4.3, 1.4.11). Measured 2026-10-07: `correctFg` on `correct` is 4.33:1 and `absentFg` on
   `absent` (light) is 4.29:1, so text on those fills must be large (tile letters, card titles),
-  never 14 dp body text. The current daily card's 14 dp white body text on `correct` fails.
+  never 14 dp body text. Current violations: the home daily card's 14 dp white body text on
+  `correct`; the 12 dp count inside the highlighted `correct` bar in `StatsScreen.tsx` (`correctFg`)
+  and in #87's `GameOverCard` (`brandFg`, also a C1 mismatch; 4.13:1 in dark). Fix: counts sit
+  outside the bar fill in `text`, or the fill uses a token with enough contrast.
 - **C3 [R]** Brand orange is for the one primary action per screen and for selection; game-state
   green is for game meaning, not for generic buttons (Stats/How-to "Kapat" buttons use `correct`
   today; they go away with the top bar).
@@ -112,7 +116,7 @@ From the ADR: tiles and buttons read as pressable through a bottom depth edge.
 
 | Element | Radius | Depth (bottom edge) | Depth colour |
 | ------- | ------ | ------------------- | ------------ |
-| Game tile | `radiusTile` 14 | none on board; `DEPTH.lg` 6 on hero/splash tiles | `*Depth` of the fill |
+| Game tile | `radiusTile` 14 | none on board; 1/8 of the face on brand tiles (`DEPTH.lg` 6 at 48 dp hero, 15 dp at the 120 dp splash tile) | `*Depth` of the fill |
 | Key | `radiusKey` 10 | `DEPTH.sm` 3 (pressed 1, translateY 2) | `keyDepth` / state depth |
 | Button (primary, secondary) | `RADIUS.md` 12 | `DEPTH.md` 4 (pressed 1, translateY 3) | `brandDepth` / `surfaceDepth` |
 | Card | `RADIUS.lg` 16 | `DEPTH.md` 4 when pressable, 0 when static | `surfaceDepth` |
@@ -131,23 +135,27 @@ From the ADR: tiles and buttons read as pressable through a bottom depth edge.
 Lucide via `lucide-react-native` (PR #88). Emoji never appear in the app's own UI (the share grid
 squares are the only exception, Plan 011 owner decision).
 
-- **I1 [L]** No emoji code points (`\p{Extended_Pictographic}`) in `apps/mobile/src/**/*.tsx`
-  string literals; the share text comes from `@harfhane/shared`.
+- **I1 [L]** No emoji or symbol glyphs used as icons in `apps/mobile/src/**/*.tsx` string
+  literals. The regex must cover more than `\p{Extended_Pictographic}`, which misses "‹"
+  (U+2039) and "⌫" (U+232B): `[\p{Extended_Pictographic}\u2039\u203A\u2190-\u21FF\u2300-\u23FF\u2700-\u27BF]`.
+  The share text comes from `@harfhane/shared` and is exempt.
 - **I2 [R]** Sizes: `ICON_SIZE.lg` 24 in top bars and icon buttons, `md` 20 inside buttons and
-  status rows, `sm` 16 inside chips. Default stroke width 2; never mix stroke widths on one screen.
+  status rows, `sm` 16 inside chips. Keyboard keys keep #88's `KEY_ICON_SIZE` 18 (bounded by key
+  width). Default stroke width 2; never mix stroke widths on one screen.
 - **I3 [T]** Icon colour comes from a token (`text`, `textMuted`, or the `*Fg` of its fill).
 - **I4 [T]** Icon-only controls carry `accessibilityLabel`; decorative icons next to text are
   hidden from TalkBack (`accessibilityElementsImportant="no"` / `importantForAccessibility="no"`).
 - Canonical icons: back `ArrowLeft` (Android convention, not a chevron), how to play
-  `CircleQuestionMark` (`CircleHelp` is only a deprecated alias in lucide-react-native 1.52), stats `ChartColumn`, settings `Settings`, daily `CalendarDays`, unlimited
+  `CircleQuestionMark` (`CircleHelp` is only a deprecated alias in lucide-react-native 1.52),
+  stats `ChartColumn`, settings `Settings`, daily `CalendarDays`, unlimited
   `Infinity`, streak `Flame`, solved `CircleCheck`, not solved `CircleX`, share `Share2`,
   next word `Clock`, Enter `CornerDownLeft`, delete `Delete`.
 
 ## 7. Touch targets
 
 - **A1 [T]** Every pressable has a hit area ≥ `TOUCH_TARGET` (48 × 48 dp): either its own size or
-  size plus `hitSlop`. Keys are exempt (46 dp height is bounded by the 11-key Turkish row on a
-  360 dp screen) but keep ≥ 4 dp gaps.
+  size plus `hitSlop`. Keys are exempt: the 11-key Turkish row on a 360 dp screen bounds key
+  width to ~27 dp; keys keep 46 dp height and ≥ 4 dp gaps.
 - **A2 [R]** Adjacent targets do not overlap their hit areas; at least 8 dp between icon buttons'
   visible bounds.
 - **A3 [R]** Length chips may be 40 dp tall visually with `hitSlop` 4 to reach 48 dp.
@@ -196,7 +204,8 @@ One component, `apps/mobile/src/ui/TopBar.tsx`. Pattern: M3 small center-aligned
   `surfaceBorder`, depth 4 dp `surfaceDepth` only when the whole card is pressable.
 - **CA2 [T]** A pressable card is one target with one action and one `accessibilityLabel` that
   includes its state ("Günlük oyun, 5 harf, bugün çözüldü"); nested pressables only for clearly
-  separate actions (length chips).
+  separate actions (length chips). A button-styled CTA inside a pressable card ("Oyna") is part
+  of the card's target, not its own `Pressable`; the whole card lowers when pressed (D2).
 - **CA3 [R]** Card anatomy: optional leading icon tile (48 dp, radius 12, game-state or brand
   fill with depth 3), title (`title`), one supporting line (`body`, `textMuted`), optional status
   row (`caption` chips), optional trailing `ChevronRight` 20 dp in `textMuted`.
@@ -216,7 +225,7 @@ One component, `apps/mobile/src/ui/TopBar.tsx`. Pattern: M3 small center-aligned
 ## 12. Accessibility
 
 - **AX1 [T]** Every `Pressable` has `accessibilityRole` and either visible text or an
-  `accessibilityLabel` in Turkish. Labels say the action: "İstatistikleri aç", not "Grafik".
+  `accessibilityLabel` in Turkish. Labels say the action: "İstatistikleri aç", "Nasıl oynanır sayfasını aç", not "Grafik".
 - **AX2 [T]** Selected and disabled states use `accessibilityState`.
 - **AX3 [T]** Live result text (`message`, countdown on completion) uses
   `accessibilityLiveRegion="polite"`; the per-second countdown itself is not live.
