@@ -17,25 +17,20 @@ produces the same output files under `data/words/`.
 
 - `hunspell_source.py`: pinned-commit download/cache and `.dic` parsing.
 - `turkish.py`: Turkish-aware case conversion and alphabet validation (no `Q`/`W`/`X`).
-- `inflection.py`: heuristic to drop inflected forms when their root is itself an
-  independent, reasonably frequent word, including consonant softening (p/ç/t/k ->
-  b/c/d/ğ, e.g. "kitabına" -> "kitap"). Two scopes: `include_verbs=False` (the
-  default for `build_valid_set`, i.e. `valid-N.txt`, the player-facing guess
-  dictionary) only strips nominal forms (possessive/case/plural); `include_verbs=True`
-  (the default otherwise — candidate/unlimited-pool selection) also strips common verb
-  conjugations (narrative past "-miş", future "-ecek"/"-acak", the "-dık" participle).
-  Several short suffixes were tried and deliberately dropped because they collided
-  with unrelated, often very common, standalone words even with the known-word +
-  frequency guard — see the comments above `NOMINAL_SUFFIXES`/`VERB_SUFFIXES` for
-  concrete examples ("kalem" is not "kale" + possessive, "zaman"/"insan"/"kazan" are
-  not a verb + "-an" participle).
+- `inflection.py`: heuristic to drop nominal inflected forms (possessive/case/plural) from
+  the valid-word list when their root is itself an independent, reasonably frequent word.
+  Verb-conjugation stripping and consonant softening (p/ç/t/k -> b/c/d/ğ) were both tried
+  and removed — see "Quality notes" below for why.
 - `candidates.py`: zipf-frequency filter, mastar (`-mak`/`-mek`) exclusion, family-safety
   blocklist, the `needs_review` heuristic, and `is_likely_english` (an English loanword
   filter: `ENGLISH_ZIPF_MARGIN = 1.5`, flagging a word whose English `wordfreq` zipf
   score is at least that much higher than its Turkish one).
 - `build_word_lists.py`: orchestrates the above and writes `data/words/`.
-- `blocklist.txt`: short, hand-curated list of explicit/vulgar roots. Prefix-matched against
-  candidates. Do not quote its contents in reports, PRs or commit messages.
+- `blocklist.txt`: short, hand-curated list of explicit/vulgar roots, prefix-matched
+  against candidates unless the line is prefixed with `=`, which blocks only that exact
+  word (for an entry whose plain spelling also has an unrelated, legitimate meaning as a
+  longer word's prefix — e.g. `=kaşar` blocks the slang word "kaşar" but not "kaşarlı",
+  a type of cheese). Do not quote its contents in reports, PRs or commit messages.
 - `test_build_word_lists.py`: unittest suite (run with `python3 -m unittest` from this
   directory).
 
@@ -78,12 +73,41 @@ produces the same output files under `data/words/`.
 ## Quality notes (manual sampling)
 
 A manual sample of the unlimited pool found a meaningful share of unsuitable entries: English
-words, proper nouns, verb conjugations (missed because `is_inflected_form` only covered nominal
-forms), and a handful of vulgar/sexual/slur words that slipped past `blocklist.txt`. This pass:
-adds the missed offensive roots to `blocklist.txt` (not reproduced here — see its own note),
-extends `inflection.py` with consonant softening and a bounded set of verb-conjugation suffixes
-(see above), and adds the English-loanword filter. It does **not** fully eliminate unsuitable
-entries — bare past tense (`-dı`/`-di`/...), `-sa`/`-se`, and `-an`/`-en` conjugations are
-deliberately left unfiltered (too many false positives on common nouns), so some verb forms
-and a few proper nouns/loanwords from other languages remain. A follow-up would need a real
-verb-root dictionary or a proper-noun list rather than this prefix/suffix heuristic.
+words, proper nouns, verb conjugations, possessive/case forms missed because of consonant
+softening, and a handful of vulgar/sexual/slur words that slipped past `blocklist.txt`.
+
+A first pass tried to fix verb conjugations and consonant softening inside `inflection.py`
+itself. Both were reverted (main-loop decision) after testing showed they dropped real,
+independent words — not just inflected junk:
+
+- Verb-conjugation suffixes (`-dık`/`-tık`/`-miş`/`-acak`, even restricted to "safer"-looking
+  ones) wrongly flagged lexicalized nouns that happen to share a verb's surface form: "antik"
+  (antique), "sadık" (loyal), "gümüş" (silver), "koltuk" (armchair), "mantık" (logic),
+  "geçmiş" (the past), "altmış" (sixty), "içecek" (a drink), "gelecek" (the future) are all
+  independent dictionary words, not conjugated verbs, but each one also parses as some root +
+  a verb suffix.
+- Consonant softening wrongly flagged independent words whose "hardened" root happened to
+  collide with an unrelated real word: "düğünü"/"tribünü" (wedding/stand, accusative) ->
+  hardened root collided with other real short words; "yığına" (to the pile) and "kendini"
+  (yourself) similarly collided.
+
+Heuristics like these cannot make the unlimited pool family-safe or lexically clean on their
+own — the real gate for unlimited-pool quality is **model labels + the eval gate (Plan 010
+U5/U6) + the blocklist**, not a bigger suffix list. So this pipeline is kept deliberately
+conservative: it must never remove a good word, even if that means some verb forms, proper
+nouns and non-English loanwords still get through to be caught by labelling/review instead.
+`valid-N.txt` (the player-facing guess dictionary, every length) and the daily pool/review
+files are confirmed byte-identical to `main` — this pass changes nothing there.
+
+What this pass does keep: the English-loanword filter (`is_likely_english`) tested clean (no
+Turkish false positives found), and the `blocklist.txt` additions found by manually scanning
+the generated pool files (not reproduced here — see the file's own note), covering explicit
+sexual/anatomical terms, a racial slur, prostitution/adultery terms, a crude imperative, two
+"pervert" words and several drug names. The anti-gay slur category was already covered by the
+pre-existing `ibne`/`puşt` entries. Two ambiguous drug-adjacent words ("afyon"/"haşhaş") were
+deliberately left unblocked: both are far more commonly used for their legitimate meanings in
+Turkish (a province name; poppy seed as a food topping) than for the drug, so blocking them
+would violate the "never remove a good word" rule above.
+
+**The unlimited pool must not be imported into the game until Plan 010 U5/U6 (the label eval
+gate) has passed.** Heuristic filtering alone is not a family-safety gate.

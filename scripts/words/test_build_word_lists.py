@@ -5,6 +5,7 @@ from unittest.mock import patch
 from turkish import tr_lower, tr_upper, is_turkish_alphabet
 from inflection import is_inflected_form
 from candidates import is_likely_english
+import build_word_lists as bwl
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "words")
 
@@ -51,77 +52,18 @@ class InflectionHeuristicTests(unittest.TestCase):
         for word in ("kalem", "kitap", "beyaz", "masa", "hafta", "yaprak"):
             self.assertFalse(is_inflected_form(word, self.known_words))
 
-
-class VerbConjugationHeuristicTests(unittest.TestCase):
-    def setUp(self):
-        self.known_words = {"gel", "git", "al", "bak", "gör"}
-
-    def test_strips_narrative_past(self):
-        self.assertTrue(is_inflected_form("gitmiş", self.known_words))
-
-    def test_strips_future_participle(self):
-        self.assertTrue(is_inflected_form("alacak", self.known_words))
-
-    def test_strips_dik_participle(self):
-        self.assertTrue(is_inflected_form("gördük", self.known_words))
-
-    def test_keeps_plain_verb_roots(self):
-        for word in ("gel", "git", "al", "bak", "gör"):
-            self.assertFalse(is_inflected_form(word, self.known_words))
-
-    def test_does_not_strip_bare_past_tense_or_participle_endings(self):
-        # "-dı"/"-se"/"-an"/"-en" were tried and dropped (see the note above
-        # VERB_SUFFIXES): common nouns like "zaman" and "insan" parse just as
-        # well as "root + -an", so these must NOT be treated as inflected.
-        known = {"zam", "ins", "kaz", "düz"}
-        for word in ("zaman", "insan", "kazan", "düzen"):
+    def test_does_not_strip_verb_conjugations_or_soften_consonants(self):
+        # Verb-conjugation stripping and consonant softening were both tried and
+        # removed (main-loop decision, Plan 008 follow-up): heuristics cannot make
+        # the unlimited pool family-safe, and both caused real words to be wrongly
+        # dropped from the guess dictionary / candidate pools (e.g. "geçmiş",
+        # "altmış", "içecek", "gelecek", "koltuk", "mantık" as lexicalized nouns
+        # colliding with the verb-conjugation rule; "düğünü", "tribünü", "yığına",
+        # "kendini" colliding with consonant softening). Keep this locked down to
+        # the plain nominal-only heuristic.
+        known = {"git", "kitap", "ağaç", "kanat"}
+        for word in ("gitmiş", "gidecek", "gittik", "kitabına", "ağacına", "kanadını"):
             self.assertFalse(is_inflected_form(word, known))
-
-
-class IncludeVerbsScopeTests(unittest.TestCase):
-    # valid-N.txt (the guess dictionary) must not lose verb-conjugated forms;
-    # only candidate/unlimited-pool selection should treat them as inflected.
-    def setUp(self):
-        self.known_words = {"git", "kitap"}
-
-    def test_verb_conjugations_are_not_inflected_when_verbs_are_excluded(self):
-        self.assertFalse(is_inflected_form("gitmiş", self.known_words, include_verbs=False))
-
-    def test_verb_conjugations_are_inflected_by_default(self):
-        self.assertTrue(is_inflected_form("gitmiş", self.known_words))
-
-    def test_nominal_consonant_softening_still_applies_with_verbs_excluded(self):
-        self.assertTrue(is_inflected_form("kitabına", self.known_words, include_verbs=False))
-
-
-class ConsonantSofteningHeuristicTests(unittest.TestCase):
-    # These use the existing multi-letter vowel-initial suffixes ("-ına", "-ini",
-    # "-ının", ...), not a bare single-letter case vowel (see the note above
-    # NOMINAL_SUFFIXES: those were tried and dropped for colliding with unrelated
-    # standalone words).
-    def setUp(self):
-        self.known_words = {"kitap", "ağaç", "kanat", "kapak"}
-
-    def test_softens_p_to_b_before_the_dative_possessive(self):
-        # kitabına = kitap + 3rd-person possessive dative "-ına"; p softens to b.
-        self.assertTrue(is_inflected_form("kitabına", self.known_words))
-
-    def test_softens_c_cedilla_to_c_before_the_dative_possessive(self):
-        # ağacına = ağaç + "-ına"; ç softens to c before the vowel suffix.
-        self.assertTrue(is_inflected_form("ağacına", self.known_words))
-
-    def test_softens_t_to_d_before_the_accusative_possessive(self):
-        # kanadını = kanat + 3rd-person possessive accusative "-ını"; t softens to d.
-        self.assertTrue(is_inflected_form("kanadını", self.known_words))
-
-    def test_softens_k_to_g_breve_before_the_genitive_possessive(self):
-        # kapağının = kapak + 3rd-person possessive genitive "-ının"; k softens to ğ.
-        self.assertTrue(is_inflected_form("kapağının", self.known_words))
-
-    def test_does_not_soften_before_a_consonant_initial_suffix(self):
-        # "kitaptan" (ablative "-tan") never softens; the root stays "kitap" as-is,
-        # and this exercises the plain (non-softened) lookup still works.
-        self.assertTrue(is_inflected_form("kitaptan", self.known_words))
 
 
 class EnglishLoanwordHeuristicTests(unittest.TestCase):
@@ -151,6 +93,41 @@ class EnglishLoanwordHeuristicTests(unittest.TestCase):
         scores = {"edge": {"en": 3.0 + ENGLISH_ZIPF_MARGIN, "tr": 3.0}}
         with patch("candidates.zipf_frequency", self._fake_zipf(scores)):
             self.assertTrue(is_likely_english("edge"))
+
+
+class BlocklistExactMatchTests(unittest.TestCase):
+    def test_exact_match_entry_blocks_only_the_exact_word(self):
+        from candidates import is_blocked
+
+        self.assertTrue(is_blocked("kaşar", {"=kaşar"}))
+
+    def test_exact_match_entry_does_not_block_a_longer_word_with_that_prefix(self):
+        from candidates import is_blocked
+
+        # "kaşarlı" (with kaşar cheese) is an unrelated, legitimate food word.
+        self.assertFalse(is_blocked("kaşarlı", {"=kaşar"}))
+
+    def test_plain_entry_still_blocks_by_prefix(self):
+        from candidates import is_blocked
+
+        self.assertTrue(is_blocked("sokaklı", {"sokak"}))
+
+
+class BuildCandidateRowsEnglishFilterTests(unittest.TestCase):
+    # Exercises build_word_lists.build_candidate_rows directly (not just
+    # candidates.is_likely_english in isolation), so a mutant that drops the
+    # is_likely_english check from the candidate pipeline itself is caught.
+    def test_excludes_a_word_flagged_as_english(self):
+        valid_words = {"masa": ()}
+        with patch.object(bwl, "is_likely_english", lambda word: word == "masa"):
+            rows = bwl.build_candidate_rows(valid_words, blocklist=set())
+        self.assertEqual(rows, [])
+
+    def test_keeps_a_word_not_flagged_as_english(self):
+        valid_words = {"masa": ()}
+        with patch.object(bwl, "is_likely_english", lambda word: False):
+            rows = bwl.build_candidate_rows(valid_words, blocklist=set())
+        self.assertEqual([row["word"] for row in rows], ["MASA"])
 
 
 class GeneratedOutputTests(unittest.TestCase):

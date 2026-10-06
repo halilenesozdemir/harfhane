@@ -1,4 +1,6 @@
-# Family-safety blocklist (lowercase roots, prefix-matched).
+# Family-safety blocklist (lowercase roots, prefix-matched unless prefixed with
+# "=", which blocks only that exact word — for an entry whose plain spelling also
+# has an unrelated, legitimate meaning as a longer word's prefix).
 # Intentionally short and hand-curated. Do not expand without review.
 # Contents are not reproduced in reports or PR descriptions; only counts are.
 amcık
@@ -21,6 +23,26 @@ yarak
 kaltak
 sürtük
 fahişe
-kaşar
+=kaşar
 puşt
 gavur
+testis
+anüs
+orgazm
+sperm
+=meni
+azgın
+fetiş
+zenci
+zina
+fuhuş
+=metres
+geber
+sapık
+sapkın
+=esrar
+eroin
+kokain
+morfin
+penis
+vajina

@@ -29,8 +29,7 @@ directory.
   that length.
 - `candidates-4.csv` ... `candidates-7.csv`: columns `word,length,needs_review,reason`.
   Subset of the valid list with `wordfreq` zipf frequency ≥ 3.0, infinitive verb forms
-  (`-mak`/`-mek`) excluded, common verb conjugations excluded (see
-  `scripts/words/inflection.py`), likely-English loanwords excluded
+  (`-mak`/`-mek`) excluded, likely-English loanwords excluded
   (`candidates.is_likely_english`), and family-safety blocklist matches excluded. No
   frequency value is stored. `needs_review=1` rows have few Hunspell inflection flags, which
   correlates with proper nouns, abbreviations and loanwords; they should be spot-checked
@@ -46,22 +45,20 @@ Length-7 lists are generated for future hard-mode / weekly "super word" features
 
 | Length | Valid | Candidates (zipf ≥ 3.0) |
 | --- | --- | --- |
-| 4 | 5828 | 1660 |
-| 5 | 9862 | 2978 |
-| 6 | 12177 | 2597 |
-| 7 | 11687 | 2519 |
+| 4 | 5828 | 1657 |
+| 5 | 9862 | 3009 |
+| 6 | 12185 | 2711 |
+| 7 | 11694 | 2623 |
 
 ## Known limitations
 
-- The inflection heuristic (see `scripts/words/inflection.py`) strips nominal suffixes
-  (possessive, case, plural, with consonant softening) everywhere, and additionally strips a
-  bounded set of verb conjugations (narrative past "-miş", future "-ecek"/"-acak", the "-dık"
-  participle) for candidate/unlimited-pool selection only — not for `valid-N.txt`, so none of
-  this removes a word as a player guess. Bare past tense (`-dı`/`-di`/...), `-sa`/`-se`, and
-  `-an`/`-en` conjugations are deliberately NOT filtered: on a short residual root they collide
-  with unrelated, often very common, standalone nouns (e.g. "zaman", "insan", "kazan" all parse
-  as root + "-an" just as well as an actual participle), so those verb forms can still surface
-  in the candidate lists. Manual review of `needs_review=0` candidates before promoting them to
-  daily answers is still recommended.
+- The inflection heuristic (see `scripts/words/inflection.py`) only strips nominal suffixes
+  (possessive, case, plural). Hunspell's `tr_TR.dic` also contains fully inflected verb forms
+  (e.g. negative/past conjugations); those are not filtered and can surface in the candidate
+  lists. A verb-conjugation and consonant-softening heuristic was tried and reverted (see
+  `scripts/words/README.md` "Quality notes"): it wrongly dropped independent dictionary words
+  that happen to share a verb's or a softened root's surface form (e.g. "geçmiş", "altmış",
+  "içecek", "gelecek", "düğünü", "kendini"). Manual review of `needs_review=0` candidates
+  before promoting them to daily answers is still recommended.
 - `needs_review` is a heuristic (low inflection-flag count), not a verified proper-noun/foreign-
   word detector.

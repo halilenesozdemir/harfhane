@@ -24,8 +24,18 @@ def passes_frequency(word_lower: str) -> bool:
     return zipf_frequency(word_lower, "tr") >= ZIPF_THRESHOLD
 
 
+EXACT_MATCH_PREFIX = "="
+
+
 def is_blocked(word_lower: str, blocklist: set) -> bool:
     for root in blocklist:
+        # An entry prefixed with "=" blocks only that exact word, not every word
+        # starting with it (e.g. "=kaşar" blocks the slang word "kaşar" itself but
+        # not the unrelated food word "kaşarlı").
+        if root.startswith(EXACT_MATCH_PREFIX):
+            if word_lower == root[len(EXACT_MATCH_PREFIX):]:
+                return True
+            continue
         if word_lower.startswith(root):
             return True
     return False

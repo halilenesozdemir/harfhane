@@ -40,19 +40,15 @@ def filter_by_length_and_alphabet(raw_words, length):
 
 
 def build_valid_set(length_words, known_words):
-    # include_verbs=False: valid-N.txt is the player-facing guess dictionary. Verb
-    # conjugations (geldi, gelecek, gelen, ...) stay valid guesses; only the nominal
-    # inflected-form check (plus its consonant-softening/possessive fixes) applies
-    # here, same scope as before this change.
     valid = {}
     for word, flags in length_words.items():
-        if is_inflected_form(word, known_words, include_verbs=False):
+        if is_inflected_form(word, known_words):
             continue
         valid[word] = flags
     return valid
 
 
-def build_candidate_rows(valid_words, known_words, blocklist):
+def build_candidate_rows(valid_words, blocklist):
     rows = []
     for word in sorted(valid_words):
         flags = valid_words[word]
@@ -63,11 +59,6 @@ def build_candidate_rows(valid_words, known_words, blocklist):
         if not passes_frequency(word):
             continue
         if is_likely_english(word):
-            continue
-        # Candidates feed the daily/unlimited answer pools, not the guess dictionary:
-        # also drop common verb conjugations here (valid_words already excluded
-        # nominal inflected forms only, via build_valid_set's include_verbs=False).
-        if is_inflected_form(word, known_words, include_verbs=True):
             continue
         rows.append(
             {
@@ -111,7 +102,7 @@ def main():
     for length in LENGTHS:
         length_words = filter_by_length_and_alphabet(raw_words, length)
         valid_words = build_valid_set(length_words, known_words)
-        candidate_rows = build_candidate_rows(valid_words, known_words, blocklist)
+        candidate_rows = build_candidate_rows(valid_words, blocklist)
 
         write_valid_file(os.path.join(OUTPUT_DIR, f"valid-{length}.txt"), valid_words.keys())
         write_candidates_file(
