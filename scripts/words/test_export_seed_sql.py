@@ -194,6 +194,12 @@ class CommittedSeedFilesDriftTests(unittest.TestCase):
             actual = handle.read()
         self.assertEqual(actual, expected)
 
+    def test_should_reject_a_start_date_flag_when_parsing_cli_arguments(self):
+        # Every run takes the same first 90 words, so another start date would repeat
+        # them inside the 3-year cooldown; top-ups belong to the cron auto-fill.
+        with self.assertRaises(SystemExit):
+            seed.parse_args(["--start-date", "2027-01-04"])
+
     def test_should_keep_the_applied_start_date_when_reading_the_schedule_constant(self):
         self.assertEqual(seed.SCHEDULE_START_DATE, "2026-10-06")
 

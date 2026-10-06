@@ -28,6 +28,11 @@ Deviations from the steps as written:
 - "Before you start" below is kept as executed: #74, #59 and #63 are merged, so `main`
   now carries `0002_word_pools.sql` and the `DB` → `harfhane` binding. Run future
   steps from `main`.
+- **Step 4's regeneration is superseded.** `export_seed_sql.py` no longer takes
+  `--start-date`; `schedule_5.sql` is pinned to the applied 2026-10-06 schedule (tests fail
+  otherwise). Every run picks the same first 90 words, so regenerating for a later date
+  would repeat them inside the 3-year cooldown. Top-ups come from the cron auto-fill
+  (PR #63). Do not re-run step 4 for 5 letters.
 
 ## Before you start
 
@@ -167,6 +172,7 @@ this.** Before step 6 merges, the deployed Worker is still bound to the legacy
 unscheduled. The schedule is a committed, reviewable SQL file instead, applied the same
 way as the other seed files.
 
+*Superseded after execution — see "Deviations" at the top; kept as the record of what ran.*
 Regenerate it right before running this step, with tomorrow's real Turkey date (the
 committed file's `SCHEDULE_START_DATE` is a fixed placeholder, not computed at import
 time — see `scripts/words/export_seed_sql.py`):
