@@ -687,13 +687,11 @@ ERİTME,6,1,low_inflection_support
 ERİŞİM,6,0,
 ERİŞME,6,0,
 ERKEĞİ,6,0,
-EROTİK,6,0,
 ERTESİ,6,0,
 ESARET,6,0,
 ESERLE,6,0,
 ESİNTİ,6,0,
 ESKİYE,6,1,low_inflection_support
-ESKORT,6,0,
 ESKRİM,6,0,
 ESNEME,6,0,
 ETEĞİN,6,1,low_inflection_support
@@ -726,8 +724,6 @@ EĞİLME,6,0,
 EĞİTİM,6,0,
 EŞİNİZ,6,0,
 EŞKIYA,6,0,
-FACTOR,6,1,low_inflection_support
-FAHİŞE,6,0,
 FAİZLE,6,0,
 FAKTÖR,6,0,
 FARKLA,6,0,
@@ -798,7 +794,6 @@ GERDEK,6,1,low_inflection_support
 GEREĞİ,6,1,low_inflection_support
 GERGİN,6,0,
 GERİCİ,6,0,
-GERMAN,6,0,
 GERZEK,6,0,
 GERÇEK,6,0,
 GETİRİ,6,0,
@@ -1136,7 +1131,6 @@ KALORİ,6,0,
 KALPLE,6,0,
 KALPLİ,6,0,
 KALSIN,6,1,low_inflection_support
-KALTAK,6,1,low_inflection_support
 KALYON,6,0,
 KALIBI,6,1,low_inflection_support
 KALICI,6,0,
@@ -1268,7 +1262,6 @@ KOBALT,6,0,
 KOCAMA,6,0,
 KOCAMI,6,0,
 KOCAYA,6,1,low_inflection_support
-KOKAİN,6,0,
 KOKPİT,6,0,
 KOKULU,6,0,
 KOLERA,6,0,
@@ -1539,7 +1532,6 @@ MESLEK,6,0,
 METALİ,6,0,
 METEOR,6,0,
 METRAJ,6,0,
-METRES,6,0,
 METRİK,6,0,
 METRUK,6,0,
 MEVCUT,6,0,
@@ -1578,7 +1570,6 @@ MODERN,6,0,
 MODÜLÜ,6,1,low_inflection_support
 MOMENT,6,0,
 MONTAJ,6,0,
-MORFİN,6,0,
 MORİNA,6,1,low_inflection_support
 MORLUK,6,1,low_inflection_support
 MOTORS,6,1,low_inflection_support
@@ -1708,7 +1699,6 @@ ONURLU,6,0,
 ORANLA,6,0,
 ORANTI,6,0,
 ORGANI,6,0,
-ORGAZM,6,0,
 ORKİDE,6,0,
 ORMANI,6,1,low_inflection_support
 ORTAMI,6,0,
@@ -1767,7 +1757,6 @@ PAYLAŞ,6,0,
 PAZARI,6,1,low_inflection_support
 PEKMEZ,6,0,
 PELTEK,6,0,
-PENİSİ,6,0,
 PERHİZ,6,0,
 PETROL,6,0,
 PEYNİR,6,0,
@@ -1903,7 +1892,6 @@ SANMIŞ,6,1,low_inflection_support
 SANSAR,6,0,
 SANSÜR,6,0,
 SANTİM,6,0,
-SAPKIN,6,0,
 SARHOŞ,6,0,
 SARKIK,6,0,
 SARKIT,6,0,
@@ -2063,7 +2051,6 @@ SÜRECİ,6,0,
 SÜRELİ,6,1,low_inflection_support
 SÜRGÜN,6,0,
 SÜRMÜŞ,6,0,
-SÜRTÜK,6,0,
 SÜRÜCÜ,6,0,
 SÜRÜMÜ,6,0,
 SÜRÜŞÜ,6,1,low_inflection_support
@@ -2197,7 +2184,6 @@ TESİSİ,6,1,low_inflection_support
 TESLİM,6,0,
 TESPİH,6,0,
 TESPİT,6,0,
-TESTİS,6,0,
 TETKİK,6,0,
 TEVAZU,6,0,
 TEVFİK,6,0,
@@ -2319,7 +2305,6 @@ VAFTİZ,6,0,
 VAGONU,6,1,low_inflection_support
 VAHDET,6,1,low_inflection_support
 VAHŞET,6,0,
-VAJİNA,6,0,
 VAKTİM,6,1,low_inflection_support
 VAKTİN,6,1,low_inflection_support
 VAMPİR,6,0,
@@ -2343,7 +2328,6 @@ VERMEN,6,1,low_inflection_support
 VERMEZ,6,0,
 VERMİŞ,6,0,
 VESİLE,6,0,
-VİDEOS,6,0,
 VİRGÜL,6,0,
 VİRÜSÜ,6,1,low_inflection_support
 VİTRİN,6,0,
