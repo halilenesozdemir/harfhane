@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, CalendarDays, Users, Gamepad2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BookOpen, CalendarDays, AlertTriangle, CheckCircle } from 'lucide-react';
 import { getAdminStats, getScheduleHealth, type AdminStats, type ScheduleHealthEntry } from '../../lib/admin-api';
 
 interface DashboardProps {
@@ -99,7 +99,7 @@ export default function Dashboard({ secret }: DashboardProps): React.JSX.Element
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           label="Toplam Kelime"
           value={stats.words.total}
@@ -113,19 +113,6 @@ export default function Dashboard({ secret }: DashboardProps): React.JSX.Element
           sub={stats.daily.today ? 'Programlanmış' : 'Programlanmamış!'}
           icon={<CalendarDays size={18} />}
           accent={stats.daily.today ? 'green' : 'red'}
-        />
-        <StatCard
-          label="Kayıtlı Kullanıcı"
-          value={stats.users.total}
-          icon={<Users size={18} />}
-          accent="blue"
-        />
-        <StatCard
-          label="Bugün Oynanan"
-          value={stats.games.playedToday}
-          sub={`Toplam: ${stats.games.totalPlayed}`}
-          icon={<Gamepad2 size={18} />}
-          accent="blue"
         />
       </div>
 

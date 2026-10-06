@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Calendar, Infinity as InfinityIcon, Settings, Flame, Trophy, BarChart2, HelpCircle, LogIn, TrendingUp, Shield } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { useProfile } from "../hooks/useProfile";
+import { Calendar, Infinity as InfinityIcon, Settings, HelpCircle } from "lucide-react";
 import HowToPlayModal from "./HowToPlayModal";
-import AuthModal from "./AuthModal";
 import SettingsModal from "./SettingsModal";
 import type { HomePageProps, WordLength } from "../types";
 
@@ -12,17 +9,12 @@ const WORD_LENGTHS: WordLength[] = [4, 5, 6];
 const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
-  const { user, token } = useAuth();
   const [selectedLength, setSelectedLength] = useState<WordLength>(5);
   const [showHelp, setShowHelp] = useState(() => {
     const seen = localStorage.getItem(HAS_SEEN_HELP_KEY);
     return !seen || seen === 'false';
   });
-  const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const { data: profileData } = useProfile(token);
-
-  const stats = profileData?.stats;
 
   return (
     <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center p-4 relative">
@@ -50,52 +42,6 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">HARFHANE</h1>
         <p className="text-text-secondary text-base">Türkçe kelime oyunu</p>
       </div>
-
-      {user && stats && (
-        <div className="w-full max-w-md mb-6 space-y-2">
-          <div className="bg-bg-secondary rounded-2xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-correct rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">{user.username.charAt(0).toUpperCase()}</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-text-primary">{user.username}</p>
-                <p className="text-xs text-text-secondary">
-                  {stats.currentStreak > 0 ? `${stats.currentStreak} günlük seri` : 'Seri yok'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-sm">
-              {stats.currentStreak > 0 && (
-                <div className="flex items-center gap-1">
-                  <Flame size={16} className="text-present" />
-                  <span className="font-bold text-text-primary">{stats.currentStreak}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1">
-                <Trophy size={16} className="text-correct" />
-                <span className="font-bold text-text-primary">{stats.totalWon}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <BarChart2 size={16} className="text-text-secondary" />
-                <span className="font-bold text-text-primary">{stats.winRate}%</span>
-              </div>
-            </div>
-          </div>
-
-          {!profileData?.playedToday && (
-            <button
-              onClick={() => onSelectMode("daily", 5)}
-              className="w-full bg-present/10 border border-present/40 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-present/15 transition-colors"
-            >
-              <span className="text-sm font-semibold text-present">Bugün oynamadın!</span>
-              <span className="text-xs text-present/70 font-medium">
-                {stats.currentStreak > 0 ? `${stats.currentStreak} günlük serini koru →` : 'Günlük oyunu oyna →'}
-              </span>
-            </button>
-          )}
-        </div>
-      )}
 
       <div className="w-full max-w-md space-y-3">
         <button
@@ -146,28 +92,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
         </div>
       </div>
 
-      {!user && (
-        <button
-          onClick={() => setShowAuth(true)}
-          className="w-full max-w-md mt-4 bg-bg-secondary hover:bg-tile-empty rounded-2xl p-4 transition-colors cursor-pointer text-left"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
-              <LogIn size={15} className="text-correct" />
-              Giriş yaparak kazan
-            </span>
-            <span className="text-xs text-correct font-medium">Ücretsiz</span>
-          </div>
-          <div className="flex gap-4 text-xs text-text-secondary">
-            <span className="flex items-center gap-1"><TrendingUp size={12} className="text-correct" /> XP &amp; Seviye</span>
-            <span className="flex items-center gap-1"><Flame size={12} className="text-present" /> Seri takibi</span>
-            <span className="flex items-center gap-1"><Shield size={12} className="text-blue-400" /> Seri dondurma</span>
-          </div>
-        </button>
-      )}
-
       <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(HAS_SEEN_HELP_KEY, JSON.stringify(true)); setShowHelp(false); }} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );

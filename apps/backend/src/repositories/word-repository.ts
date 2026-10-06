@@ -38,7 +38,7 @@ export async function findDailyWord(
       `SELECT dw.word_id, dw.date, w.word, w.meaning, w.context, w.category
        FROM daily_words dw
        JOIN words w ON w.id = dw.word_id
-       WHERE dw.date = ? AND length(w.word) = ?
+       WHERE dw.date = ? AND length(w.word) = ? AND w.source != 'user'
        LIMIT 1`
     )
     .bind(date, length)
@@ -72,7 +72,7 @@ export async function findRandomWord(
     .prepare(
       `SELECT id, word, meaning, context, category
        FROM words
-       WHERE is_active = 1 AND length(word) = ?
+       WHERE is_active = 1 AND source != 'user' AND length(word) = ?
        ORDER BY RANDOM()
        LIMIT 1`
     )
@@ -90,7 +90,7 @@ export async function findWordById(
     .prepare(
       `SELECT id, word, meaning, context, category
        FROM words
-       WHERE id = ? AND is_active = 1
+       WHERE id = ? AND is_active = 1 AND source != 'user'
        LIMIT 1`
     )
     .bind(wordId)
