@@ -1,7 +1,7 @@
 import type { WordEntry } from '@harfhane/shared';
 export type { WordEntry, WordData } from '@harfhane/shared';
-export type { TileStatus, TimeCountdown } from '@harfhane/shared';
-import type { TileStatus } from '@harfhane/shared';
+export type { TileStatus, TimeCountdown, LetterHint } from '@harfhane/shared';
+import type { TileStatus, LetterHint } from '@harfhane/shared';
 
 export interface SessionChallenge {
   won: number;
@@ -78,6 +78,7 @@ export interface TileProps {
   isRevealing: boolean;
   revealDelay: number;
   isFilled: boolean;
+  isHint?: boolean;
 }
 
 export interface KeyProps {
@@ -95,6 +96,7 @@ export interface GameGridProps {
   shakeRow: boolean;
   gameStatus: GameStatus;
   wordLength: WordLength;
+  hint?: LetterHint | null;
 }
 
 export interface KeyboardProps {

@@ -6,22 +6,24 @@ const STATUS_CLASSES: Record<string, string> = {
   absent: 'bg-absent border-absent text-absent-fg shadow-depth-absent',
 };
 
-const getStateClasses = (status: TileProps['status'], isFilled: boolean): string => {
+const getStateClasses = (status: TileProps['status'], isFilled: boolean, isHint: boolean): string => {
   if (status) return STATUS_CLASSES[status] ?? '';
+  if (isHint) return 'bg-tile-empty-bg border-brand text-brand';
   if (isFilled) return 'bg-bg-secondary border-tile-filled text-text-primary shadow-depth-tile';
   return 'bg-tile-empty-bg border-tile-empty text-text-primary';
 };
 
-const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }: TileProps): React.JSX.Element => (
+const Tile = ({ letter, status, isRevealing, revealDelay, isFilled, isHint }: TileProps): React.JSX.Element => (
   <div
     data-testid="tile"
     data-status={status ?? (isFilled ? 'filled' : 'empty')}
+    data-hint={isHint ? 'true' : undefined}
     className={`
       w-14 h-14 md:w-16 md:h-16
       flex items-center justify-center
       rounded-tile border-2
       font-display text-3xl md:text-4xl font-extrabold uppercase leading-none
-      ${getStateClasses(status, Boolean(isFilled))}
+      ${getStateClasses(status, Boolean(isFilled), Boolean(isHint))}
       ${isRevealing ? `tile-flip tile-flip-delay-${revealDelay}` : ''}
       ${isFilled && !status ? 'animate-pop' : ''}
       select-none
