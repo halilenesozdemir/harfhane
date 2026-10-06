@@ -2,17 +2,16 @@
 # One `<plan>-AE<n>` per line, followed by a short reason. scripts/check-ac-coverage.mjs
 # accepts these as covered. Remove a line once a test proves that example.
 
-001-AE1  no unit test exercises the is_active-without-approval CHECK constraint; candidate repository tests are owned by open PRs #59/#63
+001-AE1  no unit test exercises the is_active-without-approval CHECK constraint; PR #59 merged without adding one and PR #63 closed without merging, so no candidate test exists yet
 001-AE2  the "is not approved" half is covered by the daily_words_require_active_word trigger tests in word-pools-migration.test.ts (PR #59, merged); no test uses a non-existent word id (e.g. 999) specifically, so the "does not exist" half stays unproven. PR #63 closed without merging.
 001-AE3  meta statement (pnpm test passes against the baseline migration), not a single test's target
 003-AE1  commit-gate/lint behavior (no-console failing the hook), not exercised by a unit test
 003-AE2  CI/gate state (pnpm lint exits 0), not a unit test target
 004-AE1  commit-gate/typecheck behavior, not exercised by a unit test
 004-AE2  build/export behavior (expo export bundling from TS source), not exercised by a unit test
-006-AE2  candidate tests (admin-repository-autofill.test.ts) are owned by open PRs #59/#63; tag after they merge
-006-AE3  candidate tests (schedule-health-service.test.ts) are owned by open PR #63; tag after PR #63 merges
-006-AE4  candidate tests (admin-repository-autofill.test.ts) are owned by open PRs #59/#63; tag after they merge
-006-AE5  candidate tests (schedule-health-service.test.ts) are owned by open PR #63; tag after PR #63 merges
+006-AE3  no test asserts the alert function is called once for a below-warning-threshold schedule; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
+006-AE4  no test exercises the top-up cron's specific 60-scheduled/90-eligible-word scenario; PR #59 merged without adding it and PR #63 closed without merging
+006-AE5  no test asserts the alert fires on low unscheduled stock independent of runway; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
 008-AE7  no test exists yet for the hint behavior (apps/frontend/src/hooks/useHint.ts, src/components/GameHint.tsx)
 
 009-AE2  Plan 009 U2 (Playwright journeys + axe), not started
