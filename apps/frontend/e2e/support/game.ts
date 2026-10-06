@@ -57,8 +57,9 @@ export async function playGuess(page: Page, letters: string[]): Promise<void> {
 }
 
 // The board (and its window keydown listener) only mounts once the splash
-// screen finishes, ~1.9s after navigation; wait for it before dispatching
-// raw keyboard events, which skip Playwright's click-target auto-waiting.
+// screen finishes (capped at ~600ms after navigation, R6); wait for it
+// before dispatching raw keyboard events, which skip Playwright's
+// click-target auto-waiting.
 export async function waitForBoardReady(page: Page): Promise<void> {
   await keyButton(page, 'ENTER').waitFor({ state: 'visible' });
 }

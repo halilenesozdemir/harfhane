@@ -1,5 +1,10 @@
+// Imported from the single-weight subpath, not the package root, so Metro
+// doesn't bundle the other four Baloo 2 weights this app never uses.
+import { Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2/800ExtraBold';
+import { useFonts } from '@expo-google-fonts/baloo-2/useFonts';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
@@ -16,6 +21,11 @@ import { useHardwareBackHandler } from './src/navigation/useHardwareBackHandler'
 import type { HomeScreenMode } from './src/screens/HomeScreen';
 import type { Route } from './src/navigation/routes';
 import type { WordLength } from './src/stats/stats';
+
+// R6/AE4: hold the native splash until the theme, stored game state and
+// fonts are loaded, instead of letting it auto-hide on the first frame.
+// Must run at module load, before any component mounts.
+void SplashScreen.preventAutoHideAsync();
 
 interface RouteViewProps {
   readonly route: Route;
@@ -78,6 +88,14 @@ export function AppNavigator() {
   }, [state]);
   useHardwareBackHandler(handleHardwareBack);
 
+  // AppNavigator only mounts once ThemeProvider has finished loading the
+  // stored theme preference (R6/AE4), so this effect firing is itself the
+  // "theme and stored state are ready" signal; fonts are gated separately
+  // in App() below, before this tree is even mounted.
+  useEffect(() => {
+    void SplashScreen.hideAsync();
+  }, []);
+
   const handleStart = useCallback(
     (mode: HomeScreenMode, length: WordLength) => dispatch({ type: 'push', route: { screen: 'game', mode, length } }),
     [],
@@ -113,6 +131,13 @@ export function AppNavigator() {
 }
 
 export default function App() {
+  const [fontsLoaded, fontsError] = useFonts({ Baloo2_800ExtraBold });
+  // Keeps the splash up until Baloo 2 is ready, so ThemeProvider (and its
+  // own stored-state gate below) never mount with the fallback font. A
+  // permanent font-loading error still lets the app through (system font
+  // fallback) instead of holding the splash forever.
+  if (!fontsLoaded && !fontsError) return null;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider store={deviceStore}>

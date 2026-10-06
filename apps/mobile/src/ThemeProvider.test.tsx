@@ -107,4 +107,25 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('bg').props.children).toBe(themes.dark.bg);
     expect(store.entries.get('harfhane:theme')).toBe('"dark"');
   });
+
+  // (011-AE4): a rejecting AsyncStorage read (corrupt storage, I/O error)
+  // must still resolve isLoaded to true with the system defaults, instead
+  // of leaving Promise.all permanently unsettled and holding the native
+  // splash screen forever (App.tsx only hides it once this provider's
+  // children render).
+  it('(011-AE4) should fall back to the system defaults and finish loading when the store rejects', async () => {
+    const rejectingStore: KeyValueStore = {
+      getItem: async () => {
+        throw new Error('storage unavailable');
+      },
+      setItem: async () => undefined,
+    };
+    await render(
+      <ThemeProvider store={rejectingStore}>
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(await screen.findByTestId('bg')).toBeTruthy();
+    expect(screen.getByTestId('bg').props.children).toBe(themes.light.bg);
+  });
 });

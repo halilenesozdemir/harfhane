@@ -9,10 +9,10 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
         <div className="flex items-center gap-2">
           <button
             onClick={onTitleClick}
-            className="w-8 h-8 bg-correct rounded-md flex items-center justify-center hover:bg-correct/90 transition-colors cursor-pointer"
+            className="w-8 h-8 bg-brand rounded-md flex items-center justify-center hover:bg-brand/90 transition-colors cursor-pointer"
             aria-label="Ana Sayfa"
           >
-            <span className="text-white font-bold text-lg">H</span>
+            <span className="text-brand-fg font-bold text-lg">H</span>
           </button>
         </div>
 
