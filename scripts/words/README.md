@@ -26,3 +26,12 @@ produces the same output files under `data/words/`.
   candidates. Do not quote its contents in reports, PRs or commit messages.
 - `test_build_word_lists.py`: unittest suite (run with `python3 -m unittest` from this
   directory).
+
+## Answer review
+
+- `answer_pool.py --length N`: ranks `data/words/candidates-N.csv` by frequency and writes the
+  top 600 to `data/words/review/pool-N.txt`.
+- `validate_labels.py --length N`: checks the model-written labels in
+  `data/words/review/labels-N.jsonl` against the pool and prints accepted/rejected counts and
+  errors as JSON. Accepted words with meaning and context go to `review-N.csv` for import.
+- `test_validate_labels.py`: unittest suite for the validator.
