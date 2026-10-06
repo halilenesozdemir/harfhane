@@ -59,13 +59,6 @@ The web app carries code from many experiments; removed features such as challen
 - Some reference removed features (challenge links, comments page); re-check each against the current code before planning.
 - Promote an item into `docs/plans/` when picked up; delete this entry once the list is triaged.
 
-## Mobile — app version line on SettingsScreen
-Navigation wiring (Plan 004 U7 follow-up) is done: `App.tsx` mounts a state-based router with the device
-`AsyncStorage`-backed store, `HomeScreen` opens How to play/Stats/Settings, and the Android hardware back
-button pops the stack.
-- `SettingsScreen` omits an app version line: `expo-constants` is not yet a dependency. Add it with
-  `pnpm exec expo install expo-constants` if the version display is wanted.
-
 ## Player-facing word queries only exclude `source = 'user'`, not the full approved/family-safe filter
 `findRandomWord`, `findWordById`, `findDailyWord` (`apps/backend/src/repositories/word-repository.ts`) and
 `autoFillLength` (`admin-repository.ts`) now exclude `source = 'user'` so unmoderated custom-list words can't be served as an answer in unlimited
@@ -161,6 +154,39 @@ and already removed end to end in #54.
   hook to run `pickHint` against a `solution` that is stale relative to the now-current day's
   `getTodayString()`-keyed storage slot, or vice versa. Out of scope for U9; needs the same fix
   as (or depends on) resolving the `useDailyWord`/`useGameState` day-boundary drift itself.
+
+## AC coverage check: source scanning is a stopgap
+`scripts/check-ac-coverage.mjs` finds AE tags by regex-scanning test file source (JS/TS call
+arguments, Python `def`/docstrings) rather than asking the test runner what tests actually exist
+and ran. This is a parser, not a real one, so it can still be fooled by shapes it doesn't model
+(e.g. a tag built from string concatenation, a dynamically generated test name, a test file the
+runner excludes by config). Move the check to runner-collected test names instead (vitest's/
+pytest's own test list, e.g. `vitest list --json` / `pytest --collect-only -q`) so it checks what
+actually runs, not what the source merely looks like.
+
+## AC coverage check / commit-gate gaps (PR #69 round 4, 2026-10-06)
+- `.githooks/pre-commit`'s `CODE_PATTERN` does not match `scripts/` at all (it only matches
+  `apps/`, `packages/`, and top-level files), so it never typechecks, lints or tests
+  `scripts/*.mjs` or `scripts/**/*.py` changes. Include those paths in the pattern.
+- `schedule-health-repository.test.ts`'s restock-runway query: removing `pool = 'daily'` from
+  `fetchRestockRunwayDays` (`apps/backend/src/repositories/schedule-health-repository.ts`)
+  survives the current test suite (an R4 mutation-testing gap, found in PR #69 round 4 review).
+  Add a test that an unlimited-pool word of the matching length does not count toward
+  `restockRunwayDays`.
+
+## AC coverage check: more skip/pending shapes it can miss (PR #69 round 6, 2026-10-06)
+`scripts/check-ac-coverage.mjs`'s skip handling (`describe.skip(...)`, `.skip`/`.todo` on a test
+call, `@pytest.mark.skip`) does not yet cover: a skip block whose body contains an unbalanced `)`
+(e.g. inside a string or comment, defeating `findMatchingParenIndex`'s naive depth count);
+`@unittest.skip` applied at class level (skips every test method, not matched by the per-test
+decorator check); a multi-line skip decorator (args spanning several lines before the decorated
+`def`); `pytest.skip()` or `self.skipTest()` called from inside a test body (always-skips but
+looks like a normal test to the regex); `describe.skip.each(...)` and `xdescribe(...)` (alternate
+spellings of a skipped suite); `it.fails(...)` (Jest/Vitest: expected to fail, not a proof either);
+and a template-literal test name whose state (e.g. a module-level counter or captured loop
+variable used to build the name) never resets between files, so two tags can collide or one can
+go unseen depending on scan order. Each needs its own fixture and regex/parsing fix in
+`scripts/check-ac-coverage.mjs` and `scripts/check-ac-coverage.test.mjs`.
 
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI

@@ -31,6 +31,11 @@ Three agents in `.claude/agents/`; the main loop owns planning, integration and 
 
 Two open PRs never touch the same file; each plan names the files its parallel units own. At most three implementation PRs are open per area (backend, web, mobile, scripts); docs-only PRs and PRs labelled `parked` (waiting on the owner or a cutover) do not count. A PR whose review is clean merges the same day; otherwise it is brought up to date with `main` before more work lands on it. Removals run one after another. Adding a dependency, changing settings files, remote D1 writes and store or account steps need the owner.
 
+## Testing
+
+Flaky-test policy: a test that fails intermittently is quarantined with a `docs/backlog.md` entry
+and fixed or deleted within a week; tests are never silently retried to green.
+
 ## Owner autonomy
 
 The owner has approved merging without asking once CI is green and the `reviewer` found nothing real (or its findings are fixed). Merging to `main` deploys web and backend; that is accepted. Everything in Invariant 4 and the line above still needs the owner. Plans with `status: approved` do not need another round of questions; unclear requirements do. An owner decision is written into the affected plan or `docs/roadmap.md` in the same session; memory only points to it.

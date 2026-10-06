@@ -41,7 +41,7 @@ describe('GET /api/words/random', () => {
     expect(body.data.word.meaning).toBeDefined();
   });
 
-  it('should serve an unlimited-pool word when no daily-pool word exists for that length (AE3)', async () => {
+  it('should serve an unlimited-pool word when no daily-pool word exists for that length (008-AE3)', async () => {
     await env.DB
       .prepare(
         `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active, pool)

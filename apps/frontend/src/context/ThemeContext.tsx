@@ -31,5 +31,3 @@ export const useThemeContext = (): ThemeContextValue => {
   }
   return context;
 };
-
-export default ThemeContext;

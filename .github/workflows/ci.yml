@@ -47,6 +47,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Check acceptance-example coverage
+        run: pnpm run check:ac
+
       - name: Build frontend
         run: pnpm --filter @harfhane/frontend run build
 
