@@ -1,24 +1,19 @@
-import { useState, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { saveResult } from '../lib/auth-api';
 import { getTodayString } from '@harfhane/shared';
-import type { DailyStats, UnlimitedStats, WordLength, GameXPResult } from '../types';
+import type { DailyStats, UnlimitedStats, WordLength } from '../types';
 
 interface UseGameStatsOptions {
   isUnlimited: boolean;
   wordLength: WordLength;
-  token: string | null;
-  wordId?: number | null;
 }
 
 interface UseGameStatsReturn {
   currentStats: DailyStats | UnlimitedStats;
   updateStats: (won: boolean, guessCount: number) => void;
-  lastXPResult: GameXPResult | null;
 }
 
-export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGameStatsOptions): UseGameStatsReturn {
+export function useGameStats({ isUnlimited, wordLength }: UseGameStatsOptions): UseGameStatsReturn {
   const [stats, setStats] = useLocalStorage<DailyStats>(`harfhane:stats:${wordLength}`, {
     gamesPlayed: 0,
     gamesWon: 0,
@@ -34,9 +29,6 @@ export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGame
     guessDistribution: [0, 0, 0, 0, 0, 0],
   });
 
-  const [lastXPResult, setLastXPResult] = useState<GameXPResult | null>(null);
-  const queryClient = useQueryClient();
-
   const updateStats = useCallback((won: boolean, guessCount: number): void => {
     if (isUnlimited) {
       setUnlimitedStats(prev => {
@@ -47,21 +39,6 @@ export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGame
         }
         return { gamesPlayed: prev.gamesPlayed + 1, gamesWon: prev.gamesWon + (won ? 1 : 0), guessDistribution: newDistribution };
       });
-      if (token) {
-        void saveResult(token, {
-          date: getTodayString(),
-          word_length: wordLength,
-          guesses: won ? guessCount : 0,
-          won,
-          mode: 'unlimited',
-          word_id: wordId ?? undefined,
-        }).then(result => {
-          if (result.xp) {
-            setLastXPResult(result.xp);
-            void queryClient.invalidateQueries({ queryKey: ['xp', 'profile'] });
-          }
-        }).catch((_: unknown) => undefined);
-      }
       return;
     }
 
@@ -85,21 +62,7 @@ export function useGameStats({ isUnlimited, wordLength, token, wordId }: UseGame
         lastPlayedDate: getTodayString(),
       };
     });
+  }, [isUnlimited, setStats, setUnlimitedStats]);
 
-    if (token) {
-      void saveResult(token, {
-        date: getTodayString(),
-        word_length: wordLength,
-        guesses: won ? guessCount : 0,
-        won,
-      }).then(result => {
-        if (result.xp) {
-          setLastXPResult(result.xp);
-          void queryClient.invalidateQueries({ queryKey: ['xp', 'profile'] });
-        }
-      }).catch((_: unknown) => undefined);
-    }
-  }, [isUnlimited, token, wordLength, wordId, setStats, setUnlimitedStats, queryClient]);
-
-  return { currentStats: isUnlimited ? unlimitedStats : stats, updateStats, lastXPResult };
+  return { currentStats: isUnlimited ? unlimitedStats : stats, updateStats };
 }

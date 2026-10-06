@@ -6,8 +6,6 @@ interface HitRecord {
   resetAt: number;
 }
 
-const AUTH_WINDOW_MS = 60 * 1000;
-const AUTH_MAX_HITS = 10;
 const GAME_WINDOW_MS = 60 * 1000;
 const GAME_MAX_HITS = 30;
 
@@ -52,5 +50,4 @@ export function createRateLimiter(
   };
 }
 
-export const rateLimiter = createRateLimiter(AUTH_MAX_HITS, AUTH_WINDOW_MS);
 export const gameRateLimiter = createRateLimiter(GAME_MAX_HITS, GAME_WINDOW_MS);

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Share2, Check, RotateCcw, Home, X, TrendingUp, LogIn, ShieldCheck } from "lucide-react";
+import { Share2, Check, RotateCcw, Home, X } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
-import { BadgeItem } from "./XPBar";
 import { getTimeUntilMidnight, generateShareText } from "@harfhane/shared";
 import { useShare } from "../hooks/useShare";
-import type { GameOverModalProps, TimeCountdown, Badge } from "../types";
+import type { GameOverModalProps, TimeCountdown } from "../types";
 
 interface StatBoxProps {
   value: number;
@@ -32,11 +31,8 @@ function GameOverModal({
   gameNumber,
   stats,
   isUnlimited,
-  isAuthenticated,
   onPlayAgain,
   onGoHome,
-  onAuthClick,
-  xpResult,
   sessionChallenge,
   challengeUrl,
 }: GameOverModalProps): React.JSX.Element {
@@ -179,48 +175,6 @@ function GameOverModal({
           })}
         </div>
 
-        {!isUnlimited && xpResult && (
-          <div className="bg-bg-primary border border-border-color rounded-lg p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-text-primary font-semibold text-sm">
-                <TrendingUp size={16} className="text-correct" />
-                <span>+{xpResult.earned} XP</span>
-                {xpResult.levelUp && (
-                  <span className="text-xs px-2 py-0.5 bg-correct text-white rounded-full">
-                    Seviye {xpResult.level}!
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-text-secondary">Toplam: {xpResult.total} XP</span>
-            </div>
-            {(xpResult.breakdown.guessBonus > 0 || xpResult.breakdown.streakBonus > 0) && (
-              <div className="flex gap-3 text-xs text-text-secondary">
-                <span>+{xpResult.breakdown.base} baz</span>
-                {xpResult.breakdown.guessBonus > 0 && (
-                  <span className="text-correct">+{xpResult.breakdown.guessBonus} hız bonusu</span>
-                )}
-                {xpResult.breakdown.streakBonus > 0 && (
-                  <span className="text-present">+{xpResult.breakdown.streakBonus} seri bonusu</span>
-                )}
-              </div>
-            )}
-            {xpResult.freezeTokenEarned && (
-              <div className="flex items-center gap-2 text-xs text-blue-400 font-medium">
-                <ShieldCheck size={14} />
-                <span>Seri dondurma tokeni kazandın!</span>
-              </div>
-            )}
-            {xpResult.newBadges.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-text-secondary font-medium">Yeni rozet kazandın!</p>
-                {xpResult.newBadges.map((badge: Badge) => (
-                  <BadgeItem key={badge.slug} badge={badge} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {isUnlimited && sessionChallenge && (
           <div className="bg-bg-primary border border-border-color rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
@@ -267,16 +221,6 @@ function GameOverModal({
               </>
             )}
           </div>
-        )}
-
-        {!isAuthenticated && (
-          <button
-            onClick={onAuthClick}
-            className="w-full py-3 px-4 rounded-md font-bold bg-present/10 hover:bg-present/20 text-present border border-present/40 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
-          >
-            <LogIn size={20} />
-            Giriş yap — serini ve istatistiklerini kaydet
-          </button>
         )}
 
         <div className="space-y-3">

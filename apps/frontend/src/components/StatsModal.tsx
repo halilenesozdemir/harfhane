@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { useAuth } from '../context/AuthContext';
-import { useUnlimitedStats } from '../hooks/useUnlimitedStats';
 import type { StatsModalProps } from '../types';
 
 interface StatBoxProps {
@@ -45,8 +43,6 @@ function DistributionBar({ count, targetWidth, guessNumber, isHighlighted, anima
 function StatsModal({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnlimited }: StatsModalProps): React.JSX.Element {
   const [animate, setAnimate] = useState(false);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const { token } = useAuth();
-  const { data: unlimitedPersonalData } = useUnlimitedStats();
 
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
@@ -64,7 +60,6 @@ function StatsModal({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
     : 0;
 
   const maxDistribution = Math.max(...stats.guessDistribution, 1);
-  const personalStats = unlimitedPersonalData?.stats;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isUnlimited ? 'Sınırsız Mod İstatistikleri' : 'İstatistikler'}>
@@ -101,25 +96,6 @@ function StatsModal({ isOpen, onClose, stats, lastGuessCount, gameStatus, isUnli
           <p className="text-center text-text-secondary text-sm">
             İlk oyununuzu tamamladığınızda istatistikler burada görünecek.
           </p>
-        )}
-
-        {isUnlimited && (
-          <div className="border-t border-border pt-5 mt-2">
-            <h3 className="text-sm font-semibold mb-3 text-text-secondary uppercase tracking-wider">Kişisel İstatistikler</h3>
-            {!token && (
-              <p className="text-center text-text-secondary text-sm">
-                Giriş yap — istatistiklerini kaydet
-              </p>
-            )}
-            {token && personalStats && (
-              <div className="grid grid-cols-4 gap-2">
-                <StatBox value={personalStats.gamesPlayed} label="Oyun" />
-                <StatBox value={personalStats.gamesWon > 0 ? Math.round((personalStats.gamesWon / personalStats.gamesPlayed) * 100) : 0} label="Kazanma %" />
-                <StatBox value={personalStats.avgGuesses} label="Ort. Tahmin" />
-                <StatBox value={personalStats.bestStreak} label="En İyi Seri" />
-              </div>
-            )}
-          </div>
         )}
       </div>
     </Modal>
