@@ -186,6 +186,40 @@ describe('App', () => {
   describe('splash screen hold (R6)', () => {
     const STORE_DELAY_MS = 300;
 
+    // A fresh module registry, not the mockClear()-reset shared instance
+    // above: this is the only way to see App.tsx's *module-load* behavior
+    // (the top-level preventAutoHideAsync() call) in isolation, instead of
+    // relying on a mock reset that would just as happily hide a real bug
+    // (e.g. an accidental immediate hideAsync() at import time).
+    it('(011-AE4) should call preventAutoHideAsync as a module-load side effect, without calling hideAsync at the same time', () => {
+      // jest.mock's module factory is memoized per mocked path across
+      // isolateModules boundaries, so the mock fns below are the SAME
+      // jest.fn() instances as the outer `SplashScreen` import, already
+      // carrying calls from the file's own static import and earlier
+      // tests. Deltas, not absolute counts, isolate what THIS fresh
+      // evaluation of App.tsx actually did — this is exactly what
+      // mockClear() cannot prove, since it would also erase a real bug
+      // (e.g. an accidental immediate hideAsync() at import time).
+      const preventCallsBefore = (SplashScreen.preventAutoHideAsync as jest.Mock).mock.calls.length;
+      const hideCallsBefore = (SplashScreen.hideAsync as jest.Mock).mock.calls.length;
+
+      let freshSplash!: typeof SplashScreen;
+      jest.isolateModules(() => {
+        // jest.isolateModules needs a synchronous require to get a fresh
+        // module instance; a static/dynamic `import` would not re-run
+        // App.tsx's module-load side effect in isolation.
+        /* eslint-disable @typescript-eslint/no-require-imports */
+        freshSplash = require('expo-splash-screen');
+        // Module-load side effect fires here, synchronously, before any
+        // component ever mounts.
+        require('./App');
+        /* eslint-enable @typescript-eslint/no-require-imports */
+      });
+
+      expect(freshSplash.preventAutoHideAsync).toHaveBeenCalledTimes(preventCallsBefore + 1);
+      expect(freshSplash.hideAsync).toHaveBeenCalledTimes(hideCallsBefore);
+    });
+
     function createDelayedStore(): KeyValueStore {
       return {
         getItem: () => new Promise((resolve) => setTimeout(() => resolve(null), STORE_DELAY_MS)),
