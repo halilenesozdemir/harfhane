@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react';
 const SPLASH_TILES = ['H', 'A', 'R', 'F'] as const;
 const TILE_COLORS = ['bg-correct', 'bg-present', 'bg-correct', 'bg-present'] as const;
 
+// R6: the splash is a brief brand moment, not a load screen — it no longer
+// holds the app behind a fixed 1.9s wait. ENTER_DELAY_MS starts the pop-in
+// transition on the next frame, HOLD_START_MS begins the fade-out, and
+// TOTAL_DURATION_MS is the hard cap at which the app takes over.
+const ENTER_DELAY_MS = 50;
+const HOLD_START_MS = 400;
+const TOTAL_DURATION_MS = 600;
+
 interface SplashScreenProps {
   onDone: () => void;
 }
@@ -11,9 +19,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps): React.JSX.E
   const [phase, setPhase] = useState<'in' | 'hold' | 'out'>('in');
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('hold'), 600);
-    const t2 = setTimeout(() => setPhase('out'), 1400);
-    const t3 = setTimeout(() => onDone(), 1900);
+    const t1 = setTimeout(() => setPhase('hold'), ENTER_DELAY_MS);
+    const t2 = setTimeout(() => setPhase('out'), HOLD_START_MS);
+    const t3 = setTimeout(() => onDone(), TOTAL_DURATION_MS);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onDone]);
 
