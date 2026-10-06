@@ -10,7 +10,7 @@ const getStateClasses = (status: TileProps['status'], isFilled: boolean, isHint:
   if (status) return STATUS_CLASSES[status] ?? '';
   // Dashed border + reduced text opacity mark this as a placeholder, not a
   // typed letter, so it reads distinctly from a tile the player filled in.
-  if (isHint) return 'bg-tile-empty-bg border-dashed border-brand text-brand/50';
+  if (isHint) return 'bg-tile-empty-bg border-dashed border-brand text-brand/75';
   if (isFilled) return 'bg-bg-secondary border-tile-filled text-text-primary shadow-depth-tile';
   return 'bg-tile-empty-bg border-tile-empty text-text-primary';
 };

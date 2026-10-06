@@ -102,6 +102,21 @@ test('the hint only counts submitted guesses, not the unsubmitted current guess'
   await expect(page.getByText('3. harf: L')).toBeVisible();
 });
 
+test('a hint revealed in daily mode does not leak into unlimited mode', async ({ page, api }) => {
+  await api.stubDailyWord(5, { word: 'KALEM' });
+  await api.stubRandomWord(5, [{ word: 'MASAL' }]);
+  await api.stubValidate(() => true);
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
+
+  await page.goto('/unlimited/5');
+  await waitForBoardReady(page);
+
+  await expect(page.locator('[data-hint="true"]')).toHaveCount(0);
+});
+
 test('a hint survives a reload without granting a fresh one', async ({ page, api }) => {
   const solution = 'KALEM';
   await api.stubDailyWord(5, { word: solution });

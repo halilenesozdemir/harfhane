@@ -7,7 +7,13 @@ import type { WordLength } from '../types';
 const SOLUTION = 'KALEM';
 const WORD_LENGTH: WordLength = 5;
 
-function storageKeyFor(wordLength: WordLength): string {
+function dailyKeyFor(wordLength: WordLength): string {
+  return `harfhane:hint:daily:${getTodayString()}:${wordLength}`;
+}
+
+// The key before mode-scoping was added: shared by daily and unlimited, which
+// is exactly the bug this file now guards against.
+function legacyKeyFor(wordLength: WordLength): string {
   return `harfhane:hint:${getTodayString()}:${wordLength}`;
 }
 
@@ -48,7 +54,7 @@ describe('useHint', () => {
   });
 
   it('should keep the revealed hint after a reload', () => {
-    const storageKey = storageKeyFor(WORD_LENGTH);
+    const storageKey = dailyKeyFor(WORD_LENGTH);
 
     const { result, unmount } = renderHook(() => useHint(SOLUTION, WORD_LENGTH, [], false));
     act(() => result.current.revealHint());
@@ -73,9 +79,8 @@ describe('useHint', () => {
     expect(result.current.hintUsed).toBe(true);
   });
 
-  it('should ignore a legacy boolean value stored under the same key and start from no revealed positions', () => {
-    const storageKey = storageKeyFor(WORD_LENGTH);
-    window.localStorage.setItem(storageKey, JSON.stringify(true));
+  it('should ignore a legacy boolean value stored under the pre-mode-scoping key', () => {
+    window.localStorage.setItem(legacyKeyFor(WORD_LENGTH), JSON.stringify(true));
 
     const { result } = renderHook(() => useHint(SOLUTION, WORD_LENGTH, [], false));
 
@@ -87,7 +92,7 @@ describe('useHint', () => {
   });
 
   it('should not record the same position twice when revealHint fires twice before a re-render settles', () => {
-    const storageKey = storageKeyFor(WORD_LENGTH);
+    const storageKey = dailyKeyFor(WORD_LENGTH);
     const { result } = renderHook(() => useHint(SOLUTION, WORD_LENGTH, [], false));
 
     act(() => {
@@ -108,5 +113,32 @@ describe('useHint', () => {
 
     act(() => result.current.revealHint());
     expect(result.current.hint).toBeNull();
+  });
+
+  it('should opportunistically pick up a position revealed under the pre-mode-scoping key for daily mode', () => {
+    window.localStorage.setItem(legacyKeyFor(WORD_LENGTH), JSON.stringify([1]));
+
+    const { result } = renderHook(() => useHint(SOLUTION, WORD_LENGTH, [], false));
+
+    expect(result.current.hint).toEqual({ position: 1, letter: 'A' });
+  });
+
+  it('should not leak a daily-mode revealed position into unlimited mode (same day, same length)', () => {
+    window.localStorage.setItem(dailyKeyFor(WORD_LENGTH), JSON.stringify([0]));
+
+    const { result } = renderHook(() => useHint('MASAL', WORD_LENGTH, [], true));
+
+    expect(result.current.hint).toBeNull();
+  });
+
+  it('should make revealHint a no-op in unlimited mode even if storage has a stale value', () => {
+    window.localStorage.setItem(dailyKeyFor(WORD_LENGTH), JSON.stringify([0]));
+
+    const { result } = renderHook(() => useHint('MASAL', WORD_LENGTH, [], true));
+
+    act(() => result.current.revealHint());
+
+    expect(result.current.hint).toBeNull();
+    expect(result.current.hintAvailable).toBe(false);
   });
 });
