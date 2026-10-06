@@ -73,7 +73,7 @@ jobs:
             ELAPSED=$((ELAPSED + INTERVAL))
           done
           echo "Found CI run $RUN_ID for $GITHUB_SHA — waiting for it to finish..."
-          if ! timeout "$WATCH_TIMEOUT" gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status; then
+          if ! timeout "$WATCH_TIMEOUT" gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status --interval 30; then
             echo "::error::CI run $RUN_ID for commit $GITHUB_SHA did not conclude with success"
             exit 1
           fi
