@@ -1,17 +1,11 @@
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { useAutoOpenAuthModal } from './hooks/useAutoOpenAuthModal';
-import { useLoginWelcomeMessage } from './hooks/useLoginWelcomeMessage';
-import AuthModal from './components/AuthModal';
 import InstallPrompt from './components/InstallPrompt';
 import SplashScreen from './components/SplashScreen';
-import Toast from './components/Toast';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
-import ResetPasswordPage from './components/ResetPasswordPage';
 import { PageMeta } from './components/page-meta';
 import type { GameMode, WordLength } from './types';
 
@@ -81,9 +75,6 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
 
 function HomeRoute(): React.JSX.Element {
   const navigate = useNavigate();
-  const { googleAuthFailed, justLoggedIn, clearJustLoggedIn, user } = useAuth();
-  const [showAuth, setShowAuth] = useAutoOpenAuthModal(googleAuthFailed);
-  const welcomeMessage = useLoginWelcomeMessage(justLoggedIn, user?.username, clearJustLoggedIn);
 
   return (
     <>
@@ -97,8 +88,6 @@ function HomeRoute(): React.JSX.Element {
           navigate(`/${mode}/${length}`);
         }}
       />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-      <Toast message={welcomeMessage} />
     </>
   );
 }
@@ -118,7 +107,7 @@ function AppRoutes(): React.JSX.Element {
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
           <Route path="/tournament" element={<Navigate to="/" replace />} />
           <Route path="/discuss" element={<Navigate to="/" replace />} />
-          <Route path="/sifre-sifirla" element={<ResetPasswordPage />} />
+          <Route path="/sifre-sifirla" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
@@ -128,22 +117,9 @@ function AppRoutes(): React.JSX.Element {
 }
 
 function AppShell(): React.JSX.Element {
-  const { isLoading, isAuthCallback } = useAuth();
   const [splashDone, setSplashDone] = useState(false);
-  const handleSplashDone = useCallback(() => setSplashDone(true), []);
 
-  if (!splashDone) return <SplashScreen onDone={handleSplashDone} />;
-
-  if (isAuthCallback && isLoading) {
-    return (
-      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 bg-correct rounded-xl flex items-center justify-center shadow-lg">
-          <span className="text-white font-bold text-3xl">H</span>
-        </div>
-        <p className="text-text-secondary text-sm tracking-wide">Giriş yapılıyor...</p>
-      </div>
-    );
-  }
+  if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />;
 
   return (
     <BrowserRouter>
@@ -195,9 +171,7 @@ function App(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <AppShell />
-        </AuthProvider>
+        <AppShell />
       </ThemeProvider>
     </QueryClientProvider>
   );
