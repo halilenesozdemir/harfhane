@@ -5,12 +5,14 @@ import type { DailyStats, GameMode, UnlimitedStats, WordLength } from '../types'
 
 const NAV_WIDTH_PX = 260;
 const STATS_WIDTH_PX = 300;
-const WORD_LENGTHS: WordLength[] = [4, 5, 6];
+const SCHEDULED_WORD_LENGTHS: WordLength[] = [4, 5, 6];
 const PERCENT_SCALE = 100;
 
 interface DesktopShellProps {
   mode: GameMode;
   wordLength: WordLength;
+  /** R1: lengths the length picker offers; defaults to every scheduled length. */
+  playableLengths?: readonly WordLength[];
   stats: DailyStats | UnlimitedStats;
   onGoHome: () => void;
   children: React.ReactNode;
@@ -46,16 +48,18 @@ function WordLengthRow({
   mode,
   activeMode,
   activeWordLength,
+  lengths,
   onNavigate,
 }: {
   mode: 'daily' | 'unlimited';
   activeMode: GameMode;
   activeWordLength: WordLength;
+  lengths: readonly WordLength[];
   onNavigate: (mode: 'daily' | 'unlimited', wordLength: WordLength) => void;
 }): React.JSX.Element {
   return (
     <div className="flex gap-1.5 px-1">
-      {WORD_LENGTHS.map((length) => {
+      {lengths.map((length) => {
         const isActive = activeMode === mode && activeWordLength === length;
         return (
           <button
@@ -77,16 +81,19 @@ function WordLengthRow({
 function ModeNav({
   mode,
   wordLength,
+  playableLengths,
   onGoHome,
 }: {
   mode: GameMode;
   wordLength: WordLength;
+  playableLengths: readonly WordLength[];
   onGoHome: () => void;
 }): React.JSX.Element {
   const navigate = useNavigate();
   const goToGame = (nextMode: 'daily' | 'unlimited', length: WordLength): void => {
     navigate(`/${nextMode}/${length}`);
   };
+  const showLengthPicker = playableLengths.length > 1;
 
   return (
     <nav aria-label="Oyun modları" className="flex flex-col gap-4">
@@ -103,12 +110,16 @@ function ModeNav({
 
       <div className="flex flex-col gap-1.5">
         <NavLink label="Günlük" isActive={mode === 'daily'} onClick={() => goToGame('daily', wordLength)} />
-        <WordLengthRow mode="daily" activeMode={mode} activeWordLength={wordLength} onNavigate={goToGame} />
+        {showLengthPicker && (
+          <WordLengthRow mode="daily" activeMode={mode} activeWordLength={wordLength} lengths={playableLengths} onNavigate={goToGame} />
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
         <NavLink label="Sınırsız" isActive={mode === 'unlimited'} onClick={() => goToGame('unlimited', wordLength)} />
-        <WordLengthRow mode="unlimited" activeMode={mode} activeWordLength={wordLength} onNavigate={goToGame} />
+        {showLengthPicker && (
+          <WordLengthRow mode="unlimited" activeMode={mode} activeWordLength={wordLength} lengths={playableLengths} onNavigate={goToGame} />
+        )}
       </div>
 
     </nav>
@@ -151,7 +162,14 @@ function StatusPanel({ mode, stats }: { mode: GameMode; stats: DailyStats | Unli
   );
 }
 
-export default function DesktopShell({ mode, wordLength, stats, onGoHome, children }: DesktopShellProps): React.JSX.Element {
+export default function DesktopShell({
+  mode,
+  wordLength,
+  playableLengths = SCHEDULED_WORD_LENGTHS,
+  stats,
+  onGoHome,
+  children,
+}: DesktopShellProps): React.JSX.Element {
   return (
     <div className="lg:flex lg:justify-center lg:gap-6 lg:px-6 lg:py-6">
       <aside
@@ -159,7 +177,7 @@ export default function DesktopShell({ mode, wordLength, stats, onGoHome, childr
         className="hidden lg:block lg:sticky lg:top-6 lg:self-start lg:shrink-0 bg-bg-secondary rounded-tile p-4 shadow-depth-surface"
         style={{ width: NAV_WIDTH_PX }}
       >
-        <ModeNav mode={mode} wordLength={wordLength} onGoHome={onGoHome} />
+        <ModeNav mode={mode} wordLength={wordLength} playableLengths={playableLengths} onGoHome={onGoHome} />
       </aside>
 
       <div className="lg:flex-1 lg:flex lg:justify-center lg:min-w-0">

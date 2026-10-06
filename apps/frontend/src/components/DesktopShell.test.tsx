@@ -54,4 +54,22 @@ describe('DesktopShell', () => {
     renderShell(dailyStats);
     expect(screen.getByText('Oyun alanı')).toBeInTheDocument();
   });
+
+  it('shows the length picker for every scheduled length by default', () => {
+    renderShell(dailyStats);
+    expect(screen.getAllByRole('button', { name: '4' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: '6' }).length).toBeGreaterThan(0);
+  });
+
+  it('hides the length picker when only one length is playable', () => {
+    render(
+      <MemoryRouter>
+        <DesktopShell mode="daily" wordLength={5} playableLengths={[5]} stats={dailyStats} onGoHome={vi.fn()}>
+          <div>Oyun alanı</div>
+        </DesktopShell>
+      </MemoryRouter>
+    );
+    expect(screen.queryByRole('button', { name: '4' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '5' })).not.toBeInTheDocument();
+  });
 });

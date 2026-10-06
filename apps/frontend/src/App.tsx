@@ -7,6 +7,7 @@ import SplashScreen from './components/SplashScreen';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import { PageMeta } from './components/page-meta';
+import { usePlayableLengths, usePlayableLengthsQuery } from './hooks/usePlayableLengths';
 import type { GameMode, WordLength } from './types';
 
 const CHUNK_RELOAD_KEY = 'harfhane:chunk-reload';
@@ -51,15 +52,32 @@ const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkE
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
-const VALID_LENGTHS = [4, 5, 6] as const;
+const DEFAULT_WORD_LENGTH: WordLength = 5;
+const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
 
 function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
   const { length } = useParams<{ length?: string }>();
   const navigate = useNavigate();
+  const playableLengths = usePlayableLengths();
+  const { isLoading: lengthsLoading } = usePlayableLengthsQuery();
   const parsed = Number(length);
-  const wordLength: WordLength = (VALID_LENGTHS as readonly number[]).includes(parsed)
-    ? (parsed as WordLength)
-    : 5;
+  const isScheduled = (SCHEDULED_WORD_LENGTHS as readonly number[]).includes(parsed);
+  const isPlayable = (playableLengths as readonly number[]).includes(parsed);
+  const fallbackLength = playableLengths[0] ?? DEFAULT_WORD_LENGTH;
+
+  // A length outside 4/5/6 is never valid; redirect right away.
+  if (length !== undefined && !isScheduled) {
+    return <Navigate to={`/${mode}/${fallbackLength}`} replace />;
+  }
+
+  // AE1: once the playable-lengths answer is in, a scheduled-but-not-playable
+  // length redirects to the default one. Waiting for lengthsLoading avoids
+  // redirecting on the fallback [5] before the real list has arrived.
+  if (length !== undefined && !lengthsLoading && !isPlayable) {
+    return <Navigate to={`/${mode}/${fallbackLength}`} replace />;
+  }
+
+  const wordLength: WordLength = length === undefined ? fallbackLength : (parsed as WordLength);
   const canonicalPath = length === undefined ? `/${mode}` : `/${mode}/${wordLength}`;
   return (
     <>
@@ -68,7 +86,7 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
         description={GAME_DESCRIPTIONS[mode](wordLength)}
         canonicalPath={canonicalPath}
       />
-      <GamePage mode={mode} wordLength={wordLength} onGoHome={() => navigate('/')} />
+      <GamePage mode={mode} wordLength={wordLength} playableLengths={playableLengths} onGoHome={() => navigate('/')} />
     </>
   );
 }

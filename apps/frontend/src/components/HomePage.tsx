@@ -2,14 +2,20 @@ import { useState } from "react";
 import { Calendar, Infinity as InfinityIcon, Settings, HelpCircle } from "lucide-react";
 import HowToPlayModal from "./HowToPlayModal";
 import SettingsModal from "./SettingsModal";
+import { usePlayableLengths } from "../hooks/usePlayableLengths";
 import type { HomePageProps, WordLength } from "../types";
 
-const WORD_LENGTHS: WordLength[] = [4, 5, 6];
+const DEFAULT_WORD_LENGTH: WordLength = 5;
 
 const HAS_SEEN_HELP_KEY = 'harfhane:has-seen-help';
 
 const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
-  const [selectedLength, setSelectedLength] = useState<WordLength>(5);
+  const playableLengths = usePlayableLengths();
+  const dailyLength = playableLengths[0] ?? DEFAULT_WORD_LENGTH;
+  // null means "no explicit pick yet"; falls back to dailyLength, and also
+  // whenever a previous pick stops being playable (derived, not an effect).
+  const [pickedLength, setPickedLength] = useState<WordLength | null>(null);
+  const selectedLength = pickedLength !== null && playableLengths.includes(pickedLength) ? pickedLength : dailyLength;
   const [showHelp, setShowHelp] = useState(() => {
     const seen = localStorage.getItem(HAS_SEEN_HELP_KEY);
     return !seen || seen === 'false';
@@ -45,7 +51,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
 
       <div className="w-full max-w-md space-y-3">
         <button
-          onClick={() => onSelectMode("daily", 5)}
+          onClick={() => onSelectMode("daily", dailyLength)}
           className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
@@ -54,7 +60,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
             </div>
             <div className="text-left">
               <h2 className="text-xl font-bold">Günlük Oyun</h2>
-              <p className="text-white/75 text-sm">Günün 5 harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
+              <p className="text-white/75 text-sm">Günün {dailyLength} harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
             </div>
           </div>
         </button>
@@ -74,11 +80,12 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
               </div>
             </div>
           </button>
+          {playableLengths.length > 1 && (
           <div className="flex gap-2 px-5 pb-4">
-            {WORD_LENGTHS.map((len) => (
+            {playableLengths.map((len) => (
               <button
                 key={len}
-                onClick={() => setSelectedLength(len)}
+                onClick={() => setPickedLength(len)}
                 className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                   selectedLength === len
                     ? "bg-present text-white shadow-sm"
@@ -89,6 +96,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
               </button>
             ))}
           </div>
+          )}
         </div>
       </div>
 
