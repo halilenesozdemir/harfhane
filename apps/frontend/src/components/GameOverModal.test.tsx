@@ -39,7 +39,7 @@ function renderModal(overrides: Partial<GameOverModalProps> = {}) {
 }
 
 describe('GameOverModal', () => {
-  it('should not render the meaning text even when solutionEntry has one', () => {
+  it('should not render the meaning text even when solutionEntry has one (008-AE6)', () => {
     renderModal();
     expect(screen.queryByText('Yazı yazmaya yarayan araç')).not.toBeInTheDocument();
     expect(screen.queryByText('Anlam:')).not.toBeInTheDocument();
