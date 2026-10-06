@@ -13,23 +13,27 @@ per-length rollout depend on, so word supply is measurable and never runs out (I
 
 Research: `docs/research/2026-10-06-word-supply-standards.md`. Owner decisions of 2026-10-06:
 5 letters launch first, 4 and 6 open once stocked; an answer may repeat within its length only
-after 3 years; unlimited mode gets its own larger pool without meanings; daily answers keep a
-short meaning but no longer need a context sentence; no Wiktionary or other CC BY-SA sources.
+after 3 years; unlimited mode gets its own larger pool; words carry no meaning or context at all (the hint
+reveals a letter instead, and may later become a supporter perk); no Wiktionary or other
+CC BY-SA sources.
 
 ## Requirements
 - R1. The backend decides which lengths are playable; web and mobile stop hard-coding `[4, 5, 6]`.
   Scheduled lengths (cron auto-fill, schedule health) stay 4, 5 and 6 so hidden lengths keep filling.
-- R2. A word belongs to one pool: `daily` (owner-reviewed, has a meaning) or `unlimited`
-  (model-labelled, deterministic checks, meaning optional). Daily scheduling uses only the daily
+- R2. A word belongs to one pool: `daily` (owner-reviewed) or `unlimited` (model-labelled,
+  deterministic checks). Daily scheduling uses only the daily
   pool; unlimited mode draws from both pools.
 - R3. Auto-fill never schedules a word that was a daily answer of the same length in the last
   3 years, and never repeats a word inside one fill. When stock runs out it stops and schedule
   health reports it, instead of cycling.
 - R4. Schedule health reports, per scheduled length, the approved daily-pool words that can still
   be scheduled under R3 ("restock runway"), and warns when that runway is under 180 days.
-- R5. Empty `meaning` or `context` never renders as an empty block or an empty quote.
-- R6. The label validator no longer requires a context sentence (if one is given it must use the
-  answer), and supports an unlimited-pool mode that needs only a decision and reason.
+- R5. No meaning or context is shown anywhere in the game; the game-over modal shows the word only.
+- R6. The label validator needs only a decision (and a reason for reject/unsure) in both pools and
+  writes word-only review files.
+- R7. The daily hint reveals one letter of the answer at a position the player has not yet solved,
+  once per daily game, on web and mobile. How many hints a player gets is a single constant so a
+  supporter perk can change it later (Plan 005).
 
 ## Acceptance examples
 - AE1 (R1). Given `PLAYABLE_WORD_LENGTHS = "5"`, `GET /api/words/lengths` returns `[5]`; the web home
@@ -42,8 +46,10 @@ short meaning but no longer need a context sentence; no Wiktionary or other CC B
   schedules two dates and leaves three empty.
 - AE5 (R4). Given 120 eligible 5-letter daily words, schedule health marks 5 as `restock` with
   runway 120.
-- AE6 (R5). Given a solution with empty meaning, the game-over modal shows the word without a
-  meaning block.
+- AE6 (R5). Given a solution with a non-empty meaning in the database, the game-over modal still
+  shows only the word.
+- AE7 (R7). Given the answer KALEM and a guess with K and A green, the hint reveals L, E or M at
+  its position and marks it on the board; a second press does nothing.
 
 ## Key technical decisions
 - KTD1. Playable lengths are a Worker var `PLAYABLE_WORD_LENGTHS` (comma-separated, validated against
@@ -73,16 +79,18 @@ group run in order.
   `HomePage.tsx`, `DesktopShell.tsx`; redirect non-playable lengths; hide the length picker when only
   one length is playable. Admin `WordsManager.tsx` keeps all scheduled lengths. (R1, AE1, AE2)
 - U3 (A). Mobile: same for `HomeScreen.tsx` and stats; cache the last list in AsyncStorage. (R1)
-- U4 (B). Web: `GameOverModal.tsx` hides empty meaning and context; label validator makes context
-  optional and adds `--pool unlimited` (decision + reason only, writes `unlimited-N.csv` with
-  `word` only). Python tests first. (R5, R6, AE6)
+- U4 (B). Web: `GameOverModal.tsx` drops the meaning/context block; label validator needs only a
+  decision (+ reason) and adds `--pool unlimited`; both write word-only CSVs. Python tests first.
+  (R5, R6, AE6)
 - U5 (C). Backend: migration `0002_word_pools.sql` (column + trigger update), repositories: random
   draws both pools, auto-fill and admin scheduling use only `pool = 'daily'`; admin import accepts
-  `pool` (default `daily`) and allows empty meaning only for `unlimited`. (R2, AE3)
+  `pool` (default `daily`) and never requires meaning or context. (R2, AE3)
 - U6 (C). Backend: auto-fill per R3 (cooldown query against `daily_words`, no cycling) and schedule
   health per R4 (restock runway and status), cron alert includes restock. (R3, R4, AE4, AE5)
 - U7 (after U4). Script: `scripts/words/unlimited_pool.py` builds candidates per KTD5 and the pool
   file for labelling; README section. (R2)
+- U9 (after U4). Web: `useHint.ts` and `GameHint.tsx` reveal a letter per R7 (`HINTS_PER_DAILY_GAME = 1`). (R7, AE7)
+- U10 (after U3). Mobile: the same letter hint on the game screen. (R7)
 - U8 *(owner)*. Remote: apply `0002_word_pools.sql` to `harfhane` before importing (Invariant 4).
 
 ## Not in this plan
