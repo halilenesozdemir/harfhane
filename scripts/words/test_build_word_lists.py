@@ -213,7 +213,7 @@ class BlocklistAdditionsTests(unittest.TestCase):
     def test_does_not_block_longer_words_sharing_an_owner_rejected_prefix(self):
         for word in (
             "seksen", "seksek", "rakım", "rakip", "birader", "talkım",
-            "şarapçı", "alkolik", "dubleks",
+            "şarapçı", "alkolik", "dubleks", "içkin",
         ):
             self.assertFalse(is_blocked(word, self.blocklist))
 

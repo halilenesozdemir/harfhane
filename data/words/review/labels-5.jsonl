@@ -435,7 +435,6 @@
 {"word": "KURAL", "decision": "accept", "category": "isim", "meaning": "Uyulması gereken belirlenmiş ilke veya düzenleme", "context": "Oyunun kuralını herkese açıkladı."}
 {"word": "OLMAM", "decision": "reject", "reason": "verb_form"}
 {"word": "SÜRDÜ", "decision": "reject", "reason": "verb_form"}
-{"word": "ALKOL", "decision": "reject", "reason": "sensitive"}
 {"word": "DEVRE", "decision": "accept", "category": "isim", "meaning": "Belirli bir süreyi veya elektrik akımının izlediği yolu ifade eden terim", "context": "Elektrikçi evin devresindeki arızayı buldu."}
 {"word": "DURAN", "decision": "reject", "reason": "verb_form"}
 {"word": "DUVAR", "decision": "accept", "category": "isim", "meaning": "Bir yapıyı çevreleyen veya bölen dikey yapı elemanı", "context": "Çocuk duvara resim çizdi."}
@@ -519,7 +518,6 @@
 {"word": "MELEK", "decision": "accept", "category": "isim", "meaning": "Dini inançlara göre Tanrı'nın buyruklarını yerine getiren göksel varlık.", "context": "Çocuk, rüyasında bir melek gördüğünü anlattı."}
 {"word": "TEMAS", "decision": "accept", "category": "isim", "meaning": "İki şeyin birbirine değmesi veya kişiler arası iletişim kurma.", "context": "İki ülke arasında diplomatik temas sağlandı."}
 {"word": "YAPAY", "decision": "accept", "category": "sıfat", "meaning": "Doğal olmayan, insan eliyle üretilmiş.", "context": "Bahçeye yapay çim döşettiler."}
-{"word": "ŞARAP", "decision": "reject", "reason": "sensitive"}
 {"word": "ŞEKİL", "decision": "accept", "category": "isim", "meaning": "Bir nesnenin dış görünüşü veya biçimi.", "context": "Bulutlar gökyüzünde ilginç bir şekil almıştı."}
 {"word": "BAKIM", "decision": "accept", "category": "isim", "meaning": "Bir şeyin iyi durumda kalması için gösterilen özen.", "context": "Arabanın düzenli bakımı ömrünü uzatır."}
 {"word": "HATAY", "decision": "reject", "reason": "proper_noun"}
@@ -598,3 +596,5 @@
 {"word": "DOSTU", "decision": "reject", "reason": "inflected"}
 {"word": "EVVEL", "decision": "reject", "reason": "function_word"}
 {"word": "GÖRME", "decision": "reject", "reason": "verb_form"}
+{"word": "KONUŞ", "decision": "reject", "reason": "verb_form"}
+{"word": "OLANA", "decision": "reject", "reason": "inflected"}
