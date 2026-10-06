@@ -142,3 +142,12 @@ and already removed end to end in #54.
   forever with no UI path to them. Decide whether that's acceptable (data just sits unused) or
   whether hidden-length stats need their own access point (e.g. still reachable once a length
   reopens) or a cleanup policy.
+
+## Reusable factory (after Harfhane is stable)
+Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
+deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
+routine) should later be reusable for another product on the same stack (pnpm monorepo, Hono +
+Workers + D1, React + Vite, Expo). Do it once Harfhane has shipped and the gates have settled: write an
+ADR, map every file as factory or product, extract the factory layer into a GitHub template repo and
+`~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
+then, write new rules so the factory part stays separable from product rules.
