@@ -1,20 +1,21 @@
+import type { LetterHint } from '@harfhane/shared';
 import type { GameStatus } from '../types';
 
 interface GameHintProps {
-  hintText: string | null;
+  hint: LetterHint | null;
   hintUsed: boolean;
+  hintAvailable: boolean;
   gameStatus: GameStatus;
-  isUnlimited: boolean;
   onRevealHint: () => void;
 }
 
-export default function GameHint({ hintText, hintUsed, gameStatus, isUnlimited, onRevealHint }: GameHintProps): React.JSX.Element | null {
-  if (isUnlimited || gameStatus !== 'playing') return null;
+export default function GameHint({ hint, hintUsed, hintAvailable, gameStatus, onRevealHint }: GameHintProps): React.JSX.Element | null {
+  if (!hintAvailable || gameStatus !== 'playing') return null;
 
-  if (hintText) {
+  if (hint) {
     return (
       <div className="text-xs text-text-secondary bg-bg-secondary border border-border-color rounded-full px-4 py-1.5">
-        {hintText}
+        {hint.position + 1}. harf: {hint.letter}
       </div>
     );
   }

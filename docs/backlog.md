@@ -178,6 +178,15 @@ and already removed end to end in #54.
   whether hidden-length stats need their own access point (e.g. still reachable once a length
   reopens) or a cleanup policy.
 
+## Plan 008 U9 follow-up (web letter hint, 2026-10-06)
+- **Midnight rollover can compute a hint against yesterday's word.** `useHint.ts` derives its
+  localStorage key and reads `solution`/`guesses` from `useGameState`, but `useDailyWord` and
+  `useGameState` already have a pre-existing drift in how they detect the day boundary (not
+  introduced by this unit). If a tab is left open across midnight, it's possible for the hint
+  hook to run `pickHint` against a `solution` that is stale relative to the now-current day's
+  `getTodayString()`-keyed storage slot, or vice versa. Out of scope for U9; needs the same fix
+  as (or depends on) resolving the `useDailyWord`/`useGameState` day-boundary drift itself.
+
 ## AC coverage check: source scanning is a stopgap
 `scripts/check-ac-coverage.mjs` finds AE tags by regex-scanning test file source (JS/TS call
 arguments, Python `def`/docstrings) rather than asking the test runner what tests actually exist

@@ -11,6 +11,7 @@ const GameGrid = ({
   shakeRow,
   gameStatus,
   wordLength,
+  hint,
 }: GameGridProps): React.JSX.Element => {
   const rows = [];
 
@@ -30,9 +31,11 @@ const GameGrid = ({
 
     const tiles = [];
     for (let j = 0; j < wordLength; j++) {
-      const letter = rowContent[j] || '';
+      let letter = rowContent[j] || '';
       const status = rowEvaluation ? rowEvaluation[j]! : null;
-      
+      const isHint = isCurrentRow && hint != null && hint.position === j && !letter;
+      if (isHint) letter = hint!.letter;
+
       tiles.push(
         <Tile
           key={`${i}-${j}`}
@@ -40,7 +43,8 @@ const GameGrid = ({
           status={status}
           isRevealing={isRevealingRow}
           revealDelay={j}
-          isFilled={!!letter}
+          isFilled={!isHint && !!letter}
+          isHint={isHint}
         />
       );
     }
