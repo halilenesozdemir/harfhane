@@ -74,6 +74,28 @@ class BuildUnlimitedPoolTests(unittest.TestCase):
         pool = up.build_unlimited_pool(5, raw, known, blocklist=set(), excluded=set())
         self.assertEqual(pool, [])
 
+    def test_excludes_words_flagged_as_english_loanwords(self):
+        raw = {"sokak": ()}
+        known = {"sokak"}
+        with patch.object(
+            up, "is_likely_english", lambda word, allowlist=frozenset(): word == "sokak"
+        ):
+            pool = up.build_unlimited_pool(5, raw, known, blocklist=set(), excluded=set())
+        self.assertEqual(pool, [])
+
+    def test_allowlist_keeps_a_word_the_english_heuristic_would_otherwise_drop(self):
+        raw = {"sokak": ()}
+        known = {"sokak"}
+        with patch.object(
+            up,
+            "is_likely_english",
+            lambda word, allowlist=frozenset(): word == "sokak" and word not in allowlist,
+        ):
+            pool = up.build_unlimited_pool(
+                5, raw, known, blocklist=set(), excluded=set(), allowlist={"sokak"}
+            )
+        self.assertEqual(pool, ["SOKAK"])
+
     def test_excludes_mastar_verb_forms(self):
         # "gitmek" scores well above the floor, but the mastar (-mek/-mak) ending
         # must still exclude it, same as the daily pipeline.

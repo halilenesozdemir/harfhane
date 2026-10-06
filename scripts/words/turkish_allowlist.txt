@@ -1,0 +1,11 @@
+# Exact-match allowlist: words that `is_likely_english` (candidates.py,
+# ENGLISH_ZIPF_MARGIN) would otherwise drop as English loanwords, but that are
+# real, commonly used Turkish words. Checked by exact match only (no
+# prefix-matching, unlike blocklist.txt) before the English-frequency-margin
+# check runs, so these always survive regardless of the margin value.
+# Add an entry here only when a real Turkish word is confirmed wrongly
+# flagged; do not use this file to silence genuine English loanwords.
+fire
+step
+sure
+moment
