@@ -14,6 +14,7 @@ const getStateClasses = (status: TileProps['status'], isFilled: boolean): string
 
 const Tile = ({ letter, status, isRevealing, revealDelay, isFilled }: TileProps): React.JSX.Element => (
   <div
+    data-testid="tile"
     data-status={status ?? (isFilled ? 'filled' : 'empty')}
     className={`
       w-14 h-14 md:w-16 md:h-16
