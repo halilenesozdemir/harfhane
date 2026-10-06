@@ -79,6 +79,13 @@ def write_review_csv(path: str, accepted: list) -> None:
             writer.writerow([label["word"]])
 
 
+def has_blocking_errors(report: dict) -> bool:
+    # A label set is only "clean" when every pool word got a valid label. A non-empty
+    # `missing` list means the label file was truncated (or the model skipped words), and
+    # importing a partial review CSV from that would silently drop pool words.
+    return bool(report["errors"]) or bool(report["missing"])
+
+
 def summarize(report: dict) -> dict:
     reasons = {}
     for label in report["rejected"]:
@@ -108,8 +115,9 @@ def main():
     labels = load_labels(labels_path)
     report = validate(labels, pool_words)
     print(json.dumps(summarize(report), ensure_ascii=False, indent=2))
-    # A review CSV is only written from a clean label set, so import never sees partial data.
-    if report["errors"]:
+    # A review CSV is only written from a clean, complete label set, so import never sees
+    # partial data.
+    if has_blocking_errors(report):
         sys.exit(1)
     review_path = os.path.join(REVIEW_DIR, REVIEW_FILES[args.pool].format(length=args.length))
     write_review_csv(review_path, report["accepted"])

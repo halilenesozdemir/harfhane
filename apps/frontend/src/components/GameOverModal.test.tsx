@@ -60,4 +60,9 @@ describe('GameOverModal', () => {
     renderModal({ solutionEntry: null });
     expect(screen.getByText('Tebrikler!')).toBeInTheDocument();
   });
+
+  it('should still show the solution word on a loss', () => {
+    renderModal({ gameStatus: 'lost', guesses: [] });
+    expect(screen.getByText('KALEM')).toBeInTheDocument();
+  });
 });

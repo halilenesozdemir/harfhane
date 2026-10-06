@@ -4,7 +4,7 @@ import csv
 import os
 import tempfile
 
-from validate_labels import validate, write_review_csv
+from validate_labels import has_blocking_errors, validate, write_review_csv
 
 POOL = ["KALEM", "GELDİ", "MASA", "DENİZ"]
 
@@ -72,6 +72,38 @@ class ValidateTests(unittest.TestCase):
     def test_requires_a_known_decision(self):
         report = validate([{"word": "KALEM", "decision": "maybe"}], POOL)
         self.assertEqual(report["errors"]["KALEM"], ["decision"])
+
+
+class HasBlockingErrorsTests(unittest.TestCase):
+    def test_treats_missing_pool_words_as_blocking(self):
+        # A truncated labels file: KALEM is labeled but the other three pool words never
+        # got a label. That must never produce a partial review CSV.
+        report = validate([accepted("KALEM")], POOL)
+        self.assertEqual(report["errors"], {})
+        self.assertTrue(report["missing"])
+        self.assertTrue(has_blocking_errors(report))
+
+    def test_is_false_for_a_complete_clean_label_set(self):
+        report = validate(
+            [accepted("KALEM"), accepted("GELDİ"), accepted("MASA"), accepted("DENİZ")], POOL
+        )
+        self.assertEqual(report["errors"], {})
+        self.assertEqual(report["missing"], [])
+        self.assertFalse(has_blocking_errors(report))
+
+    def test_is_true_when_there_are_label_errors_even_with_nothing_missing(self):
+        report = validate(
+            [
+                accepted("KALEM"),
+                accepted("GELDİ"),
+                accepted("MASA"),
+                {"word": "DENİZ", "decision": "maybe"},
+            ],
+            POOL,
+        )
+        self.assertEqual(report["missing"], [])
+        self.assertTrue(report["errors"])
+        self.assertTrue(has_blocking_errors(report))
 
 
 class WriteReviewCsvTests(unittest.TestCase):
