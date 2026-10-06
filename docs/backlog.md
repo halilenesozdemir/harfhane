@@ -229,3 +229,11 @@ From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calend
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
+
+## Turkish casing bug in StatsScreen (found while fixing PR #87, 2026-10-07)
+`apps/mobile/src/screens/StatsScreen.tsx:144` (`sectionTitle` style) applies
+`textTransform: 'uppercase'` to the Turkish string "Tahmin Dağılımı" (line 51), which is
+locale-unaware and renders "TAHMIN DAĞILIMI" with a dotless I instead of the correct
+"TAHMİN DAĞILIMI". Same bug class fixed in `apps/mobile/src/components/GameOverCard.tsx` (drop the
+transform, write the literal string). `StatsScreen.tsx` is outside the file ownership of Plan 011
+U1; whoever owns it should apply the same fix.
