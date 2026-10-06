@@ -19,11 +19,9 @@
 008-AE5  candidate tests (schedule-health-service.test.ts) are owned by open PR #63; tag after PR #63 merges
 008-AE7  no test exists yet for the hint behavior (apps/frontend/src/hooks/useHint.ts, src/components/GameHint.tsx)
 
-009-AE1  proven by scripts/check-ac-coverage.test.mjs's own fixtures, but that file is .mjs (node:test) and outside the script's own scanned extensions (.test.ts(x), .spec.ts, test_*.py) by design, per KTD1
 009-AE2  Plan 009 U2 (Playwright journeys + axe), not started
 009-AE3  Plan 009 U3 (real-backend Playwright project), not started
 009-AE4  Plan 009 U4 (Maestro flows), not started
-009-AE5  Plan 009 U5 (fast-check property tests); tagged already in open PR #68, not yet merged
 009-AE6  Plan 009 U6 (Stryker mutation baseline), not started
 
 010-AE1  Plan 010 U1 (packages/shared strict flags + ts-reset), not started

@@ -21,7 +21,7 @@ function playGuess(word: string) {
 }
 
 describe('game storage', () => {
-  it('should restore both guesses after a restart when two guesses were saved (004-AE3)', async () => {
+  it('should restore both guesses after a restart when two guesses were saved', async () => {
     const store = createMemoryStore();
     const twoGuesses = applyGuess({ ...playGuess('KALAY'), currentGuess: 'KALIP' }, 'KALEM');
     await saveGameState(store, KEY, twoGuesses);

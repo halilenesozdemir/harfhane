@@ -2,15 +2,19 @@
 // Traceability check (Plan 009 KTD1, R1): every acceptance example (AE<n>) in an
 // approved plan must be referenced by at least one test name as "(<plan>-AE<n>)",
 // or listed in docs/plans/ac-pending.txt with a reason. Exits 1 and lists missing
-// ids otherwise.
+// ids otherwise. Also fails on a stale pending entry (an id that is both tagged
+// and still allowlisted) and on a plan whose "Acceptance examples" heading has no
+// AE<n> bullet (a parsing miss, not a plan with no AEs at all).
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, realpathSync } from "node:fs";
 import { join, basename } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const EXCLUDED_DIRS = new Set(["node_modules", ".git", "dist", "build", "coverage", ".expo"]);
 
 const TEST_FILE_PATTERNS = [
   /\.test\.tsx?$/,
+  /\.test\.mjs$/,
   /\.spec\.ts$/,
   /^test_.*\.py$/,
 ];
@@ -50,11 +54,19 @@ function findPlanFiles(plansDir) {
   return files;
 }
 
+function readNormalized(filePath) {
+  // Normalize CRLF to LF once at the source so every line-based parser below
+  // (frontmatter, heading, bullet) sees a consistent line ending.
+  return readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
+}
+
 function parseStatus(content) {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return null;
   const statusLine = match[1].match(/^status:\s*(.+)$/m);
-  return statusLine ? statusLine[1].trim() : null;
+  if (!statusLine) return null;
+  // Frontmatter may quote the value (status: "approved" or status: 'approved').
+  return statusLine[1].trim().replace(/^(['"])(.*)\1$/, "$2");
 }
 
 function derivePlanNumber(fileName) {
@@ -62,25 +74,38 @@ function derivePlanNumber(fileName) {
   return match ? match[1] : null;
 }
 
+const HEADING_PATTERN = /^#{1,6}\s+acceptance examples\s*$/i;
+
 function extractAcceptanceExampleSection(content) {
   const lines = content.split("\n");
-  const startIndex = lines.findIndex((line) => line.trim() === "## Acceptance examples");
-  if (startIndex === -1) return [];
+  const startIndex = lines.findIndex((line) => HEADING_PATTERN.test(line.trim()));
+  if (startIndex === -1) return null;
   const sectionLines = [];
   for (let i = startIndex + 1; i < lines.length; i++) {
-    if (/^## /.test(lines[i])) break;
+    if (/^#{1,6}\s+/.test(lines[i].trim())) break;
     sectionLines.push(lines[i]);
   }
   return sectionLines;
 }
 
-function extractAcceptanceExampleIds(content) {
+// Matches a bullet's own id: "- AE1", "* AE1", "- **AE2**" (bold wrapping the
+// id only). AE ids of other plans may still appear in prose elsewhere in the
+// section (e.g. a traceability example quoting "Plan 008 AE7") and must not
+// be mistaken for this plan's own AE, so only the bullet's leading id counts.
+const BULLET_ID_PATTERN = /^[-*]\s+\*{0,2}AE(\d+)\b/;
+
+function extractAcceptanceExampleIds(content, planLabel) {
+  const section = extractAcceptanceExampleSection(content);
+  if (section === null) return [];
   const ids = new Set();
-  // Only a bullet's own id counts; AE ids of other plans may appear in prose
-  // (e.g. a traceability example quoting "Plan 008 AE7").
-  for (const line of extractAcceptanceExampleSection(content)) {
-    const match = line.match(/^- AE(\d+)\b/);
+  for (const line of section) {
+    const match = BULLET_ID_PATTERN.exec(line.trim());
     if (match) ids.add(match[1]);
+  }
+  if (ids.size === 0) {
+    throw new Error(
+      `${planLabel} has an "Acceptance examples" heading but no AE<n> bullet was found under it`,
+    );
   }
   return [...ids];
 }
@@ -88,11 +113,11 @@ function extractAcceptanceExampleIds(content) {
 function collectRequiredTags(plansDir) {
   const tags = [];
   for (const planFile of findPlanFiles(plansDir)) {
-    const content = readFileSync(planFile, "utf8");
+    const content = readNormalized(planFile);
     if (parseStatus(content) !== "approved") continue;
     const planNumber = derivePlanNumber(basename(planFile));
     if (!planNumber) continue;
-    for (const aeId of extractAcceptanceExampleIds(content)) {
+    for (const aeId of extractAcceptanceExampleIds(content, basename(planFile))) {
       tags.push({ tag: `${planNumber}-AE${aeId}`, plan: basename(planFile) });
     }
   }
@@ -135,7 +160,8 @@ export function checkAcCoverage({ rootDir, plansDir, allowlistPath }) {
   const allowlisted = collectAllowlistedTags(allowlistPath);
 
   const missing = required.filter(({ tag }) => !found.has(tag) && !allowlisted.has(tag));
-  return { missing, requiredCount: required.length, foundCount: found.size };
+  const stalePending = [...allowlisted].filter((tag) => found.has(tag));
+  return { missing, stalePending, requiredCount: required.length, foundCount: found.size };
 }
 
 function main() {
@@ -143,19 +169,54 @@ function main() {
   const plansDir = join(rootDir, "docs", "plans");
   const allowlistPath = join(plansDir, "ac-pending.txt");
 
-  const { missing } = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+  let result;
+  try {
+    result = checkAcCoverage({ rootDir, plansDir, allowlistPath });
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+
+  const { missing, stalePending } = result;
+  let failed = false;
 
   if (missing.length > 0) {
+    failed = true;
     console.error("Missing acceptance-example test coverage:");
     for (const { tag, plan } of missing) {
       console.error(`  ${tag} (${plan})`);
     }
+  }
+
+  if (stalePending.length > 0) {
+    failed = true;
+    console.error("Stale docs/plans/ac-pending.txt entries (already tagged by a test, remove the line):");
+    for (const tag of stalePending) {
+      console.error(`  ${tag}`);
+    }
+  }
+
+  if (failed) {
     process.exit(1);
   }
 
   console.log("All acceptance examples in approved plans are covered or allowlisted.");
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Compare realpaths (not raw argv[1]) so this guard still recognizes direct
+// execution through a symlink, a path with spaces, or a non-ASCII path (e.g.
+// a home directory with Turkish characters) — `file://${process.argv[1]}`
+// does not percent-encode those the way import.meta.url does, so it silently
+// failed to match and main() never ran (exit 0, no output, no check).
+function isMainModule() {
+  if (!process.argv[1]) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
   main();
 }

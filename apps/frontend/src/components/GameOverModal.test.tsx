@@ -39,7 +39,7 @@ function renderModal(overrides: Partial<GameOverModalProps> = {}) {
 }
 
 describe('GameOverModal', () => {
-  it('should not render the meaning text even when solutionEntry has one (008-AE6)', () => {
+  it('should not render the meaning text even when solutionEntry has one', () => {
     renderModal();
     expect(screen.queryByText('Yazı yazmaya yarayan araç')).not.toBeInTheDocument();
     expect(screen.queryByText('Anlam:')).not.toBeInTheDocument();
@@ -61,8 +61,10 @@ describe('GameOverModal', () => {
     expect(screen.getByText('Tebrikler!')).toBeInTheDocument();
   });
 
-  it('should still show the solution word on a loss', () => {
+  it('should show only the word, not the meaning or context, when a solution with a meaning is revealed on a loss (008-AE6)', () => {
     renderModal({ gameStatus: 'lost', guesses: [] });
     expect(screen.getByText('KALEM')).toBeInTheDocument();
+    expect(screen.queryByText('Yazı yazmaya yarayan araç')).not.toBeInTheDocument();
+    expect(screen.queryByText('Anlam:')).not.toBeInTheDocument();
   });
 });
