@@ -54,5 +54,7 @@ scripts/curated-words.json
 
 /dev-dist/
 .playwright-mcp/
+apps/frontend/playwright-report/
+apps/frontend/test-results/
 scripts/words/.cache/
 __pycache__/

@@ -9,8 +9,6 @@ vi.mock('../../lib/admin-api');
 const STATS: AdminStats = {
   words: { total: 100, active: 90, inactive: 10 },
   daily: { today: '2026-10-05', scheduledNext30: 30, unscheduledNext30: 0 },
-  users: { total: 5 },
-  games: { totalPlayed: 50, playedToday: 3 },
 };
 
 const HEALTH: ScheduleHealthEntry[] = [

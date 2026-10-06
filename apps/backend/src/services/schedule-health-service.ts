@@ -1,3 +1,4 @@
+import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { findScheduleRunway, type ScheduleHealthRow } from '../repositories/schedule-health-repository';
 import { SCHEDULE_WARNING_DAYS, SCHEDULE_CRITICAL_DAYS } from '../constants/schedule';
@@ -15,12 +16,8 @@ export function severityFor(runwayDays: number): ScheduleHealthSeverity {
   return 'ok';
 }
 
-function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export async function getScheduleHealth(db: Env['DB']): Promise<ScheduleHealthEntry[]> {
-  const rows = await findScheduleRunway(db, todayUTC());
+  const rows = await findScheduleRunway(db, getTodayString());
   return rows.map((row) => ({ ...row, severity: severityFor(row.runwayDays) }));
 }
 

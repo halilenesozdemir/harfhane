@@ -1,5 +1,5 @@
-import type { WordEntry, GameXPResult } from '@harfhane/shared';
-export type { WordEntry, WordData, GameXPResult, XPBreakdown, Badge, XPProfile, UnlimitedPersonalStats, DuelPublic } from '@harfhane/shared';
+import type { WordEntry } from '@harfhane/shared';
+export type { WordEntry, WordData } from '@harfhane/shared';
 export type { TileStatus, TimeCountdown } from '@harfhane/shared';
 import type { TileStatus } from '@harfhane/shared';
 
@@ -62,9 +62,6 @@ export interface HeaderProps {
   onHelpClick: () => void;
   onStatsClick: () => void;
   onSettingsClick: () => void;
-  onLeaderboardClick: () => void;
-  onAuthClick: () => void;
-  onProfileClick?: () => void;
   modeLabel?: string;
 }
 
@@ -125,11 +122,8 @@ export interface GameOverModalProps {
   gameNumber: number | string;
   stats: DailyStats | UnlimitedStats;
   isUnlimited: boolean;
-  isAuthenticated: boolean;
   onPlayAgain: () => void;
   onGoHome: () => void;
-  onAuthClick: () => void;
-  xpResult?: GameXPResult | null;
   sessionChallenge?: SessionChallenge;
   challengeUrl?: string;
 }
@@ -168,7 +162,6 @@ export interface UseGameStateReturn {
   submitGuess: () => void;
   setHasSeenHelp: (value: boolean) => void;
   startNewGame: () => void;
-  lastXPResult: GameXPResult | null;
   wordId: number | null;
 }
 

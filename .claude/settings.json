@@ -52,15 +52,6 @@
             "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; cd $CLAUDE_PROJECT_DIR; if [[ \"$FILE\" =~ \\.(ts|tsx|js|jsx|json|css|md)$ ]]; then npx prettier --write \"$FILE\" 2>/dev/null; fi; exit 0"
           }
         ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "FILE=\"$CLAUDE_FILE_PATHS\"; if [[ \"$FILE\" =~ \\.(ts|tsx)$ ]] && [[ \"$FILE\" =~ apps/ ]]; then cd $CLAUDE_PROJECT_DIR && pnpm typecheck 2>&1 | tail -20; fi; exit 0"
-          }
-        ]
       }
     ]
   }

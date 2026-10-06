@@ -4,18 +4,13 @@ import type {
   ValidateWordResponse,
   ApiError,
   WordEntry,
-  UnlimitedPersonalStats,
-  DuelPublic,
 } from '@harfhane/shared';
 
 const BASE_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '/api').trim();
 
-async function request<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     ...init,
   });
 
@@ -53,25 +48,4 @@ export function validateWord(word: string): Promise<ValidateWordResponse> {
     method: 'POST',
     body: JSON.stringify({ word }),
   });
-}
-
-export function fetchUnlimitedStats(token: string): Promise<{ stats: UnlimitedPersonalStats }> {
-  return request<{ stats: UnlimitedPersonalStats }>('/results/me/unlimited', undefined, token);
-}
-
-export function registerDuelResult(
-  token: string,
-  wordId: number,
-  guesses: number,
-  won: boolean
-): Promise<{ duel: DuelPublic }> {
-  return request<{ duel: DuelPublic }>(
-    '/duels',
-    { method: 'POST', body: JSON.stringify({ word_id: wordId, guesses, won }) },
-    token
-  );
-}
-
-export function fetchDuel(token: string, wordId: number): Promise<{ duel: DuelPublic }> {
-  return request<{ duel: DuelPublic }>(`/duels/${wordId}`, undefined, token);
 }

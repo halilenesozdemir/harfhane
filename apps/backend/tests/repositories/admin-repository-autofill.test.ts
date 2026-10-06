@@ -32,4 +32,23 @@ describe('adminAutoFillSchedule', () => {
       .first<{ count: number }>();
     expect(row?.count).toBe(EXPECTED_DAYS);
   });
+
+  it('should never schedule a user-submitted word when filling the schedule', async () => {
+    await env.DB
+      .prepare(
+        `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
+         VALUES ('KULLA', 5, 'user', 'user-submitted', 'draft', 0, 1)`
+      )
+      .run();
+
+    await adminAutoFillSchedule(env.DB, FROM, TO);
+
+    const row = await env.DB
+      .prepare(
+        `SELECT COUNT(*) as count FROM daily_words dw JOIN words w ON w.id = dw.word_id
+         WHERE w.source = 'user'`
+      )
+      .first<{ count: number }>();
+    expect(row?.count).toBe(0);
+  });
 });

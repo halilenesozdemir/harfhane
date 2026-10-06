@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { getDailyWord, getRandomWord, validateWord } from '../../src/services/word-service';
 import { ApiError } from '../../src/errors/api-error';
@@ -29,6 +29,29 @@ describe('getDailyWord', () => {
     await expect(getDailyWord(env.DB, 'not-a-date')).rejects.toMatchObject({
       code: 'INVALID_DATE',
       statusCode: 400,
+    });
+  });
+
+  describe('no-args path at the Turkey midnight boundary', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('throws NOT_FOUND just before the Turkey midnight crossover into 2026-01-01', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T20:59:00Z'));
+
+      await expect(getDailyWord(env.DB)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+
+    it("matches getTodayString()'s roll-over to 2026-01-01 right at the 21:00 UTC crossover", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-12-31T21:00:00Z'));
+
+      const result = await getDailyWord(env.DB);
+
+      expect(result.date).toBe('2026-01-01');
+      expect(result.word.word).toBe('KİTAP');
     });
   });
 });

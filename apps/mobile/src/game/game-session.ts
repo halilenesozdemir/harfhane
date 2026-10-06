@@ -11,11 +11,19 @@ export interface GameSession {
   readonly message: string | null;
   readonly isSubmitting: boolean;
   readonly storageKey: string | null;
+  readonly dailyDate: string | null;
 }
 
 export type SessionAction =
   | { readonly type: 'loading' }
-  | { readonly type: 'loaded'; readonly solution: string; readonly wordId: number | null; readonly game: GameState; readonly storageKey: string | null }
+  | {
+      readonly type: 'loaded';
+      readonly solution: string;
+      readonly wordId: number | null;
+      readonly game: GameState;
+      readonly storageKey: string | null;
+      readonly dailyDate: string | null;
+    }
   | { readonly type: 'failed' }
   | { readonly type: 'letter'; readonly letter: string }
   | { readonly type: 'delete' }
@@ -31,7 +39,16 @@ export const INVALID_WORD_MESSAGE = 'Kelime listede yok';
 export const CONNECTION_ERROR_MESSAGE = 'Bağlantı hatası, tekrar dene';
 
 export function createSession(): GameSession {
-  return { phase: 'loading', solution: '', wordId: null, game: createInitialState(), message: null, isSubmitting: false, storageKey: null };
+  return {
+    phase: 'loading',
+    solution: '',
+    wordId: null,
+    game: createInitialState(),
+    message: null,
+    isSubmitting: false,
+    storageKey: null,
+    dailyDate: null,
+  };
 }
 
 export function shortGuessMessage(wordLength: number): string {
@@ -63,8 +80,8 @@ export function reduceSession(session: GameSession, action: SessionAction): Game
   if (action.type === 'loading') return createSession();
   if (action.type === 'failed') return { ...session, phase: 'error' };
   if (action.type === 'loaded') {
-    const { solution, wordId, game, storageKey } = action;
-    return { ...createSession(), phase: 'ready', solution, wordId, game, storageKey };
+    const { solution, wordId, game, storageKey, dailyDate } = action;
+    return { ...createSession(), phase: 'ready', solution, wordId, game, storageKey, dailyDate };
   }
   if (action.type === 'message') return { ...session, message: action.message };
   return session.phase === 'ready' ? reduceReady(session, action) : session;
