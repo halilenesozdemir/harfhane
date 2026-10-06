@@ -1,7 +1,13 @@
 import { getTodayString } from '@harfhane/shared';
-import type { DailyWordResponse, RandomWordResponse, ValidateWordResponse } from '@harfhane/shared';
+import type {
+  DailyWordResponse,
+  PlayableLengthsResponse,
+  RandomWordResponse,
+  ValidateWordResponse,
+} from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
+import { parsePlayableLengths } from '../utils/playable-lengths';
 import {
   findDailyWord,
   findRandomWord,
@@ -18,9 +24,12 @@ export async function getDailyWord(
   date?: string,
   length = 5
 ): Promise<DailyWordResponse> {
-  const targetDate = date ?? getTodayString();
+  const today = getTodayString();
+  const targetDate = date ?? today;
 
   if (!isValidDate(targetDate)) throw INVALID_DATE();
+  // Future answers stay hidden; the same error as a missing day reveals nothing about the schedule.
+  if (targetDate > today) throw NOT_FOUND('Daily word');
 
   const result = await findDailyWord(db, targetDate, length);
   if (!result) throw NOT_FOUND('Daily word');
@@ -42,6 +51,10 @@ export async function getWordById(
   const result = await findWordById(db, wordId);
   if (!result) throw NOT_FOUND('Word');
   return { word: result.entry, wordId: result.id };
+}
+
+export function getPlayableLengths(playableWordLengths: string | undefined): PlayableLengthsResponse {
+  return { lengths: parsePlayableLengths(playableWordLengths) };
 }
 
 export async function validateWord(

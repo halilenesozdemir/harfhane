@@ -15,6 +15,10 @@ Changing any of these needs an ADR in `docs/decisions/`.
 9. **Deploy workflows list their own file** in `paths` and keep `workflow_dispatch`. *Why:* otherwise a CI-only fix never redeploys.
 10. **Daily content never runs out.** At least 90 days of approved daily words per active length; a schedule-health check warns before the runway ends. *Why:* the 5-letter schedule silently ran out on 2026-08-26.
 
+## Constraints first
+
+The owner does not read code. A change is trusted only through tests that would fail on a broken version (mutation-checked), acceptance examples tagged in test names, and the environment checklist in `docs/guides/review-checklist.md`.
+
 ## Agents
 
 Three agents in `.claude/agents/`; the main loop owns planning, integration and merging.
@@ -25,7 +29,7 @@ Three agents in `.claude/agents/`; the main loop owns planning, integration and 
 | `implementer` | sonnet | Ships one plan unit through `/unit` in its own worktree; stops at a draft PR. |
 | `reviewer` | opus | Fresh context, never saw the implementation; asks "where does this break?" against the Invariants. |
 
-Parallel implementers never edit the same file, and at most three implementation PRs are open at once; removals run one after another. Adding a dependency, changing settings files, remote D1 writes and store or account steps need the owner.
+Two open PRs never touch the same file; each plan names the files its parallel units own. At most three implementation PRs are open per area (backend, web, mobile, scripts); docs-only PRs and PRs labelled `parked` (waiting on the owner or a cutover) do not count. A PR whose review is clean merges the same day; otherwise it is brought up to date with `main` before more work lands on it. Removals run one after another. Adding a dependency, changing settings files, remote D1 writes and store or account steps need the owner.
 
 ## Owner autonomy
 

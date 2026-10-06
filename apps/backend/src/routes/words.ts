@@ -2,7 +2,13 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../types/env';
 import { dailyWordQuerySchema, randomWordQuerySchema, validateWordBodySchema } from '../schemas/word-schemas';
-import { getDailyWord, getRandomWord, getWordById, validateWord } from '../services/word-service';
+import {
+  getDailyWord,
+  getPlayableLengths,
+  getRandomWord,
+  getWordById,
+  validateWord,
+} from '../services/word-service';
 import { gameRateLimiter } from '../middleware/rate-limiter';
 
 const words = new Hono<{ Bindings: Env }>();
@@ -36,6 +42,11 @@ words.get(
     return c.json({ data: result });
   }
 );
+
+words.get('/lengths', (c) => {
+  const result = getPlayableLengths(c.env.PLAYABLE_WORD_LENGTHS);
+  return c.json({ data: result });
+});
 
 words.get('/challenge/:wordId', async (c) => {
   const wordId = Number(c.req.param('wordId'));

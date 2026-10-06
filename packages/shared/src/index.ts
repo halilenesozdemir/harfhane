@@ -29,6 +29,10 @@ export interface ValidateWordResponse {
   isValid: boolean;
 }
 
+export interface PlayableLengthsResponse {
+  lengths: number[];
+}
+
 export interface ApiError {
   error: {
     code: string;

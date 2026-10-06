@@ -13,14 +13,24 @@ export interface HomeScreenProps {
   readonly onOpenHowToPlay: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenStats: (length: WordLength) => void;
+  /** R1: lengths the unlimited-mode picker offers; defaults to every scheduled length. */
+  readonly playableLengths?: readonly WordLength[];
 }
 
 export const DEFAULT_WORD_LENGTH: WordLength = 5;
-const UNLIMITED_LENGTHS: readonly WordLength[] = [4, 5, 6];
+const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
 const TITLE_LETTER_SPACING = 2;
 const LENGTH_OPTION_HEIGHT = 36;
 
-export function HomeScreen({ selectedLength, onSelectLength, onStart, onOpenHowToPlay, onOpenSettings, onOpenStats }: HomeScreenProps) {
+export function HomeScreen({
+  selectedLength,
+  onSelectLength,
+  onStart,
+  onOpenHowToPlay,
+  onOpenSettings,
+  onOpenStats,
+  playableLengths = SCHEDULED_WORD_LENGTHS,
+}: HomeScreenProps) {
   const { colors } = useTheme();
 
   const handleStartDaily = useCallback(() => onStart('daily', selectedLength), [onStart, selectedLength]);
@@ -55,11 +65,13 @@ export function HomeScreen({ selectedLength, onSelectLength, onStart, onOpenHowT
             Dilediğin kadar oyna. Her seferinde yeni kelime.
           </Text>
         </Pressable>
-        <View style={styles.lengthRow}>
-          {UNLIMITED_LENGTHS.map((length) => (
-            <LengthOption key={length} length={length} isSelected={selectedLength === length} onSelect={onSelectLength} />
-          ))}
-        </View>
+        {playableLengths.length > 1 && (
+          <View style={styles.lengthRow}>
+            {playableLengths.map((length) => (
+              <LengthOption key={length} length={length} isSelected={selectedLength === length} onSelect={onSelectLength} />
+            ))}
+          </View>
+        )}
       </View>
 
       <View style={styles.menuRow}>

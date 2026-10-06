@@ -3,6 +3,9 @@ import { BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import App, { AppNavigator } from './App';
 import { ThemeProvider } from './src/ThemeProvider';
+import { api } from './src/lib/api';
+import { deviceStore } from './src/game/device-store';
+import { PLAYABLE_LENGTHS_STORAGE_KEY } from './src/lib/playable-lengths';
 import { createMemoryStore, flattenStyle } from './src/test-utils/render-with-theme';
 
 jest.mock('./src/lib/api', () => ({
@@ -10,6 +13,7 @@ jest.mock('./src/lib/api', () => ({
     fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' }),
     fetchRandomWord: jest.fn().mockResolvedValue({ word: { word: 'KİTAP' }, wordId: 9 }),
     validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+    fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
   },
 }));
 
@@ -120,5 +124,46 @@ describe('App', () => {
     const style = flattenStyle(container.props.style);
     expect(style.paddingTop).toBe(24);
     expect(style.paddingBottom).toBe(16);
+  });
+
+  it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
+    (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [5] });
+    await render(<App />);
+    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
+    expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
+  });
+
+  it('should prefer length 5 as the daily default when 4, 5 and 6 are all playable', async () => {
+    (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 5, 6] });
+    await render(<App />);
+    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+  });
+
+  it('should fall back to the first playable length when 5 is not playable', async () => {
+    // If the fetch result were ignored, the hook's own loading default
+    // ([5]) would make this show "5 harfle başlat" instead of "4".
+    (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 6] });
+    await render(<App />);
+    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+  });
+
+  it('(008-AE1) should show the cached lengths immediately, then switch to the freshly fetched lengths once they load', async () => {
+    await deviceStore.setItem(PLAYABLE_LENGTHS_STORAGE_KEY, JSON.stringify([4, 6]));
+    let resolveFetch!: (value: { lengths: number[] }) => void;
+    (api.fetchPlayableLengths as jest.Mock).mockImplementationOnce(
+      () => new Promise((resolve) => { resolveFetch = resolve; }),
+    );
+
+    await render(<App />);
+    // Cache applied before the fetch resolves: default length is 4 (5 isn't in [4, 6]).
+    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+
+    await act(async () => {
+      resolveFetch({ lengths: [5] });
+    });
+    // The fetch result ([5]) wins once it arrives, proving it isn't ignored
+    // and a slower cache read can't overwrite it afterwards.
+    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
   });
 });

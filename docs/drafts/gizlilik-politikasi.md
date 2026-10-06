@@ -33,10 +33,8 @@ Aşağıdaki tablo, kod tabanında doğrulanmış veri kategorilerini listeler.
 
 ### 2.2 Oyun verileriniz
 - Oynadığınız gün, kelime uzunluğu, tahmin sayısı, kazandınız mı kaybettiniz mi, oyun modu (günlük/
-  süresiz/düello/turnuva).
+  sınırsız).
 - XP, seviye, rozetler, seri dondurma hakları (freeze tokens).
-- Düello ve turnuva sonuçlarınız (rakip bilgisiyle birlikte).
-- Oluşturduğunuz kelime listeleri, bu listelere yaptığınız yorumlar ve beğeniler.
 
 ### 2.3 Bildirim tercihleri ve push bildirimleri
 - E-posta bildirim tercihiniz (açık/kapalı).
@@ -125,19 +123,9 @@ erişim kısıtları) varsa eklenmeli.]
 
 ## 7. Hesabınızı Silme
 
-Ayarlar bölümünden hesabınızı sildiğinizde aşağıdakiler **kalıcı olarak silinir**: oyun
-sonuçlarınız, turnuva sonuçlarınız, push bildirim abonelikleriniz, şifre sıfırlama kayıtlarınız,
-seri dondurma kayıtlarınız, XP/seviye bilgisi, rozetleriniz, liste beğenileriniz ve yorumlarınız.
-
-**Silinmeyen / anonimleştirilen istisnalar** (bunları kullanıcıya açıkça belirtmek şeffaflık
-gerektirir):
-- Katıldığınız bir düelloda **rakip** iseniz, düello kaydı ve rakibinizin sonucu silinmez; sadece
-  sizi tanımlayan alan boşaltılır (anonimleştirilir). Düelloyu siz başlatan taraf (challenger)
-  iseniz, düello kaydı tamamen silinir.
-- Oluşturduğunuz kelime listeleri (ad, açıklama, içerdiği kelimeler) hesap silindiğinde **silinmez**;
-  yalnızca liste sahibi bilgisi boşaltılır ve liste sahipsiz/anonim olarak uygulamada kalmaya devam
-  eder. [SAHİP KONTROL ETMELİ: Bu davranış ürün kararı olarak isteniyor mu, yoksa listelerin de
-  silinmesi mi tercih edilir? Şu anki kod, listeleri korur.]
+Ayarlar bölümünden hesabınızı sildiğinizde, hesabınızla ve oluşturduğunuz her şeyle ilişkili
+veriler **kalıcı olarak silinir**: oyun sonuçlarınız, push bildirim abonelikleriniz, şifre
+sıfırlama kayıtlarınız, seri dondurma kayıtlarınız, XP/seviye bilgisi ve rozetleriniz.
 
 Hesap silme talebini uygulama içindeki [SAHİP KONTROL ETMELİ: ayarlar menüsü adı/yolu] üzerinden ya
 da [İLETİŞİM E-POSTASI] adresine yazarak iletebilirsiniz.
