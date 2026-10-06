@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from '../helpers/db';
 import { findScheduleRunway } from '../../src/repositories/schedule-health-repository';
+import { restockStatusFor } from '../../src/services/schedule-health-service';
 
 const TODAY = '2026-03-01';
 
@@ -122,5 +123,6 @@ describe('findScheduleRunway restock runway (R4, AE5)', () => {
     const result = await findScheduleRunway(env.DB, TODAY);
     const entry = result.find((r) => r.length === 5);
     expect(entry?.restockRunwayDays).toBe(120);
+    expect(restockStatusFor(entry!.restockRunwayDays)).toBe('restock');
   });
 });
