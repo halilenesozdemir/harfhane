@@ -12,7 +12,8 @@
       // seed-db.ts shell out to the wrangler CLI but hardcode `harfhane-db
       // --remote`; already tracked in docs/backlog.md ("Legacy migrations
       // folder") pending a retire-or-repoint decision.
-      "ignoreBinaries": ["wrangler"]
+      // maestro: Maestro CLI is installed outside npm (docs/guides/mobile-run.md, Plan 009 KTD3).
+      "ignoreBinaries": ["wrangler", "maestro"]
     },
     "apps/backend": {
       "project": ["src/**/*.ts", "tests/**/*.ts"],
