@@ -11,6 +11,7 @@ function createApi(): ApiClient {
     fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' }),
     fetchRandomWord: jest.fn().mockResolvedValue({ word: { word: 'KİTAP' }, wordId: 9 }),
     validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+    fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
   };
 }
 

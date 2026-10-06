@@ -1,5 +1,6 @@
 import type {
   DailyWordResponse,
+  PlayableLengthsResponse,
   RandomWordResponse,
   ValidateWordResponse,
   ApiError,
@@ -41,6 +42,10 @@ export function fetchRandomWord(length?: number): Promise<RandomWordResponse> {
 
 export function fetchWordById(wordId: number): Promise<{ word: WordEntry; wordId: number }> {
   return request<{ word: WordEntry; wordId: number }>(`/words/challenge/${wordId}`);
+}
+
+export function fetchPlayableLengths(): Promise<PlayableLengthsResponse> {
+  return request<PlayableLengthsResponse>('/words/lengths');
 }
 
 export function validateWord(word: string): Promise<ValidateWordResponse> {

@@ -1,52 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, FileText, Check, AlertCircle, X, Info } from 'lucide-react';
-import { normalizeWord } from '@harfhane/shared';
 import * as api from '../../lib/admin-api';
+import { parseCSV, parseJSON, type PreviewRow } from '../../lib/importWordsParser';
 
 interface ImportWordsProps {
   secret: string;
-}
-
-interface PreviewRow {
-  word: string;
-  meaning: string;
-  context: string;
-  category: string;
-  error?: string;
-}
-
-const VALID_CATEGORIES = ['isim', 'sıfat', 'fiil'];
-
-function parseCSV(text: string): PreviewRow[] {
-  const lines = text.trim().split('\n').filter((l) => l.trim());
-  const firstLine = lines[0]?.toLowerCase() ?? '';
-  const hasHeader = firstLine.includes('kelime') || firstLine.includes('word') || firstLine.includes('anlam');
-  return (hasHeader ? lines.slice(1) : lines).map((line) => {
-    const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-    const [word = '', meaning = '', context = '', category = 'isim'] = cols;
-    const errors: string[] = [];
-    if (!word) errors.push('kelime boş');
-    if (!meaning) errors.push('anlam boş');
-    if (!VALID_CATEGORIES.includes(category)) errors.push(`geçersiz kategori`);
-    return { word: normalizeWord(word), meaning, context, category, error: errors.join(', ') || undefined };
-  });
-}
-
-function parseJSON(text: string): PreviewRow[] {
-  const data = JSON.parse(text) as unknown[];
-  if (!Array.isArray(data)) throw new Error('JSON bir dizi olmalı');
-  return data.map((item) => {
-    const row = item as Record<string, unknown>;
-    const word = String(row['word'] ?? row['kelime'] ?? '');
-    const meaning = String(row['meaning'] ?? row['anlam'] ?? '');
-    const context = String(row['context'] ?? row['baglan'] ?? row['bağlam'] ?? '');
-    const category = String(row['category'] ?? row['kategori'] ?? 'isim');
-    const errors: string[] = [];
-    if (!word) errors.push('kelime boş');
-    if (!meaning) errors.push('anlam boş');
-    if (!VALID_CATEGORIES.includes(category)) errors.push('geçersiz kategori');
-    return { word: normalizeWord(word), meaning, context, category, error: errors.join(', ') || undefined };
-  });
 }
 
 export default function ImportWords({ secret }: ImportWordsProps): React.JSX.Element {
@@ -108,9 +66,12 @@ export default function ImportWords({ secret }: ImportWordsProps): React.JSX.Ele
     setImporting(true);
     setParseError('');
     try {
+      // `pool` is parsed for preview but not sent yet: the backend import request type
+      // (apps/frontend/src/lib/admin-api.ts `importWords`) does not accept it until the
+      // backend adds pool support (Plan 008 U5); it stays `daily`-only until then.
       const res = await api.importWords(
         secret,
-        validRows as { word: string; meaning: string; context: string; category: string }[]
+        validRows.map(({ word, meaning, context, category }) => ({ word, meaning, context, category }))
       );
       setResult(res);
       handleReset();

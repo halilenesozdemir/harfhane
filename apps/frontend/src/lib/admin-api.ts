@@ -135,7 +135,7 @@ export function removeDailyWord(secret: string, id: number): Promise<{ success: 
 
 export function importWords(
   secret: string,
-  words: { word: string; meaning: string; context: string; category: string }[]
+  words: { word: string; meaning: string; context: string; category: string | null }[]
 ): Promise<ImportResult> {
   return adminRequest<ImportResult>('/import', secret, {
     method: 'POST',
