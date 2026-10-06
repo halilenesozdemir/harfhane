@@ -140,7 +140,7 @@ KAÇAK,sıfat,"Yasal izin olmadan, gizlice yapılan veya getirilen",Sınırdan k
 KAĞIT,isim,Yazı yazmak veya baskı için kullanılan ince malzeme,Mektubunu beyaz bir kağıda yazdı.
 KEMİK,isim,Omurgalı canlıların vücudunu oluşturan sert doku.,Röntgende kolundaki kemik net görünüyordu.
 KEYİF,isim,"Hoşa giden, rahatlatan ruh hali.",Güneşli havada sahilde yürümek ona keyif veriyor.
-KILIÇ,isim,"Uzun, keskin bilezikli eski bir kesici silah",Müzede yüzyıllık bir kılıç sergileniyordu.
+KILIÇ,isim,"Uzun ve keskin ağızlı, eski bir kesici silah",Müzede yüzyıllık bir kılıç sergileniyordu.
 KIRIK,isim,Kemikte veya bir nesnede çatlayıp ayrılma sonucu oluşan hasar,Düştükten sonra kolunda kırık tespit edildi.
 KISIM,isim,Bir bütünün ayrıldığı parçalardan her biri.,Kitabın ilk kısmını bir günde bitirdi.
 KIZIL,sıfat,Koyu kırmızıya çalan renk tonunda olan,Gün batımında gökyüzü kızıl bir renge büründü.
@@ -230,7 +230,7 @@ SAVAŞ,isim,İki taraf arasındaki silahlı çatışma,Tarih kitabında eski bir
 SAYFA,isim,"Bir kitap veya defterin yaprağı, bölümü",Kitabın son sayfasını heyecanla okudu.
 SAYGI,isim,Birine değer verip onurunu gözetme duygusu,Büyüklerine her zaman saygı gösterirdi.
 SAÇMA,sıfat,"Mantıksız, anlam taşımayan",Bu kadar saçma bir öneri duymamıştım.
-SEBEP,isim,Bir olayın ortaya çıkmasına yol açan etken,Gecikmenin nedenini açıklamadı.
+SEBEP,isim,Bir olayın ortaya çıkmasına yol açan etken,Gecikmesinin sebebini kimseye açıklamadı.
 SEFER,isim,Bir yere yapılan yolculuk veya görev,Otobüs son seferini akşam yaptı.
 SELAM,isim,Karşılaşıldığında söylenen dostça söz,Arkadaşıma yolda selam verdim.
 SESLİ,sıfat,Ses çıkaran ya da duyulacak biçimde yapılan,"Çocuk, sesli bir şekilde gülmeye başladı."
@@ -238,7 +238,7 @@ SEVGİ,isim,Birine veya bir şeye duyulan derin bağlılık duygusu,Ailesine ola
 SEZON,isim,Bir etkinliğin veya dizinin yıl içindeki dönemi,Dizinin yeni sezonu bu ay başladı.
 SEÇİM,isim,Birden çok şey arasından birini tercih etme,Yarın önemli bir seçim yapılacak.
 SICAK,sıfat,Isısı yüksek olan,Bugün hava çok sıcak.
-SIFIR,sıfat,"Hiç kullanılmamış, yepyeni olan",Komşum geçen hafta sıfır bir araba aldı.
+SIFIR,sıfat,"Hiç kullanılmamış, yepyeni olan; değeri olmayan",Komşum geçen hafta sıfır bir araba aldı.
 SINAV,isim,Bilgi veya beceriyi ölçmek için yapılan değerlendirme,Yarın matematik sınavı var.
 SINIF,isim,Öğrencilerin ders gördüğü oda veya grup,Sınıfta otuz öğrenci vardı.
 SINIR,isim,İki bölgeyi birbirinden ayıran çizgi veya nokta,İki ülke arasındaki sınır kapatıldı.
@@ -271,7 +271,7 @@ TEPKİ,isim,Bir davranışa karşı gösterilen karşılık,Haber herkesten büy
 TERİM,isim,Belirli bir alanda özel anlam taşıyan kelime.,"Doktor, hastalığı tıbbi bir terimle açıkladı."
 TESTİ,isim,Su gibi sıvıları taşımak için kullanılan topraktan kap.,"Köy evinde su, serin kalsın diye testide saklanırdı."
 TIBBİ,sıfat,"Hekimlikle, sağlık alanıyla ilgili olan",Hastaneye tıbbi bir müdahale için gittiler.
-TOKAT,isim,Açık elle birinin yüzüne hızlıca vurma hareketi.,Çocuk yaramazlık yapınca bir tokat yedi.
+TOKAT,isim,Açık elle birinin yüzüne hızlıca vurma hareketi.,Rüzgâr kapıyı çarpınca yüzüme tokat gibi bir soğuk çarptı.
 TOPLU,sıfat,Birçok kişi veya şeyi bir arada barındıran,Çalışanlar toplu bir toplantıda bir araya geldi.
 TUHAF,sıfat,"Alışılmışın dışında, garip görünen.",Bu gece sokaklarda tuhaf bir sessizlik vardı.
 TUTAR,isim,Bir hesaplamanın veya ödemenin toplam miktarı.,Faturadaki tutarı kontrol edip ödeme yaptı.
@@ -290,7 +290,7 @@ YAPAY,sıfat,"Doğal olmayan, insan eliyle üretilmiş.",Bahçeye yapay çim dö
 YAPIM,isim,Bir eserin veya ürünün meydana getirilme süreci,Filmin yapımı iki yıl sürdü.
 YARAR,isim,Bir şeyin sağladığı olumlu etki veya fayda,Bu bitkinin sağlığa pek çok yararı var.
 YARGI,isim,Bir konu hakkında varılan sonuç veya hüküm,Mahkeme davada nihai yargısını açıkladı.
-YARIM,sıfat,Bütünün yaklaşık ortasına denk gelen bölüm,Ekmeğin yarımını bana verdi.
+YARIM,sıfat,Bir bütünün iki eşit parçasından biri olan,Pastanın yarım dilimini kardeşine verdi.
 YARIŞ,isim,Kimin daha hızlı veya başarılı olduğunu belirlemek için yapılan karşılaşma.,Çocuklar bahçede koşu yarışı yaptı.
 YASAK,isim,Yapılması veya kullanılması engellenen durum,Parkta sigara içmek yasaktı.
 YASAL,sıfat,"Kanunlara uygun, hukuken geçerli olan",Bu işlem tamamen yasal yollarla yapıldı.
@@ -300,10 +300,10 @@ YAVRU,isim,Hayvanların yeni doğmuş veya küçük olan çocuğu.,"Kedi, yavrul
 YAZAR,isim,Kitap veya yazı üreten kişi,Bu romanın yazarı çok ünlüdür.
 YAŞAM,isim,Canlıların doğumdan ölüme kadar sürdürdüğü süreç,Şehirde yaşam oldukça hareketli.
 YAŞLI,sıfat,"İleri yaşta olan, çok yıl yaşamış",Yaşlı adam parkta oturuyordu.
-YEDEK,isim,Asıl olanın yerine kullanılmak üzere hazırda tutulan.,Çantamda her zaman yedek bir pil bulundururum.
+YEDEK,isim,Asıl olanın yerine kullanılmak üzere hazırda tutulan şey,Çantamda her zaman yedek bir pil bulundururum.
 YEREL,sıfat,"Belirli bir bölgeye özgü, bölgesel",Yerel yönetimler bu projeye destek verdi.
 YERLİ,sıfat,Bulunduğu ülkede üretilmiş veya doğmuş,Bu araba tamamen yerli üretimdir.
-YEŞİL,sıfat,Bitki yapraklarının doğal rengi,Bahçedeki çim yemyeşildi.
+YEŞİL,sıfat,Bitki yapraklarının doğal rengi,Baharda bahçedeki ağaçlar yeşil yapraklarla doldu.
 YOLCU,isim,Bir araçla seyahat eden kişi,Otobüsteki yolcu uykuya dalmıştı.
 YORUM,isim,Bir konu hakkında belirtilen kişisel görüş,Habere pek çok yorum yazıldı.
 YOĞUN,sıfat,Belirli bir hacimde çok miktarda bulunan,Bugün trafik çok yoğundu.

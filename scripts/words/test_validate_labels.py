@@ -36,6 +36,20 @@ class MentionsAnswerTests(unittest.TestCase):
 
 
 class ValidateTests(unittest.TestCase):
+    def test_flags_context_when_it_does_not_use_the_answer(self):
+        label = accepted("KALEM", context="Çantasından mavi bir araç çıkardı.")
+        report = validate([label], POOL)
+        self.assertEqual(report["errors"], {"KALEM": ["context_missing_answer"]})
+
+    def test_accepts_context_when_the_answer_drops_a_vowel(self):
+        label = accepted("VAKİT", meaning="Bir işin yapılacağı zaman dilimi", context="Eve dönme vakti geldi.")
+        self.assertEqual(validate([label], ["VAKİT"])["errors"], {})
+
+    def test_drops_every_copy_when_a_word_is_duplicated(self):
+        report = validate([accepted("KALEM"), accepted("KALEM")], POOL)
+        self.assertEqual(report["accepted"], [])
+        self.assertEqual(report["errors"], {"KALEM": ["duplicate"]})
+
     def test_buckets_valid_labels(self):
         report = validate([accepted("KALEM"), rejected("GELDİ")], POOL)
         self.assertEqual([label["word"] for label in report["accepted"]], ["KALEM"])

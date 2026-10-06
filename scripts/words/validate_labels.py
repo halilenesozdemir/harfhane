@@ -3,6 +3,8 @@ import csv
 import json
 import os
 import re
+import sys
+from collections import Counter
 
 from turkish import tr_lower
 
@@ -18,6 +20,7 @@ CATEGORIES = {"isim", "sıfat"}
 MEANING_LENGTH = (8, 140)
 CONTEXT_LENGTH = (10, 160)
 SHORT_WORD_LENGTH = 4
+CONTEXT_STEM_LENGTH = 3
 SENTENCE_ENDINGS = (".", "!", "?")
 ALLOWED_TEXT = re.compile(r"^[A-Za-zÇĞİÖŞÜçğıöşüÂâÎîÛû0-9 .,;:!?'\"()\-–]+$")
 TOKEN_SPLIT = re.compile(r"[^a-zçğıöşüâîû]+")
@@ -33,6 +36,15 @@ def answer_stem(word: str) -> str:
 
 def mentions_answer(text: str, word: str) -> bool:
     stem = answer_stem(word)
+    tokens = TOKEN_SPLIT.split(tr_lower(text))
+    return any(token.startswith(stem) for token in tokens)
+
+
+# Context sentences inflect the answer, which can drop a vowel or soften the final
+# consonant (VAKİT -> vakti, KAYIT -> kaydı), so only the first letters must match.
+def context_mentions_answer(text: str, word: str) -> bool:
+    lowered = tr_lower(word)
+    stem = lowered if len(lowered) <= SHORT_WORD_LENGTH else lowered[:CONTEXT_STEM_LENGTH]
     tokens = TOKEN_SPLIT.split(tr_lower(text))
     return any(token.startswith(stem) for token in tokens)
 
@@ -58,6 +70,8 @@ def accepted_errors(label: dict) -> list:
         errors.append("meaning_mentions_answer")
     if isinstance(label.get("context"), str) and not label["context"].endswith(SENTENCE_ENDINGS):
         errors.append("context_not_sentence")
+    if isinstance(label.get("context"), str) and not context_mentions_answer(label["context"], label["word"]):
+        errors.append("context_missing_answer")
     return errors
 
 
@@ -85,19 +99,19 @@ def label_errors(label: dict, pool: set) -> list:
 
 def validate(labels: list, pool_words: list) -> dict:
     pool = set(pool_words)
-    seen = set()
+    counts = Counter(str(label.get("word")) for label in labels)
     report = {"accepted": [], "rejected": [], "unsure": [], "errors": {}}
     for label in labels:
-        word = label.get("word")
+        word = str(label.get("word"))
+        if counts[word] > 1:
+            report["errors"][word] = ["duplicate"]
+            continue
         errors = label_errors(label, pool)
-        if word in seen:
-            errors = errors + ["duplicate"]
-        seen.add(word)
         if errors:
             report["errors"][str(word)] = errors
             continue
         report[DECISION_BUCKETS[label["decision"]]].append(label)
-    report["missing"] = [word for word in pool_words if word not in seen]
+    report["missing"] = [word for word in pool_words if word not in counts]
     return report
 
 
@@ -144,8 +158,11 @@ def main():
     pool_words = load_lines(os.path.join(REVIEW_DIR, f"pool-{args.length}.txt"))
     labels = load_labels(os.path.join(REVIEW_DIR, f"labels-{args.length}.jsonl"))
     report = validate(labels, pool_words)
-    write_review_csv(os.path.join(REVIEW_DIR, f"review-{args.length}.csv"), report["accepted"])
     print(json.dumps(summarize(report), ensure_ascii=False, indent=2))
+    # A review CSV is only written from a clean label set, so import never sees partial data.
+    if report["errors"]:
+        sys.exit(1)
+    write_review_csv(os.path.join(REVIEW_DIR, f"review-{args.length}.csv"), report["accepted"])
 
 
 if __name__ == "__main__":

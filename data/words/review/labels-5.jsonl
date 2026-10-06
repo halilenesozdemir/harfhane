@@ -156,7 +156,7 @@
 {"word": "HUKUK", "decision": "accept", "category": "isim", "meaning": "Toplumu düzenleyen kurallar bütünü", "context": "Hukuk fakültesinde dört yıl okudu."}
 {"word": "MEDYA", "decision": "accept", "category": "isim", "meaning": "Kitle iletişim araçlarının tümü", "context": "Medya bu habere geniş yer verdi."}
 {"word": "BASİT", "decision": "accept", "category": "sıfat", "meaning": "Karmaşık olmayan, kolay anlaşılan", "context": "Soru oldukça basitti, hemen çözdü."}
-{"word": "SEBEP", "decision": "accept", "category": "isim", "meaning": "Bir olayın ortaya çıkmasına yol açan etken", "context": "Gecikmenin nedenini açıklamadı."}
+{"word": "SEBEP", "decision": "accept", "category": "isim", "meaning": "Bir olayın ortaya çıkmasına yol açan etken", "context": "Gecikmesinin sebebini kimseye açıklamadı."}
 {"word": "SOĞUK", "decision": "accept", "category": "sıfat", "meaning": "Isısı düşük, sıcak olmayan", "context": "Dışarısı bu sabah çok soğuktu."}
 {"word": "TABİİ", "decision": "reject", "reason": "function_word"}
 {"word": "YAVAŞ", "decision": "accept", "category": "sıfat", "meaning": "Hızı az olan, çabuk olmayan", "context": "Trafikte araçlar yavaş ilerliyordu."}
@@ -181,7 +181,7 @@
 {"word": "KEŞKE", "decision": "reject", "reason": "function_word"}
 {"word": "SİLAH", "decision": "reject", "reason": "sensitive"}
 {"word": "TEMİZ", "decision": "accept", "category": "sıfat", "meaning": "Kirden arınmış, pak", "context": "Odasını her zaman temiz tutar."}
-{"word": "YARIM", "decision": "accept", "category": "sıfat", "meaning": "Bütünün yaklaşık ortasına denk gelen bölüm", "context": "Ekmeğin yarımını bana verdi."}
+{"word": "YARIM", "decision": "accept", "category": "sıfat", "meaning": "Bir bütünün iki eşit parçasından biri olan", "context": "Pastanın yarım dilimini kardeşine verdi."}
 {"word": "ÖRNEK", "decision": "accept", "category": "isim", "meaning": "Bir şeyin benzerini gösteren model", "context": "Öğretmen tahtaya bir örnek yazdı."}
 {"word": "AŞIRI", "decision": "accept", "category": "sıfat", "meaning": "Ölçüyü kaçıran, fazla miktarda", "context": "Aşırı sıcaktan bitkin düştü."}
 {"word": "FATİH", "decision": "reject", "reason": "proper_noun"}
@@ -190,7 +190,7 @@
 {"word": "HASAN", "decision": "reject", "reason": "proper_noun"}
 {"word": "PARÇA", "decision": "accept", "category": "isim", "meaning": "Bir bütünden ayrılan küçük bölüm", "context": "Pastadan bir parça kesti."}
 {"word": "YOĞUN", "decision": "accept", "category": "sıfat", "meaning": "Belirli bir hacimde çok miktarda bulunan", "context": "Bugün trafik çok yoğundu."}
-{"word": "YEŞİL", "decision": "accept", "category": "sıfat", "meaning": "Bitki yapraklarının doğal rengi", "context": "Bahçedeki çim yemyeşildi."}
+{"word": "YEŞİL", "decision": "accept", "category": "sıfat", "meaning": "Bitki yapraklarının doğal rengi", "context": "Baharda bahçedeki ağaçlar yeşil yapraklarla doldu."}
 {"word": "ALMIŞ", "decision": "reject", "reason": "verb_form"}
 {"word": "ASKER", "decision": "accept", "category": "isim", "meaning": "Orduda görev yapan silahlı kişi", "context": "Asker sınırda nöbet tutuyordu."}
 {"word": "BALIK", "decision": "accept", "category": "isim", "meaning": "Suda yaşayan solungaçlı canlı", "context": "Göletten iki balık tuttu."}
@@ -402,7 +402,7 @@
 {"word": "FRANK", "decision": "reject", "reason": "proper_noun"}
 {"word": "FİKRİ", "decision": "reject", "reason": "inflected"}
 {"word": "NÜFUS", "decision": "accept", "category": "isim", "meaning": "Bir yerde yaşayan insan sayısı", "context": "Şehrin nüfusu son yıllarda hızla arttı."}
-{"word": "SIFIR", "decision": "accept", "category": "sıfat", "meaning": "Hiç kullanılmamış, yepyeni olan", "context": "Komşum geçen hafta sıfır bir araba aldı."}
+{"word": "SIFIR", "decision": "accept", "category": "sıfat", "meaning": "Hiç kullanılmamış, yepyeni olan; değeri olmayan", "context": "Komşum geçen hafta sıfır bir araba aldı."}
 {"word": "TARZI", "decision": "reject", "reason": "inflected"}
 {"word": "YARAR", "decision": "accept", "category": "isim", "meaning": "Bir şeyin sağladığı olumlu etki veya fayda", "context": "Bu bitkinin sağlığa pek çok yararı var."}
 {"word": "ÖDÜLÜ", "decision": "reject", "reason": "inflected"}
@@ -411,7 +411,7 @@
 {"word": "FORMA", "decision": "accept", "category": "isim", "meaning": "Spor takımlarının giydiği özel kıyafet", "context": "Oyuncu yeni formasıyla sahaya çıktı."}
 {"word": "FİLAN", "decision": "reject", "reason": "function_word"}
 {"word": "HOCAM", "decision": "reject", "reason": "inflected"}
-{"word": "KILIÇ", "decision": "accept", "category": "isim", "meaning": "Uzun, keskin bilezikli eski bir kesici silah", "context": "Müzede yüzyıllık bir kılıç sergileniyordu."}
+{"word": "KILIÇ", "decision": "accept", "category": "isim", "meaning": "Uzun ve keskin ağızlı, eski bir kesici silah", "context": "Müzede yüzyıllık bir kılıç sergileniyordu."}
 {"word": "VÜCUT", "decision": "accept", "category": "isim", "meaning": "Bir canlının bütün organlarıyla oluşturduğu beden", "context": "Düzenli spor vücut sağlığına iyi gelir."}
 {"word": "YOLCU", "decision": "accept", "category": "isim", "meaning": "Bir araçla seyahat eden kişi", "context": "Otobüsteki yolcu uykuya dalmıştı."}
 {"word": "YUNAN", "decision": "reject", "reason": "proper_noun"}
@@ -449,7 +449,7 @@
 {"word": "KAĞIT", "decision": "accept", "category": "isim", "meaning": "Yazı yazmak veya baskı için kullanılan ince malzeme", "context": "Mektubunu beyaz bir kağıda yazdı."}
 {"word": "KIZIL", "decision": "accept", "category": "sıfat", "meaning": "Koyu kırmızıya çalan renk tonunda olan", "context": "Gün batımında gökyüzü kızıl bir renge büründü."}
 {"word": "SADIK", "decision": "accept", "category": "sıfat", "meaning": "Birine karşı bağlılığını hiç bozmayan, güvenilir.", "context": "O, yıllardır sadık bir dost olarak yanımda."}
-{"word": "TOKAT", "decision": "accept", "category": "isim", "meaning": "Açık elle birinin yüzüne hızlıca vurma hareketi.", "context": "Çocuk yaramazlık yapınca bir tokat yedi."}
+{"word": "TOKAT", "decision": "accept", "category": "isim", "meaning": "Açık elle birinin yüzüne hızlıca vurma hareketi.", "context": "Rüzgâr kapıyı çarpınca yüzüme tokat gibi bir soğuk çarptı."}
 {"word": "ÖRGÜT", "decision": "accept", "category": "isim", "meaning": "Ortak bir amaç için bir araya gelmiş kişilerden oluşan topluluk.", "context": "Bu dernek, gönüllülerden oluşan bir örgüt olarak kuruldu."}
 {"word": "KALBİ", "decision": "reject", "reason": "inflected"}
 {"word": "KAÇAK", "decision": "accept", "category": "sıfat", "meaning": "Yasal izin olmadan, gizlice yapılan veya getirilen", "context": "Sınırdan kaçak geçmeye çalışan kişi yakalandı."}
@@ -477,7 +477,7 @@
 {"word": "SUÇLU", "decision": "accept", "category": "isim", "meaning": "Bir kabahat veya suç işlediği belirlenen kişi.", "context": "Polis, suçlu olduğu düşünülen kişiyi gözaltına aldı."}
 {"word": "TERİM", "decision": "accept", "category": "isim", "meaning": "Belirli bir alanda özel anlam taşıyan kelime.", "context": "Doktor, hastalığı tıbbi bir terimle açıkladı."}
 {"word": "YAKIT", "decision": "accept", "category": "isim", "meaning": "Yanarak ısı veya enerji veren madde; benzin, odun, kömür gibi", "context": "Araba, yolun ortasında yakıt bitince durdu."}
-{"word": "YEDEK", "decision": "accept", "category": "isim", "meaning": "Asıl olanın yerine kullanılmak üzere hazırda tutulan.", "context": "Çantamda her zaman yedek bir pil bulundururum."}
+{"word": "YEDEK", "decision": "accept", "category": "isim", "meaning": "Asıl olanın yerine kullanılmak üzere hazırda tutulan şey", "context": "Çantamda her zaman yedek bir pil bulundururum."}
 {"word": "İLHAM", "decision": "accept", "category": "isim", "meaning": "Bir eser ya da fikir için zihne doğan yaratıcı dürtü.", "context": "Ressam, denizden ilham alarak bu tabloyu yaptı."}
 {"word": "ŞEKLİ", "decision": "reject", "reason": "inflected"}
 {"word": "BURAK", "decision": "reject", "reason": "proper_noun"}
