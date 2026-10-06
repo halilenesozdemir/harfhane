@@ -5,8 +5,9 @@ import {
   checkScheduleHealthAndAlert,
   getScheduleHealth,
   severityFor,
+  restockStatusFor,
 } from '../../src/services/schedule-health-service';
-import { SCHEDULE_WARNING_DAYS, SCHEDULE_CRITICAL_DAYS } from '../../src/constants/schedule';
+import { SCHEDULE_WARNING_DAYS, SCHEDULE_CRITICAL_DAYS, RESTOCK_WARNING_DAYS } from '../../src/constants/schedule';
 
 beforeAll(async () => {
   await applySchema(env.DB);
@@ -28,12 +29,25 @@ describe('severityFor', () => {
   });
 });
 
+describe('restockStatusFor', () => {
+  it('returns restock below the restock warning threshold', () => {
+    expect(restockStatusFor(0)).toBe('restock');
+    expect(restockStatusFor(RESTOCK_WARNING_DAYS - 1)).toBe('restock');
+  });
+
+  it('returns ok at or above the restock warning threshold', () => {
+    expect(restockStatusFor(RESTOCK_WARNING_DAYS)).toBe('ok');
+    expect(restockStatusFor(RESTOCK_WARNING_DAYS + 1)).toBe('ok');
+  });
+});
+
 describe('getScheduleHealth', () => {
-  it('marks every active length as critical when nothing is scheduled', async () => {
+  it('marks every active length as critical and needing restock when nothing is scheduled', async () => {
     const health = await getScheduleHealth(env.DB);
     expect(health.length).toBeGreaterThan(0);
     for (const entry of health) {
       expect(entry.severity).toBe('critical');
+      expect(entry.restockStatus).toBe('restock');
     }
   });
 });

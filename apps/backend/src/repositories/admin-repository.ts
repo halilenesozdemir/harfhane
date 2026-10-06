@@ -1,6 +1,6 @@
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
-import { ACTIVE_WORD_LENGTHS, type ActiveWordLength } from '../constants/schedule';
+import { ACTIVE_WORD_LENGTHS, type ActiveWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
 
 export interface WordRow {
   id: number;
@@ -295,36 +295,86 @@ function shuffleArray<T>(arr: T[]): T[] {
   return copy;
 }
 
+function subtractDays(date: string, days: number): string {
+  const cursor = new Date(`${date}T00:00:00Z`);
+  cursor.setUTCDate(cursor.getUTCDate() - days);
+  return cursor.toISOString().slice(0, 10);
+}
+
+/** A word is on cooldown for a target date if it answered this length on, or within
+ * ANSWER_REPEAT_COOLDOWN_DAYS before, that date — this also rules out any date already
+ * scheduled in the future, since a future date is never before the cooldown threshold. */
+function isOnCooldown(usageDates: string[], targetDate: string): boolean {
+  const threshold = subtractDays(targetDate, ANSWER_REPEAT_COOLDOWN_DAYS);
+  return usageDates.some((date) => date >= threshold);
+}
+
+function groupUsageByWord(rows: { word_id: number; date: string }[]): Map<number, string[]> {
+  const byWord = new Map<number, string[]>();
+  for (const row of rows) {
+    const dates = byWord.get(row.word_id) ?? [];
+    dates.push(row.date);
+    byWord.set(row.word_id, dates);
+  }
+  return byWord;
+}
+
+function pickAssignments(
+  candidateIds: number[],
+  usageByWord: Map<number, string[]>,
+  unscheduledDates: string[]
+): { date: string; wordId: number }[] {
+  const usedInThisFill = new Set<number>();
+  const assignments: { date: string; wordId: number }[] = [];
+
+  for (const date of unscheduledDates) {
+    const wordId = candidateIds.find(
+      (id) => !usedInThisFill.has(id) && !isOnCooldown(usageByWord.get(id) ?? [], date)
+    );
+    if (wordId === undefined) continue;
+    usedInThisFill.add(wordId);
+    assignments.push({ date, wordId });
+  }
+  return assignments;
+}
+
 async function autoFillLength(
   db: Env['DB'],
   from: string,
   to: string,
   length: ActiveWordLength
 ): Promise<{ scheduled: number; skipped: number }> {
-  const [existingResult, activeResult] = await db.batch([
+  const [existingResult, eligibleResult, historyResult] = await db.batch([
     db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
     db
       .prepare("SELECT id FROM words WHERE is_active = 1 AND source != 'user' AND pool = 'daily' AND length = ?")
       .bind(length),
+    db.prepare('SELECT word_id, date FROM daily_words WHERE length = ?').bind(length),
   ]);
 
   const scheduledDates = new Set(
     ((existingResult?.results ?? []) as { date: string }[]).map((r) => r.date)
   );
-  const activeIds = ((activeResult?.results ?? []) as { id: number }[]).map((r) => r.id);
+  const eligibleIds = ((eligibleResult?.results ?? []) as { id: number }[]).map((r) => r.id);
+  const usageByWord = groupUsageByWord(
+    (historyResult?.results ?? []) as { word_id: number; date: string }[]
+  );
 
   const unscheduledDates = generateDatesInRange(from, to).filter((d) => !scheduledDates.has(d));
-  if (unscheduledDates.length === 0 || activeIds.length === 0) {
+  if (unscheduledDates.length === 0 || eligibleIds.length === 0) {
     return { scheduled: 0, skipped: scheduledDates.size };
   }
 
-  const pool = shuffleArray(activeIds);
-  const statements = unscheduledDates.map((date, i) => {
-    const wordId = pool[i % pool.length] as number;
-    return db
+  const assignments = pickAssignments(shuffleArray(eligibleIds), usageByWord, unscheduledDates);
+  if (assignments.length === 0) {
+    return { scheduled: 0, skipped: scheduledDates.size };
+  }
+
+  const statements = assignments.map(({ date, wordId }) =>
+    db
       .prepare('INSERT OR IGNORE INTO daily_words (word_id, date, length) VALUES (?, ?, ?)')
-      .bind(wordId, date, length);
-  });
+      .bind(wordId, date, length)
+  );
 
   const insertResults = await db.batch(statements);
   const scheduled = insertResults.filter((r) => (r.meta.changes ?? 0) > 0).length;

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from './helpers/db';
+import { SCHEDULE_TOPUP_DAYS } from '../src/constants/schedule';
 
 const { checkScheduleHealthAndAlertMock } = vi.hoisted(() => ({
   checkScheduleHealthAndAlertMock: vi.fn(),
@@ -10,9 +11,19 @@ vi.mock('../src/services/schedule-health-service', () => ({
   checkScheduleHealthAndAlert: checkScheduleHealthAndAlertMock,
 }));
 
+const { autoFillDailyScheduleMock } = vi.hoisted(() => ({
+  autoFillDailyScheduleMock: vi.fn(),
+}));
+
+vi.mock('../src/services/admin-service', () => ({
+  autoFillDailySchedule: autoFillDailyScheduleMock,
+}));
+
 beforeEach(async () => {
   await applySchema(env.DB);
   checkScheduleHealthAndAlertMock.mockReset();
+  autoFillDailyScheduleMock.mockReset();
+  autoFillDailyScheduleMock.mockResolvedValue({ scheduled: 0, skipped: 0 });
 });
 
 describe('scheduled()', () => {
@@ -38,6 +49,25 @@ describe('scheduled()', () => {
     const envWithoutAlertEmail = { ...env, ADMIN_ALERT_EMAIL: undefined };
 
     await expect(worker.scheduled({} as ScheduledEvent, envWithoutAlertEmail as never)).resolves.toBeUndefined();
+    expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('tops up the schedule before checking its health (Plan 006 U3a)', async () => {
+    checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
+    const worker = (await import('../src/index')).default;
+
+    await worker.scheduled({} as ScheduledEvent, env as never);
+
+    expect(autoFillDailyScheduleMock).toHaveBeenCalledTimes(1);
+    expect(autoFillDailyScheduleMock).toHaveBeenCalledWith(env.DB, SCHEDULE_TOPUP_DAYS);
+  });
+
+  it('does not let a failing auto-fill break the cron run', async () => {
+    autoFillDailyScheduleMock.mockRejectedValue(new Error('autofill boom'));
+    checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
+    const worker = (await import('../src/index')).default;
+
+    await expect(worker.scheduled({} as ScheduledEvent, env as never)).resolves.toBeUndefined();
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -8,6 +8,8 @@ import { admin } from './routes/admin';
 import { gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
 import { checkScheduleHealthAndAlert } from './services/schedule-health-service';
+import { autoFillDailySchedule } from './services/admin-service';
+import { SCHEDULE_TOPUP_DAYS } from './constants/schedule';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -54,6 +56,9 @@ export default {
   fetch: app.fetch,
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+    // Top up the schedule before checking its health, so the health check (and alert)
+    // reflect what auto-fill could actually place, not stale gaps (Plan 006 U3a).
+    await Promise.allSettled([autoFillDailySchedule(env.DB, SCHEDULE_TOPUP_DAYS)]);
     await Promise.allSettled([
       checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL),
     ]);

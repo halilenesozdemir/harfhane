@@ -1,11 +1,12 @@
 import type { Env } from '../types/env';
-import { ACTIVE_WORD_LENGTHS, type ActiveWordLength } from '../constants/schedule';
+import { ACTIVE_WORD_LENGTHS, type ActiveWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
 
 export interface ScheduleHealthRow {
   length: ActiveWordLength;
   runwayDays: number;
   lastScheduledDate: string | null;
   unscheduledStock: number;
+  restockRunwayDays: number;
 }
 
 interface ScheduledDateRow {
@@ -44,6 +45,27 @@ async function fetchUnscheduledStock(db: Env['DB'], length: number): Promise<num
   return row?.count ?? 0;
 }
 
+function subtractDays(date: string, days: number): string {
+  const cursor = new Date(`${date}T00:00:00Z`);
+  cursor.setUTCDate(cursor.getUTCDate() - days);
+  return cursor.toISOString().slice(0, 10);
+}
+
+/** Approved, active, daily-pool words of this length that R3's cooldown still allows to be
+ * scheduled from `today` onward: never used, or last used more than the cooldown ago. */
+async function fetchRestockRunwayDays(db: Env['DB'], length: number, today: string): Promise<number> {
+  const threshold = subtractDays(today, ANSWER_REPEAT_COOLDOWN_DAYS);
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) as count FROM words
+       WHERE is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily' AND length = ?
+         AND id NOT IN (SELECT word_id FROM daily_words WHERE length = ? AND date >= ?)`
+    )
+    .bind(length, length, threshold)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
 function groupDatesByLength(rows: ScheduledDateRow[]): Map<number, string[]> {
   const byLength = new Map<number, string[]>();
   for (const row of rows) {
@@ -67,7 +89,8 @@ export async function findScheduleRunway(
     const runwayDays = countConsecutiveRunway(dates, today);
     const lastScheduledDate = dates.length > 0 ? dates[dates.length - 1]! : null;
     const unscheduledStock = await fetchUnscheduledStock(db, length);
-    results.push({ length, runwayDays, lastScheduledDate, unscheduledStock });
+    const restockRunwayDays = await fetchRestockRunwayDays(db, length, today);
+    results.push({ length, runwayDays, lastScheduledDate, unscheduledStock, restockRunwayDays });
   }
   return results;
 }

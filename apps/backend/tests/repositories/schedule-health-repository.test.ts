@@ -69,3 +69,45 @@ describe('findScheduleRunway', () => {
     expect(entry?.unscheduledStock).toBe(0);
   });
 });
+
+describe('findScheduleRunway restock runway (R4, AE5)', () => {
+  async function restockFor(length: number): Promise<number> {
+    const result = await findScheduleRunway(env.DB, TODAY);
+    return result.find((r) => r.length === length)!.restockRunwayDays;
+  }
+
+  it('counts a never-used word as restock-eligible', async () => {
+    const before = await restockFor(6);
+    await insertWord('NEVUSA', 6);
+    expect(await restockFor(6)).toBe(before + 1);
+  });
+
+  it('excludes a word used within the cooldown window, before or after today', async () => {
+    const recentWord = await insertWord('RESTAA', 6);
+    await scheduleDay(recentWord, '2025-01-01', 6);
+    const futureWord = await insertWord('RESTBA', 6);
+    await scheduleDay(futureWord, '2027-01-01', 6);
+    const baseline = await restockFor(6);
+
+    await insertWord('RESTCA', 6);
+    expect(await restockFor(6)).toBe(baseline + 1);
+  });
+
+  it('includes a word used more than the cooldown window ago', async () => {
+    const before = await restockFor(6);
+    const oldWord = await insertWord('RESTDA', 6);
+    await scheduleDay(oldWord, '2020-01-01', 6);
+    expect(await restockFor(6)).toBe(before + 1);
+  });
+
+  it('matches AE5: marks 120 eligible 5-letter words as a runway of 120', async () => {
+    for (let i = 0; i < 120; i++) {
+      const word = String(1000 + i).padStart(5, '0').replace(/\d/g, (d) => 'ABCDEFGHIJ'[Number(d)]!);
+      await insertWord(word, 5);
+    }
+
+    const result = await findScheduleRunway(env.DB, TODAY);
+    const entry = result.find((r) => r.length === 5);
+    expect(entry?.restockRunwayDays).toBe(120);
+  });
+});
