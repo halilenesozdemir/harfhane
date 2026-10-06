@@ -12,9 +12,11 @@
     "build": "pnpm --filter @harfhane/shared run build && pnpm --parallel --filter \"@harfhane/frontend\" --filter \"@harfhane/backend\" run build",
     "typecheck": "pnpm --recursive run typecheck",
     "lint": "eslint .",
-    "test": "pnpm --filter @harfhane/shared run test && pnpm --filter @harfhane/ui-tokens run test && pnpm --filter @harfhane/frontend run test && pnpm --filter @harfhane/mobile run test && pnpm --filter @harfhane/backend run test",
+    "test": "pnpm --filter @harfhane/shared run test && pnpm --filter @harfhane/ui-tokens run test && pnpm --filter @harfhane/frontend run test && pnpm --filter @harfhane/mobile run test && pnpm --filter @harfhane/backend run test && pnpm run test:scripts",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "typecheck:test": "pnpm --filter @harfhane/backend run typecheck:test",
-    "check": "pnpm --filter @harfhane/shared run build && pnpm typecheck && pnpm typecheck:test && pnpm lint && pnpm test",
+    "check": "pnpm --filter @harfhane/shared run build && pnpm typecheck && pnpm typecheck:test && pnpm lint && pnpm test && pnpm run check:ac",
+    "check:ac": "node scripts/check-ac-coverage.mjs",
     "test:e2e": "pnpm --filter @harfhane/frontend run test:e2e"
   },
   "devDependencies": {
