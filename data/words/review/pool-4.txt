@@ -320,7 +320,6 @@ UYUM
 VİZE
 YAŞA
 İZNİ
-BİRA
 HIZI
 KALE
 KALK
@@ -598,3 +597,4 @@ MİSS
 ÖLÇÜ
 İLKE
 NEVİ
+FLAŞ
