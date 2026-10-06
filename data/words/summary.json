@@ -1,8 +1,8 @@
 {
   "lengths": {
     "4": {
-      "blocked_count": 12,
-      "candidate_count": 1657,
+      "blocked_count": 14,
+      "candidate_count": 1655,
       "valid_count": 5828
     },
     "5": {
@@ -11,8 +11,8 @@
       "valid_count": 9862
     },
     "6": {
-      "blocked_count": 17,
-      "candidate_count": 2712,
+      "blocked_count": 18,
+      "candidate_count": 2711,
       "valid_count": 12185
     },
     "7": {

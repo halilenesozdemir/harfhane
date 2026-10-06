@@ -148,19 +148,6 @@ and already removed end to end in #54.
   whether hidden-length stats need their own access point (e.g. still reachable once a length
   reopens) or a cleanup policy.
 
-## Plan 008 U7 follow-up (unlimited pool quality fixes, 2026-10-06)
-- **`pool-4.txt` no longer reproduces from its generator.** The Opus-review fixes to
-  `scripts/words/candidates.py`'s English-loanword filter (`turkish_allowlist.txt`, plus the
-  new `=bird`/`=lamb` blocklist entries) changed `candidates-4.csv`, but `pool-4.txt`
-  (`data/words/review/pool-4.txt`, the already-reviewed daily pool, generated earlier with
-  `answer_pool.py --length 4`) was deliberately left untouched per this unit's scope (never
-  edit daily review data). As a result `pool-4.txt` still contains BEST and PART, both of
-  which the new filter now drops from `candidates-4.csv` (English/Turkish zipf margin, same
-  mechanism as FİRE/STEP/SURE/MOMENT, but these two were not added to the allowlist since
-  nothing flagged them as needing one). Regenerating `pool-4.txt` from the current
-  `candidates-4.csv` would drop BEST/PART and pull in different replacement words — an
-  owner decision, not made here.
-
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
 deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research

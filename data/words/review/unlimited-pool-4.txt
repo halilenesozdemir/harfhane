@@ -456,7 +456,6 @@ HIZA
 İLAH
 İLET
 İLİK
-İLKE
 İLLE
 İLME
 İLMİ
@@ -673,7 +672,6 @@ NENE
 NEON
 NERE
 NEVA
-NEVİ
 NEŞE
 NİNE
 NİSA
@@ -744,7 +742,6 @@ PÜRE
 RABB
 RAFA
 RAKS
-RAKI
 RAMA
 RAMİ
 RAND
@@ -1010,7 +1007,6 @@ ZIRH
 ÖDÜN
 ÖKÜZ
 ÖLME
-ÖLÇÜ
 ÖNER
 ÖPME
 ÖPTÜ
