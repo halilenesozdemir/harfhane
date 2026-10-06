@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import Constants from 'expo-constants';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
+import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { ThemePreference } from '../theme';
 
@@ -22,6 +23,7 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
 
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
   const { colors, preference, setPreference, isHighContrast, setHighContrast } = useTheme();
+  const { isEnabled: isHapticsEnabled, setEnabled: setHapticsEnabled } = useHapticsSettings();
   const appVersion = Constants.expoConfig?.version;
 
   return (
@@ -47,6 +49,16 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
           accessibilityLabel="Yüksek kontrast"
           value={isHighContrast}
           onValueChange={setHighContrast}
+          trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
+        />
+      </View>
+
+      <View style={[styles.row, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.rowLabel, { color: colors.text }]}>Titreşim</Text>
+        <Switch
+          accessibilityLabel="Titreşim"
+          value={isHapticsEnabled}
+          onValueChange={setHapticsEnabled}
           trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
         />
       </View>

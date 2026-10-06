@@ -15,12 +15,27 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
+const mockHapticsStore = new Map<string, string>();
+jest.mock('../game/device-store', () => ({
+  deviceStore: {
+    getItem: (key: string) => Promise.resolve(mockHapticsStore.get(key) ?? null),
+    setItem: (key: string, value: string) => {
+      mockHapticsStore.set(key, value);
+      return Promise.resolve();
+    },
+  },
+}));
+
 function ColorProbe() {
   const { colors } = useTheme();
   return <Text testID="probe-bg">{colors.bg}</Text>;
 }
 
 describe('SettingsScreen', () => {
+  beforeEach(() => {
+    mockHapticsStore.clear();
+  });
+
   it('should render the Turkish theme and contrast controls', async () => {
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
     expect(screen.getByText('Ayarlar')).toBeTruthy();
@@ -60,5 +75,19 @@ describe('SettingsScreen', () => {
     mockExpoConfig.version = undefined;
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
     expect(screen.queryByText(/^Sürüm/)).toBeNull();
+  });
+
+  it('should show the haptics switch on by default', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByLabelText('Titreşim').props.value).toBe(true);
+  });
+
+  it('should persist turning the haptics switch off', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await act(async () => {
+      fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
+    });
+    expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
+    expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
   });
 });
