@@ -23,9 +23,12 @@ Owner decisions, 2026-10-06:
 - The share text keeps the coloured emoji squares; the no-emoji rule covers the app's own UI, not
   the share grid players paste into chats.
 - Later the same day: no accounts at launch either (accounts only solve moving a streak between
-  devices; their privacy, KVKK and onboarding cost outweighs that now). Android Auto Backup is the
-  first line for keeping stats across reinstalls; if it proves insufficient, a local streak
-  export/import code is added. A used hint is marked in the share text (supersedes Plan 008 R7's
+  devices; their privacy, KVKK and onboarding cost outweighs that now). Android Auto Backup keeps
+  stats across reinstalls: verified 2026-10-06 on the emulator with a local release build
+  (`allowBackup` defaults to true in Expo SDK 57; `bmgr backupnow` then uninstall/install restored
+  the AsyncStorage game state). In the field it depends on the player's Google backup setting and
+  runs roughly daily, so a local streak export/import code stays a fallback only if closed-test
+  players report lost streaks. A used hint is marked in the share text (supersedes Plan 008 R7's
   "not shown in share"). No anonymous server-side aggregate for now; closed-test feedback comes
   from a survey. Research: `docs/research/2026-10-06-puzzle-game-ux-engagement.md`.
 - Post-launch engagement ideas (streak calendar, hard mode, local achievements, share image) are
