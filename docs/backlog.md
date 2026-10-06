@@ -2,6 +2,13 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
+## Baloo 2 on Tile and Key (Plan 011 U4, R4)
+`apps/mobile/src/ui/layout.ts` now exports `FONT_FAMILY_DISPLAY` (Baloo 2 ExtraBold, loaded via
+`@expo-google-fonts/baloo-2` in `App.tsx`). It is applied to the HomeScreen title/card titles, but
+Plan 011 assigns `Tile.tsx` and `Key.tsx` to the B/C unit owners, so this unit (D) did not touch
+them. Whoever owns the next Tile/Key change should set `fontFamily: FONT_FAMILY_DISPLAY` on the
+letter/label text styles there too, matching the web tokens' `font-display`.
+
 ## knip findings recorded instead of fixed (2026-10-06)
 From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
 reason; details here.
