@@ -10,6 +10,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
     visible:
       id: "tile-0-0"
     timeout: 15000
+- assertVisible: { id: "hint-button" }
 
 - tapOn: { id: "key-K" }
 - tapOn: { id: "key-A" }
@@ -17,7 +18,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-A" }
 - tapOn: { id: "key-K" }
 - tapOn: { id: "key-ENTER" }
-- extendedWaitUntil: { visible: { id: "tile-1-0", text: "boş" }, timeout: 15000 }
+- extendedWaitUntil: { visible: { id: "tile-0-0", text: "K, .*" }, timeout: 15000 }
 
 - tapOn: { id: "key-D" }
 - tapOn: { id: "key-E" }
@@ -25,7 +26,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-E" }
 - tapOn: { id: "key-T" }
 - tapOn: { id: "key-ENTER" }
-- extendedWaitUntil: { visible: { id: "tile-2-0", text: "boş" }, timeout: 15000 }
+- extendedWaitUntil: { visible: { id: "tile-1-0", text: "D, .*" }, timeout: 15000 }
 
 - tapOn: { id: "key-S" }
 - tapOn: { id: "key-O" }
@@ -33,7 +34,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-A" }
 - tapOn: { id: "key-K" }
 - tapOn: { id: "key-ENTER" }
-- extendedWaitUntil: { visible: { id: "tile-3-0", text: "boş" }, timeout: 15000 }
+- extendedWaitUntil: { visible: { id: "tile-2-0", text: "S, .*" }, timeout: 15000 }
 
 - tapOn: { id: "key-T" }
 - tapOn: { id: "key-A" }
@@ -41,7 +42,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-A" }
 - tapOn: { id: "key-K" }
 - tapOn: { id: "key-ENTER" }
-- extendedWaitUntil: { visible: { id: "tile-4-0", text: "boş" }, timeout: 15000 }
+- extendedWaitUntil: { visible: { id: "tile-3-0", text: "T, .*" }, timeout: 15000 }
 
 - tapOn: { id: "key-M" }
 - tapOn: { id: "key-A" }
@@ -49,7 +50,7 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-A" }
 - tapOn: { id: "key-L" }
 - tapOn: { id: "key-ENTER" }
-- extendedWaitUntil: { visible: { id: "tile-5-0", text: "boş" }, timeout: 15000 }
+- extendedWaitUntil: { visible: { id: "tile-4-0", text: "M, .*" }, timeout: 15000 }
 
 - tapOn: { id: "key-B" }
 - tapOn: { id: "key-A" }
@@ -57,10 +58,14 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - tapOn: { id: "key-I" }
 - tapOn: { id: "key-K" }
 - tapOn: { id: "key-ENTER" }
-# The hint control only renders while mode is daily and the game is still playing; its
-# disappearance is proof the game reached an end state (win or loss) without depending on the
-# live daily word.
+- extendedWaitUntil: { visible: { id: "tile-5-0", text: "B, .*" }, timeout: 15000 }
+
+# The hint control only renders while mode is daily and the game is still playing, so its
+# disappearance plus the finished-game message together prove the game reached an end state
+# (win or loss) without depending on the live daily word.
 - extendedWaitUntil: { notVisible: { id: "hint-button" }, timeout: 15000 }
+- assertVisible: "(Kelime: .*|Muhteşem!|Harika!|Güzel!|İyi!|Fena değil!|Kıl payı!)"
 
 - back
-- assertVisible: "HARFHANE"
+- assertVisible: "Sınırsız Mod"
+- assertNotVisible: { id: "key-ENTER" }

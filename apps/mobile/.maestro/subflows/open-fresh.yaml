@@ -6,13 +6,18 @@ appId: host.exp.exponent
 - launchApp:
     clearState: true
 - openLink: "exp://127.0.0.1:8081"
+# The first bundle load after a clean state can be slow; this wait is optional so a slow
+# load (or no dev-menu sheet at all) never fails the flow outright.
 - extendedWaitUntil:
     visible: "Continue"
-    timeout: 15000
-- tapOn:
-    text: "Continue"
+    timeout: 30000
     optional: true
-- back
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - back
 - extendedWaitUntil:
     visible: "HARFHANE"
     timeout: 15000

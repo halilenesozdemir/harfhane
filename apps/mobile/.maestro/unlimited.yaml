@@ -1,7 +1,7 @@
 appId: host.exp.exponent
 ---
-# Unlimited mode fetches a fresh random word on every entry; typing a valid word fills the
-# board without needing to know the solution.
+# Unlimited mode fetches a fresh random word on every entry; submitting a valid word evaluates
+# the row without needing to know the solution.
 - runFlow: subflows/open-fresh.yaml
 - tapOn: "Sınırsız Mod"
 - extendedWaitUntil:
@@ -14,7 +14,9 @@ appId: host.exp.exponent
 - tapOn: { id: "key-P" }
 - tapOn: { id: "key-A" }
 - tapOn: { id: "key-K" }
-- assertVisible: { id: "tile-0-4", text: "K" }
+- tapOn: { id: "key-ENTER" }
+- extendedWaitUntil: { visible: { id: "tile-0-0", text: "K, .*" }, timeout: 15000 }
 
 - back
-- assertVisible: "HARFHANE"
+- assertVisible: "Sınırsız Mod"
+- assertNotVisible: { id: "key-ENTER" }

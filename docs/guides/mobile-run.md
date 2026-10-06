@@ -61,7 +61,7 @@ Her denemede:
 1. Emülatörü başlat (Device Manager'dan, ör. `harfhane_pixel`).
 2. Metro'yu worktree'den başlat (`expo start` zaten çalışıyorsa önce öldür):
    ```bash
-   pkill -f "expo start"
+   lsof -ti tcp:8081 | xargs kill
    cd apps/mobile && CI=1 pnpm exec expo start --port 8081 --clear
    ```
 3. Yeni bir terminalde cihazı Metro'ya bağla:

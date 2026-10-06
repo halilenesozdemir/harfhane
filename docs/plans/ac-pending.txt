@@ -16,7 +16,7 @@
 
 009-AE2  Plan 009 U2 (Playwright journeys + axe), not started
 009-AE3  Plan 009 U3 (real-backend Playwright project), not started
-009-AE4  proven by apps/mobile/.maestro/daily.yaml ("009-AE4" in its `name`), not a unit test target the script's TEST_FILE_PATTERNS scan for
+009-AE4  covered only by a local Maestro flow (apps/mobile/.maestro/daily.yaml); no gate runs it (R5: not in CI)
 009-AE6  Plan 009 U6 (Stryker mutation baseline), not started
 
 010-AE1  Plan 010 U1 (packages/shared strict flags + ts-reset), not started
