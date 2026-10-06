@@ -122,23 +122,33 @@ describe('GameScreen', () => {
     expect(reopened.queryByLabelText('İpucu göster')).toBeNull();
   });
 
-  it('should hide the hint control once the daily game is won', async () => {
+  it('should hide the hint control and stop marking the trailing row once the daily game is won', async () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
-    await screen.findByLabelText('Gönder');
+    const hintButton = await screen.findByLabelText('İpucu göster');
+    await act(async () => fireEvent.press(hintButton));
+    await screen.findByTestId('hint-text');
+
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
     await screen.findByText('Muhteşem!');
+
     expect(screen.queryByTestId('hint-button')).toBeNull();
     expect(screen.queryByTestId('hint-text')).toBeNull();
+    // Without the isPlaying guard this trailing row would still show "K, ipucu" from the
+    // (now stale) revealed position — the hint was at position 0.
     expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('boş');
   });
 
-  it('should hide the hint control once the daily game is lost', async () => {
+  it('should hide the hint control and stop marking the trailing row once the daily game is lost', async () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
-    await screen.findByLabelText('Gönder');
+    const hintButton = await screen.findByLabelText('İpucu göster');
+    await act(async () => fireEvent.press(hintButton));
+    await screen.findByTestId('hint-text');
+
     for (let attempt = 0; attempt < 6; attempt += 1) {
       await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
     }
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
+
     expect(screen.queryByTestId('hint-button')).toBeNull();
     expect(screen.queryByTestId('hint-text')).toBeNull();
   });
