@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { env } from 'cloudflare:test';
+import { getGameNumber } from '@harfhane/shared';
 import {
   findDailyWord,
   findRandomWord,
@@ -44,6 +45,29 @@ describe('findDailyWord', () => {
   it('returns null for a date with no daily word', async () => {
     const result = await findDailyWord(env.DB, '2025-01-01');
     expect(result).toBeNull();
+  });
+
+  it('should compute gameNumber from the Turkey calendar date, not from counting scheduled rows', async () => {
+    // Only 3 rows ever exist in daily_words in this test DB, but a word scheduled
+    // ~100 days after the game epoch must still report a gameNumber in the hundreds —
+    // proof that gameNumber comes from the shared date-based clock (Plan 001 cutover:
+    // a fresh database must not reset gameNumber to a small row count).
+    const futureDate = '2026-04-10';
+    await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES ('TAVUK', 'Kümes hayvanı', 'Tavuk yumurtladı.', 'isim', 5, 'test', 'test', 'approved', 1, 1)`
+    ).run();
+    await env.DB.prepare(
+      `INSERT INTO daily_words (word_id, date, length)
+       SELECT id, ?, 5 FROM words WHERE word = 'TAVUK'`
+    )
+      .bind(futureDate)
+      .run();
+
+    const result = await findDailyWord(env.DB, futureDate);
+    expect(result).not.toBeNull();
+    expect(result!.gameNumber).toBe(getGameNumber(new Date(`${futureDate}T12:00:00Z`)));
+    expect(result!.gameNumber).toBeGreaterThan(3);
   });
 });
 
