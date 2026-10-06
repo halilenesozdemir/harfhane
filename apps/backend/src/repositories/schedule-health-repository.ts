@@ -58,7 +58,8 @@ async function fetchRestockRunwayDays(db: Env['DB'], length: number, today: stri
   const row = await db
     .prepare(
       `SELECT COUNT(*) as count FROM words
-       WHERE is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily' AND length = ?
+       WHERE is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily'
+         AND source != 'user' AND length = ?
          AND id NOT IN (SELECT word_id FROM daily_words WHERE length = ? AND date >= ?)`
     )
     .bind(length, length, threshold)

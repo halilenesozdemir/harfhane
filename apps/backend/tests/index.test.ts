@@ -52,7 +52,7 @@ describe('scheduled()', () => {
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
   });
 
-  it('tops up the schedule before checking its health (Plan 006 U3a)', async () => {
+  it('should top up the schedule before checking its health (Plan 006 U3a)', async () => {
     checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
     const worker = (await import('../src/index')).default;
 
@@ -62,7 +62,7 @@ describe('scheduled()', () => {
     expect(autoFillDailyScheduleMock).toHaveBeenCalledWith(env.DB, SCHEDULE_TOPUP_DAYS);
   });
 
-  it('does not let a failing auto-fill break the cron run', async () => {
+  it('should not let a failing auto-fill break the cron run', async () => {
     autoFillDailyScheduleMock.mockRejectedValue(new Error('autofill boom'));
     checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
     const worker = (await import('../src/index')).default;

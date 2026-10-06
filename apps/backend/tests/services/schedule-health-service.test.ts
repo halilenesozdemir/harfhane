@@ -30,19 +30,19 @@ describe('severityFor', () => {
 });
 
 describe('restockStatusFor', () => {
-  it('returns restock below the restock warning threshold', () => {
+  it('should return restock when runway is below the restock warning threshold', () => {
     expect(restockStatusFor(0)).toBe('restock');
     expect(restockStatusFor(RESTOCK_WARNING_DAYS - 1)).toBe('restock');
   });
 
-  it('returns ok at or above the restock warning threshold', () => {
+  it('should return ok when runway is at or above the restock warning threshold', () => {
     expect(restockStatusFor(RESTOCK_WARNING_DAYS)).toBe('ok');
     expect(restockStatusFor(RESTOCK_WARNING_DAYS + 1)).toBe('ok');
   });
 });
 
 describe('getScheduleHealth', () => {
-  it('marks every active length as critical and needing restock when nothing is scheduled', async () => {
+  it('should mark every active length as critical and needing restock when nothing is scheduled', async () => {
     const health = await getScheduleHealth(env.DB);
     expect(health.length).toBeGreaterThan(0);
     for (const entry of health) {

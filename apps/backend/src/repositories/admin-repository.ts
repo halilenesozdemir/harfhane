@@ -347,7 +347,11 @@ async function autoFillLength(
   const [existingResult, eligibleResult, historyResult] = await db.batch([
     db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
     db
-      .prepare("SELECT id FROM words WHERE is_active = 1 AND source != 'user' AND pool = 'daily' AND length = ?")
+      .prepare(
+        `SELECT id FROM words
+         WHERE is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily'
+           AND source != 'user' AND length = ?`
+      )
       .bind(length),
     db.prepare('SELECT word_id, date FROM daily_words WHERE length = ?').bind(length),
   ]);
@@ -387,12 +391,16 @@ export async function adminAutoFillSchedule(
   from: string,
   to: string
 ): Promise<{ scheduled: number; skipped: number }> {
+  const results = await Promise.allSettled(
+    ACTIVE_WORD_LENGTHS.map((length) => autoFillLength(db, from, to, length))
+  );
+
   let scheduled = 0;
   let skipped = 0;
-  for (const length of ACTIVE_WORD_LENGTHS) {
-    const result = await autoFillLength(db, from, to, length);
-    scheduled += result.scheduled;
-    skipped += result.skipped;
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    scheduled += result.value.scheduled;
+    skipped += result.value.skipped;
   }
   return { scheduled, skipped };
 }
