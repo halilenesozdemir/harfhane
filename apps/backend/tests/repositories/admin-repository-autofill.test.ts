@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from '../helpers/db';
 import { adminAutoFillSchedule } from '../../src/repositories/admin-repository';
-import { ACTIVE_WORD_LENGTHS, ANSWER_REPEAT_COOLDOWN_DAYS } from '../../src/constants/schedule';
+import { SCHEDULED_WORD_LENGTHS, ANSWER_REPEAT_COOLDOWN_DAYS } from '../../src/constants/schedule';
 
 const FROM = '2026-02-01';
 const TO = '2026-02-05';
@@ -50,12 +50,12 @@ function isoDateMinusYears(date: string, years: number): string {
 describe('adminAutoFillSchedule with full stock', () => {
   beforeEach(async () => {
     await applySchema(env.DB);
-    for (const length of ACTIVE_WORD_LENGTHS) {
+    for (const length of SCHEDULED_WORD_LENGTHS) {
       await insertWords(length, EXPECTED_DAYS);
     }
   });
 
-  it.each(ACTIVE_WORD_LENGTHS)('should schedule %i days for length %i when stock covers every day', async (length) => {
+  it.each(SCHEDULED_WORD_LENGTHS)('should schedule %i days for length %i when stock covers every day', async (length) => {
     await adminAutoFillSchedule(env.DB, FROM, TO);
 
     const row = await env.DB

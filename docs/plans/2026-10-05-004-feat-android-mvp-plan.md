@@ -12,6 +12,8 @@ Track A of `docs/decisions/2026-10-04-parallel-tracks.md`: an Android app with t
 
 Research: `docs/research/2026-10-05-android-mvp-expo.md`.
 
+Owner decision, 2026-10-05: MVP scope cut (`docs/decisions/2026-10-05-mvp-scope-cut.md`) — see KTD5.
+
 ## Requirements
 - R1. `apps/mobile` is a workspace in this monorepo and joins `pnpm typecheck`, `pnpm lint`, `pnpm test` and the commit gate.
 - R2. Game rules come only from `@harfhane/shared`; colors and radii only from `@harfhane/ui-tokens`. Nothing is re-implemented in the app.
@@ -31,12 +33,12 @@ Decisions marked *(assumption)* were made without the owner and are open to chan
 - KTD2. **StyleSheet + tokens** (owner decision, 2026-10-05). Components take colors from `src/theme` (generated from `@harfhane/ui-tokens`) through a theme context; styles are plain objects, so component tests can assert them. Replaces Plan 002 KTD2 (NativeWind + react-native-reusables) for mobile: NativeWind v4 could not be verified at runtime without a device (`docs/research/2026-10-05-nativewind-spike.md`). Dialogs and sheets are built on React Native `Modal`.
 - KTD3. Tests: Vitest for pure logic (hooks, API client, storage), jest-expo + React Native Testing Library for rendered components. `apps/mobile` runs both from its `test` script.
 - KTD4. Storage: AsyncStorage behind a small async storage hook; web keys and JSON shapes are kept so a future export or sync is straightforward.
-- KTD5. *(assumption)* Anonymous play first. Sign-in arrives with Plan 007; email/password is not added to mobile separately.
-- KTD6. *(assumption)* Screens: Home (mode and length picker), Game (daily and unlimited share one screen), How to play, Stats, Settings. Leaderboard, profile, duels, tournaments and lists stay web-only for the MVP.
+- KTD5. **Owner decision, 2026-10-05 — supersedes the draft assumption.** Anonymous play, with no account at all for MVP. Google sign-in, email/password, password reset and the Resend reminder mail are all cut from MVP scope (`docs/decisions/2026-10-05-mvp-scope-cut.md`), not just withheld from mobile; Plan 007's sign-in units are postponed past MVP.
+- KTD6. Screens: Home (mode and length picker), Game (daily and unlimited share one screen), How to play, Stats, Settings. Leaderboard, profile, duels, tournaments and lists are removed from the product entirely (`docs/decisions/2026-10-05-mvp-scope-cut.md`, plus lists #37/#42, tournaments #40, duels #54) — not web-only, not shipped on any platform.
 - KTD7. Verification without a device: `expo export --platform android` in CI-like local runs proves Metro resolves the workspace packages. Emulator and device checks are owner steps until an emulator is set up.
 
 ## Scope boundaries
-- Out of scope: purchases (Plan 005), sign-in and push (Plan 007), iOS, web parity for leaderboard/profile/duels.
+- Out of scope: purchases (Plan 005), sign-in and push (Plan 007), iOS.
 
 ## Units
 - U1. Scaffold `apps/mobile` (SDK 57, TypeScript), wire scripts into the root gate, prove AE1 and AE2. (R1, R2)

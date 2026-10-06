@@ -1,6 +1,6 @@
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
-import { ACTIVE_WORD_LENGTHS, type ActiveWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
+import { SCHEDULED_WORD_LENGTHS, type ScheduledWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
 
 export interface WordRow {
   id: number;
@@ -342,7 +342,7 @@ async function autoFillLength(
   db: Env['DB'],
   from: string,
   to: string,
-  length: ActiveWordLength
+  length: ScheduledWordLength
 ): Promise<{ scheduled: number; skipped: number }> {
   const [existingResult, eligibleResult, historyResult] = await db.batch([
     db.prepare('SELECT date FROM daily_words WHERE date >= ? AND date <= ? AND length = ?').bind(from, to, length),
@@ -392,7 +392,7 @@ export async function adminAutoFillSchedule(
   to: string
 ): Promise<{ scheduled: number; skipped: number }> {
   const results = await Promise.allSettled(
-    ACTIVE_WORD_LENGTHS.map((length) => autoFillLength(db, from, to, length))
+    SCHEDULED_WORD_LENGTHS.map((length) => autoFillLength(db, from, to, length))
   );
 
   let scheduled = 0;

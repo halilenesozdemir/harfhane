@@ -1,8 +1,8 @@
 import type { Env } from '../types/env';
-import { ACTIVE_WORD_LENGTHS, type ActiveWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
+import { SCHEDULED_WORD_LENGTHS, type ScheduledWordLength, ANSWER_REPEAT_COOLDOWN_DAYS } from '../constants/schedule';
 
 export interface ScheduleHealthRow {
-  length: ActiveWordLength;
+  length: ScheduledWordLength;
   runwayDays: number;
   lastScheduledDate: string | null;
   unscheduledStock: number;
@@ -85,7 +85,7 @@ export async function findScheduleRunway(
   const byLength = groupDatesByLength(scheduledRows);
 
   const results: ScheduleHealthRow[] = [];
-  for (const length of ACTIVE_WORD_LENGTHS) {
+  for (const length of SCHEDULED_WORD_LENGTHS) {
     const dates = byLength.get(length) ?? [];
     const runwayDays = countConsecutiveRunway(dates, today);
     const lastScheduledDate = dates.length > 0 ? dates[dates.length - 1]! : null;
