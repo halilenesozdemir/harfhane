@@ -77,6 +77,15 @@ describe('POST /api/words/validate', () => {
   });
 });
 
+describe('GET /api/words/lengths', () => {
+  it('returns the playable lengths from the PLAYABLE_WORD_LENGTHS var', async () => {
+    const res = await SELF.fetch('http://example.com/api/words/lengths');
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { lengths: number[] } };
+    expect(body.data.lengths).toEqual([5]);
+  });
+});
+
 describe('404 handler', () => {
   it('returns 404 for unknown routes', async () => {
     const res = await SELF.fetch('http://example.com/api/unknown');
