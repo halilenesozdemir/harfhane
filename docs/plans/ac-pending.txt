@@ -27,4 +27,3 @@
 011-AE3  Plan 011 U3 (haptics switch) not started
 011-AE4  Plan 011 U4 (splash hold) not started
 011-AE5  Plan 011 U5 (first-launch how-to-play) not started
-011-AE6  Plan 011 U6 (hint marker in share text) not started
