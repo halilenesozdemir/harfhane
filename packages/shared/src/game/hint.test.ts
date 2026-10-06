@@ -9,7 +9,7 @@ import {
 } from './hint';
 
 describe('pickHint', () => {
-  it('should reveal L at position 2 when the answer is KALEM and K and A are green (008-AE7)', () => {
+  it('should reveal L at position 2 when the answer is KALEM and K and A are green', () => {
     const hint = pickHint('KALEM', ['KAPAK'], []);
     expect(hint).toEqual({ position: 2, letter: 'L' });
   });

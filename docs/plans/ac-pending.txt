@@ -12,7 +12,7 @@
 006-AE3  no test asserts the alert function is called once for a below-warning-threshold schedule; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
 006-AE4  no test exercises the top-up cron's specific 60-scheduled/90-eligible-word scenario; PR #59 merged without adding it and PR #63 closed without merging
 006-AE5  no test asserts the alert fires on low unscheduled stock independent of runway; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
-008-AE7  no test exists yet for the hint behavior (apps/frontend/src/hooks/useHint.ts, src/components/GameHint.tsx)
+008-AE7  letter choice proven in packages/shared hint.test.ts; board marking and second-press need the web/mobile hint PRs (Plan 008 U9/U10)
 
 009-AE2  Plan 009 U2 (Playwright journeys + axe), not started
 009-AE3  Plan 009 U3 (real-backend Playwright project), not started
