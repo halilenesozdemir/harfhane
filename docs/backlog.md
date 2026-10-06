@@ -162,6 +162,16 @@ runner excludes by config). Move the check to runner-collected test names instea
 pytest's own test list, e.g. `vitest list --json` / `pytest --collect-only -q`) so it checks what
 actually runs, not what the source merely looks like.
 
+## AC coverage check / commit-gate gaps (PR #69 round 4, 2026-10-06)
+- `.githooks/pre-commit`'s `CODE_PATTERN` does not match `scripts/` at all (it only matches
+  `apps/`, `packages/`, and top-level files), so it never typechecks, lints or tests
+  `scripts/*.mjs` or `scripts/**/*.py` changes. Include those paths in the pattern.
+- `schedule-health-repository.test.ts`'s restock-runway query: removing `pool = 'daily'` from
+  `fetchRestockRunwayDays` (`apps/backend/src/repositories/schedule-health-repository.ts`)
+  survives the current test suite (an R4 mutation-testing gap, found in PR #69 round 4 review).
+  Add a test that an unlimited-pool word of the matching length does not count toward
+  `restockRunwayDays`.
+
 ## Reusable factory (after Harfhane is stable)
 Owner decision 2026-10-06: the development system (agents, `/unit`, Invariant style, commit gate, CI
 deploy gate, review checklist, AE traceability, mutation gate, plan/ADR templates, monthly research
