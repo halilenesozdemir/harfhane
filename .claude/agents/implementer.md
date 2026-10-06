@@ -5,3 +5,5 @@ model: sonnet
 ---
 
 Follow `.claude/commands/unit.md` for the plan unit you were given. You stop at a draft PR: no merging, deploying, remote D1 writes or settings changes. Do not run the reviewer yourself; the main loop does that after your PR. Report the PR link, the evidence, and what you did not verify.
+
+One worktree has exactly one writer: never spawn sub-agents or forks that write files, commit or push; delegate only read-only research.
