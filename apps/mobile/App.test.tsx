@@ -3,6 +3,7 @@ import { BackHandler } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import App, { AppNavigator } from './App';
 import { ThemeProvider } from './src/ThemeProvider';
+import { api } from './src/lib/api';
 import { createMemoryStore, flattenStyle } from './src/test-utils/render-with-theme';
 
 jest.mock('./src/lib/api', () => ({
@@ -10,6 +11,7 @@ jest.mock('./src/lib/api', () => ({
     fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' }),
     fetchRandomWord: jest.fn().mockResolvedValue({ word: { word: 'KİTAP' }, wordId: 9 }),
     validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+    fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
   },
 }));
 
@@ -120,5 +122,13 @@ describe('App', () => {
     const style = flattenStyle(container.props.style);
     expect(style.paddingTop).toBe(24);
     expect(style.paddingBottom).toBe(16);
+  });
+
+  it('should hide the unlimited-mode length picker when only one length is playable', async () => {
+    (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [5] });
+    await render(<App />);
+    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
+    expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
   });
 });

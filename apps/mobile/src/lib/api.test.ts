@@ -39,6 +39,12 @@ describe('createApiClient', () => {
     await expect(client.fetchDailyWord(4)).rejects.toMatchObject({ status: 404, code: 'NOT_FOUND', message: 'Kelime yok' });
   });
 
+  it('should request the playable lengths', async () => {
+    const { client, fetchImpl } = createClient(jsonResponse({ data: { lengths: [5] } }));
+    await expect(client.fetchPlayableLengths()).resolves.toEqual({ lengths: [5] });
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(`${BASE_URL}/words/lengths`);
+  });
+
   it('should throw an ApiRequestError when the body is not JSON', async () => {
     const { client } = createClient(new Response('<html>', { status: 502 }));
     const error = await client.fetchDailyWord(5).catch((caught: unknown) => caught);
