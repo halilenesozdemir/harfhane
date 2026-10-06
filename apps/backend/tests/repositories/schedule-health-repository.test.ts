@@ -113,7 +113,7 @@ describe('findScheduleRunway restock runway (R4, AE5)', () => {
     expect(await restockFor(6)).toBe(before + 1);
   });
 
-  it('should match AE5: 120 eligible 5-letter words give a restock runway of 120', async () => {
+  it('should match AE5: 120 eligible 5-letter words give a restock runway of 120 (008-AE5)', async () => {
     for (let i = 0; i < 120; i++) {
       const word = String(1000 + i).padStart(5, '0').replace(/\d/g, (d) => 'ABCDEFGHIJ'[Number(d)]!);
       await insertWord(word, 5);

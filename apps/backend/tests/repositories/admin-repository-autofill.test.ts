@@ -121,7 +121,7 @@ describe('adminAutoFillSchedule stock exhaustion (R3, AE4)', () => {
     expect(row?.words).toBe(2);
   });
 
-  it('should match AE4: two eligible words across five empty dates schedules two and leaves three empty', async () => {
+  it('should match AE4: two eligible words across five empty dates schedules two and leaves three empty (008-AE4)', async () => {
     await insertWords(5, 3);
     const wordA = await wordIdFor('BAAAA');
     const wordB = await wordIdFor('CAAAA');
