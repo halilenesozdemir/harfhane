@@ -23,6 +23,7 @@ export interface UseGameOptions extends GameDependencies {
 
 export interface UseGameResult {
   readonly session: GameSession;
+  readonly isHapticsEnabled: boolean;
   onLetter(letter: string): void;
   onDelete(): void;
   onSubmit(): void;
@@ -131,7 +132,7 @@ function useSubmit(
 export function useGame(options: UseGameOptions): UseGameResult {
   const [session, dispatch] = useReducer(reduceSession, undefined, createSession);
   const [round, setRound] = useState(0);
-  const { isEnabled: isHapticsEnabled } = useHapticsSettings();
+  const { isEnabled: isHapticsEnabled } = useHapticsSettings(options.store);
   useSessionLoader(options, dispatch, round);
   useDailyPersistence(options.store, session);
   useMessageTimeout(session, dispatch);
@@ -140,5 +141,5 @@ export function useGame(options: UseGameOptions): UseGameResult {
   const onLetter = useCallback((letter: string) => dispatch({ type: 'letter', letter }), []);
   const onDelete = useCallback(() => dispatch({ type: 'delete' }), []);
   const startNewGame = useCallback(() => setRound((current) => current + 1), []);
-  return { session, onLetter, onDelete, onSubmit, startNewGame };
+  return { session, isHapticsEnabled, onLetter, onDelete, onSubmit, startNewGame };
 }
