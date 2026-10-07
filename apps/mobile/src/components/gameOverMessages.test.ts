@@ -39,8 +39,10 @@ describe('selectResultMessage', () => {
     expect(first).toBe(second);
   });
 
-  it('should normalize a negative seed into a valid variant index', () => {
-    expect(() => selectResultMessage('daily', 'won', 3, -1)).not.toThrow();
+  it('should normalize a negative seed into the matching positive-seed variant (-1 wraps to the last of 3)', () => {
+    // WIN_MESSAGE_VARIANTS[3] has 3 entries; ((-1 % 3) + 3) % 3 === 2, the last index.
+    expect(selectResultMessage('daily', 'won', 3, -1)).toBe('Aferin!');
+    expect(selectResultMessage('daily', 'won', 3, -1)).toBe(selectResultMessage('daily', 'won', 3, 2));
   });
 
   it('should never suggest retrying now on a daily loss, since the next word only opens at midnight', () => {
