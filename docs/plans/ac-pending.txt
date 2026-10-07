@@ -24,7 +24,6 @@
 010-AE4  Plan 010 U6 (unlimited import threshold gate), not started
 011-AE1  Plan 011 U1 (mobile game-over card) not started
 011-AE2  Plan 011 U2 (tile animations, reduce-motion) not started
-011-AE3  Plan 011 U3 (haptics switch), trigger wiring moved to feat/mobile-haptics-triggers
 011-AE5  Plan 011 U5 (first-launch how-to-play) not started
 011-AE6  Plan 011 U6 (hint marker in share text) not started
 011-AE7  Plan 011 U7 (mobile UI standard redesign) not started
