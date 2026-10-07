@@ -1,9 +1,10 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { AccessibilityInfo, Share } from 'react-native';
 import { generateShareText } from '@harfhane/shared';
 import { GameOverCard } from './GameOverCard';
 import type { GameOverCardProps } from './GameOverCard';
-import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
+import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
+import { getThemeColors } from '../theme';
 
 jest.mock('react-native/Libraries/Share/Share', () => ({
   __esModule: true,
@@ -50,6 +51,13 @@ describe('GameOverCard', () => {
     expect(await screen.findByTestId('gameover-countdown')).toHaveTextContent('00:00:01');
     expect(screen.queryByTestId('gameover-new-word')).toBeNull();
 
+    // The Distribution section renders at all, with the just-won third bar highlighted: kills
+    // mutants that drop the <Distribution/> line entirely or force isWon to false.
+    const thirdFill = await screen.findByTestId('gameover-distribution-3-fill');
+    expect(within(thirdFill).getByText('1')).toBeTruthy();
+    const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+    expect(flattenStyle(thirdFill.props.style)['backgroundColor']).toBe(colors.correct);
+
     const shareButton = screen.getByTestId('gameover-share');
     await act(async () => fireEvent.press(shareButton));
     // Full-text equality (not a substring match) kills mutants that would flip `won`, or empty
@@ -87,6 +95,15 @@ describe('GameOverCard', () => {
   it('should offer a retry-flavoured loss title when the game is unlimited', async () => {
     await renderCard({ mode: 'unlimited', gameStatus: 'lost', guesses: [], evaluations: [], wordId: 0, dailyDate: null });
     expect(await screen.findByText('Tekrar dene!')).toBeTruthy();
+  });
+
+  it('should show hours, minutes and seconds in that order, not swapped', async () => {
+    // 18:59:58Z is 2h 0m 2s before the next Turkey midnight (21:00 UTC): a distinct value in
+    // every field, so swapping hours/minutes (or minutes/seconds) in the countdown string would
+    // produce a visibly different, wrong string ("00:02:02" or "02:02:00") instead of this one.
+    const now = () => new Date('2026-01-01T18:59:58Z');
+    await renderCard({ now });
+    expect(await screen.findByTestId('gameover-countdown')).toHaveTextContent('02:00:02');
   });
 
   it('should tick the countdown when the clock advances and clear its interval when unmounted', async () => {

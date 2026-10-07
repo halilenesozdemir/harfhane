@@ -92,6 +92,23 @@ function ShareButton({ shareText, colors }: ShareButtonProps) {
   );
 }
 
+interface ResultHeaderProps {
+  readonly title: string;
+  readonly solution: string;
+  readonly colors: ThemeColors;
+}
+
+function ResultHeader({ title, solution, colors }: ResultHeaderProps) {
+  return (
+    <>
+      <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.title, { color: colors.text }]}>
+        {title}
+      </Text>
+      <Text style={[styles.answer, { color: colors.correctText }]}>{`${ANSWER_LABEL}: ${solution}`}</Text>
+    </>
+  );
+}
+
 interface CountdownOrNewWordProps {
   readonly mode: GameMode;
   readonly countdown: string;
@@ -157,14 +174,7 @@ export function GameOverCard({
       style={[styles.cardScroll, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
       contentContainerStyle={styles.card}
     >
-      <Text
-        accessibilityRole="header"
-        accessibilityLiveRegion="polite"
-        style={[styles.title, { color: colors.text }]}
-      >
-        {title}
-      </Text>
-      <Text style={[styles.answer, { color: colors.correctText }]}>{`${ANSWER_LABEL}: ${solution}`}</Text>
+      <ResultHeader title={title} solution={solution} colors={colors} />
       {distribution !== null && <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />}
       <ShareButton shareText={shareText} colors={colors} />
       <CountdownOrNewWord mode={mode} countdown={countdown} onNewGame={onNewGame} colors={colors} />
