@@ -1,9 +1,11 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import type { ApiClient } from '../lib/api';
 import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
 import { GameScreen } from './GameScreen';
 import { loadDailyStats } from '../stats/stats';
 import { saveRevealedHints } from '../game/game-storage';
+import { dailyGameNumber, selectResultMessage } from '../components/gameOverMessages';
+import { shortGuessMessage } from '../game/game-session';
 
 const today = () => '2026-10-05';
 
@@ -27,19 +29,33 @@ async function pressKeys(values: readonly string[]) {
 }
 
 describe('GameScreen', () => {
-  it('should show the win message when the daily word is guessed with the keyboard', async () => {
+  it('should show the game-over card with a deterministic win title when the daily word is guessed with the keyboard (011-AE1)', async () => {
     const onBack = jest.fn();
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={onBack} api={createApi()} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    expect(await screen.findByText('Muhteşem!')).toBeTruthy();
+    expect(await screen.findByTestId('gameover-card')).toBeTruthy();
+    const expectedTitle = selectResultMessage('daily', 'won', 1, dailyGameNumber(today()));
+    expect(await screen.findByText(expectedTitle)).toBeTruthy();
+    expect(await screen.findByTestId('gameover-share')).toBeTruthy();
+    expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+    expect(screen.queryByTestId('key-ENTER')).toBeNull();
   });
 
-  it('should offer a new word when an unlimited game is over', async () => {
-    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+  it('should offer a new word in the game-over card when an unlimited game is over, and fetch a fresh word when pressed', async () => {
+    const api = createApi();
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
-    expect(await screen.findByText('Yeni kelime')).toBeTruthy();
+    expect(await screen.findByTestId('gameover-card')).toBeTruthy();
+    expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+    expect(screen.queryByTestId('key-ENTER')).toBeNull();
+    expect(api.fetchRandomWord).toHaveBeenCalledTimes(1);
+
+    await act(async () => fireEvent.press(await screen.findByTestId('gameover-new-word')));
+    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
+    expect(screen.queryByTestId('gameover-card')).toBeNull();
+    expect(await screen.findByTestId('tile-0-0')).toBeTruthy();
   });
 
   it('should record the daily result in stats when the game finishes', async () => {
@@ -47,7 +63,7 @@ describe('GameScreen', () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByText('Muhteşem!');
+    await screen.findByTestId('gameover-card');
     await waitFor(async () => {
       const stats = await loadDailyStats(store, 5);
       expect(stats.gamesPlayed).toBe(1);
@@ -129,7 +145,7 @@ describe('GameScreen', () => {
     await screen.findByTestId('hint-text');
 
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByText('Muhteşem!');
+    await screen.findByTestId('gameover-card');
 
     expect(screen.queryByTestId('hint-button')).toBeNull();
     expect(screen.queryByTestId('hint-text')).toBeNull();
@@ -147,9 +163,43 @@ describe('GameScreen', () => {
     for (let attempt = 0; attempt < 6; attempt += 1) {
       await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
     }
+    await screen.findByTestId('gameover-card');
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
 
     expect(screen.queryByTestId('hint-button')).toBeNull();
     expect(screen.queryByTestId('hint-text')).toBeNull();
+  });
+
+  it('should show the in-game message (e.g. not enough letters) while the game is still playing, before it finishes (011-N4)', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'ENTER']);
+    expect(await screen.findByText(shortGuessMessage(5))).toBeTruthy();
+    expect(screen.queryByTestId('gameover-card')).toBeNull();
+  });
+
+  it('should count a 1-guess unlimited win and a 1-guess daily win each as "1" in their own distribution, not double-counted (011-N5)', async () => {
+    const store = createMemoryStore();
+    const unlimitedApi = createApi();
+    (unlimitedApi.fetchRandomWord as jest.Mock).mockResolvedValue({ word: { word: 'KALEM' }, wordId: 9 });
+    const unlimitedView = await renderWithTheme(
+      <GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={unlimitedApi} store={store} today={today} />,
+    );
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await screen.findByTestId('gameover-card');
+    const unlimitedRow1Fill = await screen.findByTestId('gameover-distribution-1-fill');
+    expect(within(unlimitedRow1Fill).getByText('1')).toBeTruthy();
+    await act(async () => unlimitedView.unmount());
+
+    const dailyView = await renderWithTheme(
+      <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />,
+    );
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await screen.findByTestId('gameover-card');
+    const dailyRow1Fill = await screen.findByTestId('gameover-distribution-1-fill');
+    expect(within(dailyRow1Fill).getByText('1')).toBeTruthy();
+    await act(async () => dailyView.unmount());
   });
 });

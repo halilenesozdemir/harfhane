@@ -1,4 +1,5 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { CornerDownLeft, Delete } from 'lucide-react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Switch } from 'react-native';
 import { Keyboard } from './Keyboard';
@@ -28,6 +29,24 @@ beforeEach(() => {
   mockPerformAndroidHapticsAsync.mockClear();
   storedHapticsValue.current = null;
 });
+
+interface SvgPathNode {
+  readonly type: unknown;
+  readonly props?: { readonly d?: string };
+  readonly children?: readonly unknown[];
+}
+
+// Lucide icons resolve all the way down to RNSVGPath host nodes with a distinct `d`
+// attribute per icon, which is how a testID query can tell CornerDownLeft apart from
+// Delete (no icon-identity query exists on this RNTL version's lightweight instances).
+function findSvgPathData(node: SvgPathNode): readonly string[] {
+  const paths: string[] = [];
+  if (node.type === 'RNSVGPath' && typeof node.props?.d === 'string') paths.push(node.props.d);
+  for (const child of node.children ?? []) {
+    if (typeof child === 'object' && child !== null) paths.push(...findSvgPathData(child as SvgPathNode));
+  }
+  return paths;
+}
 
 interface RenderKeyboardOptions {
   readonly keyboardStatus?: Record<string, 'correct' | 'present' | 'absent' | null>;
@@ -156,6 +175,17 @@ describe('Keyboard', () => {
     expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
   });
 
+  it('should not trigger a haptic on its own stored setting when off and no isHapticsEnabled prop is given', async () => {
+    // Distinct from the prop-override tests below: this renders Keyboard the way it is used
+    // standalone (no prop), so `isHapticsEnabled ?? ownHapticsSettings.isEnabled` must read
+    // the own hook, not just fall through a `?? true` default (which a GameScreen caller
+    // that always passes a defined boolean prop can no longer exercise).
+    storedHapticsValue.current = 'false';
+    await renderKeyboard();
+    await fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+  });
+
   it('should prefer the isHapticsEnabled prop over its own stored setting when given', async () => {
     storedHapticsValue.current = 'true';
     await renderKeyboard({ isHapticsEnabled: false });
@@ -180,5 +210,23 @@ describe('Keyboard', () => {
     const { onLetter } = await renderKeyboard({ isInputBlocked: true });
     await fireEvent.press(screen.getByLabelText('A'));
     expect(onLetter).toHaveBeenCalledWith('A');
+  });
+
+  it('should render the CornerDownLeft icon inside the Enter key and Delete inside the Backspace key', async () => {
+    const [expectedEnterPath] = findSvgPathData((await render(<CornerDownLeft />)).toJSON() as SvgPathNode);
+    const [expectedBackspacePath] = findSvgPathData((await render(<Delete />)).toJSON() as SvgPathNode);
+
+    await renderKeyboard();
+    const enterPaths = findSvgPathData(screen.getByTestId('key-ENTER') as unknown as SvgPathNode);
+    const backspacePaths = findSvgPathData(screen.getByTestId('key-BACKSPACE') as unknown as SvgPathNode);
+
+    expect(enterPaths).toContain(expectedEnterPath);
+    expect(backspacePaths).toContain(expectedBackspacePath);
+    expect(enterPaths).not.toContain(expectedBackspacePath);
+  });
+
+  it('should render a letter key as text, not an icon', async () => {
+    await renderKeyboard();
+    expect(screen.getByText('K')).toBeTruthy();
   });
 });
