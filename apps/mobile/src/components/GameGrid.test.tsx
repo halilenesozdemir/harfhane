@@ -76,6 +76,20 @@ describe('GameGrid', () => {
     expect(flattenStyle(tile.props.style).borderStyle).not.toBe('dashed');
   });
 
+  it('should show the hint ghost at position 0 when no submitted guess has solved KALEM there yet', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={['ZZZZZ']} evaluations={[['absent', 'absent', 'absent', 'absent', 'absent']]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 0, letter: 'K' }]} />,
+    );
+    expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('K, ipucu');
+  });
+
+  it('should not show the hint ghost once a submitted guess places K at position 0 of KALEM', async () => {
+    await renderWithTheme(
+      <GameGrid guesses={['KAPAK']} evaluations={[['correct', 'correct', 'absent', 'absent', 'absent']]} currentGuess="" wordLength={WORD_LENGTH} hints={[{ position: 0, letter: 'K' }]} />,
+    );
+    expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('boş');
+  });
+
   it('should leave rows after the current guess empty', async () => {
     await renderWithTheme(
       <GameGrid guesses={['HARFİ']} evaluations={[['correct', 'correct', 'correct', 'correct', 'absent']]} currentGuess="AB" wordLength={WORD_LENGTH} />,
