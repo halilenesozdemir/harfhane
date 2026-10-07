@@ -1,5 +1,6 @@
 import Tile from './Tile';
 import type { GameGridProps } from '../types';
+import { isHintSolved } from '@harfhane/shared';
 
 const MAX_GUESSES = 6;
 
@@ -33,7 +34,12 @@ const GameGrid = ({
     for (let j = 0; j < wordLength; j++) {
       let letter = rowContent[j] || '';
       const status = rowEvaluation ? rowEvaluation[j]! : null;
-      const isHint = isCurrentRow && hint != null && hint.position === j && !letter;
+      const isHint =
+        isCurrentRow &&
+        hint != null &&
+        hint.position === j &&
+        !letter &&
+        !isHintSolved(guesses, hint.position, hint.letter);
       if (isHint) letter = hint!.letter;
 
       tiles.push(

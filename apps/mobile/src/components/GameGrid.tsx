@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { isHintSolved } from '@harfhane/shared';
 import type { LetterHint, TileStatus } from '@harfhane/shared';
 import { Tile } from './Tile';
 
@@ -56,7 +57,10 @@ export function GameGrid({ guesses, evaluations, currentGuess, wordLength, hints
   const rows = [];
   for (let rowIndex = 0; rowIndex < MAX_GUESSES; rowIndex++) {
     const letters = getRowLetters(rowIndex, guesses, currentGuess);
-    const rowHints = isPlaying && rowIndex === guesses.length ? hints : undefined;
+    const isCurrentRow = isPlaying && rowIndex === guesses.length;
+    const rowHints = isCurrentRow
+      ? hints?.filter((hint) => !isHintSolved([...guesses], hint.position, hint.letter))
+      : undefined;
     rows.push(
       <GameRow
         key={rowIndex}
