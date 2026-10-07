@@ -46,13 +46,6 @@ export const ICON_SIZE = {
   xl: 28,
 } as const;
 
-/** Bottom depth-edge heights in dp for the playful 3D look (mobile-ui-standard.md, section 5). */
-export const DEPTH = {
-  sm: 3,
-  md: 4,
-  lg: 6,
-} as const;
-
 /**
  * Horizontal screen padding (mobile-ui-standard.md, L1).
  * @deferred No screen applies it yet (Plan 011 U7b/U7c wire screens). See docs/backlog.md.
