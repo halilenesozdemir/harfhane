@@ -1,12 +1,10 @@
-import { useCallback } from 'react';
-import type { ComponentType } from 'react';
+import { useCallback, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { CornerDownLeft, Delete } from 'lucide-react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { keyTap } from '../lib/haptics';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
-import { Key } from './Key';
-import type { KeyIconProps } from './Key';
+import { Key, type KeyIconProps } from './Key';
 
 export interface KeyboardProps {
   readonly keyboardStatus: Readonly<Record<string, TileStatus>>;

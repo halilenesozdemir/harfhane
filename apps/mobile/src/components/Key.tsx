@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import type { ComponentType } from 'react';
+import { useCallback, useState, type ComponentType } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { base } from '@harfhane/ui-tokens';

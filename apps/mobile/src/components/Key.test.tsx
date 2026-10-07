@@ -1,8 +1,14 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { Delete } from 'lucide-react-native';
+import { View } from 'react-native';
 import { themes } from '@harfhane/ui-tokens';
-import { Key } from './Key';
+import { Key, type KeyIconProps } from './Key';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
+
+const KEY_ICON_SIZE = 18;
+
+function TestIcon(props: KeyIconProps) {
+  return <View testID="key-icon" {...props} />;
+}
 
 describe('Key', () => {
   it('should use the correct token color when status is correct', async () => {
@@ -46,11 +52,25 @@ describe('Key', () => {
     expect(onPress).toHaveBeenCalledWith('K');
   });
 
+  it('should render the label text when no icon is given', async () => {
+    await renderWithTheme(<Key label="K" value="K" status={null} accessibilityLabel="K" onPress={() => undefined} />);
+    expect(screen.getByText('K')).toBeTruthy();
+  });
+
   it('should render the icon instead of the text label when an icon is given', async () => {
     await renderWithTheme(
-      <Key label="⌫" value="BACKSPACE" status={null} accessibilityLabel="Sil" icon={Delete} onPress={() => undefined} />,
+      <Key label="⌫" value="BACKSPACE" status={null} accessibilityLabel="Sil" icon={TestIcon} onPress={() => undefined} />,
     );
     expect(screen.queryByText('⌫')).toBeNull();
     expect(screen.getByLabelText('Sil')).toBeTruthy();
+  });
+
+  it('should pass the key foreground color and the fixed icon size to a given icon', async () => {
+    await renderWithTheme(
+      <Key label="⌫" value="BACKSPACE" status={null} accessibilityLabel="Sil" icon={TestIcon} onPress={() => undefined} />,
+    );
+    const icon = screen.getByTestId('key-icon');
+    expect(icon.props.color).toBe(themes.light.keyFg);
+    expect(icon.props.size).toBe(KEY_ICON_SIZE);
   });
 });

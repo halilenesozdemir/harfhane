@@ -1,8 +1,27 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { CornerDownLeft, Delete } from 'lucide-react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Keyboard } from './Keyboard';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { HAPTICS_ENABLED_KEY } from '../lib/useHapticsSettings';
+
+interface SvgPathNode {
+  readonly type: unknown;
+  readonly props?: { readonly d?: string };
+  readonly children?: readonly unknown[];
+}
+
+// Lucide icons resolve all the way down to RNSVGPath host nodes with a distinct `d`
+// attribute per icon, which is how a testID query can tell CornerDownLeft apart from
+// Delete (no icon-identity query exists on this RNTL version's lightweight instances).
+function findSvgPathData(node: SvgPathNode): readonly string[] {
+  const paths: string[] = [];
+  if (node.type === 'RNSVGPath' && typeof node.props?.d === 'string') paths.push(node.props.d);
+  for (const child of node.children ?? []) {
+    if (typeof child === 'object' && child !== null) paths.push(...findSvgPathData(child as SvgPathNode));
+  }
+  return paths;
+}
 
 const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
 jest.mock('expo-haptics', () => ({
@@ -97,12 +116,22 @@ describe('Keyboard', () => {
     expect(screen.getByTestId('key-BACKSPACE')).toBeTruthy();
   });
 
-  it('should render Lucide icons instead of text glyphs for Enter and Backspace', async () => {
+  it('should render the CornerDownLeft icon inside the Enter key and Delete inside the Backspace key', async () => {
+    const [expectedEnterPath] = findSvgPathData((await render(<CornerDownLeft />)).toJSON() as SvgPathNode);
+    const [expectedBackspacePath] = findSvgPathData((await render(<Delete />)).toJSON() as SvgPathNode);
+
     await renderKeyboard();
-    expect(screen.queryByText('ENTER')).toBeNull();
-    expect(screen.queryByText('⌫')).toBeNull();
-    expect(screen.getByLabelText('Gönder')).toBeTruthy();
-    expect(screen.getByLabelText('Sil')).toBeTruthy();
+    const enterPaths = findSvgPathData(screen.getByTestId('key-ENTER') as unknown as SvgPathNode);
+    const backspacePaths = findSvgPathData(screen.getByTestId('key-BACKSPACE') as unknown as SvgPathNode);
+
+    expect(enterPaths).toContain(expectedEnterPath);
+    expect(backspacePaths).toContain(expectedBackspacePath);
+    expect(enterPaths).not.toContain(expectedBackspacePath);
+  });
+
+  it('should render a letter key as text, not an icon', async () => {
+    await renderKeyboard();
+    expect(screen.getByText('K')).toBeTruthy();
   });
 
   it('should match the mocked device-store key with the real haptics settings key', () => {
