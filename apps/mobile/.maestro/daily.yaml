@@ -61,10 +61,10 @@ name: "Daily game to the end and Android back returns home (009-AE4)"
 - extendedWaitUntil: { visible: { id: "tile-5-0", text: "B, .*" }, timeout: 15000 }
 
 # The hint control only renders while mode is daily and the game is still playing, so its
-# disappearance plus the finished-game message together prove the game reached an end state
-# (win or loss) without depending on the live daily word.
+# disappearance plus the game-over card together prove the game reached an end state (win or
+# loss) without depending on the live daily word or which message variant was selected.
 - extendedWaitUntil: { notVisible: { id: "hint-button" }, timeout: 15000 }
-- assertVisible: "(Kelime: .*|Muhteşem!|Harika!|Güzel!|İyi!|Fena değil!|Kıl payı!)"
+- assertVisible: { id: "gameover-card" }
 
 - back
 - assertVisible: "Sınırsız Mod"
