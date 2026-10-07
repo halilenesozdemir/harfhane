@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react-native';
+import { screen, waitFor, within } from '@testing-library/react-native';
 import { Distribution, useDisplayDistribution } from './GameOverDistribution';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
@@ -90,6 +90,39 @@ describe('GameOverDistribution', () => {
     expect(within(secondRow).getByText('1')).toBeTruthy();
   });
 
+  it('should not add to any bar when the daily game was lost (every bar stays empty with no prior stats)', async () => {
+    await renderDistribution({ store: createMemoryStore(), gameStatus: 'lost', guessCount: 6 });
+    // recordDailyResult only ever increments the distribution on a win, so a loss against empty
+    // prior stats must render no fill bar at all (no coloured sliver for a zero count).
+    for (let guessNumber = 1; guessNumber <= 6; guessNumber += 1) {
+      expect(screen.queryByTestId(`gameover-distribution-${guessNumber}-fill`)).toBeNull();
+    }
+  });
+
+  it('should use the daily game\'s own dailyDate, not "today", to decide whether the result was already recorded', async () => {
+    const store = createMemoryStore();
+    // The game itself was played/recorded on 2026-01-03 (dailyDate), but the card is still open
+    // once "today" has rolled over to 2026-01-04 (Turkey midnight passed while mounted). The
+    // comparison must use dailyDate, not today(), or this would be wrongly treated as a new,
+    // unrecorded result and double-counted.
+    await saveDailyStats(store, 5, { ...createInitialDailyStats(), guessDistribution: [1, 0, 0, 0, 0, 0], lastPlayedDate: '2026-01-03' });
+    await renderDistribution({ store, dailyDate: '2026-01-03', today: () => '2026-01-04', guessCount: 1 });
+    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
+    expect(within(firstFill).getByText('1')).toBeTruthy();
+    expect(within(firstFill).queryByText('2')).toBeNull();
+  });
+
+  it('should render with no distribution, not an unhandled rejection, when the stats read fails', async () => {
+    const rejectingStore: KeyValueStore = {
+      getItem: () => Promise.reject(new Error('AsyncStorage unavailable')),
+      setItem: async () => undefined,
+    };
+    await renderDistribution({ store: rejectingStore, guessCount: 1 });
+    // Give the rejected promise's .catch a turn to settle; no distribution means Distribution
+    // never mounts, so none of its rows render.
+    await waitFor(() => expect(screen.queryByTestId('gameover-distribution-1')).toBeNull());
+  });
+
   it('should not highlight any bar when a loss happens to match a prior row by guess count (011-N2)', async () => {
     await renderWithTheme(
       <Distribution distribution={[0, 0, 0, 0, 0, 2]} gameStatus="lost" guessCount={6} />,
@@ -100,13 +133,21 @@ describe('GameOverDistribution', () => {
   });
 
   it('should use correctFg (not brandFg) for the count text colour when a bar is highlighted (011-N3)', async () => {
-    await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
-    const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
-    // Light-scheme brandFg and correctFg both happen to be white, so the dark scheme is what
-    // actually distinguishes the two tokens (correctFg #ffffff vs brandFg #1c1611 in dark).
+    // Light-scheme brandFg and correctFg both happen to be white, so this test must render in the
+    // dark scheme (correctFg #ffffff vs brandFg #1c1611 there) to actually distinguish the two
+    // tokens — a mutant hard-coding colors.brandFg for the highlighted case would otherwise still
+    // pass in light mode.
     const darkColors = getThemeColors({ scheme: 'dark', isHighContrast: false });
-    expect(flattenStyle(countText.props.style)['color']).toBe(COLORS.correctFg);
-    expect(darkColors.correctFg).not.toBe(darkColors.brandFg);
+    await renderWithTheme(
+      <Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />,
+      { 'harfhane:theme': '"dark"' },
+    );
+    await waitFor(() => {
+      const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
+      expect(flattenStyle(countText.props.style)['color']).toBe(darkColors.correctFg);
+    });
+    const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
+    expect(flattenStyle(countText.props.style)['color']).not.toBe(darkColors.brandFg);
   });
 
   it('should use brandFg for the count text colour when a bar is not highlighted', async () => {

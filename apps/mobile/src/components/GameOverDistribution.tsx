@@ -30,12 +30,16 @@ export function useDisplayDistribution(
     // matches this one is shown as-is, not re-added. Unlimited has no persisted "reopen a
     // finished game" path (a fresh mount always starts a brand-new word), so it always adds —
     // there is nothing stored yet to double-count against.
-    const load = mode === 'daily'
+    const load = (mode === 'daily'
       ? loadDailyStats(store, wordLength).then((stats) => {
           const date = dailyDate ?? today();
           return stats.lastPlayedDate === date ? stats.guessDistribution : recordDailyResult(stats, won, guessCount, date).guessDistribution;
         })
-      : loadUnlimitedStats(store, wordLength).then((stats) => recordUnlimitedResult(stats, won, guessCount).guessDistribution);
+      : loadUnlimitedStats(store, wordLength).then((stats) => recordUnlimitedResult(stats, won, guessCount).guessDistribution)
+    // A rejected AsyncStorage read (I/O error, corrupt native module) must not become an unhandled
+    // promise rejection: the card simply renders without a distribution section (null), the same
+    // as while the read is still pending.
+    ).catch(() => null);
     load.then((value) => isCurrent && setDistribution(value));
     return () => {
       isCurrent = false;
