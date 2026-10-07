@@ -1,8 +1,9 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
+import { Switch } from 'react-native';
 import { Keyboard } from './Keyboard';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
-import { HAPTICS_ENABLED_KEY } from '../lib/useHapticsSettings';
+import { HAPTICS_ENABLED_KEY, useHapticsSettings } from '../lib/useHapticsSettings';
 
 const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
 jest.mock('expo-haptics', () => ({
@@ -16,7 +17,10 @@ const storedHapticsValue: { current: string | null } = { current: null };
 jest.mock('../game/device-store', () => ({
   deviceStore: {
     getItem: (key: string) => Promise.resolve(key === 'harfhane:haptics' ? storedHapticsValue.current : null),
-    setItem: () => Promise.resolve(),
+    setItem: (key: string, value: string) => {
+      if (key === 'harfhane:haptics') storedHapticsValue.current = value;
+      return Promise.resolve();
+    },
   },
 }));
 
@@ -107,13 +111,6 @@ describe('Keyboard', () => {
     expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
   });
 
-  it('should not trigger a haptic on key press when haptics are switched off (011-AE3)', async () => {
-    storedHapticsValue.current = 'false';
-    await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('A'));
-    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
-  });
-
   it('should prefer the isHapticsEnabled prop over its own stored setting when given', async () => {
     storedHapticsValue.current = 'true';
     await renderKeyboard({ isHapticsEnabled: false });
@@ -138,5 +135,51 @@ describe('Keyboard', () => {
     const { onLetter } = await renderKeyboard({ isInputBlocked: true });
     fireEvent.press(screen.getByLabelText('A'));
     expect(onLetter).toHaveBeenCalledWith('A');
+  });
+
+  // Last: this test drives Settings' Switch and Keyboard's isHapticsEnabled prop from a
+  // single real useHapticsSettings() instance, which leaves lingering async state that
+  // breaks later tests' queries in this suite (a testing-library/react-native quirk) --
+  // keeping it last avoids that without weakening what it proves.
+  it('should stop triggering the key-tap haptic once the Titreşim switch is turned off (011-AE3)', async () => {
+    // Self-proving: the switch and Keyboard's isHapticsEnabled prop share one real
+    // useHapticsSettings() instance (the closest integration to SettingsScreen and Keyboard
+    // sharing the real hook+store: Keyboard's own hook only re-reads storage on mount, so an
+    // in-place toggle -- unlike a remount -- needs the lifted prop GameScreen will eventually
+    // pass, per docs/backlog.md). If the hook's load never actually ran (e.g. its setState
+    // were a no-op), isEnabled would stay false from the very start and the first assertion
+    // below -- haptics firing while the switch is on -- would fail, so this can't pass by
+    // the switch merely starting (and staying) "off".
+    function Harness() {
+      const { isEnabled, setEnabled } = useHapticsSettings();
+      return (
+        <>
+          <Switch accessibilityLabel="Titreşim" value={isEnabled} onValueChange={setEnabled} />
+          <Keyboard
+            keyboardStatus={{}}
+            onLetter={jest.fn()}
+            onDelete={jest.fn()}
+            onSubmit={jest.fn()}
+            isHapticsEnabled={isEnabled}
+          />
+        </>
+      );
+    }
+
+    await renderWithTheme(<Harness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+
+    mockPerformAndroidHapticsAsync.mockClear();
+    await act(async () => {
+      fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
+    });
+
+    fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
   });
 });
