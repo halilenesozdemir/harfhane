@@ -23,7 +23,11 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
 
 export function SettingsScreen({ onClose }: SettingsScreenProps) {
   const { colors, preference, setPreference, isHighContrast, setHighContrast } = useTheme();
-  const { isEnabled: isHapticsEnabled, setEnabled: setHapticsEnabled } = useHapticsSettings();
+  const {
+    isEnabled: isHapticsEnabled,
+    isLoaded: isHapticsLoaded,
+    setEnabled: setHapticsEnabled,
+  } = useHapticsSettings();
   const appVersion = Constants.expoConfig?.version;
 
   return (
@@ -59,6 +63,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
           accessibilityLabel="Titreşim"
           value={isHapticsEnabled}
           onValueChange={setHapticsEnabled}
+          disabled={!isHapticsLoaded}
           trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
         />
       </View>
