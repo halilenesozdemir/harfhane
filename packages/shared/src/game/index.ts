@@ -6,5 +6,6 @@ export { getTimeUntilMidnight, getTodayString, getGameNumber } from './time';
 export type { HintMode, LetterHint } from './hint';
 export {
   hintAllowance,
+  isHintSolved,
   pickHint,
 } from './hint';

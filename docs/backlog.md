@@ -252,6 +252,14 @@ local achievements, share image (needs a dependency), sound (off by default), vi
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
 
+## Web hint control sits too close to the keyboard (owner, 2026-10-07)
+The hint control above the on-screen keyboard has no breathing room from it on web; add spacing
+between them.
+
+## Web desktop layout looks like a stretched mobile layout (owner: mobile first, 2026-10-07)
+On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
+desktop layout is post-launch work; mobile ships first.
+
 ## Turkish casing bug in StatsScreen (found while fixing PR #87, 2026-10-07)
 `apps/mobile/src/screens/StatsScreen.tsx:144` (`sectionTitle` style) applies
 `textTransform: 'uppercase'` to the Turkish string "Tahmin Dağılımı" (line 51), which is
