@@ -4,7 +4,6 @@ import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-th
 import { GameScreen } from './GameScreen';
 import { loadDailyStats } from '../stats/stats';
 import { saveRevealedHints } from '../game/game-storage';
-import { dailyGameNumber, selectResultMessage } from '../components/gameOverMessages';
 
 const today = () => '2026-10-05';
 
@@ -28,33 +27,19 @@ async function pressKeys(values: readonly string[]) {
 }
 
 describe('GameScreen', () => {
-  it('should show the game-over card with a deterministic win title when the daily word is guessed with the keyboard (011-AE1)', async () => {
+  it('should show the win message when the daily word is guessed with the keyboard', async () => {
     const onBack = jest.fn();
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={onBack} api={createApi()} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    expect(await screen.findByTestId('gameover-card')).toBeTruthy();
-    const expectedTitle = selectResultMessage('daily', 'won', 1, dailyGameNumber(today()));
-    expect(await screen.findByText(expectedTitle)).toBeTruthy();
-    expect(await screen.findByTestId('gameover-share')).toBeTruthy();
-    expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
-    expect(screen.queryByTestId('key-ENTER')).toBeNull();
+    expect(await screen.findByText('Muhteşem!')).toBeTruthy();
   });
 
-  it('should offer a new word in the game-over card when an unlimited game is over, and fetch a fresh word when pressed', async () => {
-    const api = createApi();
-    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+  it('should offer a new word when an unlimited game is over', async () => {
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
-    expect(await screen.findByTestId('gameover-card')).toBeTruthy();
-    expect(screen.queryByTestId('gameover-countdown')).toBeNull();
-    expect(screen.queryByTestId('key-ENTER')).toBeNull();
-    expect(api.fetchRandomWord).toHaveBeenCalledTimes(1);
-
-    await act(async () => fireEvent.press(await screen.findByTestId('gameover-new-word')));
-    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
-    expect(screen.queryByTestId('gameover-card')).toBeNull();
-    expect(await screen.findByTestId('tile-0-0')).toBeTruthy();
+    expect(await screen.findByText('Yeni kelime')).toBeTruthy();
   });
 
   it('should record the daily result in stats when the game finishes', async () => {
@@ -62,7 +47,7 @@ describe('GameScreen', () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
+    await screen.findByText('Muhteşem!');
     await waitFor(async () => {
       const stats = await loadDailyStats(store, 5);
       expect(stats.gamesPlayed).toBe(1);
@@ -144,7 +129,7 @@ describe('GameScreen', () => {
     await screen.findByTestId('hint-text');
 
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
+    await screen.findByText('Muhteşem!');
 
     expect(screen.queryByTestId('hint-button')).toBeNull();
     expect(screen.queryByTestId('hint-text')).toBeNull();
@@ -162,7 +147,6 @@ describe('GameScreen', () => {
     for (let attempt = 0; attempt < 6; attempt += 1) {
       await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
     }
-    await screen.findByTestId('gameover-card');
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
 
     expect(screen.queryByTestId('hint-button')).toBeNull();

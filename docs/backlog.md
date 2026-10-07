@@ -269,3 +269,11 @@ from the `/words/daily` response into `GameSession` and have `GameOverCard` read
 instead of recomputing it locally, matching how the web app already uses the server's
 `gameNumber` (`apps/frontend/src/components/GameOverModal.tsx`). A device with a wrong clock is
 the only way the two values could currently disagree.
+
+## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
+`getTimeUntilMidnight` (used by `GameOverCard`'s countdown, now `GameOverDistribution`'s sibling
+code) computes the time left until the *next* midnight relative to `now()`. If the card is still
+mounted a moment after Turkey midnight has actually passed (the parent has not yet swapped in the
+new day's word), the countdown wraps around to `23:59:59` and starts counting down a full day
+again, while the card still shows yesterday's finished game. Not fixed here: needs the parent to
+react to the day boundary (e.g. re-fetch/reset session) rather than the countdown display alone.

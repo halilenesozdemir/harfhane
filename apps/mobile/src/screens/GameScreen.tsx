@@ -1,6 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameGrid } from '../components/GameGrid';
-import { GameOverCard } from '../components/GameOverCard';
 import { HintControl } from '../components/HintControl';
 import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
@@ -46,15 +45,12 @@ function ActionButton({ label, onPress, colors }: ActionButtonProps) {
 interface GameBoardProps {
   readonly session: GameSession;
   readonly mode: GameMode;
-  readonly wordLength: WordLength;
   readonly game: ReturnType<typeof useGame>;
   readonly hint: UseHintResult;
   readonly colors: ThemeColors;
-  readonly store: GameDependencies['store'];
-  readonly today: GameDependencies['today'];
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today }: GameBoardProps) {
+function GameBoard({ session, mode, game, hint, colors }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   return (
     <>
@@ -66,44 +62,24 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
         hints={hint.hints}
         isPlaying={!isFinished}
       />
-      {!isFinished && (
-        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
-      )}
+      <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
       {mode === 'daily' && !isFinished && (
         <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
       )}
-      {isFinished && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
-        <GameOverCard
-          mode={mode}
-          wordLength={wordLength}
-          gameStatus={session.game.gameStatus}
-          solution={session.solution}
-          guesses={session.game.guesses}
-          evaluations={session.game.evaluations}
-          wordId={session.wordId}
-          dailyDate={session.dailyDate}
-          store={store}
-          today={today}
-          onNewGame={game.startNewGame}
-        />
-      ) : (
-        <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={game.onSubmit} />
-      )}
+      {mode === 'unlimited' && isFinished && <ActionButton label="Yeni kelime" onPress={game.startNewGame} colors={colors} />}
+      <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={game.onSubmit} />
     </>
   );
 }
 
 interface GameBodyProps {
   readonly mode: GameMode;
-  readonly wordLength: WordLength;
   readonly game: ReturnType<typeof useGame>;
   readonly hint: UseHintResult;
   readonly colors: ThemeColors;
-  readonly store: GameDependencies['store'];
-  readonly today: GameDependencies['today'];
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBodyProps) {
+function GameBody({ mode, game, hint, colors }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -114,7 +90,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBo
       </View>
     );
   }
-  return <GameBoard session={session} mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />;
+  return <GameBoard session={session} mode={mode} game={game} hint={hint} colors={colors} />;
 }
 
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
@@ -137,7 +113,7 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
         </Pressable>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{`${MODE_TITLES[mode]} · ${wordLength} harf`}</Text>
       </View>
-      <GameBody mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />
+      <GameBody mode={mode} game={game} hint={hint} colors={colors} />
     </View>
   );
 }
