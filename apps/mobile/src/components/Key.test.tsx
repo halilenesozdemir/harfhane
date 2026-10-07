@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { Delete } from 'lucide-react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Key } from './Key';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -43,5 +44,13 @@ describe('Key', () => {
     await renderWithTheme(<Key label="K" value="K" status={null} accessibilityLabel="K" onPress={onPress} />);
     fireEvent.press(screen.getByLabelText('K'));
     expect(onPress).toHaveBeenCalledWith('K');
+  });
+
+  it('should render the icon instead of the text label when an icon is given', async () => {
+    await renderWithTheme(
+      <Key label="⌫" value="BACKSPACE" status={null} accessibilityLabel="Sil" icon={Delete} onPress={() => undefined} />,
+    );
+    expect(screen.queryByText('⌫')).toBeNull();
+    expect(screen.getByLabelText('Sil')).toBeTruthy();
   });
 });

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import type { ComponentType } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { base } from '@harfhane/ui-tokens';
@@ -6,12 +7,19 @@ import { useTheme } from '../ThemeProvider';
 import type { ThemeColors } from '../theme';
 import { parsePx } from '../utils/px';
 
+export interface KeyIconProps {
+  readonly color?: string;
+  readonly size?: number;
+}
+
 export interface KeyProps {
   readonly label: string;
   readonly value: string;
   readonly status: TileStatus;
   readonly accessibilityLabel: string;
   readonly isWide?: boolean;
+  /** Renders a Lucide icon instead of the text label, e.g. for Enter/Backspace. */
+  readonly icon?: ComponentType<KeyIconProps>;
   readonly onPress: (value: string) => void;
   readonly testID?: string;
 }
@@ -22,6 +30,7 @@ const WIDE_KEY_FLEX = 1.5;
 const WIDE_KEY_MAX_WIDTH = 66;
 const WIDE_KEY_PADDING = 4;
 const KEY_FONT_SIZE = 14;
+const KEY_ICON_SIZE = 18;
 const KEY_DEPTH_HEIGHT = 3;
 const KEY_PRESSED_DEPTH_HEIGHT = 1;
 const KEY_PRESSED_TRANSLATE_Y = 2;
@@ -33,7 +42,7 @@ function getKeyColors(status: TileStatus, colors: ThemeColors) {
   return { backgroundColor: colors.keyBg, color: colors.keyFg, depthColor: colors.keyDepth };
 }
 
-export function Key({ label, value, status, accessibilityLabel, isWide = false, onPress, testID }: KeyProps) {
+export function Key({ label, value, status, accessibilityLabel, isWide = false, icon: Icon, onPress, testID }: KeyProps) {
   const { colors } = useTheme();
   const [isPressed, setIsPressed] = useState(false);
   const { backgroundColor, color, depthColor } = getKeyColors(status, colors);
@@ -60,7 +69,7 @@ export function Key({ label, value, status, accessibilityLabel, isWide = false, 
         },
       ]}
     >
-      <Text style={[styles.label, { color }]}>{label}</Text>
+      {Icon ? <Icon color={color} size={KEY_ICON_SIZE} /> : <Text style={[styles.label, { color }]}>{label}</Text>}
     </Pressable>
   );
 }

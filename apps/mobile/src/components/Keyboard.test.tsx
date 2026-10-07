@@ -97,6 +97,14 @@ describe('Keyboard', () => {
     expect(screen.getByTestId('key-BACKSPACE')).toBeTruthy();
   });
 
+  it('should render Lucide icons instead of text glyphs for Enter and Backspace', async () => {
+    await renderKeyboard();
+    expect(screen.queryByText('ENTER')).toBeNull();
+    expect(screen.queryByText('⌫')).toBeNull();
+    expect(screen.getByLabelText('Gönder')).toBeTruthy();
+    expect(screen.getByLabelText('Sil')).toBeTruthy();
+  });
+
   it('should match the mocked device-store key with the real haptics settings key', () => {
     expect(HAPTICS_ENABLED_KEY).toBe('harfhane:haptics');
   });
