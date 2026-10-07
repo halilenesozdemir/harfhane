@@ -63,3 +63,27 @@ export async function playGuess(page: Page, letters: string[]): Promise<void> {
 export async function waitForBoardReady(page: Page): Promise<void> {
   await keyButton(page, 'ENTER').waitFor({ state: 'visible' });
 }
+
+// Forces useShare's clipboard fallback path: deletes navigator.share so the
+// headless browser's inconsistent Web Share availability cannot make a
+// share-text assertion flaky, and records whatever gets copied on window.
+// Call before page.goto().
+export async function forceClipboardShareFallback(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: (text: string) => {
+          (window as unknown as { __copiedText: string }).__copiedText = text;
+          return Promise.resolve();
+        },
+      },
+      configurable: true,
+    });
+  });
+}
+
+export async function getCopiedShareText(page: Page): Promise<string> {
+  await page.waitForFunction(() => (window as unknown as { __copiedText?: string }).__copiedText);
+  return page.evaluate(() => (window as unknown as { __copiedText: string }).__copiedText);
+}

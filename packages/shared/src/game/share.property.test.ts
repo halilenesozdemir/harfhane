@@ -24,7 +24,8 @@ const gameArb = fc
           maxLength: numGuesses,
         }),
         fc.boolean(),
-        fc.string({ minLength: 1, maxLength: 6 })
+        fc.string({ minLength: 1, maxLength: 6 }),
+        fc.boolean()
       )
     )
   );
@@ -36,20 +37,22 @@ const buildExpectedText = (
   numGuesses: number,
   evaluations: TileStatus[][],
   isWon: boolean,
-  modeText: string
+  modeText: string,
+  hintUsed: boolean
 ): string => {
   const attemptText = isWon ? `${numGuesses}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  const hintSuffix = hintUsed ? ' · ipucu' : '';
   const rows = evaluations.map((row) => row.map(toEmoji).join('')).join('\n');
-  return `Harfhane ${modeText} ${attemptText}\n\n${rows}\n\nhttps://harfhane.app`;
+  return `Harfhane ${modeText} ${attemptText}${hintSuffix}\n\n${rows}\n\nhttps://harfhane.app`;
 };
 
 describe('generateShareText property tests', () => {
-  it('should produce exactly the header, rows and footer the format intends, for any guess count and tile pattern', () => {
+  it('should produce exactly the header, rows and footer the format intends, for any guess count, tile pattern and hint flag', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText]) => {
+      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const actual = generateShareText(guesses, evaluations, modeText, isWon);
-        const expected = buildExpectedText(numGuesses, evaluations, isWon, modeText);
+        const actual = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
+        const expected = buildExpectedText(numGuesses, evaluations, isWon, modeText, hintUsed);
         expect(actual).toBe(expected);
       }),
       { numRuns: NUM_RUNS }
@@ -58,9 +61,9 @@ describe('generateShareText property tests', () => {
 
   it('should have exactly one line per guess plus 4 fixed lines (header, blank, blank, URL)', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText]) => {
+      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const text = generateShareText(guesses, evaluations, modeText, isWon);
+        const text = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
         expect(text.split('\n')).toHaveLength(numGuesses + 4);
       }),
       { numRuns: NUM_RUNS }
@@ -69,15 +72,29 @@ describe('generateShareText property tests', () => {
 
   it('should show "n/6" when won and "X/6" when lost, matching guesses.length', () => {
     fc.assert(
+      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
+        const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
+        const text = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
+        const headerLine = text.split('\n')[0]!;
+        const attemptText = isWon ? `${numGuesses}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+        if (hintUsed) {
+          expect(headerLine.endsWith(`${attemptText} · ipucu`)).toBe(true);
+        } else {
+          expect(headerLine.endsWith(attemptText)).toBe(true);
+        }
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('should keep the emoji grid identical regardless of the hint flag', () => {
+    fc.assert(
       fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const text = generateShareText(guesses, evaluations, modeText, isWon);
-        const headerLine = text.split('\n')[0]!;
-        if (isWon) {
-          expect(headerLine.endsWith(`${numGuesses}/${MAX_GUESSES}`)).toBe(true);
-        } else {
-          expect(headerLine.endsWith(`X/${MAX_GUESSES}`)).toBe(true);
-        }
+        const withHint = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed: true });
+        const withoutHint = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed: false });
+        const gridLines = (text: string): string[] => text.split('\n').slice(2, 2 + numGuesses);
+        expect(gridLines(withHint)).toEqual(gridLines(withoutHint));
       }),
       { numRuns: NUM_RUNS }
     );

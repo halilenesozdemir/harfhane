@@ -1,5 +1,5 @@
 import { expect, test } from './support/fixtures';
-import { keyButton, playGuess, tile, waitForBoardReady } from './support/game';
+import { forceClipboardShareFallback, getCopiedShareText, keyButton, playGuess, tile, waitForBoardReady } from './support/game';
 
 test('unlimited mode can be won and "new word" starts a fresh game', async ({ page, api }) => {
   await api.stubRandomWord(5, [{ word: 'KALEM' }, { word: 'MASAL' }]);
@@ -28,4 +28,21 @@ test('unlimited mode shows no hint button (FREE_UNLIMITED_HINTS = 0)', async ({ 
 
   await expect(page.getByRole('button', { name: 'İpucu göster' })).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'İpucu kullanıldı' })).not.toBeVisible();
+});
+
+test('share text header never mentions "ipucu" in unlimited mode (011-AE6)', async ({ page, api }) => {
+  await api.stubRandomWord(5, [{ word: 'KALEM' }]);
+  await api.stubValidate(() => true);
+  await forceClipboardShareFallback(page);
+
+  await page.goto('/unlimited/5');
+  await waitForBoardReady(page);
+
+  await playGuess(page, 'KALEM'.split(''));
+  await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole('button', { name: /Paylaş/ }).click();
+  const copiedText = await getCopiedShareText(page);
+  const headerLine = copiedText.split('\n')[0]!;
+  expect(headerLine).not.toContain('ipucu');
 });

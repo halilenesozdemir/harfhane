@@ -239,18 +239,15 @@ ADR, map every file as factory or product, extract the factory layer into a GitH
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
 
+## Mobile share hint marker (Plan 011 U6, after PR #87 merges)
+`generateShareText` (`packages/shared/src/game/share.ts`) now takes an options object with
+`hintUsed` (R8/AE6: the share header gets a "· ipucu" suffix). Web passes it from `useHint`'s
+`hintUsed` in `apps/frontend/src/components/GamePage.tsx` / `GameOverModal.tsx`. The mobile
+game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
+wire mobile's own hint state through once #87 merges, matching the web wiring above.
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
-
-## Wire GameScreen to Keyboard's new haptics props (Plan 011 U3, PR #88, 2026-10-07)
-`Keyboard` accepts `isHapticsEnabled` (overrides its own `useHapticsSettings()` read) and
-`isInputBlocked` (suppresses the key-tap haptic once the game is over or a guess is in flight);
-`useGame()` already exposes `isHapticsEnabled` on its result. `GameScreen.tsx` was off limits for
-PR #88 (owned by the game-over-card unit, PR #87, open at the time), so neither prop is wired yet:
-Keyboard still reads its own setting independently and never suppresses on game-over/in-flight.
-Once #87 merges, have `GameScreen.tsx` pass `isHapticsEnabled={session.isHapticsEnabled}` and
-`isInputBlocked={session.game.gameStatus !== 'playing' || session.isSubmitting}` (or equivalent)
-to `Keyboard`, then drop Keyboard's own `useHapticsSettings()` call — one hook instance per screen.

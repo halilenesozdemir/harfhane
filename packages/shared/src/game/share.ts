@@ -8,17 +8,25 @@ const EMOJI_MAP: Record<string, string> = {
 
 const MAX_GUESSES = 6;
 const DEFAULT_SHARE_URL = 'https://harfhane.app';
+const HINT_SUFFIX = ' · ipucu';
+
+export interface ShareTextOptions {
+  shareUrl?: string;
+  hintUsed?: boolean;
+}
 
 export const generateShareText = (
   guesses: string[],
   evaluations: TileStatus[][],
   modeText: string | number,
   isWon: boolean,
-  shareUrl = DEFAULT_SHARE_URL
+  options: ShareTextOptions = {}
 ): string => {
+  const { shareUrl = DEFAULT_SHARE_URL, hintUsed = false } = options;
   const attemptText = isWon ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+  const hintSuffix = hintUsed ? HINT_SUFFIX : '';
 
-  let text = `Harfhane ${modeText} ${attemptText}\n\n`;
+  let text = `Harfhane ${modeText} ${attemptText}${hintSuffix}\n\n`;
 
   evaluations.forEach((evaluation) => {
     const row = evaluation.map((status) => (status ? EMOJI_MAP[status] : '⬜') || '⬜').join('');

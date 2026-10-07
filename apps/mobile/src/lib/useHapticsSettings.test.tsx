@@ -58,4 +58,38 @@ describe('useHapticsSettings', () => {
     expect(result.current.isEnabled).toBe(false);
     expect(await store.getItem(HAPTICS_ENABLED_KEY)).toBe('false');
   });
+
+  it('should report isLoaded false until the stored value resolves, true after', async () => {
+    let resolveGetItem!: (value: string | null) => void;
+    const store = {
+      getItem: () => new Promise<string | null>((resolve) => { resolveGetItem = resolve; }),
+      setItem: async () => undefined,
+    };
+    const { result } = await renderHook(() => useHapticsSettings(store));
+    expect(result.current.isLoaded).toBe(false);
+    await act(async () => {
+      resolveGetItem(null);
+      await Promise.resolve();
+    });
+    expect(result.current.isLoaded).toBe(true);
+  });
+
+  it('should keep a user-set value when the stored-value load resolves after it', async () => {
+    let resolveGetItem!: (value: string | null) => void;
+    const store = {
+      getItem: () => new Promise<string | null>((resolve) => { resolveGetItem = resolve; }),
+      setItem: async () => undefined,
+    };
+    const { result } = await renderHook(() => useHapticsSettings(store));
+    await act(async () => {
+      result.current.setEnabled(false);
+    });
+    expect(result.current.isEnabled).toBe(false);
+    await act(async () => {
+      resolveGetItem('true');
+      await Promise.resolve();
+    });
+    expect(result.current.isEnabled).toBe(false);
+    expect(result.current.isLoaded).toBe(true);
+  });
 });

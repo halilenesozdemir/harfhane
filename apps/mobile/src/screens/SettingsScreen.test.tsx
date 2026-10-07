@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
 import { renderWithTheme } from '../test-utils/render-with-theme';
+import { deviceStore } from '../game/device-store';
 
 const mockExpoConfig: { version?: string } = { version: '1.2.3' };
 jest.mock('expo-constants', () => ({
@@ -89,5 +90,20 @@ describe('SettingsScreen', () => {
     });
     expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
     expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
+  });
+
+  it('should disable the haptics switch until the stored value loads', async () => {
+    let resolveGetItem!: (value: string | null) => void;
+    const getItemSpy = jest
+      .spyOn(deviceStore, 'getItem')
+      .mockReturnValueOnce(new Promise((resolve) => { resolveGetItem = resolve; }));
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByLabelText('Titreşim').props.disabled).toBe(true);
+    await act(async () => {
+      resolveGetItem(null);
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText('Titreşim').props.disabled).toBe(false);
+    getItemSpy.mockRestore();
   });
 });

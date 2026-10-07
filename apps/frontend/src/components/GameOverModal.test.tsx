@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import GameOverModal from './GameOverModal';
 import type { DailyStats, GameOverModalProps, WordEntry } from '../types';
 
@@ -68,5 +68,40 @@ describe('GameOverModal', () => {
     expect(screen.queryByText('Anlam:')).not.toBeInTheDocument();
     expect(screen.queryByText('"Çantasından bir kalem çıkardı."')).not.toBeInTheDocument();
     expect(screen.queryByText('Bağlam:')).not.toBeInTheDocument();
+  });
+
+  describe('share text hint marker', () => {
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'share');
+      vi.restoreAllMocks();
+    });
+
+    it('should end the shared header line with "· ipucu" when a hint was used (011-AE6)', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+      renderModal({ hintUsed: true });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Paylaş'));
+      });
+      expect(shareMock).toHaveBeenCalledTimes(1);
+
+      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
+      expect(sharedText.split('\n')[0]).toContain('· ipucu');
+    });
+
+    it('should not append "· ipucu" to the shared header line when no hint was used', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+      renderModal({ hintUsed: false });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Paylaş'));
+      });
+      expect(shareMock).toHaveBeenCalledTimes(1);
+
+      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
+      expect(sharedText.split('\n')[0]).not.toContain('ipucu');
+    });
   });
 });

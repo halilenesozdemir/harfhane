@@ -1,5 +1,14 @@
 import { expect, test } from './support/fixtures';
-import { backspaceOnScreen, playGuess, submitAndWaitForReveal, tile, typeOnScreen, waitForBoardReady } from './support/game';
+import {
+  backspaceOnScreen,
+  forceClipboardShareFallback,
+  getCopiedShareText,
+  playGuess,
+  submitAndWaitForReveal,
+  tile,
+  typeOnScreen,
+  waitForBoardReady,
+} from './support/game';
 
 const DAILY_WORDS: Record<4 | 5 | 6, { solution: string; wrongGuess: string }> = {
   4: { solution: 'MASA', wrongGuess: 'KAPI' },
@@ -132,6 +141,44 @@ test('a hint survives a reload without granting a fresh one', async ({ page, api
 
   await expect(page.getByText(pillTextBefore!)).toBeVisible();
   await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
+});
+
+test('share text header ends with "· ipucu" when a hint was revealed (011-AE6)', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+  await forceClipboardShareFallback(page);
+
+  await page.goto('/daily/5');
+  await page.getByRole('button', { name: 'İpucu göster' }).click();
+
+  await playGuess(page, solution.split(''));
+  await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole('button', { name: /Paylaş/ }).click();
+  const copiedText = await getCopiedShareText(page);
+  const headerLine = copiedText.split('\n')[0]!;
+  expect(headerLine.endsWith('· ipucu')).toBe(true);
+});
+
+test('share text header does not mention "ipucu" when the hint was available but never pressed (011-AE6)', async ({ page, api }) => {
+  const solution = 'KALEM';
+  await api.stubDailyWord(5, { word: solution });
+  await api.stubValidate(() => true);
+  await forceClipboardShareFallback(page);
+
+  await page.goto('/daily/5');
+  // The hint button is visible (available) but deliberately left unpressed:
+  // this is what distinguishes GamePage wiring `hintUsed` from `hintAvailable`.
+  await expect(page.getByRole('button', { name: 'İpucu göster' })).toBeVisible();
+
+  await playGuess(page, solution.split(''));
+  await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole('button', { name: /Paylaş/ }).click();
+  const copiedText = await getCopiedShareText(page);
+  const headerLine = copiedText.split('\n')[0]!;
+  expect(headerLine).not.toContain('ipucu');
 });
 
 test('a finished daily game survives a reload', async ({ page, api }) => {

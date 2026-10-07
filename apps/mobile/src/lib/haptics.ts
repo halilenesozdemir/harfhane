@@ -1,9 +1,10 @@
 import { AndroidHaptics, performAndroidHapticsAsync } from 'expo-haptics';
 
 /**
- * `Confirm`/`Reject` map to `HapticFeedbackConstants` added in Android 11 (API 30); on
- * older devices the OS silently drops them (and some OEM builds throw instead), so a
- * rejection falls back to a type guaranteed since API 27 to still give some feedback.
+ * `Confirm`/`Reject` map to `HapticFeedbackConstants` added in Android 11 (API 30). Below
+ * that, `expo-haptics` rejects the promise with `HapticsNotSupportedException` — it does not
+ * drop the call silently — so `performHaptic` catches that and retries with a type
+ * guaranteed since API 27 to still give some feedback.
  */
 async function performHaptic(type: AndroidHaptics, fallback: AndroidHaptics | null, isEnabled: boolean): Promise<void> {
   if (!isEnabled) return;
