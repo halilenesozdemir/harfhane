@@ -246,6 +246,21 @@ then, write new rules so the factory part stays separable from product rules.
 game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
 wire mobile's own hint state through once #87 merges, matching the web wiring above.
 
+## Mobile UI primitives wiring (Plan 011 U7a, follow-up in U7b/U7c)
+U7a added `apps/mobile/src/ui/layout.ts` constants (`ICON_SIZE`, `SCREEN_PADDING`) and the
+`IconButton`, `TopBar`, `Button`, `Card` primitives, but changed no screen (the owner approved
+starting U7a in parallel with U1-U6's open PRs since it only adds files). `ICON_SIZE` and
+`SCREEN_PADDING` are tagged `@deferred` for knip since nothing imports them yet; U7b/U7c wire the
+primitives into `GameScreen`, `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard`
+and `HomeScreen`, at which point both constants gain real importers and the tags should come off.
+`TopBar`'s `leading`/`trailing` are plain `ReactNode` slots (not wired to `lucide-react-native`,
+not yet a dependency on `main`); U7b/U7c compose the actual `IconButton` + Lucide icon elements and
+also add the home-top-bar variant (streak chip, three trailing actions) described in
+`docs/design/mobile-redesign-spec.md` section B, which U7a does not implement. Nunito body text
+(`docs/design/mobile-ui-standard.md` section 2) also stays open; `Button`/`Card` text still uses the
+system font since adding `@expo-google-fonts/nunito` needs touching `App.tsx`'s font loading,
+out of scope for a files-only unit.
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
