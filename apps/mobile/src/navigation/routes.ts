@@ -20,8 +20,12 @@ export type NavigationAction =
 const HOME_ROUTE: Route = { screen: 'home' };
 const MIN_STACK_SIZE_WITH_BACK = 2;
 
-export function createInitialNavigationState(): NavigationState {
-  return { stack: [HOME_ROUTE] };
+// R7/AE5: a first launch that has not seen How to play yet starts with it
+// pushed on top of home, so the hardware back button (and the screen's own
+// close action) return to home exactly like opening it from the menu would.
+export function createInitialNavigationState(hasSeenHowToPlay = true): NavigationState {
+  if (hasSeenHowToPlay) return { stack: [HOME_ROUTE] };
+  return { stack: [HOME_ROUTE, { screen: 'howToPlay' }] };
 }
 
 export function canGoBack(state: NavigationState): boolean {

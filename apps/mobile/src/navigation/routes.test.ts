@@ -36,6 +36,14 @@ describe('routes', () => {
     expect(canGoBack(next)).toBe(false);
   });
 
+  it('should start with How to play on top of home when first launch has not seen it (011-AE5)', () => {
+    const state = createInitialNavigationState(false);
+    expect(currentRoute(state)).toEqual({ screen: 'howToPlay' });
+    expect(canGoBack(state)).toBe(true);
+    const next = reduceNavigation(state, { type: 'back' });
+    expect(currentRoute(next)).toEqual({ screen: 'home' });
+  });
+
   it('should push a game route carrying mode and length', () => {
     const state = createInitialNavigationState();
     const next = reduceNavigation(state, { type: 'push', route: { screen: 'game', mode: 'unlimited', length: 6 } });
