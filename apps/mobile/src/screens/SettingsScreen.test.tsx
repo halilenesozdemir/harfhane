@@ -4,6 +4,7 @@ import { Text } from 'react-native';
 import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
 import { renderWithTheme } from '../test-utils/render-with-theme';
+import { deviceStore } from '../game/device-store';
 
 const mockExpoConfig: { version?: string } = { version: '1.2.3' };
 jest.mock('expo-constants', () => ({
@@ -15,12 +16,27 @@ jest.mock('expo-constants', () => ({
   },
 }));
 
+const mockHapticsStore = new Map<string, string>();
+jest.mock('../game/device-store', () => ({
+  deviceStore: {
+    getItem: (key: string) => Promise.resolve(mockHapticsStore.get(key) ?? null),
+    setItem: (key: string, value: string) => {
+      mockHapticsStore.set(key, value);
+      return Promise.resolve();
+    },
+  },
+}));
+
 function ColorProbe() {
   const { colors } = useTheme();
   return <Text testID="probe-bg">{colors.bg}</Text>;
 }
 
 describe('SettingsScreen', () => {
+  beforeEach(() => {
+    mockHapticsStore.clear();
+  });
+
   it('should render the Turkish theme and contrast controls', async () => {
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
     expect(screen.getByText('Ayarlar')).toBeTruthy();
@@ -60,5 +76,34 @@ describe('SettingsScreen', () => {
     mockExpoConfig.version = undefined;
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
     expect(screen.queryByText(/^Sürüm/)).toBeNull();
+  });
+
+  it('should show the haptics switch on by default', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByLabelText('Titreşim').props.value).toBe(true);
+  });
+
+  it('should persist turning the haptics switch off', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await act(async () => {
+      fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
+    });
+    expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
+    expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
+  });
+
+  it('should disable the haptics switch until the stored value loads', async () => {
+    let resolveGetItem!: (value: string | null) => void;
+    const getItemSpy = jest
+      .spyOn(deviceStore, 'getItem')
+      .mockReturnValueOnce(new Promise((resolve) => { resolveGetItem = resolve; }));
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByLabelText('Titreşim').props.disabled).toBe(true);
+    await act(async () => {
+      resolveGetItem(null);
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText('Titreşim').props.disabled).toBe(false);
+    getItemSpy.mockRestore();
   });
 });

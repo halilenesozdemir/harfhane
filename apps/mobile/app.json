@@ -14,7 +14,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "app.harfhane"
+      "package": "app.harfhane",
+      "blockedPermissions": ["android.permission.VIBRATE"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
