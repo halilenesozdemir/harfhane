@@ -58,27 +58,72 @@ async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBl
 }
 
 describe('Keyboard', () => {
+  // This test shares one real useHapticsSettings() instance between a Titreşim Switch and
+  // Keyboard's isHapticsEnabled prop -- the closest integration to SettingsScreen and
+  // Keyboard sharing the real hook+store. It stays untagged: the AE3 ("switched off in
+  // Settings, pressing a key triggers no haptic") acceptance example is proven by the real
+  // navigation path in App.test.tsx instead, since in production GameScreen passes no
+  // isHapticsEnabled prop and Settings is a separate route -- this test only proves the prop
+  // wiring, not that real path. It runs first to prove the suite is no longer order-dependent
+  // now that every fireEvent/fireEvent.press call below is awaited (RNTL 14 returns promises
+  // from both; a dangling one used to overlap with later `act()` calls in this file).
+  it('should stop triggering the key-tap haptic once the Titreşim switch is turned off', async () => {
+    // Self-proving: if the hook's load never actually ran (e.g. its setState were a no-op),
+    // isEnabled would stay false from the very start and the first assertion below --
+    // haptics firing while the switch is on -- would fail, so this can't pass by the switch
+    // merely starting (and staying) "off".
+    function Harness() {
+      const { isEnabled, setEnabled } = useHapticsSettings();
+      return (
+        <>
+          <Switch accessibilityLabel="Titreşim" value={isEnabled} onValueChange={setEnabled} />
+          <Keyboard
+            keyboardStatus={{}}
+            onLetter={jest.fn()}
+            onDelete={jest.fn()}
+            onSubmit={jest.fn()}
+            isHapticsEnabled={isEnabled}
+          />
+        </>
+      );
+    }
+
+    await renderWithTheme(<Harness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    await fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+
+    mockPerformAndroidHapticsAsync.mockClear();
+    await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
+
+    await fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+  });
+
   it('should call onLetter with İ when the İ key is pressed', async () => {
     const { onLetter } = await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('İ'));
+    await fireEvent.press(screen.getByLabelText('İ'));
     expect(onLetter).toHaveBeenCalledWith('İ');
   });
 
   it('should call onLetter with I when the I key is pressed', async () => {
     const { onLetter } = await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('I'));
+    await fireEvent.press(screen.getByLabelText('I'));
     expect(onLetter).toHaveBeenCalledWith('I');
   });
 
   it('should call onDelete when the backspace key is pressed', async () => {
     const { onDelete } = await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('Sil'));
+    await fireEvent.press(screen.getByLabelText('Sil'));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
   it('should call onSubmit when the enter key is pressed', async () => {
     const { onSubmit } = await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('Gönder'));
+    await fireEvent.press(screen.getByLabelText('Gönder'));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
@@ -107,79 +152,33 @@ describe('Keyboard', () => {
 
   it('should trigger a haptic on key press when haptics are enabled', async () => {
     await renderKeyboard();
-    fireEvent.press(screen.getByLabelText('A'));
+    await fireEvent.press(screen.getByLabelText('A'));
     expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
   });
 
   it('should prefer the isHapticsEnabled prop over its own stored setting when given', async () => {
     storedHapticsValue.current = 'true';
     await renderKeyboard({ isHapticsEnabled: false });
-    fireEvent.press(screen.getByLabelText('A'));
+    await fireEvent.press(screen.getByLabelText('A'));
     expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
   });
 
   it('should use the isHapticsEnabled prop to enable haptics even if storage says off', async () => {
     storedHapticsValue.current = 'false';
     await renderKeyboard({ isHapticsEnabled: true });
-    fireEvent.press(screen.getByLabelText('A'));
+    await fireEvent.press(screen.getByLabelText('A'));
     expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
   });
 
   it('should not trigger a haptic on key press when input is blocked (game over or submitting)', async () => {
     await renderKeyboard({ isInputBlocked: true });
-    fireEvent.press(screen.getByLabelText('A'));
+    await fireEvent.press(screen.getByLabelText('A'));
     expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
   });
 
   it('should still call onLetter when input is blocked (the reducer, not Keyboard, owns ignoring it)', async () => {
     const { onLetter } = await renderKeyboard({ isInputBlocked: true });
-    fireEvent.press(screen.getByLabelText('A'));
+    await fireEvent.press(screen.getByLabelText('A'));
     expect(onLetter).toHaveBeenCalledWith('A');
-  });
-
-  // Last: this test drives Settings' Switch and Keyboard's isHapticsEnabled prop from a
-  // single real useHapticsSettings() instance, which leaves lingering async state that
-  // breaks later tests' queries in this suite (a testing-library/react-native quirk) --
-  // keeping it last avoids that without weakening what it proves.
-  it('should stop triggering the key-tap haptic once the Titreşim switch is turned off (011-AE3)', async () => {
-    // Self-proving: the switch and Keyboard's isHapticsEnabled prop share one real
-    // useHapticsSettings() instance (the closest integration to SettingsScreen and Keyboard
-    // sharing the real hook+store: Keyboard's own hook only re-reads storage on mount, so an
-    // in-place toggle -- unlike a remount -- needs the lifted prop GameScreen will eventually
-    // pass, per docs/backlog.md). If the hook's load never actually ran (e.g. its setState
-    // were a no-op), isEnabled would stay false from the very start and the first assertion
-    // below -- haptics firing while the switch is on -- would fail, so this can't pass by
-    // the switch merely starting (and staying) "off".
-    function Harness() {
-      const { isEnabled, setEnabled } = useHapticsSettings();
-      return (
-        <>
-          <Switch accessibilityLabel="Titreşim" value={isEnabled} onValueChange={setEnabled} />
-          <Keyboard
-            keyboardStatus={{}}
-            onLetter={jest.fn()}
-            onDelete={jest.fn()}
-            onSubmit={jest.fn()}
-            isHapticsEnabled={isEnabled}
-          />
-        </>
-      );
-    }
-
-    await renderWithTheme(<Harness />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    fireEvent.press(screen.getByLabelText('A'));
-    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
-
-    mockPerformAndroidHapticsAsync.mockClear();
-    await act(async () => {
-      fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
-    });
-
-    fireEvent.press(screen.getByLabelText('A'));
-    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
   });
 });

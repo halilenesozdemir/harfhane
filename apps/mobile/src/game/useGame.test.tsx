@@ -152,6 +152,21 @@ describe('useGame', () => {
     expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('reject');
   });
 
+  it('should not trigger the reject haptic when haptics are off and the guess is too short', async () => {
+    const api = createApi();
+    const store = createMemoryStore({ 'harfhane:haptics': 'false' });
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    await act(async () => {
+      'KAL'.split('').forEach((letter) => result.current.onLetter(letter));
+    });
+    await act(async () => {
+      result.current.onSubmit();
+    });
+    expect(api.validateWord).not.toHaveBeenCalled();
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('reject');
+  });
+
   it('should show a connection message when validation fails', async () => {
     const api = createApi({ validateWord: jest.fn().mockRejectedValue(new Error('offline')) });
     const store = createMemoryStore();

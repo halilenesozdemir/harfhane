@@ -239,6 +239,13 @@ ADR, map every file as factory or product, extract the factory layer into a GitH
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
 
+## Mobile share hint marker (Plan 011 U6, after PR #87 merges)
+`generateShareText` (`packages/shared/src/game/share.ts`) now takes an options object with
+`hintUsed` (R8/AE6: the share header gets a "· ipucu" suffix). Web passes it from `useHint`'s
+`hintUsed` in `apps/frontend/src/components/GamePage.tsx` / `GameOverModal.tsx`. The mobile
+game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
+wire mobile's own hint state through once #87 merges, matching the web wiring above.
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
@@ -254,3 +261,17 @@ Keyboard still reads its own setting independently and never suppresses on game-
 Once #87 merges, have `GameScreen.tsx` pass `isHapticsEnabled={session.isHapticsEnabled}` and
 `isInputBlocked={session.game.gameStatus !== 'playing' || session.isSubmitting}` (or equivalent)
 to `Keyboard`, then drop Keyboard's own `useHapticsSettings()` call — one hook instance per screen.
+
+## Un-awaited `fireEvent`/`fireEvent.press` calls caused order-dependent test failures (2026-10-07)
+RNTL 14's `fireEvent` and `fireEvent.press` both return `Promise<void>`; a few mobile test files
+called them without `await` (often inside an `act(async () => {...})` wrapper, which doesn't make
+the inner call awaited). The dangling promise could still be pending when the next `act()` call in
+the file started, printing "You seem to have overlapping act() calls" and, in at least one case,
+corrupting a later test's `screen` queries. Fixed in `Keyboard.test.tsx`, `SettingsScreen.test.tsx`
+and `App.test.tsx` by awaiting every call directly (`await fireEvent.press(...)`, no `act()`
+wrapper needed). `@typescript-eslint/no-floating-promises` would catch this class of bug, but it
+needs type-aware linting (`parserOptions.project`), which `eslint.config.js` doesn't set up for
+any workspace yet — enabling it is a repo-wide change, not specific to mobile tests, so it's left
+here rather than done as part of this fix. Worth doing once the gate's lint step can afford the
+slower typed run; audit the rest of `apps/mobile/src/**/*.test.tsx` and `apps/frontend` for the
+same pattern at the same time.
