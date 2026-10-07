@@ -7,7 +7,14 @@ export const base = {
   "radiusKey": "10px",
   "motionFast": "100ms",
   "motionBase": "220ms",
-  "easePop": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+  "easePop": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+  "motionPop": "100ms",
+  "motionFlip": "500ms",
+  "motionStagger": "100ms",
+  "motionShake": "500ms",
+  "motionBounce": "300ms",
+  "tileSizeMin": "40px",
+  "tileSizeMax": "64px"
 } as const;
 
 export const themes = {
