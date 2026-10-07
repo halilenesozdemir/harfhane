@@ -46,13 +46,11 @@ describe('GameOverCard', () => {
 
     expect(await screen.findByTestId('gameover-card')).toBeTruthy();
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
-    // One second before the next Turkey midnight (21:00 UTC): proves the countdown reads the
-    // injected clock exactly, not just "some string".
+    // One second before the next Turkey midnight (21:00 UTC): proves the exact injected clock.
     expect(await screen.findByTestId('gameover-countdown')).toHaveTextContent('00:00:01');
     expect(screen.queryByTestId('gameover-new-word')).toBeNull();
 
-    // The Distribution section renders at all, with the just-won third bar highlighted: kills
-    // mutants that drop the <Distribution/> line entirely or force isWon to false.
+    // The just-won third bar is highlighted (kills a dropped-<Distribution/> or isWon=false mutant).
     const thirdFill = await screen.findByTestId('gameover-distribution-3-fill');
     expect(within(thirdFill).getByText('1')).toBeTruthy();
     const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
@@ -60,8 +58,7 @@ describe('GameOverCard', () => {
 
     const shareButton = screen.getByTestId('gameover-share');
     await act(async () => fireEvent.press(shareButton));
-    // Full-text equality (not a substring match) kills mutants that would flip `won`, or empty
-    // out `guesses`/`evaluations`, while still producing a string containing "Harfhane #3".
+    // Full-text equality kills mutants flipping `won` or emptying `guesses`/`evaluations`.
     const expectedShareText = generateShareText(guesses, evaluations, '#3', true);
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
@@ -98,9 +95,7 @@ describe('GameOverCard', () => {
   });
 
   it('should show hours, minutes and seconds in that order, not swapped', async () => {
-    // 18:59:58Z is 2h 0m 2s before the next Turkey midnight (21:00 UTC): a distinct value in
-    // every field, so swapping hours/minutes (or minutes/seconds) in the countdown string would
-    // produce a visibly different, wrong string ("00:02:02" or "02:02:00") instead of this one.
+    // 18:59:58Z -> 02:00:02 before Turkey midnight: distinct fields catch an hours/minutes swap.
     const now = () => new Date('2026-01-01T18:59:58Z');
     await renderCard({ now });
     expect(await screen.findByTestId('gameover-countdown')).toHaveTextContent('02:00:02');
@@ -161,16 +156,14 @@ describe('GameOverCard', () => {
 
   it('should render the card as a ScrollView so its content can scroll when the screen is small', async () => {
     await renderCard();
-    // v14 RNTL only renders host elements, so this checks the native host component name:
-    // "RCTScrollView" is React Native's scroll container, not a plain "RCTView".
+    // v14 RNTL renders host elements only: "RCTScrollView" is the native host component name.
     const card = screen.getByTestId('gameover-card');
     expect(card.type).toBe('RCTScrollView');
   });
 
   it('should show an exact, known win title when the mode/guess-count/seed combination is fixed', async () => {
     // mode unlimited, wordId 0 (seed 0), guessCount 2: WIN_MESSAGE_VARIANTS[2][0] === 'Harika!'.
-    // Pinning the literal string (not calling selectResultMessage here) guards against an
-    // accidental reordering of the variants silently changing what players see.
+    // Pinning the literal string guards against a silent variant-reordering regression.
     await renderCard({
       mode: 'unlimited',
       guesses: ['KALEM', 'KALEM'],

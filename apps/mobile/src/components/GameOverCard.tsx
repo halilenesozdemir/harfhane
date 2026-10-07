@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import type { TileStatus } from '@harfhane/shared';
-import { generateShareText, getTimeUntilMidnight, getTodayString } from '@harfhane/shared';
+import { generateShareText, getTimeUntilMidnight, getTodayString, type TileStatus } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
-import { dailyGameNumber, selectResultMessage } from './gameOverMessages';
-import type { FinishedGameStatus } from './gameOverMessages';
+import { dailyGameNumber, selectResultMessage, type FinishedGameStatus } from './gameOverMessages';
 import { Distribution, useDisplayDistribution } from './GameOverDistribution';
 
 export interface GameOverCardProps {
