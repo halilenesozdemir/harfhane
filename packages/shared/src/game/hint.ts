@@ -17,13 +17,19 @@ export const hintAllowance = (mode: HintMode, isSupporter: boolean): number => {
   return isSupporter ? SUPPORTER_UNLIMITED_HINTS : FREE_UNLIMITED_HINTS;
 };
 
+// True once a submitted guess has placed `letter` at `position`. Shared by `pickHint` (to skip
+// already-solved positions) and the game grids (to stop showing a hint ghost once a submitted
+// guess has solved its position).
+export const isHintSolved = (guesses: string[], position: number, letter: string): boolean =>
+  guesses.some((guess) => Array.from(guess)[position] === letter);
+
 // Inputs are normalized uppercase words. Picks the leftmost position no guess has placed
 // correctly and no earlier hint has revealed, so the same board always yields the same hint.
 export const pickHint = (solution: string, guesses: string[], revealed: number[]): LetterHint | null => {
   const letters = Array.from(solution);
-  const isSolved = (position: number): boolean =>
-    guesses.some((guess) => Array.from(guess)[position] === letters[position]);
-  const position = letters.findIndex((_, index) => !isSolved(index) && !revealed.includes(index));
+  const position = letters.findIndex(
+    (letter, index) => !isHintSolved(guesses, index, letter) && !revealed.includes(index)
+  );
   const letter = letters[position];
   if (letter === undefined) return null;
   return { position, letter };

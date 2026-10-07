@@ -5,6 +5,7 @@ import {
   SUPPORTER_DAILY_HINTS,
   SUPPORTER_UNLIMITED_HINTS,
   hintAllowance,
+  isHintSolved,
   pickHint,
 } from './hint';
 
@@ -37,6 +38,25 @@ describe('pickHint', () => {
   it('should keep Turkish letters intact when the answer contains İ and I', () => {
     expect(pickHint('KIRIŞ', ['KZZZZ'], [])).toEqual({ position: 1, letter: 'I' });
     expect(pickHint('İPLİK', [], [])).toEqual({ position: 0, letter: 'İ' });
+  });
+});
+
+describe('isHintSolved', () => {
+  it('should return false when the answer is KALEM and no guess has placed K at position 0', () => {
+    expect(isHintSolved([], 0, 'K')).toBe(false);
+    expect(isHintSolved(['ZZZZZ'], 0, 'K')).toBe(false);
+  });
+
+  it('should return true when a submitted guess places K at position 0', () => {
+    expect(isHintSolved(['KALEM'], 0, 'K')).toBe(true);
+  });
+
+  it('should return false when the letter appears in the guess but at a different position', () => {
+    expect(isHintSolved(['AKZZZ'], 0, 'K')).toBe(false);
+  });
+
+  it('should return true when any earlier guess solved the position, not only the latest one', () => {
+    expect(isHintSolved(['KZZZZ', 'ZZZZZ'], 0, 'K')).toBe(true);
   });
 });
 

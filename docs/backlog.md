@@ -251,3 +251,11 @@ From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calend
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
+
+## Web hint control sits too close to the keyboard (owner, 2026-10-07)
+The hint control above the on-screen keyboard has no breathing room from it on web; add spacing
+between them.
+
+## Web desktop layout looks like a stretched mobile layout (owner: mobile first, 2026-10-07)
+On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
+desktop layout is post-launch work; mobile ships first.
