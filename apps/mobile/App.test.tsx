@@ -11,6 +11,18 @@ import { createMemoryStore, flattenStyle } from './src/test-utils/render-with-th
 import { useFonts } from '@expo-google-fonts/baloo-2/useFonts';
 import type { KeyValueStore } from './src/game/game-storage';
 
+const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-haptics', () => ({
+  AndroidHaptics: {
+    Keyboard_Tap: 'keyboard-tap',
+    Confirm: 'confirm',
+    Reject: 'reject',
+    Long_Press: 'long-press',
+    Context_Click: 'context-click',
+  },
+  performAndroidHapticsAsync: (...args: unknown[]) => mockPerformAndroidHapticsAsync(...args),
+}));
+
 jest.mock('expo-splash-screen', () => ({
   preventAutoHideAsync: jest.fn(),
   hideAsync: jest.fn(),
@@ -46,13 +58,9 @@ jest.mock('./src/game/device-store', () => {
 });
 
 async function openAndClose(openLabel: string, title: string) {
-  await act(async () => {
-    fireEvent.press(screen.getByLabelText(openLabel));
-  });
+  await fireEvent.press(screen.getByLabelText(openLabel));
   expect(await screen.findByText(title)).toBeTruthy();
-  await act(async () => {
-    fireEvent.press(screen.getByLabelText('Kapat'));
-  });
+  await fireEvent.press(screen.getByLabelText('Kapat'));
   expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
 }
 
@@ -64,13 +72,9 @@ function latestBackHandler(addSpy: jest.SpyInstance): () => boolean {
 describe('App', () => {
   it('should reach the game screen from home when daily is started and go back', async () => {
     await render(<App />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
-    });
+    await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
     expect(await screen.findByText('Günlük · 5 harf')).toBeTruthy();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Geri'));
-    });
+    await fireEvent.press(screen.getByLabelText('Geri'));
     expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
   });
 
@@ -83,16 +87,10 @@ describe('App', () => {
 
   it('should keep the selected word length after returning from a game', async () => {
     await render(<App />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Günlük oyunu 6 harfle başlat'));
-    });
+    await fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
+    await fireEvent.press(screen.getByLabelText('Günlük oyunu 6 harfle başlat'));
     expect(await screen.findByText('Günlük · 6 harf')).toBeTruthy();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Geri'));
-    });
+    await fireEvent.press(screen.getByLabelText('Geri'));
     expect(await screen.findByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
   });
 
@@ -102,9 +100,7 @@ describe('App', () => {
 
     expect(latestBackHandler(addSpy)()).toBe(false);
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
-    });
+    await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
     await screen.findByText('Günlük · 5 harf');
     let handledGame = false;
     await act(async () => {
@@ -113,9 +109,7 @@ describe('App', () => {
     expect(handledGame).toBe(true);
     expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('İstatistikler'));
-    });
+    await fireEvent.press(screen.getByLabelText('İstatistikler'));
     await screen.findByLabelText('Kapat');
     let handledStats = false;
     await act(async () => {
@@ -259,6 +253,45 @@ describe('App', () => {
 
       await render(<App />);
       expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+    });
+  });
+
+  describe('haptics (Plan 011 U3)', () => {
+    // This is the real path: GameScreen passes no isHapticsEnabled prop to Keyboard, so
+    // Keyboard reads its own useHapticsSettings() on mount, and Settings is a separate
+    // route navigated to and from, not a sibling sharing React state. A test that only
+    // exercises the isHapticsEnabled prop (Keyboard.test.tsx) can't prove this path: it
+    // would keep passing even if the Settings switch were never wired to setEnabled, if
+    // setEnabled never persisted, or if parseHapticsEnabled always returned true.
+    it('should stop the key-tap haptic after Titreşim is switched off in Settings (011-AE3)', async () => {
+      await render(<App />);
+      await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+      await screen.findByText('Günlük · 5 harf');
+      await screen.findByTestId('key-A');
+
+      mockPerformAndroidHapticsAsync.mockClear();
+      await fireEvent.press(screen.getByTestId('key-A'));
+      expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+
+      await fireEvent.press(screen.getByLabelText('Geri'));
+      await fireEvent.press(screen.getByLabelText('Ayarlar'));
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(screen.getByLabelText('Titreşim').props.disabled).toBe(false);
+
+      await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
+      await fireEvent.press(screen.getByLabelText('Kapat'));
+
+      await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+      await screen.findByTestId('key-A');
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      mockPerformAndroidHapticsAsync.mockClear();
+      await fireEvent.press(screen.getByTestId('key-A'));
+      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
     });
   });
 });

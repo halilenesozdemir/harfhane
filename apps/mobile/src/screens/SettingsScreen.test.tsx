@@ -51,18 +51,14 @@ describe('SettingsScreen', () => {
         <ColorProbe />
       </>,
     );
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Koyu Tema'));
-    });
+    await fireEvent.press(screen.getByLabelText('Koyu Tema'));
     expect(screen.getByTestId('probe-bg').props.children).toBe(themes.dark.bg);
   });
 
   it('should call onClose when the close button is pressed', async () => {
     const onClose = jest.fn();
     await renderWithTheme(<SettingsScreen onClose={onClose} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Kapat'));
-    });
+    await fireEvent.press(screen.getByLabelText('Kapat'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -85,9 +81,7 @@ describe('SettingsScreen', () => {
 
   it('should persist turning the haptics switch off', async () => {
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
-    await act(async () => {
-      fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
-    });
+    await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
     expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
     expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
   });
