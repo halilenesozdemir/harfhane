@@ -58,6 +58,11 @@ describe('isHintSolved', () => {
   it('should return true when any earlier guess solved the position, not only the latest one', () => {
     expect(isHintSolved(['KZZZZ', 'ZZZZZ'], 0, 'K')).toBe(true);
   });
+
+  it('should return false when a guess places a dotless I where the hint letter is İ', () => {
+    expect(isHintSolved(['IZZZZ'], 0, 'İ')).toBe(false);
+    expect(isHintSolved(['CZZZZ'], 0, 'Ç')).toBe(false);
+  });
 });
 
 describe('hintAllowance', () => {
