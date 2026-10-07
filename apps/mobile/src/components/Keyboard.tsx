@@ -1,8 +1,5 @@
-import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
-import { keyTap } from '../lib/haptics';
-import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { Key } from './Key';
 
 export interface KeyboardProps {
@@ -10,14 +7,6 @@ export interface KeyboardProps {
   readonly onLetter: (letter: string) => void;
   readonly onDelete: () => void;
   readonly onSubmit: () => void;
-  /**
-   * Overrides the "Titreşim" setting for the key-tap haptic. Pass `useGame()`'s
-   * `isHapticsEnabled` once the parent screen reads it; omitting it falls back to this
-   * component's own `useHapticsSettings()` call so it still works stand-alone.
-   */
-  readonly isHapticsEnabled?: boolean;
-  /** Suppresses the key-tap haptic once the game is over or a guess is in flight. */
-  readonly isInputBlocked?: boolean;
 }
 
 const ENTER_KEY = 'ENTER';
@@ -48,26 +37,12 @@ function getKeyAccessibilityLabel(value: string): string {
   return value;
 }
 
-export function Keyboard({
-  keyboardStatus,
-  onLetter,
-  onDelete,
-  onSubmit,
-  isHapticsEnabled,
-  isInputBlocked = false,
-}: KeyboardProps) {
-  const ownHapticsSettings = useHapticsSettings();
-  const resolvedHapticsEnabled = isHapticsEnabled ?? ownHapticsSettings.isEnabled;
-
-  const handlePress = useCallback(
-    (value: string) => {
-      if (!isInputBlocked) void keyTap(resolvedHapticsEnabled);
-      if (value === ENTER_KEY) return onSubmit();
-      if (value === BACKSPACE_KEY) return onDelete();
-      onLetter(value);
-    },
-    [isInputBlocked, resolvedHapticsEnabled, onDelete, onLetter, onSubmit],
-  );
+export function Keyboard({ keyboardStatus, onLetter, onDelete, onSubmit }: KeyboardProps) {
+  function handlePress(value: string): void {
+    if (value === ENTER_KEY) return onSubmit();
+    if (value === BACKSPACE_KEY) return onDelete();
+    onLetter(value);
+  }
 
   return (
     <View style={styles.keyboard}>
