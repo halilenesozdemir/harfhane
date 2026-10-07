@@ -6,6 +6,8 @@ import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
 import { useGame } from '../game/useGame';
 import { useHint } from '../game/useHint';
+import { useRevealState } from '../game/useRevealState';
+import { useReduceMotion } from '../ui/motion/useReduceMotion';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
@@ -28,6 +30,7 @@ const SCREEN_PADDING = SPACING.md;
 const SECTION_GAP = SPACING.md;
 const BUTTON_PADDING = SPACING.md;
 const BUTTON_RADIUS = RADIUS.md;
+function NOOP(): void {}
 
 interface ActionButtonProps {
   readonly label: string;
@@ -56,6 +59,10 @@ interface GameBoardProps {
 
 function GameBoard({ session, mode, wordLength, game, hint, colors, store, today }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
+  const reduceMotion = useReduceMotion();
+  const reveal = useRevealState(session, session.solution.length, reduceMotion);
+  // A fast player's next Enter must not land mid-flip (R2); letters and backspace stay live.
+  const onSubmit = reveal.isRevealing ? NOOP : game.onSubmit;
   return (
     <>
       <GameGrid
@@ -65,6 +72,9 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
         wordLength={session.solution.length}
         hints={hint.hints}
         isPlaying={!isFinished}
+        isRevealing={reveal.isRevealing}
+        shakeRow={reveal.shakeRow}
+        celebrateRow={reveal.celebrateRow}
       />
       {!isFinished && (
         <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
@@ -87,7 +97,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           onNewGame={game.startNewGame}
         />
       ) : (
-        <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={game.onSubmit} />
+        <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={onSubmit} />
       )}
     </>
   );

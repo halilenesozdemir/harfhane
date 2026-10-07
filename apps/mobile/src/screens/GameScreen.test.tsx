@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { base } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
 import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
 import { GameScreen } from './GameScreen';
@@ -6,8 +7,12 @@ import { loadDailyStats } from '../stats/stats';
 import { saveRevealedHints } from '../game/game-storage';
 import { dailyGameNumber, selectResultMessage } from '../components/gameOverMessages';
 import { shortGuessMessage } from '../game/game-session';
+import { parseMs } from '../utils/ms';
 
 const today = () => '2026-10-05';
+const DAILY_WORD_LENGTH = 5;
+// Matches useRevealState's wordLength * motion-stagger + motion-flip.
+const REVEAL_DURATION_MS = DAILY_WORD_LENGTH * parseMs(base.motionStagger) + parseMs(base.motionFlip);
 
 function createApi(): ApiClient {
   return {
@@ -40,6 +45,25 @@ describe('GameScreen', () => {
     expect(await screen.findByTestId('gameover-share')).toBeTruthy();
     expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
     expect(screen.queryByTestId('key-ENTER')).toBeNull();
+  });
+
+  it('should ignore Enter while the previous row is still revealing, then accept it once the reveal finishes', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // wrong guess against KİTAP; game keeps playing
+
+      await pressKeys(['A', 'B', 'A', 'B', 'A', 'ENTER']); // blocked: row 0 is still flipping
+      // Still just the typed letter, not yet evaluated — the second guess never committed.
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('A');
+
+      await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
+      await pressKeys(['ENTER']); // the exact same guess now goes through
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).not.toBe('A');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should offer a new word in the game-over card when an unlimited game is over, and fetch a fresh word when pressed', async () => {
@@ -160,8 +184,16 @@ describe('GameScreen', () => {
     await act(async () => fireEvent.press(hintButton));
     await screen.findByTestId('hint-text');
 
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
+    jest.useFakeTimers();
+    try {
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
+        // Enter is blocked while the previous row flips (R2); flush that reveal window before
+        // the next attempt's own Enter press, mirroring real wall-clock time between guesses.
+        await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
+      }
+    } finally {
+      jest.useRealTimers();
     }
     await screen.findByTestId('gameover-card');
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
