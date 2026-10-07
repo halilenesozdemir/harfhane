@@ -6,6 +6,7 @@ module.exports = {
   ],
   moduleNameMapper: {
     '^react-native-safe-area-context$': '<rootDir>/jest/rn-safe-area-context-mock.js',
+    '^lucide-react-native$': '<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js',
     '^@react-native-async-storage/async-storage$':
       '<rootDir>/node_modules/@react-native-async-storage/async-storage/jest/async-storage-mock.js',
   },
