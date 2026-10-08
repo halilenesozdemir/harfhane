@@ -102,6 +102,45 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should show no game-over card one millisecond before the loss reveal gate ends, then show it right after', async () => {
+    const api = createApi();
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // wrong guess against KALEM
+        await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
+      }
+      await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // 6th and final wrong guess: the game is lost
+
+      await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS - 1));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(1));
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should show no game-over card one millisecond before the win reveal-and-bounce gate ends, then show it right after', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // win in 1 guess
+
+      await act(async () => jest.advanceTimersByTime(WON_GAME_OVER_READY_MS - 1));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(1));
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show the game-over card immediately for a daily game restored already finished, with no reveal or bounce running', async () => {
     const store = createMemoryStore();
     await saveGameState(store, dailyGameKey(today(), 5), {
@@ -434,6 +473,66 @@ describe('GameScreen', () => {
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
     const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(within(fill).getByText('1')).toBeTruthy();
+  });
+
+  it("should show game 2's own distribution, not game 1's stale one, once game 2's stats write resolves (B2)", async () => {
+    interface HoldableStore extends KeyValueStore {
+      holdWrites(): void;
+      releaseWrites(): void;
+    }
+    function createHoldableStore(): HoldableStore {
+      const entries = new Map<string, string>();
+      const heldCommits: Array<() => void> = [];
+      let writesHeld = false;
+      return {
+        getItem: async (key) => entries.get(key) ?? null,
+        setItem: (key, value) =>
+          new Promise<void>((resolve) => {
+            const commit = () => {
+              entries.set(key, value);
+              resolve();
+            };
+            if (writesHeld) {
+              heldCommits.push(commit);
+              return;
+            }
+            commit();
+          }),
+        holdWrites() {
+          writesHeld = true;
+        },
+        releaseWrites() {
+          writesHeld = false;
+          while (heldCommits.length > 0) heldCommits.shift()?.();
+        },
+      };
+    }
+
+    await enableReduceMotion();
+    const store = createHoldableStore();
+    const api = createApi();
+    (api.fetchRandomWord as jest.Mock)
+      .mockResolvedValueOnce({ word: { word: 'KALEM' }, wordId: 9 })
+      .mockResolvedValueOnce({ word: { word: 'KAPAK' }, wordId: 10 });
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={store} today={today} />);
+    await screen.findByLabelText('Gönder');
+
+    // Game 1: win in 1 guess, and let its stats write resolve before game 2 starts.
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await waitFor(() => expect(within(screen.getByTestId('gameover-distribution-1-fill')).getByText('1')).toBeTruthy());
+
+    // Game 2's stats write is held pending (simulating slow I/O) while it plays out.
+    store.holdWrites();
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-new-word')));
+    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'B', 'A', 'K', 'ENTER']); // game 2, guess 1: wrong
+    await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // game 2, guess 2: win
+    expect(screen.getByTestId('gameover-card')).toBeTruthy();
+
+    await act(async () => store.releaseWrites());
+    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-2-fill'));
     expect(within(fill).getByText('1')).toBeTruthy();
   });
 
