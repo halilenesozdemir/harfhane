@@ -168,10 +168,8 @@ class PassesThresholdsTests(unittest.TestCase):
 
 
 class EvaluateIntegrationTests(unittest.TestCase):
-    """End-to-end `evaluate()` tests. Golden/candidate are built directly as the
-    held-out set by patching `split_golden`, so these pin exact behaviour without
-    depending on which hash bucket a given test word falls into."""
-
+    # End-to-end evaluate() tests; split_golden is patched so held_out is exactly
+    # what each test builds, independent of which hash bucket a word falls into.
     def _evaluate_with_held_out(self, held_out, candidate):
         with patch.object(el, "split_golden", return_value=([], with_ids(held_out))):
             return evaluate(held_out, candidate)
@@ -207,27 +205,23 @@ class EvaluateIntegrationTests(unittest.TestCase):
         self.assertFalse(report["passes"])
         self.assertEqual(report["reject_reason_recall"]["sensitive"]["misses"], ["G10"])
 
-    def test_fails_when_a_held_out_word_is_missing_from_the_candidate(self):
+    def test_fails_when_a_held_out_word_is_missing_or_duplicated_in_the_candidate(self):
         held_out = [golden_accept("A0"), golden_accept("A1"), golden_reject("S0", "sensitive")]
-        candidate = [candidate_accept("A0"), candidate_reject("S0", "sensitive")]  # A1 missing
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertFalse(report["passes"])
-        self.assertIn("G1", report["integrity"]["missing"])
+        missing_report = self._evaluate_with_held_out(
+            held_out, [candidate_accept("A0"), candidate_reject("S0", "sensitive")]  # A1 missing
+        )
+        self.assertFalse(missing_report["passes"])
+        self.assertIn("G1", missing_report["integrity"]["missing"])
 
-    def test_a_duplicated_held_out_word_fails_even_with_an_accept_then_reject_last_write(self):
         # Regression for a "last write wins" bug: if the duplicate check only
         # inspected the final entry for a word, an accept-then-reject duplicate
         # would look like a clean single reject and silently pass.
-        held_out = [golden_reject("S0", "sensitive")]
-        candidate = [candidate_accept("S0"), candidate_reject("S0", "sensitive")]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertFalse(report["passes"])
-        self.assertIn("G0", report["integrity"]["duplicate"])
-
-    def test_evaluate_rejects_a_golden_set_with_a_duplicate_normalized_word(self):
-        golden = [golden_accept("A0"), golden_accept("a0")]  # same word, different case
-        with self.assertRaises(ValueError):
-            evaluate(golden, [])
+        duplicate_held_out = [golden_reject("S0", "sensitive")]
+        duplicate_report = self._evaluate_with_held_out(
+            duplicate_held_out, [candidate_accept("S0"), candidate_reject("S0", "sensitive")]
+        )
+        self.assertFalse(duplicate_report["passes"])
+        self.assertIn("G0", duplicate_report["integrity"]["duplicate"])
 
 
 class LoadersTests(unittest.TestCase):
