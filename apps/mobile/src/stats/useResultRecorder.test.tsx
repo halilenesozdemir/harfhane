@@ -81,6 +81,35 @@ function createRejectingWriteStore(): KeyValueStore {
   };
 }
 
+const FIRST_WRITE_CALL = 1;
+
+// Rejects only the first setItem call, then behaves like a normal store — proves a save
+// rejection does not poison the shared per-key write queue for later results.
+function createFirstWriteRejectingStore(): KeyValueStore {
+  const entries = new Map<string, string>();
+  let setItemCalls = 0;
+  return {
+    getItem: async (key) => entries.get(key) ?? null,
+    setItem: async (key, value) => {
+      setItemCalls += 1;
+      if (setItemCalls === FIRST_WRITE_CALL) throw new Error('AsyncStorage unavailable');
+      entries.set(key, value);
+    },
+  };
+}
+
+function createLoadRejectingStore(): KeyValueStore {
+  const entries = new Map<string, string>();
+  return {
+    getItem: async () => {
+      throw new Error('AsyncStorage read failure');
+    },
+    setItem: async (key, value) => {
+      entries.set(key, value);
+    },
+  };
+}
+
 describe('useResultRecorder', () => {
   it('should expose the just-recorded distribution once the write resolves (B2)', async () => {
     const store = createMemoryStore();
@@ -137,6 +166,80 @@ describe('useResultRecorder', () => {
     await flushPendingWrites();
 
     expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
+  });
+
+  it('should still record a later daily result for the same mode and length when an earlier save for that key rejected', async () => {
+    const store = createFirstWriteRejectingStore();
+    const { rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing') } },
+    );
+
+    // Game 1's save rejects (first setItem call) but must not break the shared write queue.
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await flushPendingWrites();
+
+    // Game 2's save should still go through.
+    await rerender({ session: buildSession('loading', 'playing') });
+    await rerender({ session: buildSession('ready', 'playing') });
+    await rerender({ session: buildSession('ready', 'lost', ['A', 'B', 'C', 'D', 'E', 'F']) });
+    await flushPendingWrites();
+
+    const stats = await loadDailyStats(store, 5);
+    expect(stats.gamesPlayed).toBe(1);
+  });
+
+  it('should still expose the computed distribution when the daily stats load fails', async () => {
+    const store = createLoadRejectingStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing') } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
+  });
+
+  it('should still expose the computed distribution when the unlimited stats load fails', async () => {
+    const store = createLoadRejectingStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], null) } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], null) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
+  });
+
+  it("should not let a previous game's late-resolving write set the current game's justRecordedDistribution", async () => {
+    const store = createControllableStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], null) } },
+    );
+
+    // Game 1 finishes; its write is held pending.
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], null) });
+    expect(result.current.justRecordedDistribution).toBeNull();
+
+    // Game 2 starts before game 1's write resolves — this cleans up game 1's effect instance
+    // (isCurrent becomes false for it), while game 2's own effect has not recorded anything yet.
+    await rerender({ session: buildSession('loading', 'playing', [], null) });
+    await rerender({ session: buildSession('ready', 'playing', [], null) });
+    expect(result.current.justRecordedDistribution).toBeNull();
+
+    // Game 1's held write resolves only now, after game 2 has already started.
+    await act(async () => {
+      store.releaseWrites();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.justRecordedDistribution).toBeNull();
   });
 
   it('should record once when a daily game transitions from playing to won', async () => {
