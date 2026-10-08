@@ -62,6 +62,26 @@ export const DEPTH = {
  */
 export const SCREEN_PADDING = SPACING.lg;
 
+/** Line height per `FONT_SIZE` role, from the typography table (mobile-ui-standard.md section 2). */
+export const LINE_HEIGHT = {
+  caption: 16,
+  body: 20,
+  bodyLarge: 22,
+  title: 26,
+  titleSmall: 24,
+  headline: 30,
+  display: 40,
+} as const;
+
+/** Chip visual heights before `hitSlop` (mobile-ui-standard.md section 7, A3). */
+export const CHIP_HEIGHT = {
+  streak: 32,
+  length: 40,
+} as const;
+
+/** Letters in a fixed-size game control (tile, key, hero tile) cap the system font scale (T3). */
+export const TILE_LETTER_MAX_FONT_SCALE = 1.2;
+
 /**
  * R4: Baloo 2 ExtraBold, matching the web tokens' `font-display`
  * (`packages/ui-tokens/tokens.json`). Owned here so Tile and Key can adopt
