@@ -555,4 +555,22 @@ describe('GameScreen', () => {
 
     await act(async () => resolveValidate({ isValid: true }));
   });
+
+  it('should give no haptic and no second submit when Enter is tapped while a guess is still being validated', async () => {
+    let resolveValidate!: (value: { isValid: boolean }) => void;
+    const api = createApi();
+    api.validateWord = jest.fn(() => new Promise((resolve) => { resolveValidate = resolve; }));
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await waitFor(() => expect(api.validateWord).toHaveBeenCalledTimes(1));
+
+    mockPerformAndroidHapticsAsync.mockClear();
+    await act(async () => fireEvent.press(screen.getByTestId('key-ENTER')));
+
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+    expect(api.validateWord).toHaveBeenCalledTimes(1);
+
+    await act(async () => resolveValidate({ isValid: true }));
+  });
 });
