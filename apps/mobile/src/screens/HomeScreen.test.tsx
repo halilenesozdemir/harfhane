@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Profiler, useState } from 'react';
 import { act, configure, fireEvent, resetToDefaults, screen, waitFor } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { DEFAULT_WORD_LENGTH, HomeScreen } from './HomeScreen';
@@ -28,6 +28,7 @@ function ControlledHomeScreen({
   onOpenStats = noop,
   store = createMemoryStore(),
   playableLengths,
+  now = fixedNow,
 }: ControlledHomeScreenProps) {
   const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
   return (
@@ -40,7 +41,7 @@ function ControlledHomeScreen({
       onOpenStats={onOpenStats}
       store={store}
       playableLengths={playableLengths}
-      now={fixedNow}
+      now={now}
     />
   );
 }
@@ -231,5 +232,58 @@ describe('HomeScreen', () => {
     expect(screen.getByLabelText('4 harfli kelime seç')).toBeTruthy();
     expect(screen.getByLabelText('5 harfli kelime seç')).toBeTruthy();
     expect(screen.queryByLabelText('6 harfli kelime seç')).toBeNull();
+  });
+
+  describe('countdown re-render isolation', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(FIXED_TODAY));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should not re-render the home tree on ticks when no countdown is shown', async () => {
+      const onRender = jest.fn();
+      await renderWithTheme(
+        <Profiler id="home" onRender={onRender}>
+          <ControlledHomeScreen />
+        </Profiler>,
+      );
+      await waitFor(() => expect(screen.getByText('Yeni kelime hazır')).toBeTruthy());
+
+      // One settle render can still land on the very first tick (unrelated
+      // async layout/effect work, not the day-check interval); the fix is
+      // about every *subsequent* tick, which the day-check interval skips
+      // entirely (no Turkey day rollover) unless something re-renders.
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+      const rendersAfterFirstTick = onRender.mock.calls.length;
+
+      await act(async () => {
+        jest.advanceTimersByTime(5000);
+      });
+
+      expect(onRender.mock.calls.length).toBe(rendersAfterFirstTick);
+    });
+
+    it('should still update the visible countdown once a second once the daily game is finished', async () => {
+      const store = storeWithDailyGame(DEFAULT_WORD_LENGTH, '2026-10-08', ['kalem', 'tahta'], 'won');
+      // Reads the (faked) system clock, unlike fixedNow above, so advancing
+      // fake timers actually moves the countdown this test checks.
+      await renderWithTheme(<ControlledHomeScreen store={store} now={() => new Date()} />);
+      await waitFor(() => expect(screen.getByText('Çözüldü · 2/6')).toBeTruthy());
+      const countdownPattern = /^\d{2}:\d{2}:\d{2}$/;
+      const firstCountdown = screen.getByText(countdownPattern).props.children;
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      const nextCountdown = screen.getByText(countdownPattern).props.children;
+      expect(nextCountdown).not.toBe(firstCountdown);
+    });
   });
 });
