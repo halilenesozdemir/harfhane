@@ -3,11 +3,11 @@ import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import type { TileStatus } from '@harfhane/shared';
 import { base } from '@harfhane/ui-tokens';
 import { useTheme } from '../ThemeProvider';
-import { useReduceMotion } from '../ui/motion/useReduceMotion';
 import { TILE_SIZE_FALLBACK } from '../ui/motion/tile-size';
 import type { ThemeColors } from '../theme';
 import { parsePx } from '../utils/px';
 import { parseMs } from '../utils/ms';
+import { parseCubicBezier } from '../utils/cubicBezier';
 
 export interface TileProps {
   readonly letter: string;
@@ -22,6 +22,9 @@ export interface TileProps {
   // The owner-requested "wow" wave after a winning row finishes its flip, beyond R2's letter.
   readonly celebrate?: boolean;
   readonly celebrateDelayMs?: number;
+  // Passed down from GameScreen's single useReduceMotion() subscription (M2) rather than every
+  // Tile subscribing to AccessibilityInfo on its own.
+  readonly reduceMotion?: boolean;
 }
 
 const TILE_BORDER_WIDTH = 2;
@@ -29,6 +32,8 @@ const TILE_FONT_RATIO = 0.5;
 const PERSPECTIVE = 800;
 const BOUNCE_SCALE = 1.15;
 const POP_SCALE = 1.1;
+// Standard caps how far a tile letter grows with the OS font-size setting (T3).
+const MAX_FONT_SIZE_MULTIPLIER = 1.2;
 // 50% failed 3:1 contrast on web for the hint letter; 75% keeps the placeholder feel while reading clearly.
 const HINT_LETTER_OPACITY = 0.75;
 
@@ -36,6 +41,8 @@ const POP_MS = parseMs(base.motionPop);
 const FLIP_MS = parseMs(base.motionFlip);
 const BOUNCE_MS = parseMs(base.motionBounce);
 const FLIP_HALF_MS = FLIP_MS / 2;
+// M1: pops (and the win-bounce, which is a pop-shaped wave) use the standard's easePop.
+const EASE_POP = Easing.bezier(...parseCubicBezier(base.easePop));
 
 const STATUS_LABELS: Record<'correct' | 'present' | 'absent', string> = {
   correct: 'doğru yerde',
@@ -76,8 +83,8 @@ function usePopAnimation(isFilled: boolean, status: TileStatus, reduceMotion: bo
     wasPoppable.current = isPoppable;
     if (!justFilled || reduceMotion) return;
     Animated.sequence([
-      Animated.timing(scale, { toValue: POP_SCALE, duration: POP_MS / 2, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: POP_MS / 2, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+      Animated.timing(scale, { toValue: POP_SCALE, duration: POP_MS / 2, easing: EASE_POP, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: POP_MS / 2, easing: EASE_POP, useNativeDriver: true }),
     ]).start();
   }, [isFilled, status, reduceMotion, scale]);
 }
@@ -87,12 +94,27 @@ function usePopAnimation(isFilled: boolean, status: TileStatus, reduceMotion: bo
 function useFlipAnimation(isRevealing: boolean, revealDelayMs: number, reduceMotion: boolean, rotation: Animated.Value) {
   const [colorRevealed, setColorRevealed] = useState(true);
   const [wasRevealing, setWasRevealing] = useState(false);
+  const [wasReduceMotion, setWasReduceMotion] = useState(reduceMotion);
 
   // Adjust state when the row starts revealing (React's "adjusting state when a prop changes"
   // pattern) instead of setting it from inside the effect below.
   if (isRevealing !== wasRevealing) {
     setWasRevealing(isRevealing);
-    if (isRevealing) setColorRevealed(reduceMotion);
+    if (isRevealing) {
+      setColorRevealed(reduceMotion);
+    } else {
+      // Safety net: if isRevealing turns false before this tile's own midpoint timer fired (the
+      // parent's reveal window ending early relative to a row committed partway through it),
+      // this must not leave the tile stuck uncoloured forever.
+      setColorRevealed(true);
+    }
+  }
+  // Reduce motion can turn on mid-flip (a colour that had not reached its midpoint yet must not
+  // stay hidden forever): show the evaluated colour the moment that setting flips, independent
+  // of the isRevealing transition above.
+  if (reduceMotion !== wasReduceMotion) {
+    setWasReduceMotion(reduceMotion);
+    if (reduceMotion) setColorRevealed(true);
   }
 
   useEffect(() => {
@@ -111,8 +133,8 @@ function useCelebrateAnimation(celebrate: boolean, celebrateDelayMs: number, red
     if (!celebrate || reduceMotion) return;
     Animated.sequence([
       Animated.delay(celebrateDelayMs),
-      Animated.timing(scale, { toValue: BOUNCE_SCALE, duration: BOUNCE_MS / 2, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: BOUNCE_MS / 2, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+      Animated.timing(scale, { toValue: BOUNCE_SCALE, duration: BOUNCE_MS / 2, easing: EASE_POP, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: BOUNCE_MS / 2, easing: EASE_POP, useNativeDriver: true }),
     ]).start();
   }, [celebrate, celebrateDelayMs, reduceMotion, scale]);
 }
@@ -128,9 +150,9 @@ export function Tile({
   revealDelayMs = 0,
   celebrate = false,
   celebrateDelayMs = 0,
+  reduceMotion = false,
 }: TileProps) {
   const { colors } = useTheme();
-  const reduceMotion = useReduceMotion();
   const [scale] = useState(() => new Animated.Value(1));
   const [rotation] = useState(() => new Animated.Value(0));
 
@@ -153,7 +175,10 @@ export function Tile({
         { transform: [{ perspective: PERSPECTIVE }, { rotateX }, { scale }] },
       ]}
     >
-      <Text style={[styles.letter, { fontSize: size * TILE_FONT_RATIO, color: getTextColor(effectiveStatus, isHint, colors) }, isHint && styles.hintLetter]}>
+      <Text
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+        style={[styles.letter, { fontSize: size * TILE_FONT_RATIO, color: getTextColor(effectiveStatus, isHint, colors) }, isHint && styles.hintLetter]}
+      >
         {letter}
       </Text>
     </Animated.View>

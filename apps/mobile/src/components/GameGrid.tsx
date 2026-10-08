@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { isHintSolved } from '@harfhane/shared';
 import type { LetterHint, TileStatus } from '@harfhane/shared';
 import { Tile } from './Tile';
 import { computeTileSize } from '../ui/motion/tile-size';
-import { useReduceMotion } from '../ui/motion/useReduceMotion';
 import { useShakeAnimation } from '../ui/motion/useShakeAnimation';
 import { base } from '@harfhane/ui-tokens';
 import { parseMs } from '../utils/ms';
@@ -25,6 +24,9 @@ export interface GameGridProps {
   readonly shakeRow?: boolean;
   // The winning row bounces in a wave once its flip finishes (owner "wow" addition).
   readonly celebrateRow?: boolean;
+  // Passed down from GameScreen's single useReduceMotion() subscription (M2) rather than every
+  // row/tile subscribing to AccessibilityInfo on its own.
+  readonly reduceMotion?: boolean;
 }
 
 const MAX_GUESSES = 6;
@@ -42,6 +44,7 @@ interface GameRowProps {
   readonly isRevealing: boolean;
   readonly shake: boolean;
   readonly celebrate: boolean;
+  readonly reduceMotion: boolean;
 }
 
 function getRowLetters(rowIndex: number, guesses: readonly string[], currentGuess: string): string {
@@ -50,8 +53,7 @@ function getRowLetters(rowIndex: number, guesses: readonly string[], currentGues
   return '';
 }
 
-function GameRow({ rowIndex, letters, evaluation, wordLength, hints, tileSize, isRevealing, shake, celebrate }: GameRowProps) {
-  const reduceMotion = useReduceMotion();
+function GameRow({ rowIndex, letters, evaluation, wordLength, hints, tileSize, isRevealing, shake, celebrate, reduceMotion }: GameRowProps) {
   const translateX = useShakeAnimation(shake, reduceMotion);
   const tiles = [];
   for (let col = 0; col < wordLength; col++) {
@@ -73,6 +75,7 @@ function GameRow({ rowIndex, letters, evaluation, wordLength, hints, tileSize, i
         revealDelayMs={delayMs}
         celebrate={celebrate}
         celebrateDelayMs={delayMs}
+        reduceMotion={reduceMotion}
       />,
     );
   }
@@ -89,8 +92,13 @@ export function GameGrid({
   isRevealing = false,
   shakeRow = false,
   celebrateRow = false,
+  reduceMotion = false,
 }: GameGridProps) {
-  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const window = useWindowDimensions();
+  // Before the first onLayout measurement, the real board box is unknown — estimate from the
+  // window instead of falling back to the tile-size max, or a 6-letter row would flash ~414 dp
+  // wide on a 360 dp phone for one frame.
+  const [box, setBox] = useState<{ width: number; height: number } | null>({ width: window.width, height: window.height });
   const tileSize = computeTileSize(box, wordLength, { rows: MAX_GUESSES, columnGap: TILE_GAP, rowGap: ROW_GAP });
 
   function handleLayout(event: LayoutChangeEvent): void {
@@ -117,6 +125,7 @@ export function GameGrid({
         isRevealing={isRevealing && rowIndex === guesses.length - 1}
         shake={shakeRow && rowIndex === guesses.length}
         celebrate={celebrateRow && rowIndex === guesses.length - 1}
+        reduceMotion={reduceMotion}
       />,
     );
   }

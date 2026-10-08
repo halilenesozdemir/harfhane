@@ -72,6 +72,29 @@ describe('pending submissions', () => {
     expect(apply(session, [{ type: 'delete' }]).game.currentGuess).toBe('KALA');
   });
 
+  it('should increment rejectionCount when a rejected word sets a message (M5)', () => {
+    const session = apply(readySession(), [...typed('KALAY'), { type: 'submitted' }, { type: 'rejected', message: 'Kelime listede yok' }]);
+    expect(session.rejectionCount).toBe(1);
+  });
+
+  it('should increment rejectionCount when the too-short blocker message is dispatched (M5)', () => {
+    // submitBlocker returns the too-short message; useGame dispatches it as a plain 'message'
+    // action (the row is too short to even attempt a submit) — this must shake the row too.
+    const session = apply(readySession(), [{ type: 'message', message: 'Kelime 5 harf olmalı' }]);
+    expect(session.rejectionCount).toBe(1);
+  });
+
+  it('should not increment rejectionCount when a message is cleared (set to null)', () => {
+    const rejected = apply(readySession(), [{ type: 'message', message: 'Kelime 5 harf olmalı' }]);
+    const cleared = apply(rejected, [{ type: 'message', message: null }]);
+    expect(cleared.rejectionCount).toBe(1);
+  });
+
+  it('should not increment rejectionCount when a guess wins or continues the game', () => {
+    const session = apply(readySession(), [...typed('KALEM'), { type: 'submitted' }, { type: 'guess', word: 'KALEM' }]);
+    expect(session.rejectionCount).toBe(0);
+  });
+
   it('should keep the storage key chosen when the word loaded', () => {
     expect(readySession().storageKey).toBe('key-5');
   });

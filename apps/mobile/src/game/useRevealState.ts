@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base } from '@harfhane/ui-tokens';
 import { parseMs } from '../utils/ms';
 import type { GameSession } from './game-session';
@@ -7,10 +7,14 @@ export interface RevealState {
   readonly isRevealing: boolean;
   readonly shakeRow: boolean;
   readonly celebrateRow: boolean;
+  // Shorter than isRevealing (docs/design/mobile-ui-standard.md M4 exception): the next guess
+  // unlocks once the last tile's colour is visible, not once its flip has fully settled back.
+  readonly isEnterBlocked: boolean;
 }
 
 const STAGGER_MS = parseMs(base.motionStagger);
 const FLIP_MS = parseMs(base.motionFlip);
+const FLIP_HALF_MS = FLIP_MS / 2;
 const SHAKE_MS = parseMs(base.motionShake);
 const BOUNCE_MS = parseMs(base.motionBounce);
 
@@ -18,10 +22,18 @@ function revealDurationMs(wordLength: number): number {
   return wordLength * STAGGER_MS + FLIP_MS;
 }
 
+// The last tile starts its flip after (wordLength - 1) stagger steps and shows its evaluated
+// colour at that flip's midpoint — this is when the row reads as "done" to the player, even
+// though its tile is still rotating back to flat.
+function enterBlockDurationMs(wordLength: number): number {
+  return (wordLength - 1) * STAGGER_MS + FLIP_HALF_MS;
+}
+
 // Flip plays for the row just committed, then — only when that row won the game — the tiles
 // bounce once in a wave (an owner-requested "wow" touch beyond R2's letter).
 function useRevealTiming(session: GameSession, wordLength: number, reduceMotion: boolean) {
   const [isRevealing, setIsRevealing] = useState(false);
+  const [isEnterBlocked, setIsEnterBlocked] = useState(false);
   const [celebrateRow, setCelebrateRow] = useState(false);
   const [prevGuessCount, setPrevGuessCount] = useState(session.game.guesses.length);
 
@@ -31,8 +43,13 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
   if (guessCount !== prevGuessCount) {
     const rowAdded = guessCount > prevGuessCount;
     setPrevGuessCount(guessCount);
-    if (rowAdded && !reduceMotion) setIsRevealing(true);
+    if (rowAdded && !reduceMotion) {
+      setIsRevealing(true);
+      setIsEnterBlocked(true);
+    }
   }
+
+  const bounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isRevealing) return undefined;
@@ -40,12 +57,35 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
       setIsRevealing(false);
       if (session.game.gameStatus !== 'won') return;
       setCelebrateRow(true);
-      setTimeout(() => setCelebrateRow(false), wordLength * STAGGER_MS + BOUNCE_MS);
+      bounceTimerRef.current = setTimeout(() => setCelebrateRow(false), wordLength * STAGGER_MS + BOUNCE_MS);
     }, revealDurationMs(wordLength));
     return () => clearTimeout(revealTimer);
-  }, [isRevealing, wordLength, session.game.gameStatus]);
+    // guessCount restarts this timer when a new row commits while isRevealing is still (already)
+    // true — isEnterBlocked's shorter window (M4 exception) lets a fast player submit before the
+    // previous row's full isRevealing window ends, and without guessCount here this effect would
+    // not re-run (isRevealing's own value never flipped), leaving the new row governed by the
+    // stale timer from the previous row and cut off before its own tiles reach their midpoint.
+  }, [isRevealing, wordLength, session.game.gameStatus, guessCount]);
 
-  return { isRevealing, celebrateRow };
+  // A mount-once effect, deliberately separate from the one above: that effect's cleanup also
+  // runs on every reveal-timer rerun (isRevealing flipping true->false triggers it, which is
+  // exactly when bounceTimerRef just got set by the very same timer callback), so clearing
+  // bounceTimerRef there would immediately cancel the bounce timer it just scheduled. Clearing it
+  // only here, on true unmount, avoids that self-cancellation while still freeing a bounce timer
+  // left pending if the component unmounts mid-celebration.
+  useEffect(() => {
+    return () => {
+      if (bounceTimerRef.current !== null) clearTimeout(bounceTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isEnterBlocked) return undefined;
+    const unblockTimer = setTimeout(() => setIsEnterBlocked(false), enterBlockDurationMs(wordLength));
+    return () => clearTimeout(unblockTimer);
+  }, [isEnterBlocked, wordLength]);
+
+  return { isRevealing, celebrateRow, isEnterBlocked };
 }
 
 // A rejection (too-short guess, an unlisted word, a connection error) leaves the row's guess
@@ -79,7 +119,7 @@ function useShakeTiming(session: GameSession, reduceMotion: boolean) {
 }
 
 export function useRevealState(session: GameSession, wordLength: number, reduceMotion: boolean): RevealState {
-  const { isRevealing, celebrateRow } = useRevealTiming(session, wordLength, reduceMotion);
+  const { isRevealing, celebrateRow, isEnterBlocked } = useRevealTiming(session, wordLength, reduceMotion);
   const shakeRow = useShakeTiming(session, reduceMotion);
-  return { isRevealing, shakeRow, celebrateRow };
+  return { isRevealing, shakeRow, celebrateRow, isEnterBlocked };
 }
