@@ -82,7 +82,9 @@ function renderFace(
 export function Button(props: ButtonProps) {
   const { label, variant = 'primary', icon, disabled = false, testID } = props;
   const { colors } = useTheme();
-  const hasDepth = variant !== 'tertiary' && !disabled;
+  // Depth is reserved by variant alone (D2): disabling never changes the outer
+  // height, it only skips drawing the back layer below.
+  const hasDepth = variant !== 'tertiary';
   const restingDepth = hasDepth ? DEPTH.md : 0;
   const pressedDepth = hasDepth ? PRESSED_DEPTH : 0;
   const { translateY, onPressIn, onPressOut } = usePressDepth({ restingDepth, pressedDepth });
@@ -92,7 +94,7 @@ export function Button(props: ButtonProps) {
 
   const outerStyle = [styles.outer, { height: faceHeight + restingDepth }, disabled && styles.disabled];
   const backLayer =
-    hasDepth && look.depthColor ? (
+    hasDepth && !disabled && look.depthColor ? (
       <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { top: restingDepth, backgroundColor: look.depthColor }]} />
     ) : null;
   const face = renderFace(testID ? `${testID}-face` : undefined, variant, look, faceHeight, translateY, icon, label);

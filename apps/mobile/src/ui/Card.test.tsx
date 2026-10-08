@@ -31,6 +31,37 @@ describe('Card', () => {
     expect(screen.queryByTestId('daily-stats-back')).toBeNull();
   });
 
+  it('should draw a 1 dp surfaceBorder edge so the card boundary never relies on depth alone (C4)', async () => {
+    await renderWithTheme(
+      <Card testID="daily-stats">
+        <Text>Oyun 12</Text>
+      </Card>,
+    );
+    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
+    expect(style.borderWidth).toBe(1);
+    expect(style.borderColor).toBe(themes.light.surfaceBorder);
+  });
+
+  it('should use RADIUS.lg (16) for the card corner radius (CA1)', async () => {
+    await renderWithTheme(
+      <Card testID="daily-stats">
+        <Text>Oyun 12</Text>
+      </Card>,
+    );
+    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
+    expect(style.borderRadius).toBe(16);
+  });
+
+  it('should default padding to 16 dp (CA1)', async () => {
+    await renderWithTheme(
+      <Card testID="daily-stats">
+        <Text>Oyun 12</Text>
+      </Card>,
+    );
+    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
+    expect(style.padding).toBe(16);
+  });
+
   it('should render a back layer in surfaceDepth behind the face when pressable (CA1)', async () => {
     await renderWithTheme(
       <Card testID="daily-card" onPress={() => undefined} accessibilityLabel="Günlük oyun, 5 harf, bugün çözüldü">
