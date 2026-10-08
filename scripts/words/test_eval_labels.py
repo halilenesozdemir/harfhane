@@ -22,9 +22,7 @@ from eval_labels import (
 
 
 def golden_accept(word, **overrides):
-    label = {"word": word, "decision": "accept"}
-    label.update(overrides)
-    return label
+    return {"word": word, "decision": "accept", **overrides}
 
 
 def golden_reject(word, reason):
@@ -125,10 +123,7 @@ class ProperNounAndForeignRecallTests(unittest.TestCase):
 
 
 class PassesThresholdsTests(unittest.TestCase):
-    """Pure boundary tests: pin the exact comparison and constants so a mutant
-    (`>=` -> `>`, 0.95 -> 0.90, 0.98 -> 0.80) is caught without depending on the
-    golden-set hash split."""
-
+    # Pure boundary tests, independent of the golden-set hash split.
     def _ok(self, **overrides):
         base = dict(
             accept_precision=1.0, sensitive_recall=1.0, sensitive_total=1,
