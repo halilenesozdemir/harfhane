@@ -61,6 +61,7 @@ async function recordResult({ store, mode, wordLength, won, guessCount, dailyDat
 }
 
 const pendingWrites = new Map<string, Promise<readonly number[]>>();
+const EMPTY_DISTRIBUTION: readonly number[] = [];
 
 function recordQueueKey(mode: GameMode, wordLength: WordLength): string {
   return `${mode}:${wordLength}`;
@@ -68,9 +69,13 @@ function recordQueueKey(mode: GameMode, wordLength: WordLength): string {
 
 function enqueueRecordResult(options: RecordResultOptions): Promise<readonly number[]> {
   const key = recordQueueKey(options.mode, options.wordLength);
-  const previous = pendingWrites.get(key) ?? Promise.resolve<readonly number[]>([]);
+  const previous = pendingWrites.get(key) ?? Promise.resolve(EMPTY_DISTRIBUTION);
   const next = previous.then(() => recordResult(options));
-  pendingWrites.set(key, next);
+  // recordResult already swallows load/save failures internally, so this should never reject in
+  // practice — but storing the raw promise here would let any future rejection (e.g. a regression
+  // that drops one of those internal catches) poison every later queued write for this key, since
+  // `.then()` on a rejected promise skips its callback instead of running it.
+  pendingWrites.set(key, next.catch(() => EMPTY_DISTRIBUTION));
   return next;
 }
 
