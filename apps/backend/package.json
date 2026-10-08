@@ -12,7 +12,6 @@
     "test:watch": "vitest",
     "db:migrate:local": "wrangler d1 migrations apply harfhane --local",
     "db:migrate:remote": "wrangler d1 migrations apply harfhane --remote",
-    "db:seed:remote": "wrangler d1 execute harfhane --remote --file db/seeds/badges.sql",
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {

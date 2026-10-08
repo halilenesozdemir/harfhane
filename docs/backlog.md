@@ -59,8 +59,21 @@ migration (numbered after Plan 008's `0002_word_pools.sql`), every table `apps/b
 `tournament_results`. Also add the guard-rail changes already scoped for this same migration (drop the
 `source = 'user'` escape in the `words` CHECK, a `BEFORE UPDATE` guard on `daily_words`, block deactivating a
 word scheduled in the future, refuse activating a `rejected` word).
-- Writing the migration file is agent work. Applying it to the remote database needs explicit owner approval
-  (Invariant 4) — remote D1 writes are never done without it.
+- Done: `apps/backend/db/migrations/0003_drop_removed_features.sql` is written (all 14 tables above,
+  dropped child-before-parent), plus all four guard-rail changes, preserving `sqlite_sequence` across
+  the `words` rebuild and using the Turkey-day date shift (not bare UTC) in the future-schedule guard.
+  Covered by `apps/backend/tests/db/drop-removed-features-migration.test.ts`; two stacked follow-up PRs
+  add `drop-removed-features-migration-nonempty.test.ts` (FK-safety against a non-empty database) and
+  `drop-removed-features-migration-schema.test.ts` (full-row and `sqlite_master.sql` text coverage of
+  the rebuilt `words` table). The admin-side 409 pre-checks for the two new `words` triggers landed
+  separately, split out for the line-count limit. Code search before writing it found no remaining
+  backend route/service/repository/script/cron/test touching any of the 14 tables — only
+  `0001_baseline.sql` still declared them. `deploy-backend.yml` only runs `wrangler
+  deploy`/`deployments status`/`rollback`, never `wrangler d1 migrations apply` or `d1 execute`, so
+  merging this does not apply the migration remotely.
+- Applying it to the remote `harfhane` database needs explicit owner approval (Invariant 4). Runbook:
+  `docs/runbooks/apply-0003-drop-removed-features.md` (backup + Time Travel bookmark, remote read-only
+  pre-checks, a local rehearsal, the remote apply with smoke queries, and the rollback path).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
