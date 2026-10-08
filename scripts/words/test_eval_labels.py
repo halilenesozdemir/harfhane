@@ -74,15 +74,13 @@ class ScoreAcceptTests(unittest.TestCase):
 
     def test_reduced_precision_and_recall_from_a_wrong_accept_and_a_missing_entry(self):
         held_out = with_ids([golden_accept("A1"), golden_reject("A3", "verb_form")])
-        # A1 is missing from the candidate (recall loss); A3 is wrongly accepted
-        # (precision loss).
+        # A1 missing (recall loss); A3 wrongly accepted (precision loss).
         report = score_accept(held_out, {"A3": candidate_accept("A3")})
         self.assertEqual(report["precision"], 0.0)
         self.assertEqual(report["recall"], 0.0)
 
     def test_an_all_reject_or_empty_candidate_scores_zero_precision_not_a_vacuous_pass(self):
-        # Zero predicted accepts proves nothing about accept quality: it must not
-        # read as perfect precision just because there were no wrong accepts either.
+        # Zero predicted accepts proves nothing; it must not read as perfect precision.
         held_out = with_ids([golden_accept("A0"), golden_reject("A2", "verb_form")])
         all_reject = {"A0": candidate_reject("A0"), "A2": candidate_reject("A2")}
         for label, candidate_by_word in [("all-reject", all_reject), ("empty", {})]:
@@ -106,8 +104,7 @@ class SensitiveRecallTests(unittest.TestCase):
 
     def test_recall_counts_a_catch_under_any_reason_and_reports_zero_total_when_absent(self):
         held_out = with_ids([golden_reject("A1", "sensitive")])
-        # Family protection only cares that the word was not approved, not that the
-        # candidate guessed the golden set's exact reject reason.
+        # A catch counts under any reason, not just the golden set's exact one.
         caught_under_other_reason = {"A1": candidate_reject("A1", reason="other")}
         self.assertEqual(score_reason_recall(held_out, caught_under_other_reason, "sensitive")["recall"], 1.0)
         no_sensitive_entries = with_ids([golden_accept("A0")])
