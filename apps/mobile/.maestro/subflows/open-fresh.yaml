@@ -18,6 +18,13 @@ appId: host.exp.exponent
     commands:
       - tapOn: "Continue"
       - back
+# 011-AE5: a cleared app state has never seen How to play, so it opens before
+# home on every fresh launch. Dismiss it with its first-launch "Oyna" action
+# so every flow built on this subflow still lands on home as before.
+- extendedWaitUntil:
+    visible: "Nasıl Oynanır?"
+    timeout: 15000
+- tapOn: "Oyna"
 - extendedWaitUntil:
     visible: "HARFHANE"
     timeout: 15000
