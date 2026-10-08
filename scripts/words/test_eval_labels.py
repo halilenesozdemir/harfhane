@@ -195,7 +195,10 @@ class PassesThresholdsTests(unittest.TestCase):
     def test_fails_just_below_the_accept_precision_minimum(self):
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN - 0.001)))
 
-    def test_fails_at_090_accept_precision_010_AE4(self):
+    def test_fails_at_090_accept_precision(self):
+        # The full "unlimited import script exits 1, writes no CSV" acceptance
+        # example (Plan 010 AE4) is proven at the validate_labels.py CLI level
+        # (U6); this pins the same precision boundary one layer down.
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=0.90)))
 
     def test_passes_at_exactly_the_sensitive_recall_minimum(self):

@@ -56,13 +56,8 @@ produces the same output files under `data/words/`.
     only) for import.
   - `--pool unlimited`: pool `data/words/review/unlimited-pool-N.txt` (from
     `unlimited_pool.py`), labels `data/words/review/labels-unlimited-N.jsonl`, accepted words
-    go to `unlimited-N.csv` (`word` column only). Also requires `--eval-candidate PATH`
-    (Plan 010 R5/U6): the batch is only imported when `eval_labels.py` scores that candidate
-    above threshold against the golden set (`--golden PATH`, default
-    `data/words/review/labels-N.jsonl`). No `--eval-candidate`, a missing golden/candidate
-    file, or a below-threshold report all fail closed.
-  - Exits 1 without writing the CSV when there are any errors, and deletes any CSV already
-    at that path from an earlier run so a failed run never leaves a stale one behind.
+    go to `unlimited-N.csv` (`word` column only).
+  - Exits 1 without writing the CSV when there are any errors.
 - `test_validate_labels.py`: unittest suite for the validator.
 - `eval_labels.py --golden PATH --candidate PATH` (Plan 010 U5): scores a model-written
   labels batch against the golden set (the owner-reviewed `labels-N.jsonl`). The golden set

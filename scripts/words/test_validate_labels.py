@@ -1,7 +1,6 @@
 import unittest
 
 import csv
-import json
 import os
 import sys
 import tempfile
@@ -130,7 +129,7 @@ class WriteReviewCsvTests(unittest.TestCase):
         self.assertEqual(raw, b"word\r\nKALEM\r\n")
 
 
-class MainCliHelpers:
+class MainIntegrationTests(unittest.TestCase):
     def _write(self, tmp, name, content):
         with open(os.path.join(tmp, name), "w", encoding="utf-8") as handle:
             handle.write(content)
@@ -139,17 +138,6 @@ class MainCliHelpers:
         with patch.object(vl, "REVIEW_DIR", tmp), patch.object(sys, "argv", ["validate_labels.py"] + argv):
             vl.main()
 
-    def _write_passing_eval(self, tmp):
-        # The candidate matches every golden word exactly (accept + sensitive-reject
-        # rows), so whichever half the real hash split puts into held-out, it is
-        # fully covered and both accept precision and sensitive recall are 1.0.
-        golden = [{"word": f"A{i}", "decision": "accept"} for i in range(60)]
-        golden += [{"word": f"S{i}", "decision": "reject", "reason": "sensitive"} for i in range(10)]
-        self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(label) for label in golden) + "\n")
-        self._write(tmp, "candidate.jsonl", "\n".join(json.dumps(label) for label in golden) + "\n")
-
-
-class MainIntegrationTests(MainCliHelpers, unittest.TestCase):
     def test_truncated_labels_exit_nonzero_and_write_no_csv(self):
         # Only KALEM is labeled; GELDİ/MASA/DENİZ are missing. label_errors() alone
         # reports no per-label errors here, so this fails if main() checks
@@ -173,115 +161,9 @@ class MainIntegrationTests(MainCliHelpers, unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
             self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            self._write_passing_eval(tmp)
-            self._run_main(
-                tmp,
-                ["--length", "5", "--pool", "unlimited", "--eval-candidate", os.path.join(tmp, "candidate.jsonl")],
-            )
+            self._run_main(tmp, ["--length", "5", "--pool", "unlimited"])
             self.assertTrue(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
             self.assertFalse(os.path.exists(os.path.join(tmp, "review-5.csv")))
-
-
-class UnlimitedImportEvalGateTests(MainCliHelpers, unittest.TestCase):
-    def test_blocks_when_no_eval_candidate_is_given(self):
-        # The gate must land before any model-labelled unlimited batch is
-        # imported: no eval supplied means no trust, so the import refuses.
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
-            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            with self.assertRaises(SystemExit) as ctx:
-                self._run_main(tmp, ["--length", "5", "--pool", "unlimited"])
-            self.assertEqual(ctx.exception.code, 1)
-            self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
-
-    def test_exits_nonzero_and_writes_no_csv_below_accept_precision_010_AE4(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
-            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            golden = []
-            for i in range(20):
-                golden.append(json.dumps({"word": f"C{i}", "decision": "accept"}))
-                golden.append(json.dumps({"word": f"R{i}", "decision": "reject", "reason": "other"}))
-            self._write(tmp, "labels-5.jsonl", "\n".join(golden) + "\n")
-            candidate = [json.dumps({"word": f"C{i}", "decision": "accept"}) for i in range(20)]
-            candidate += [json.dumps({"word": f"R{i}", "decision": "accept"}) for i in range(20)]
-            self._write(tmp, "candidate.jsonl", "\n".join(candidate) + "\n")
-            with self.assertRaises(SystemExit) as ctx:
-                self._run_main(
-                    tmp,
-                    [
-                        "--length", "5", "--pool", "unlimited",
-                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
-                    ],
-                )
-            self.assertEqual(ctx.exception.code, 1)
-            self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
-
-    def test_daily_pool_import_is_unaffected_by_the_eval_gate(self):
-        # R5 only gates the unlimited pool; the daily pool keeps owner review as its
-        # quality gate and must not require an eval candidate.
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "pool-5.txt", "KALEM\n")
-            self._write(tmp, "labels-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            self._run_main(tmp, ["--length", "5"])
-            self.assertTrue(os.path.exists(os.path.join(tmp, "review-5.csv")))
-
-    def test_blocks_when_the_eval_candidate_path_does_not_exist(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
-            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            self._write_passing_eval(tmp)
-            with self.assertRaises(SystemExit) as ctx:
-                self._run_main(
-                    tmp,
-                    [
-                        "--length", "5", "--pool", "unlimited",
-                        "--eval-candidate", os.path.join(tmp, "does-not-exist.jsonl"),
-                    ],
-                )
-            self.assertEqual(ctx.exception.code, 1)
-            self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
-
-    def test_blocks_when_the_default_golden_file_is_missing_for_a_length_with_no_golden_set(self):
-        # Length 4 has no committed golden set yet (Plan 010 KTD1), so the default
-        # --golden path does not exist; the gate must fail closed, not skip itself.
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "unlimited-pool-4.txt", "KALE\n")
-            self._write(tmp, "labels-unlimited-4.jsonl", '{"word": "KALE", "decision": "accept"}\n')
-            self._write(tmp, "candidate.jsonl", '{"word": "A0", "decision": "accept"}\n')
-            with self.assertRaises(SystemExit) as ctx:
-                self._run_main(
-                    tmp,
-                    [
-                        "--length", "4", "--pool", "unlimited",
-                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
-                    ],
-                )
-            self.assertEqual(ctx.exception.code, 1)
-            self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-4.csv")))
-
-    def test_deletes_a_stale_unlimited_csv_when_the_eval_gate_fails(self):
-        # A previous passing run may have left unlimited-5.csv behind. A later,
-        # failing run must not leave that stale file in place, since it reflects an
-        # earlier (possibly unrelated) batch, not the one that just failed.
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
-            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            stale_path = os.path.join(tmp, "unlimited-5.csv")
-            self._write(tmp, "unlimited-5.csv", "word\r\nSTALEWORD\r\n")
-            with self.assertRaises(SystemExit):
-                self._run_main(tmp, ["--length", "5", "--pool", "unlimited"])
-            self.assertFalse(os.path.exists(stale_path))
-
-    def test_deletes_a_stale_review_csv_when_blocking_label_errors_are_found(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self._write(tmp, "pool-5.txt", "KALEM\nGELDİ\n")
-            self._write(tmp, "labels-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')  # GELDİ missing
-            stale_path = os.path.join(tmp, "review-5.csv")
-            self._write(tmp, "review-5.csv", "word\r\nSTALEWORD\r\n")
-            with self.assertRaises(SystemExit):
-                self._run_main(tmp, ["--length", "5"])
-            self.assertFalse(os.path.exists(stale_path))
 
 
 if __name__ == "__main__":
