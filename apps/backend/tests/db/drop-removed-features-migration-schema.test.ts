@@ -33,6 +33,46 @@ const WORDS_TABLE_SQL =
 const IDX_LENGTH_ACTIVE_SQL = 'CREATE INDEX idx_words_length_active ON words (length, is_active)';
 const IDX_STATUS_SQL = 'CREATE INDEX idx_words_status ON words (status)';
 
+const DAILY_WORDS_REQUIRE_ACTIVE_WORD_SQL =
+  "CREATE TRIGGER daily_words_require_active_word\n" +
+  "BEFORE INSERT ON daily_words\n" +
+  "WHEN NOT EXISTS (\n" +
+  "  SELECT 1 FROM words\n" +
+  "  WHERE id = NEW.word_id AND is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily'\n" +
+  ")\n" +
+  "BEGIN\n" +
+  "  SELECT RAISE(ABORT, 'daily word must be an approved, family-safe, active, daily-pool word');\n" +
+  'END';
+
+const DAILY_WORDS_REQUIRE_ACTIVE_WORD_ON_UPDATE_SQL =
+  "CREATE TRIGGER daily_words_require_active_word_on_update\n" +
+  "BEFORE UPDATE OF word_id ON daily_words\n" +
+  "WHEN NOT EXISTS (\n" +
+  "  SELECT 1 FROM words\n" +
+  "  WHERE id = NEW.word_id AND is_active = 1 AND status = 'approved' AND family_safe = 1 AND pool = 'daily'\n" +
+  ")\n" +
+  "BEGIN\n" +
+  "  SELECT RAISE(ABORT, 'daily word must be an approved, family-safe, active, daily-pool word');\n" +
+  'END';
+
+const WORDS_BLOCK_DEACTIVATE_SCHEDULED_FUTURE_SQL =
+  "CREATE TRIGGER words_block_deactivate_scheduled_future\n" +
+  "BEFORE UPDATE OF is_active ON words\n" +
+  "WHEN NEW.is_active = 0 AND OLD.is_active = 1 AND EXISTS (\n" +
+  "  SELECT 1 FROM daily_words WHERE word_id = OLD.id AND date >= date('now', '+3 hours')\n" +
+  ")\n" +
+  "BEGIN\n" +
+  "  SELECT RAISE(ABORT, 'cannot deactivate a word scheduled as a future daily word');\n" +
+  'END';
+
+const WORDS_BLOCK_ACTIVATE_REJECTED_SQL =
+  "CREATE TRIGGER words_block_activate_rejected\n" +
+  "BEFORE UPDATE OF is_active ON words\n" +
+  "WHEN NEW.is_active = 1 AND OLD.status = 'rejected'\n" +
+  "BEGIN\n" +
+  "  SELECT RAISE(ABORT, 'cannot activate a rejected word');\n" +
+  'END';
+
 async function getSql(type: string, name: string): Promise<string | null> {
   const row = await env.DB.prepare('SELECT sql FROM sqlite_master WHERE type = ? AND name = ?')
     .bind(type, name)
@@ -54,6 +94,42 @@ describe('0003 rebuilt words table schema', () => {
   it('should keep idx_words_status unchanged', async () => {
     await applySchema(env.DB);
     expect(await getSql('index', 'idx_words_status')).toBe(IDX_STATUS_SQL);
+  });
+
+  it('should recreate daily_words_require_active_word unchanged', async () => {
+    await applySchema(env.DB);
+    expect(await getSql('trigger', 'daily_words_require_active_word')).toBe(DAILY_WORDS_REQUIRE_ACTIVE_WORD_SQL);
+  });
+
+  it('should recreate daily_words_require_active_word_on_update unchanged', async () => {
+    await applySchema(env.DB);
+    expect(await getSql('trigger', 'daily_words_require_active_word_on_update')).toBe(
+      DAILY_WORDS_REQUIRE_ACTIVE_WORD_ON_UPDATE_SQL
+    );
+  });
+
+  it('should pin words_block_deactivate_scheduled_future to the Turkey-day shift and OLD.is_active/id clauses', async () => {
+    await applySchema(env.DB);
+    expect(await getSql('trigger', 'words_block_deactivate_scheduled_future')).toBe(
+      WORDS_BLOCK_DEACTIVATE_SCHEDULED_FUTURE_SQL
+    );
+  });
+
+  it('should pin words_block_activate_rejected to the OLD.status clause unchanged', async () => {
+    await applySchema(env.DB);
+    expect(await getSql('trigger', 'words_block_activate_rejected')).toBe(WORDS_BLOCK_ACTIVATE_REJECTED_SQL);
+  });
+});
+
+describe('0003 cleans up its own scratch tables', () => {
+  it('should leave no words_backup or words_seq_backup table behind', async () => {
+    await applySchema(env.DB);
+    const names = (
+      await env.DB.prepare(`SELECT name FROM sqlite_master WHERE type = 'table'`).all<{ name: string }>()
+    ).results.map((r) => r.name);
+
+    expect(names).not.toContain('words_backup');
+    expect(names).not.toContain('words_seq_backup');
   });
 });
 

@@ -174,6 +174,20 @@ describe('words_block_deactivate_scheduled_future trigger', () => {
       env.DB.prepare('UPDATE words SET is_active = 0 WHERE id = ?').bind(wordId).run()
     ).resolves.toBeDefined();
   });
+
+  it('should allow deactivating a word whose only daily schedule is in the past', async () => {
+    // Kills reducing the trigger's WHEN clause to `EXISTS (... WHERE word_id = OLD.id)`,
+    // dropping the date filter entirely: a word with only a past schedule would then
+    // still be blocked.
+    const wordId = await insertWord({ word: 'ESKIX', pool: 'daily' });
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordId, '2000-01-01')
+      .run();
+
+    await expect(
+      env.DB.prepare('UPDATE words SET is_active = 0 WHERE id = ?').bind(wordId).run()
+    ).resolves.toBeDefined();
+  });
 });
 
 describe('words_block_activate_rejected trigger', () => {
