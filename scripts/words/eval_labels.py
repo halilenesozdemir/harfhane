@@ -2,27 +2,19 @@
 model-labelled unlimited batch is imported (Plan 010 R4/R5, Invariant 1: model proposes,
 code enforces).
 
-The golden set (`data/words/review/labels-5.jsonl`, 600 owner-reviewed 5-letter
-decisions) is split deterministically by a hash of each entry's normalized word (Plan
-010 KTD1): half calibrate prompts, the other half is the held-out eval set. Hashing the
-word (not the entry's position in the file) means the split never shifts just because
-the golden file gained, lost or reordered unrelated entries. A "candidate" is a model's
-attempt at labelling those same held-out words; this script never calls a model itself
-(KTD2), so it runs in CI without API keys.
+The golden set (`data/words/review/labels-5.jsonl`) is split by a hash of each entry's
+normalized word (KTD1): half calibrate prompts, the other half is held out and scored
+against a "candidate" — a model's attempt at labelling those same words. Hashing the
+word (not file position) keeps the split stable as the golden file changes elsewhere.
+Never calls a model itself (KTD2), so it runs in CI without API keys.
 
-The gate is fail-closed, not fail-open: it refuses to pass (not vacuously pass) whenever
-it cannot actually prove the batch is trustworthy — a held-out word missing from the
-candidate, a held-out word labelled more than once, an empty held-out set, a held-out
-set with no `sensitive` rejects to measure recall against, or zero predicted "accept"
-decisions (which proves nothing about accept precision). See `passes_thresholds`.
-
-The report never includes the golden word text for a missed reject, only the golden
-entry's line-order id ("G<n>") — a miss may be a slur or other sensitive word, and that
-must never land in a report, a CI log or a PR body.
+Fail-closed, not fail-open (see `passes_thresholds`): refuses to pass whenever it
+cannot prove the batch trustworthy — a held-out word missing or duplicated in the
+candidate, an empty held-out set, no `sensitive` rejects to measure recall against, or
+zero predicted "accept" decisions. A miss is reported by the golden entry's id
+("G<n>"), never the word, since a miss may be a slur or other sensitive word.
 
     python3 scripts/words/eval_labels.py --golden PATH --candidate PATH
-
-Exits 1 when the report does not pass the thresholds below.
 """
 
 import argparse
@@ -44,27 +36,23 @@ FAMILY_REASONS = ("sensitive", "proper_noun", "foreign")
 
 
 def normalize_word(word: str) -> str:
-    """The form used to match a golden entry to a candidate label. Case alone must
-    never cause a false "missing" (and therefore a false pass): `tr_upper` fixes
-    İ/I, ı/I unlike `str.upper()` (AGENTS.md). NFC folds composed/decomposed Turkish
-    diacritics to the same code points."""
+    """Case/whitespace/NFC-normalized match key: `tr_upper` fixes İ/I, ı/I unlike
+    `str.upper()` (AGENTS.md), so case alone never causes a false "missing"."""
     return tr_upper(unicodedata.normalize("NFC", word.strip()))
 
 
 def load_candidate(path: str) -> list:
-    """A candidate batch is the model's real output: no ids are added, since these
-    words are the ones about to be imported, not golden-set entries that must stay
-    out of reports."""
+    # No ids added: these words are about to be imported, not golden-set entries
+    # that must stay out of reports.
     with open(path, encoding="utf-8") as handle:
         labels = [json.loads(line) for line in handle if line.strip()]
     return [{**label, "word": normalize_word(label["word"])} for label in labels]
 
 
 def _prepare_golden(golden: list) -> list:
-    """Normalize each entry's word and assign it a stable id from its position in the
-    given list, rejecting a duplicate normalized word outright (Plan 010 N1): the
-    golden set is owner-curated, committed data, so two entries for the same word is a
-    data error, not something to score around silently."""
+    # Normalize each word and assign a stable id from its position; a duplicate
+    # normalized word is a data error in the owner-curated golden set, not
+    # something to score around silently (Plan 010 N1).
     prepared = []
     seen = set()
     for index, entry in enumerate(golden):
@@ -88,10 +76,9 @@ def _bucket(word: str) -> int:
 
 
 def split_golden(golden: list) -> tuple:
-    """Deterministic split by a hash of each entry's normalized word (Plan 010 KTD1):
-    one bucket calibrates prompts, the other is the held-out eval set. Depending only
-    on the word (not its position) means the split is the same regardless of file
-    order, and a given word always lands in the same half."""
+    # Depends only on the word, not its file position (Plan 010 KTD1): one bucket
+    # calibrates prompts, the other is the held-out eval set, and a given word
+    # always lands in the same half regardless of file order.
     calibration = [entry for entry in golden if _bucket(entry["word"]) == 0]
     held_out = [entry for entry in golden if _bucket(entry["word"]) == 1]
     return calibration, held_out
@@ -149,11 +136,9 @@ def passes_thresholds(
     missing: list,
     duplicate: list,
 ) -> bool:
-    """The single place that decides pass/fail, kept pure and keyword-only so a
-    boundary (`>=` vs `>`, the threshold constants) can be pinned with plain numbers
-    in tests, independent of the golden-set split. Fails closed: any integrity
-    problem, or nothing to measure a gating metric against, is a fail — never a
-    vacuous pass."""
+    # The single place that decides pass/fail, kept pure and keyword-only so the
+    # `>=` boundary and the threshold constants can be pinned with plain numbers in
+    # tests. Fails closed: any integrity gap, or nothing to measure, is a fail.
     if missing or duplicate:
         return False
     if held_out_count == 0 or sensitive_total == 0:
