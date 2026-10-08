@@ -254,10 +254,11 @@ files). `ICON_SIZE` and `SCREEN_PADDING` (`apps/mobile/src/ui/layout.ts`) are ta
 for knip since nothing imports them yet; U7b/U7c wire `IconButton`/`TopBar` into `GameScreen`,
 `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard` and `HomeScreen`, at which point
 both constants gain real importers and the tags should come off. `TopBar`'s `leading`/`trailing`
-are plain `ReactNode` slots (not wired to `lucide-react-native`, not yet a dependency on `main`);
-U7b/U7c compose the actual `IconButton` + Lucide icon elements and also add the home-top-bar
-variant (streak chip, three trailing actions) described in `docs/design/mobile-redesign-spec.md`
-section B, which U7a does not implement.
+are plain `ReactNode` slots; `lucide-react-native` landed on `main` via #93, so U7b/U7c can now
+compose the actual `IconButton` + Lucide icon elements directly. `TopBar`'s `variant="home"` (no
+title, an asymmetric leading slot for the streak chip, up to three trailing actions) is in place;
+U7c still has to build the streak chip itself and wire `HomeScreen` to the variant, per
+`docs/design/mobile-redesign-spec.md` section B.
 
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,

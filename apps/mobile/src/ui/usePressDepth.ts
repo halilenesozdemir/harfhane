@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Animated } from 'react-native';
 import { base } from '@harfhane/ui-tokens';
-import { useReduceMotion } from './useReduceMotion';
+import { parseMs } from '../utils/ms';
+import { useReduceMotion } from './motion/useReduceMotion';
 
-const PRESS_ANIMATION_MS = Number(base.motionFast.replace('ms', ''));
+const PRESS_ANIMATION_MS = parseMs(base.motionFast);
 
 export interface UsePressDepthOptions {
   /** Bottom depth-edge height (dp) at rest, e.g. `DEPTH.md`. */
