@@ -56,9 +56,28 @@ produces the same output files under `data/words/`.
     only) for import.
   - `--pool unlimited`: pool `data/words/review/unlimited-pool-N.txt` (from
     `unlimited_pool.py`), labels `data/words/review/labels-unlimited-N.jsonl`, accepted words
-    go to `unlimited-N.csv` (`word` column only).
-  - Exits 1 without writing the CSV when there are any errors.
+    go to `unlimited-N.csv` (`word` column only). Also requires `--eval-candidate PATH`
+    (Plan 010 R5/U6): the batch is only imported when `eval_labels.py` scores that candidate
+    above threshold against the golden set (`--golden PATH`, default
+    `data/words/review/labels-N.jsonl`). No `--eval-candidate`, a missing golden/candidate
+    file, or a below-threshold report all fail closed.
+  - Exits 1 without writing the CSV when there are any errors, and deletes any CSV already
+    at that path from an earlier run so a failed run never leaves a stale one behind.
 - `test_validate_labels.py`: unittest suite for the validator.
+- `eval_labels.py --golden PATH --candidate PATH` (Plan 010 U5): scores a model-written
+  labels batch against the golden set (the owner-reviewed `labels-N.jsonl`). The golden set
+  is split by a hash of each entry's normalized word — half calibrate prompts, the other
+  half is the held-out eval set the candidate is actually scored against. Reports accept
+  precision/recall and recall for the three family-protecting reject reasons (`sensitive`,
+  `proper_noun`, `foreign`); a miss is named by the golden entry's id, never the word, since
+  a miss can be a slur or other sensitive word. Fails closed (reports `"passes": false`,
+  CLI exits 1) whenever it cannot actually prove the batch trustworthy: a held-out word
+  missing or duplicated in the candidate, an empty held-out set, no `sensitive` rejects to
+  measure recall against, or zero predicted "accept" decisions. Gated on
+  `LABEL_ACCEPT_PRECISION_MIN = 0.95` and `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls a
+  model; it only scores an already-written labels file, so it runs in CI without API keys.
+- `test_eval_labels.py`: unittest suite for the eval scorer, including the threshold
+  boundaries and the fail-closed cases above.
 
 ## Unlimited pool
 
