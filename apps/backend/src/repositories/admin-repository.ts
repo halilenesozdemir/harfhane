@@ -8,6 +8,7 @@ export interface WordRow {
   meaning: string;
   context: string;
   category: 'isim' | 'sıfat' | 'fiil';
+  status: 'draft' | 'approved' | 'rejected';
   is_active: number;
   created_at: string;
   pool: 'daily' | 'unlimited';
@@ -65,7 +66,7 @@ export async function adminFindWords(
 
   const batchResults = await db.batch([
     db.prepare(
-      `SELECT id, word, meaning, context, category, is_active, created_at, pool
+      `SELECT id, word, meaning, context, category, status, is_active, created_at, pool
        FROM words ${where}
        ${orderBy}
        LIMIT ? OFFSET ?`
@@ -87,9 +88,27 @@ export async function adminFindWordById(
   id: number
 ): Promise<WordRow | null> {
   return db
-    .prepare('SELECT id, word, meaning, context, category, is_active, created_at, pool FROM words WHERE id = ?')
+    .prepare(
+      'SELECT id, word, meaning, context, category, status, is_active, created_at, pool FROM words WHERE id = ?'
+    )
     .bind(id)
     .first<WordRow>();
+}
+
+/** True when the word has a daily_words entry on or after fromDate (inclusive) —
+ * the same condition the words_block_deactivate_scheduled_future trigger enforces,
+ * so the service layer can return a 409 instead of letting the trigger's RAISE
+ * surface as an opaque 500. */
+export async function adminWordScheduledOnOrAfter(
+  db: Env['DB'],
+  wordId: number,
+  fromDate: string
+): Promise<boolean> {
+  const row = await db
+    .prepare('SELECT 1 FROM daily_words WHERE word_id = ? AND date >= ? LIMIT 1')
+    .bind(wordId, fromDate)
+    .first();
+  return row !== null;
 }
 
 export async function adminCreateWord(

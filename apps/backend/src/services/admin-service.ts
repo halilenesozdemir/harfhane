@@ -7,6 +7,7 @@ import {
   adminCreateWord,
   adminUpdateWord,
   adminSetWordActive,
+  adminWordScheduledOnOrAfter,
   adminFindDailySchedule,
   adminScheduleDailyWord,
   adminRemoveDailyWord,
@@ -59,6 +60,20 @@ export async function updateWord(
 export async function toggleWordActive(db: Env['DB'], id: number, isActive: boolean) {
   const exists = await adminFindWordById(db, id);
   if (!exists) throw NOT_FOUND('Word');
+
+  // Pre-checks mirror the words_block_deactivate_scheduled_future and
+  // words_block_activate_rejected triggers in 0003_drop_removed_features.sql, so
+  // a blocked toggle surfaces as a 409 ApiError instead of the trigger's RAISE
+  // becoming an unhandled 500. The trigger still exists as a defense-in-depth
+  // backstop below this layer.
+  if (!isActive) {
+    const scheduledInFuture = await adminWordScheduledOnOrAfter(db, id, getTodayString());
+    if (scheduledInFuture) throw CONFLICT('Cannot deactivate a word scheduled as a future daily word');
+  }
+  if (isActive && exists.status === 'rejected') {
+    throw CONFLICT('Cannot activate a rejected word');
+  }
+
   await adminSetWordActive(db, id, isActive);
   const updated = await adminFindWordById(db, id);
   if (!updated) throw NOT_FOUND('Word');

@@ -42,6 +42,16 @@ describe('0003_drop_removed_features migration', () => {
     expect(await tableExists(table)).toBe(true);
   });
 
+  it.each(['idx_words_length_active', 'idx_words_status'])(
+    'should keep the %s index on the rebuilt words table',
+    async (indexName) => {
+      const row = await env.DB.prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`)
+        .bind(indexName)
+        .first();
+      expect(row).not.toBeNull();
+    }
+  );
+
   it('should keep game data readable after the migration', async () => {
     await seedTestData(env.DB);
 
@@ -134,6 +144,19 @@ describe('words_block_deactivate_scheduled_future trigger', () => {
     const wordId = await insertWord({ word: 'YARIN', pool: 'daily' });
     await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
       .bind(wordId, '2999-01-01')
+      .run();
+
+    await expect(
+      env.DB.prepare('UPDATE words SET is_active = 0 WHERE id = ?').bind(wordId).run()
+    ).rejects.toThrow();
+  });
+
+  it('should reject deactivating a word scheduled for today, not only strictly future days', async () => {
+    // Kills the `date >= date('now')` -> `date > date('now')` mutant: today must
+    // still count as "scheduled", not just days strictly after today.
+    const wordId = await insertWord({ word: 'BUGUN', pool: 'daily' });
+    await env.DB.prepare(`INSERT INTO daily_words (word_id, date, length) VALUES (?, date('now'), 5)`)
+      .bind(wordId)
       .run();
 
     await expect(

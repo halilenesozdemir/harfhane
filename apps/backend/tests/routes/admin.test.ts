@@ -168,3 +168,58 @@ describe('POST /api/admin/daily', () => {
     expect(res.status).toBe(201);
   });
 });
+
+describe('PATCH /api/admin/words/:id', () => {
+  it('should return 409 instead of a 500 when deactivating a word scheduled as a future daily word', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUNC', 5, 'test', 'test', 'approved', 1, 1, 'daily')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUNC').first<{ id: number }>();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordRow?.id, '2999-01-01')
+      .run();
+
+    const res = await SELF.fetch(`http://example.com/api/admin/words/${wordRow?.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ is_active: false }),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('should return 409 instead of a 500 when activating a word whose status is rejected', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUND', 5, 'test', 'test', 'rejected', 0, 0, 'daily')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUND').first<{ id: number }>();
+
+    const res = await SELF.fetch(`http://example.com/api/admin/words/${wordRow?.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ is_active: true }),
+    });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('should return 200 when deactivating a word with no future schedule', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUNE', 5, 'test', 'test', 'approved', 1, 1, 'daily')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUNE').first<{ id: number }>();
+
+    const res = await SELF.fetch(`http://example.com/api/admin/words/${wordRow?.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ is_active: false }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: { is_active: number } };
+    expect(body.data.is_active).toBe(0);
+  });
+});

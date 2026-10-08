@@ -60,18 +60,21 @@ migration (numbered after Plan 008's `0002_word_pools.sql`), every table `apps/b
 word scheduled in the future, refuse activating a `rejected` word).
 - Done: `apps/backend/db/migrations/0003_drop_removed_features.sql` is written (14 tables, not 13 — this
   entry's own list has 14 names; drops them in child-before-parent order), plus all four guard-rail changes.
-  Covered by `apps/backend/tests/db/drop-removed-features-migration.test.ts` (dropped/kept tables, game
-  queries still work, the CHECK and all three triggers). Code search before writing it found no remaining
-  backend route/service/repository/script/cron/test touching any of the 14 tables — only
-  `0001_baseline.sql` still declared them. The full test suite (146 tests) and backend typecheck pass with
-  it applied locally; `deploy-backend.yml` only runs `wrangler deploy`/`deployments status`/`rollback`, never
-  `wrangler d1 migrations apply` or `d1 execute`, so merging this does not apply the migration remotely.
+  Covered by `apps/backend/tests/db/drop-removed-features-migration.test.ts`,
+  `apps/backend/tests/db/drop-removed-features-migration-nonempty.test.ts` (applies 0001+0002, seeds a word
+  with a `daily_words` reference plus a row in a dropped table, then applies 0003 — the empty-database tests
+  above never exercise `DROP TABLE words` against a row `daily_words.word_id` still references) and
+  `apps/backend/tests/routes/admin.test.ts` (`PATCH /api/admin/words/:id` 409s). Code search before writing
+  it found no remaining backend route/service/repository/script/cron/test touching any of the 14 tables —
+  only `0001_baseline.sql` still declared them. The full test suite and backend typecheck pass with it
+  applied locally, and it was also applied with real local `wrangler d1 migrations apply --local
+  --persist-to` (not `--remote`) against seeded data, where SQLite foreign-key enforcement is actually on;
+  `deploy-backend.yml` only runs `wrangler deploy`/`deployments status`/`rollback`, never `wrangler d1
+  migrations apply` or `d1 execute`, so merging this does not apply the migration remotely.
 - Applying it to the remote `harfhane` database needs explicit owner approval (Invariant 4) — remote D1
-  writes are never done without it. When approved, the owner runs, in this order:
-  1. Back up first (never into the repo): `wrangler d1 export harfhane --remote --output ~/Backups/harfhane/harfhane-$(date +%Y%m%d%H%M%S).sql` (run from `apps/backend`).
-  2. Dry-run locally first: `wrangler d1 migrations apply harfhane --local` (from `apps/backend`), then
-     spot-check the local copy.
-  3. Apply remotely: `wrangler d1 migrations apply harfhane --remote` (from `apps/backend`).
+  writes are never done without it. Runbook: `docs/runbooks/apply-0003-drop-removed-features.md` (backup +
+  Time Travel bookmark, remote read-only pre-checks, a rehearsal against a local copy of the production
+  export, the remote apply with smoke queries, and the Time Travel rollback path).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.

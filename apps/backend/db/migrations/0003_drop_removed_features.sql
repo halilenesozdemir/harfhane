@@ -1,3 +1,11 @@
+-- Defer foreign key checks to the end of this migration's transaction. Without
+-- this, DROP TABLE words below does an implicit DELETE of every words row, which
+-- violates daily_words.word_id REFERENCES words(id) ON DELETE RESTRICT on any
+-- database that actually has daily_words rows (an empty test database never
+-- exercises this). words is rebuilt with the same ids further down, so by the
+-- time this transaction commits the reference is valid again.
+PRAGMA defer_foreign_keys = true;
+
 -- Drop schema left over from features removed for the MVP scope cut
 -- (docs/decisions/2026-10-05-mvp-scope-cut.md): accounts/auth/profile, XP/badges/
 -- streak-freeze/leaderboard, push/email, custom word lists, tournaments and duels.
@@ -28,15 +36,19 @@ DROP TABLE users;
 -- family-safe regardless of source (Invariant 1). SQLite cannot ALTER a CHECK
 -- constraint in place, so the table is rebuilt.
 --
--- `daily_words_require_active_word` (0001/0002) is dropped before the rebuild and
--- recreated after: leaving it in place while `words` is dropped and recreated
--- below makes the later ALTER TABLE ... RENAME TO fail with "no such table:
--- main.words" — that statement forces SQLite to recompile every trigger that
--- mentions the renamed table's old or new name, and it does so against the
--- schema as it stands mid-migration, where `words` is briefly absent.
+-- The rebuild copies into a backup table rather than using ALTER TABLE ... RENAME
+-- TO: a RENAME statement forces SQLite to recompile every trigger that mentions
+-- the renamed table, against the schema as it stands at that point in the
+-- migration, where `words` would be briefly absent — it fails with "no such
+-- table: main.words" even though the table is recreated later in the same
+-- migration. `daily_words_require_active_word` (0001/0002), the trigger that
+-- mentions `words`, is dropped before the rebuild and recreated after instead.
 DROP TRIGGER daily_words_require_active_word;
 
-CREATE TABLE words_new (
+CREATE TABLE words_backup AS SELECT * FROM words;
+DROP TABLE words;
+
+CREATE TABLE words (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   word TEXT NOT NULL UNIQUE,
   length INTEGER NOT NULL,
@@ -55,17 +67,19 @@ CREATE TABLE words_new (
   CHECK (is_active = 0 OR (status = 'approved' AND family_safe = 1))
 );
 
-INSERT INTO words_new (
+-- Explicit ids preserve daily_words.word_id references; SQLite bumps
+-- sqlite_sequence to match the highest id actually inserted, so AUTOINCREMENT
+-- continues from where the old table left off.
+INSERT INTO words (
   id, word, length, meaning, context, category, source, license,
   status, family_safe, approved_at, is_active, created_at, pool
 )
 SELECT
   id, word, length, meaning, context, category, source, license,
   status, family_safe, approved_at, is_active, created_at, pool
-FROM words;
+FROM words_backup;
 
-DROP TABLE words;
-ALTER TABLE words_new RENAME TO words;
+DROP TABLE words_backup;
 
 CREATE INDEX idx_words_length_active ON words (length, is_active);
 CREATE INDEX idx_words_status ON words (status);
@@ -93,8 +107,17 @@ BEGIN
   SELECT RAISE(ABORT, 'daily word must be an approved, family-safe, active, daily-pool word');
 END;
 
--- Guard-rail 3: a word already scheduled as a future daily word cannot be
--- deactivated out from under that schedule.
+-- Guard-rail 3: a word already scheduled as a future daily word (today included)
+-- cannot be deactivated out from under that schedule. This is a defense-in-depth
+-- check below the application layer (apps/backend/src/services/admin-service.ts
+-- pre-checks the same condition and returns a 409 before this trigger would ever
+-- fire); it compares against SQLite's date('now'), which is UTC, not the
+-- Turkey-day boundary the rest of the app uses (GLOSSARY.md). That only ever
+-- over-blocks, never under-blocks: for the ~3 hours of UTC 21:00-24:00 (the
+-- start of the Turkey day, 00:00-03:00 Istanbul time), `date('now')` has already
+-- rolled to tomorrow's UTC date while "today" in Turkey is still the same game
+-- day, so a word scheduled for what the app considers "today" can briefly be
+-- treated as "tomorrow" here and blocked from deactivation a few hours early.
 CREATE TRIGGER words_block_deactivate_scheduled_future
 BEFORE UPDATE OF is_active ON words
 WHEN NEW.is_active = 0 AND OLD.is_active = 1 AND EXISTS (
