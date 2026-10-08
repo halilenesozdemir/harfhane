@@ -63,25 +63,40 @@ function storeWithDailyGame(length: WordLength, today: string, guesses: readonly
 }
 
 describe('HomeScreen', () => {
-  // Decorative subtrees (hero tiles, card icon tiles, the chevron) use
-  // importantForAccessibility="no-hide-descendants"; see them in queries too.
-  beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
-  afterAll(() => resetToDefaults());
+  // Decorative subtrees (hero tiles, the "hane" wordmark, a card's decorative
+  // CTA button) use importantForAccessibility="no-hide-descendants": real on
+  // a device, where TalkBack reads the row/card as one unit via its own
+  // accessibilityLabel. Only the handful of tests that look *inside* such a
+  // subtree opt into seeing it (see `withHiddenElementsVisible` below); every
+  // other test — in particular the icon-button test right after this comment
+  // block — runs under the strict default, so an icon button that was
+  // wrongly made decorative would actually fail it instead of passing by
+  // way of a blanket, file-wide override.
+  function withHiddenElementsVisible(name: string, test: () => Promise<void>) {
+    it(name, async () => {
+      configure({ defaultIncludeHiddenElements: true });
+      try {
+        await test();
+      } finally {
+        resetToDefaults();
+      }
+    });
+  }
 
-  it('should render the hero as a single Harfhane header', async () => {
+  withHiddenElementsVisible('should render the hero as a single Harfhane header', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
     expect(screen.getByLabelText('Harfhane')).toBeTruthy();
     expect(screen.getByText('hane')).toBeTruthy();
   });
 
-  it('should render the H-A-R-F hero letters', async () => {
+  withHiddenElementsVisible('should render the H-A-R-F hero letters', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
     for (const letter of ['H', 'A', 'R', 'F']) {
       expect(screen.getByText(letter)).toBeTruthy();
     }
   });
 
-  it('should colour each hero letter with the fg token matching its own background', async () => {
+  withHiddenElementsVisible('should colour each hero letter with the fg token matching its own background', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
     for (const letter of ['H', 'R']) {
       expect(flattenStyle(screen.getByText(letter).props.style).color).toBe(themes.light.correctFg);
@@ -91,7 +106,7 @@ describe('HomeScreen', () => {
     }
   });
 
-  it('(011-AE7) should expose the three home actions as icon buttons with their Turkish accessibility labels', async () => {
+  it('should expose the three home actions as icon buttons with their Turkish accessibility labels', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
     for (const label of ['Nasıl oynanır sayfasını aç', 'İstatistikleri aç', 'Ayarları aç']) {
       const button = screen.getByLabelText(label);
@@ -122,7 +137,7 @@ describe('HomeScreen', () => {
     expect(onOpenStats).toHaveBeenCalledWith(DEFAULT_WORD_LENGTH);
   });
 
-  it('should hide the streak chip when the displayed streak is zero', async () => {
+  withHiddenElementsVisible('should hide the streak chip when the displayed streak is zero', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
     await waitFor(() => expect(screen.queryByText('Oyna')).toBeTruthy());
     expect(screen.queryByLabelText(/günlük seri/)).toBeNull();
@@ -136,6 +151,22 @@ describe('HomeScreen', () => {
     await waitFor(() => expect(screen.getByLabelText(label)).toBeTruthy());
     await act(async () => fireEvent.press(screen.getByLabelText(label)));
     expect(onOpenStats).toHaveBeenCalledWith(DEFAULT_WORD_LENGTH);
+  });
+
+  it('should follow the selected length when switching the streak chip and the daily status', async () => {
+    const stats5: DailyStats = { gamesPlayed: 3, gamesWon: 3, currentStreak: 3, maxStreak: 3, guessDistribution: [0, 0, 0, 0, 0, 0], lastPlayedDate: '2026-10-08' };
+    const stats6: DailyStats = { gamesPlayed: 9, gamesWon: 9, currentStreak: 9, maxStreak: 9, guessDistribution: [0, 0, 0, 0, 0, 0], lastPlayedDate: '2026-10-08' };
+    const store = createMemoryStore({
+      [dailyStatsKey(5)]: JSON.stringify(stats5),
+      [dailyStatsKey(6)]: JSON.stringify(stats6),
+    });
+    await renderWithTheme(<ControlledHomeScreen store={store} />);
+    await waitFor(() => expect(screen.getByLabelText('5 harf, 3 günlük seri')).toBeTruthy());
+
+    await act(async () => fireEvent.press(screen.getByLabelText('6 harfli kelime seç')));
+
+    await waitFor(() => expect(screen.getByLabelText('6 harf, 9 günlük seri')).toBeTruthy());
+    expect(screen.queryByLabelText('5 harf, 3 günlük seri')).toBeNull();
   });
 
   it('should call onStart with daily mode and the selected length when the daily card is pressed', async () => {
@@ -163,7 +194,7 @@ describe('HomeScreen', () => {
     await waitFor(() => expect(screen.getByText('1/6 tahmin')).toBeTruthy());
   });
 
-  it('should show the solved status and move the primary action to the unlimited card', async () => {
+  withHiddenElementsVisible('should show the solved status and move the primary action to the unlimited card', async () => {
     const store = storeWithDailyGame(DEFAULT_WORD_LENGTH, '2026-10-08', ['kalem', 'tahta'], 'won');
     await renderWithTheme(<ControlledHomeScreen store={store} />);
     await waitFor(() => expect(screen.getByText('Çözüldü · 2/6')).toBeTruthy());
