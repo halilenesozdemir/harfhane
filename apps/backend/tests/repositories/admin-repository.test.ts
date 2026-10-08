@@ -5,6 +5,7 @@ import {
   adminBulkInsertWords,
   adminFindWordById,
   adminScheduleDailyWord,
+  adminWordScheduledOnOrAfter,
 } from '../../src/repositories/admin-repository';
 
 beforeEach(async () => {
@@ -117,6 +118,38 @@ describe('adminScheduleDailyWord', () => {
   it('should reject scheduling when the word is unlimited-pool', async () => {
     const id = await insertWord('unlimited');
     await expect(adminScheduleDailyWord(env.DB, id, '2026-04-02', 5)).rejects.toThrow();
+  });
+});
+
+describe('adminWordScheduledOnOrAfter', () => {
+  async function insertDailyWord(): Promise<number> {
+    const result = await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('BOYUT', 5, 'test', 'test', 'approved', 1, 1, 'daily')
+       RETURNING id`
+    ).first<{ id: number }>();
+    if (!result) throw new Error('insert failed');
+    return result.id;
+  }
+
+  it('should report a word scheduled exactly on fromDate as scheduled, not only strictly after it', async () => {
+    // Kills the `date >= ?` -> `date > ?` mutant: a word scheduled for today
+    // (fromDate itself) must still count as scheduled.
+    const wordId = await insertDailyWord();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordId, '2026-06-15')
+      .run();
+
+    await expect(adminWordScheduledOnOrAfter(env.DB, wordId, '2026-06-15')).resolves.toBe(true);
+  });
+
+  it('should report a word with no schedule on or after fromDate as not scheduled', async () => {
+    const wordId = await insertDailyWord();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordId, '2026-06-14')
+      .run();
+
+    await expect(adminWordScheduledOnOrAfter(env.DB, wordId, '2026-06-15')).resolves.toBe(false);
   });
 });
 
