@@ -41,8 +41,7 @@ def normalize_word(word: str) -> str:
 
 
 def load_candidate(path: str) -> list:
-    # No ids added: these words are about to be imported, not golden-set entries
-    # that must stay out of reports.
+    # No ids: these words are about to be imported, not golden-set entries.
     with open(path, encoding="utf-8") as handle:
         labels = [json.loads(line) for line in handle if line.strip()]
     return [{**label, "word": normalize_word(label["word"])} for label in labels]
