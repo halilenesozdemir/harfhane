@@ -202,10 +202,11 @@ describe('HomeScreen', () => {
     expect(screen.getByText('Sınırsız oyna')).toBeTruthy();
   });
 
-  it('should show the lost status', async () => {
+  withHiddenElementsVisible('should show the lost status and also move the primary action to the unlimited card', async () => {
     const store = storeWithDailyGame(DEFAULT_WORD_LENGTH, '2026-10-08', new Array(6).fill('tahta'), 'lost');
     await renderWithTheme(<ControlledHomeScreen store={store} />);
     await waitFor(() => expect(screen.getByText('Bu sefer olmadı')).toBeTruthy());
+    expect(screen.getByText('Sınırsız oyna')).toBeTruthy();
   });
 
   it('should show the selected length in the daily card text', async () => {
