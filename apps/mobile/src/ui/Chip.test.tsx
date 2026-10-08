@@ -30,6 +30,24 @@ describe('Chip', () => {
       fireEvent.press(screen.getByLabelText('5 harf, 3 günlük seri'));
       expect(onPress).toHaveBeenCalledTimes(1);
     });
+
+    it('should have accessibilityRole button', async () => {
+      await renderWithTheme(<Chip variant="streak" label="3" accessibilityLabel="5 harf, 3 günlük seri" onPress={() => undefined} testID="streak" />);
+      expect(screen.getByTestId('streak').props.accessibilityRole).toBe('button');
+    });
+
+    it('should render the icon when given one', async () => {
+      await renderWithTheme(
+        <Chip variant="streak" label="3" icon={<Text testID="streak-icon">icon</Text>} accessibilityLabel="5 harf, 3 günlük seri" onPress={() => undefined} />,
+      );
+      expect(screen.getByTestId('streak-icon')).toBeTruthy();
+    });
+
+    it('should use tabular-nums for the count label so it does not jitter', async () => {
+      await renderWithTheme(<Chip variant="streak" label="3" accessibilityLabel="5 harf, 3 günlük seri" onPress={() => undefined} />);
+      const style = flattenStyle(screen.getByText('3').props.style);
+      expect(style.fontVariant).toEqual(['tabular-nums']);
+    });
   });
 
   describe('status variant', () => {
@@ -49,6 +67,17 @@ describe('Chip', () => {
       await renderWithTheme(<Chip variant="status" label="04:12:09" testID="status" />);
       expect(screen.getByTestId('status').props.accessibilityRole).toBeUndefined();
     });
+
+    it('should render the icon when given one', async () => {
+      await renderWithTheme(<Chip variant="status" label="04:12:09" icon={<Text testID="status-icon">icon</Text>} />);
+      expect(screen.getByTestId('status-icon')).toBeTruthy();
+    });
+
+    it('should use tabular-nums for the count/timer label so it does not jitter', async () => {
+      await renderWithTheme(<Chip variant="status" label="04:12:09" />);
+      const style = flattenStyle(screen.getByText('04:12:09').props.style);
+      expect(style.fontVariant).toEqual(['tabular-nums']);
+    });
   });
 
   describe('length variant', () => {
@@ -63,8 +92,27 @@ describe('Chip', () => {
     it('should use the surface fill with a border and text colour when not selected', async () => {
       await renderWithTheme(<Chip variant="length" label="4 harf" selected={false} accessibilityLabel="4 harf" onPress={() => undefined} testID="length" />);
       const style = flattenStyle(screen.getByTestId('length').props.style);
+      const labelStyle = flattenStyle(screen.getByText('4 harf').props.style);
       expect(style.backgroundColor).toBe(themes.light.surface);
       expect(style.borderColor).toBe(themes.light.surfaceBorder);
+      expect(labelStyle.color).toBe(themes.light.text);
+    });
+
+    it('should set accessibilityState.selected to false when not selected', async () => {
+      await renderWithTheme(<Chip variant="length" label="4 harf" selected={false} accessibilityLabel="4 harf" onPress={() => undefined} testID="length" />);
+      expect(screen.getByTestId('length').props.accessibilityState).toEqual({ selected: false });
+    });
+
+    it('should not draw a border when selected', async () => {
+      await renderWithTheme(<Chip variant="length" label="5 harf" selected accessibilityLabel="5 harf" onPress={() => undefined} testID="length" />);
+      const style = flattenStyle(screen.getByTestId('length').props.style);
+      expect(style.borderWidth).toBeUndefined();
+    });
+
+    it('should use tabular-nums for the number in the label so widths do not jitter', async () => {
+      await renderWithTheme(<Chip variant="length" label="5 harf" selected={false} accessibilityLabel="5 harf" onPress={() => undefined} />);
+      const style = flattenStyle(screen.getByText('5 harf').props.style);
+      expect(style.fontVariant).toEqual(['tabular-nums']);
     });
 
     it('should set accessibilityState.selected', async () => {

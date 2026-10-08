@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  label: { fontSize: FONT_SIZE.caption, fontWeight: '700' },
+  label: { fontSize: FONT_SIZE.caption, fontWeight: '700', fontVariant: ['tabular-nums'] },
 });
