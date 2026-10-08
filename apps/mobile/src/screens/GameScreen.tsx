@@ -112,7 +112,8 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           onDelete={game.onDelete}
           onSubmit={onSubmit}
           isHapticsEnabled={game.isHapticsEnabled}
-          isInputBlocked={session.isSubmitting || reveal.isEnterBlocked}
+          isInputBlocked={session.isSubmitting}
+          isSubmitBlocked={session.isSubmitting || reveal.isEnterBlocked}
         />
       )}
     </>

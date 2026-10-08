@@ -52,9 +52,10 @@ interface RenderKeyboardOptions {
   readonly keyboardStatus?: Record<string, 'correct' | 'present' | 'absent' | null>;
   readonly isHapticsEnabled?: boolean;
   readonly isInputBlocked?: boolean;
+  readonly isSubmitBlocked?: boolean;
 }
 
-async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBlocked }: RenderKeyboardOptions = {}) {
+async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBlocked, isSubmitBlocked }: RenderKeyboardOptions = {}) {
   const onLetter = jest.fn();
   const onDelete = jest.fn();
   const onSubmit = jest.fn();
@@ -66,6 +67,7 @@ async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBl
       onSubmit={onSubmit}
       isHapticsEnabled={isHapticsEnabled}
       isInputBlocked={isInputBlocked}
+      isSubmitBlocked={isSubmitBlocked}
     />,
   );
   // Flushes the own-hook's AsyncStorage load, which otherwise reports haptics as off
@@ -203,6 +205,19 @@ describe('Keyboard', () => {
     const { onLetter } = await renderKeyboard({ isInputBlocked: true });
     await fireEvent.press(screen.getByLabelText('A'));
     expect(onLetter).toHaveBeenCalledWith('A');
+  });
+
+  it('should give the normal key-tap haptic for a letter while only Enter is submit-blocked', async () => {
+    await renderKeyboard({ isSubmitBlocked: true });
+    await fireEvent.press(screen.getByLabelText('A'));
+    expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+  });
+
+  it('should not trigger a haptic on Enter press while submit-blocked, but still call onSubmit (GameScreen, not Keyboard, owns no-opping the submit itself)', async () => {
+    const { onSubmit } = await renderKeyboard({ isSubmitBlocked: true });
+    await fireEvent.press(screen.getByLabelText('Gönder'));
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it('should render the CornerDownLeft icon inside the Enter key and Delete inside the Backspace key', async () => {
