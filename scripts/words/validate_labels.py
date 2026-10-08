@@ -131,10 +131,19 @@ def unlimited_label_eval_passes(length: int, golden_path: str, eval_candidate_pa
     return report["passes"], report
 
 
+def _remove_stale_review_csv(review_path: str) -> None:
+    # A failed run must never leave a review CSV behind: it would be either a
+    # partial write from this run or, worse, a stale file from an earlier
+    # successful run for a now-rejected batch (Plan 010 N6).
+    if os.path.exists(review_path):
+        os.remove(review_path)
+
+
 def main():
     args = parse_args()
     pool_path = os.path.join(REVIEW_DIR, POOL_FILES[args.pool].format(length=args.length))
     labels_path = os.path.join(REVIEW_DIR, LABEL_FILES[args.pool].format(length=args.length))
+    review_path = os.path.join(REVIEW_DIR, REVIEW_FILES[args.pool].format(length=args.length))
     pool_words = load_lines(pool_path)
     labels = load_labels(labels_path)
     report = validate(labels, pool_words)
@@ -142,13 +151,14 @@ def main():
     # A review CSV is only written from a clean, complete label set, so import never sees
     # partial data.
     if has_blocking_errors(report):
+        _remove_stale_review_csv(review_path)
         sys.exit(1)
     if args.pool == "unlimited":
         passed, eval_report = unlimited_label_eval_passes(args.length, args.golden, args.eval_candidate)
         print(json.dumps({"label_eval": eval_report}, ensure_ascii=False, indent=2))
         if not passed:
+            _remove_stale_review_csv(review_path)
             sys.exit(1)
-    review_path = os.path.join(REVIEW_DIR, REVIEW_FILES[args.pool].format(length=args.length))
     write_review_csv(review_path, report["accepted"])
 
 
