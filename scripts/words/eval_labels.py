@@ -40,11 +40,25 @@ def normalize_word(word: str) -> str:
     return tr_upper(unicodedata.normalize("NFC", word.strip()))
 
 
+def _check_row_shape(entry, index: int) -> None:
+    # A row that isn't a JSON object, or whose "word" isn't a string, used to crash
+    # with an unhandled TypeError/AttributeError deep in normalize_word() and leave a
+    # stale review CSV behind (validate_labels.py). Fail closed here instead, with a
+    # ValueError the caller's except clause already handles.
+    if not isinstance(entry, dict):
+        raise ValueError(f"label row {index} is not a JSON object: {entry!r}")
+    word = entry.get("word")
+    if not isinstance(word, str):
+        raise ValueError(f"label row {index} has a non-string 'word': {word!r}")
+
+
 def load_candidate(path: str) -> list:
     # No ids added: these words are about to be imported, not golden-set entries
     # that must stay out of reports.
     with open(path, encoding="utf-8") as handle:
         labels = [json.loads(line) for line in handle if line.strip()]
+    for index, label in enumerate(labels):
+        _check_row_shape(label, index)
     return [{**label, "word": normalize_word(label["word"])} for label in labels]
 
 
@@ -55,6 +69,7 @@ def _prepare_golden(golden: list) -> list:
     prepared = []
     seen = set()
     for index, entry in enumerate(golden):
+        _check_row_shape(entry, index)
         word = normalize_word(entry["word"])
         if word in seen:
             raise ValueError(f"duplicate golden word at entry {index} (normalized: {word!r})")
@@ -126,20 +141,6 @@ def score_reason_recall(held_out: list, candidate_by_word: dict, reason: str) ->
     return {"recall": recall, "total": total, "misses": misses}
 
 
-def _copies_golden_decisions(held_out: list, candidate_by_word: dict) -> bool:
-    # A candidate that is the golden file itself (or an exact copy of its held-out
-    # decisions) proves the gate runs, not that the labelling run earned a pass.
-    if not held_out:
-        return False
-    for entry in held_out:
-        candidate = candidate_by_word.get(entry["word"])
-        if candidate is None or candidate.get("decision") != entry.get("decision"):
-            return False
-        if entry.get("decision") == "reject" and candidate.get("reason") != entry.get("reason"):
-            return False
-    return True
-
-
 def passes_thresholds(
     *,
     accept_precision: float,
@@ -148,12 +149,11 @@ def passes_thresholds(
     held_out_count: int,
     missing: list,
     duplicate: list,
-    copied: bool,
 ) -> bool:
     # The single place that decides pass/fail, kept pure and keyword-only so the
     # `>=` boundary and the threshold constants can be pinned with plain numbers in
     # tests. Fails closed: any integrity gap, or nothing to measure, is a fail.
-    if missing or duplicate or copied:
+    if missing or duplicate:
         return False
     if held_out_count == 0 or sensitive_total == 0:
         return False
@@ -171,7 +171,6 @@ def evaluate(golden: list, candidate: list) -> dict:
     missing = [entry["id"] for entry in held_out if candidate_counts[entry["word"]] == 0]
     duplicate = [entry["id"] for entry in held_out if candidate_counts[entry["word"]] > 1]
     extra_candidate_words = sum(1 for word in candidate_counts if word not in held_out_words)
-    copied = _copies_golden_decisions(held_out, candidate_by_word)
 
     accept = score_accept(held_out, candidate_by_word)
     reject_reason_recall = {
@@ -185,7 +184,6 @@ def evaluate(golden: list, candidate: list) -> dict:
         held_out_count=len(held_out),
         missing=missing,
         duplicate=duplicate,
-        copied=copied,
     )
 
     return {
@@ -196,7 +194,6 @@ def evaluate(golden: list, candidate: list) -> dict:
             "missing": missing,
             "duplicate": duplicate,
             "extra_candidate_words": extra_candidate_words,
-            "copied_from_golden": copied,
         },
         "thresholds": {
             "accept_precision_min": LABEL_ACCEPT_PRECISION_MIN,

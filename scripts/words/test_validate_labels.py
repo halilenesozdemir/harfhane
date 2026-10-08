@@ -404,6 +404,115 @@ class UnlimitedImportEvalGateTests(MainCliHelpers, unittest.TestCase):
             self.assertIn("failed to score eval candidate", stderr)
             self.assertFalse(os.path.exists(stale_path))
 
+    def test_removes_the_stale_csv_and_prints_a_reason_for_each_malformed_candidate_row(self):
+        # A row that isn't a JSON object, or whose "word" isn't a string, used to crash
+        # with an unhandled TypeError/AttributeError and leave the stale CSV in place.
+        bad_rows = ['"just a string"', "[1, 2]", '{"word": null}', '{"word": 5}']
+        for bad_row in bad_rows:
+            with self.subTest(bad_row=bad_row):
+                with tempfile.TemporaryDirectory() as tmp:
+                    self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+                    self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+                    self._write_passing_eval(tmp)
+                    self._write(tmp, "candidate.jsonl", bad_row + "\n")
+                    stale_path = os.path.join(tmp, "unlimited-5.csv")
+                    self._write(tmp, "unlimited-5.csv", "word\r\nSTALEWORD\r\n")
+
+                    code, stderr = self._run_main_capturing_stderr(
+                        tmp,
+                        [
+                            "--length", "5", "--pool", "unlimited",
+                            "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                        ],
+                    )
+                    self.assertEqual(code, 1)
+                    self.assertIn("label eval gate:", stderr)
+                    self.assertFalse(os.path.exists(stale_path))
+
+    def test_prints_a_specific_reason_when_accept_precision_is_below_threshold_010_AE4(self):
+        # Held-out: 18 true accepts, 2 false accepts (accept precision 18/20 = 0.90,
+        # below the 0.95 minimum); 5 sensitive rejects all correctly caught (recall
+        # 1.0), so only the accept-precision reason should print.
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            held_out = (
+                [{"word": f"A{i}", "decision": "accept", "id": f"G{i}"} for i in range(18)]
+                + [{"word": f"R{i}", "decision": "reject", "reason": "other", "id": f"G{18 + i}"} for i in range(2)]
+                + [{"word": f"S{i}", "decision": "reject", "reason": "sensitive", "id": f"G{20 + i}"} for i in range(5)]
+            )
+            self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(entry) for entry in held_out) + "\n")
+            candidate = (
+                [json.dumps({"word": f"A{i}", "decision": "accept"}) for i in range(18)]
+                + [json.dumps({"word": f"R{i}", "decision": "accept"}) for i in range(2)]
+                + [json.dumps({"word": f"S{i}", "decision": "reject", "reason": "sensitive"}) for i in range(5)]
+            )
+            self._write(tmp, "candidate.jsonl", "\n".join(candidate) + "\n")
+            with patch.object(vl.eval_labels, "split_golden", return_value=([], held_out)):
+                code, stderr = self._run_main_capturing_stderr(
+                    tmp,
+                    [
+                        "--length", "5", "--pool", "unlimited",
+                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                    ],
+                )
+            self.assertEqual(code, 1)
+            self.assertIn("label eval gate: accept precision 0.90 < 0.95", stderr)
+
+    def test_prints_a_specific_reason_when_sensitive_recall_is_below_threshold(self):
+        # 100 true accepts (precision stays high); 20 sensitive rejects, 16 caught, 4
+        # missed -> sensitive recall 16/20 = 0.80, below the 0.98 minimum.
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            held_out = (
+                [{"word": f"A{i}", "decision": "accept", "id": f"G{i}"} for i in range(100)]
+                + [{"word": f"S{i}", "decision": "reject", "reason": "sensitive", "id": f"G{100 + i}"} for i in range(20)]
+            )
+            self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(entry) for entry in held_out) + "\n")
+            candidate = (
+                [json.dumps({"word": f"A{i}", "decision": "accept"}) for i in range(100)]
+                + [json.dumps({"word": f"S{i}", "decision": "reject", "reason": "sensitive"}) for i in range(16)]
+                + [json.dumps({"word": f"S{i}", "decision": "accept"}) for i in range(16, 20)]
+            )
+            self._write(tmp, "candidate.jsonl", "\n".join(candidate) + "\n")
+            with patch.object(vl.eval_labels, "split_golden", return_value=([], held_out)):
+                code, stderr = self._run_main_capturing_stderr(
+                    tmp,
+                    [
+                        "--length", "5", "--pool", "unlimited",
+                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                    ],
+                )
+            self.assertEqual(code, 1)
+            self.assertIn("label eval gate: sensitive recall 0.80 < 0.98", stderr)
+
+    def test_prints_a_specific_reason_when_there_are_no_sensitive_rejects_in_held_out(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            held_out = (
+                [{"word": f"A{i}", "decision": "accept", "id": f"G{i}"} for i in range(9)]
+                + [{"word": "R0", "decision": "reject", "reason": "other", "id": "G9"}]
+            )
+            self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(entry) for entry in held_out) + "\n")
+            # One reject reason differs from golden's ("obscure" vs "other") so this
+            # is a genuine match, not a byte-identical copy of golden's decisions.
+            candidate = [json.dumps({"word": f"A{i}", "decision": "accept"}) for i in range(9)] + [
+                json.dumps({"word": "R0", "decision": "reject", "reason": "obscure"})
+            ]
+            self._write(tmp, "candidate.jsonl", "\n".join(candidate) + "\n")
+            with patch.object(vl.eval_labels, "split_golden", return_value=([], held_out)):
+                code, stderr = self._run_main_capturing_stderr(
+                    tmp,
+                    [
+                        "--length", "5", "--pool", "unlimited",
+                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                    ],
+                )
+            self.assertEqual(code, 1)
+            self.assertIn("label eval gate: no sensitive rejects in held-out", stderr)
+
     def test_prints_a_reason_and_removes_the_stale_csv_on_a_duplicate_golden_word(self):
         with tempfile.TemporaryDirectory() as tmp:
             self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
