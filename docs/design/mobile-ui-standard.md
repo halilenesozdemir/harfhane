@@ -220,7 +220,8 @@ One component, `apps/mobile/src/ui/TopBar.tsx`. Pattern: M3 small center-aligned
   on, state changes appear instantly (Plan 011 AE2).
 - **M3 [R]** Animate only `transform` and `opacity` with `useNativeDriver: true` (Plan 011 KTD1).
 - **M4 [R]** No animation blocks input for more than 300 ms, except the launch intro (≤ 800 ms,
-  skippable by tap).
+  skippable by tap) and the row reveal, which may block submitting the next guess until the last
+  tile's colour is shown (web parity, Plan 011 U2).
 
 ## 12. Accessibility
 

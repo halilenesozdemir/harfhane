@@ -6,6 +6,8 @@ import { Keyboard } from '../components/Keyboard';
 import { useTheme } from '../ThemeProvider';
 import { useGame } from '../game/useGame';
 import { useHint } from '../game/useHint';
+import { useRevealState } from '../game/useRevealState';
+import { useReduceMotion } from '../ui/motion/useReduceMotion';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
@@ -28,6 +30,7 @@ const SCREEN_PADDING = SPACING.md;
 const SECTION_GAP = SPACING.md;
 const BUTTON_PADDING = SPACING.md;
 const BUTTON_RADIUS = RADIUS.md;
+function NOOP(): void {}
 
 interface ActionButtonProps {
   readonly label: string;
@@ -52,10 +55,20 @@ interface GameBoardProps {
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
   readonly today: GameDependencies['today'];
+  readonly recordedDistribution: readonly number[] | null;
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today }: GameBoardProps) {
+function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
+  const reduceMotion = useReduceMotion();
+  const reveal = useRevealState(session, session.solution.length, reduceMotion);
+  // A fast player's next Enter must not land mid-flip (M4 exception); letters and backspace stay
+  // live throughout (only Enter, and only until the last tile's colour is shown — item 7).
+  const onSubmit = reveal.isEnterBlocked ? NOOP : game.onSubmit;
+  // Lead decision: the game-over card (and its share/countdown) waits for the reveal flip and the
+  // win bounce to finish, same as web's 1500ms wait — a restored, already-finished game has
+  // neither running, so its card still shows immediately.
+  const isGameOverReady = isFinished && !reveal.isRevealing && !reveal.celebrateRow;
   return (
     <>
       <GameGrid
@@ -65,6 +78,10 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
         wordLength={session.solution.length}
         hints={hint.hints}
         isPlaying={!isFinished}
+        isRevealing={reveal.isRevealing}
+        shakeRow={reveal.shakeRow}
+        celebrateRow={reveal.celebrateRow}
+        reduceMotion={reduceMotion}
       />
       {!isFinished && (
         <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
@@ -72,7 +89,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
       {mode === 'daily' && !isFinished && (
         <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
       )}
-      {isFinished && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
+      {isGameOverReady && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
         <GameOverCard
           mode={mode}
           wordLength={wordLength}
@@ -85,15 +102,18 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           store={store}
           today={today}
           onNewGame={game.startNewGame}
+          recordedDistribution={recordedDistribution}
         />
-      ) : (
+      ) : null}
+      {!isFinished && (
         <Keyboard
           keyboardStatus={session.game.keyboardStatus}
           onLetter={game.onLetter}
           onDelete={game.onDelete}
-          onSubmit={game.onSubmit}
+          onSubmit={onSubmit}
           isHapticsEnabled={game.isHapticsEnabled}
           isInputBlocked={session.isSubmitting}
+          isSubmitBlocked={session.isSubmitting || reveal.isEnterBlocked}
         />
       )}
     </>
@@ -108,9 +128,10 @@ interface GameBodyProps {
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
   readonly today: GameDependencies['today'];
+  readonly recordedDistribution: readonly number[] | null;
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBodyProps) {
+function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -121,13 +142,25 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBo
       </View>
     );
   }
-  return <GameBoard session={session} mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />;
+  return (
+    <GameBoard
+      session={session}
+      mode={mode}
+      wordLength={wordLength}
+      game={game}
+      hint={hint}
+      colors={colors}
+      store={store}
+      today={today}
+      recordedDistribution={recordedDistribution}
+    />
+  );
 }
 
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store, today });
-  useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,
     mode,
@@ -144,7 +177,16 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
         </Pressable>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{`${MODE_TITLES[mode]} · ${wordLength} harf`}</Text>
       </View>
-      <GameBody mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />
+      <GameBody
+        mode={mode}
+        wordLength={wordLength}
+        game={game}
+        hint={hint}
+        colors={colors}
+        store={store}
+        today={today}
+        recordedDistribution={justRecordedDistribution}
+      />
     </View>
   );
 }
