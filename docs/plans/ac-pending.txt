@@ -21,5 +21,4 @@
 010-AE1  Plan 010 U1 (packages/shared strict flags + ts-reset), not started
 010-AE2  Plan 010 U4 (branded WordLength/TurkeyDate types), not started
 011-AE2  Plan 011 U2 (tile animations, reduce-motion) not started
-011-AE5  Plan 011 U5 (first-launch how-to-play) not started
 011-AE7  Plan 011 U7 (mobile UI standard redesign) not started

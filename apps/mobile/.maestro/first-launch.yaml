@@ -1,0 +1,31 @@
+appId: host.exp.exponent
+---
+# 011-AE5: a fresh install (cleared app state) opens How to play before home; after closing it
+# with its first-launch "Oyna" action, a later launch (no state cleared) goes straight home.
+- launchApp:
+    clearState: true
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 30000
+    optional: true
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - back
+- extendedWaitUntil:
+    visible: "Nasıl Oynanır?"
+    timeout: 15000
+- tapOn: "Oyna"
+- extendedWaitUntil:
+    visible: "HARFHANE"
+    timeout: 15000
+
+- stopApp
+- runFlow: subflows/open-resume.yaml
+- extendedWaitUntil:
+    visible: "HARFHANE"
+    timeout: 15000
+- assertNotVisible: "Nasıl Oynanır?"

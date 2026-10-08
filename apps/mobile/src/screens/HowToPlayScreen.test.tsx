@@ -18,4 +18,14 @@ describe('HowToPlayScreen', () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('should show a primary Oyna button instead of Kapat on first launch (011-AE5)', async () => {
+    const onClose = jest.fn();
+    await renderWithTheme(<HowToPlayScreen onClose={onClose} isFirstLaunch />);
+    expect(screen.queryByLabelText('Kapat')).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Oyna'));
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

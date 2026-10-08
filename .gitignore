@@ -49,7 +49,6 @@ apps/frontend/dev-dist/
 
 # Build output
 apps/frontend/dist/
-scripts/scraped-words.json
 scripts/curated-words.json
 
 /dev-dist/

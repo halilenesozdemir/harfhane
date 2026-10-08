@@ -2,13 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import App, { AppNavigator } from './App';
+import App, { AppNavigator, FirstLaunchGate } from './App';
 import { ThemeProvider } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { deviceStore } from './src/game/device-store';
 import { PLAYABLE_LENGTHS_STORAGE_KEY } from './src/lib/playable-lengths';
 import { createMemoryStore, flattenStyle } from './src/test-utils/render-with-theme';
 import { useFonts } from '@expo-google-fonts/baloo-2/useFonts';
+import { HOW_TO_PLAY_SEEN_KEY } from './src/first-launch-store';
 import type { KeyValueStore } from './src/game/game-storage';
 
 const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
@@ -54,7 +55,19 @@ jest.mock('./src/game/device-store', () => {
         entries.set(key, value);
       }),
     },
+    __entries: entries,
   };
+});
+
+interface DeviceStoreMockModule {
+  readonly __entries: Map<string, string>;
+}
+
+// Full isolation between tests: without this, one test's writes (and any
+// of its still-settling async reads) could leak into the next test's
+// render through the shared in-memory map above.
+afterEach(() => {
+  (jest.requireMock('./src/game/device-store') as DeviceStoreMockModule).__entries.clear();
 });
 
 async function openAndClose(openLabel: string, title: string) {
@@ -70,6 +83,15 @@ function latestBackHandler(addSpy: jest.SpyInstance): () => boolean {
 }
 
 describe('App', () => {
+  // Every test below is about a returning user, not the first-launch flow
+  // (covered separately in its own describe block), so each one starts
+  // with the how-to-play-seen flag already set in the shared device store
+  // mock — otherwise the first launch of How to play (R7/AE5) would cover
+  // the home screen these tests expect to see immediately.
+  beforeEach(async () => {
+    await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'true');
+  });
+
   it('should reach the game screen from home when daily is started and go back', async () => {
     await render(<App />);
     await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
@@ -126,7 +148,7 @@ describe('App', () => {
     await render(
       <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 320, height: 640 }, insets }}>
         <ThemeProvider store={createMemoryStore()}>
-          <AppNavigator />
+          <AppNavigator hasSeenHowToPlay onHowToPlaySeen={() => undefined} />
         </ThemeProvider>
       </SafeAreaProvider>,
     );
@@ -224,10 +246,14 @@ describe('App', () => {
     it('(011-AE4) should hide the splash screen only after stored state has loaded', async () => {
       (SplashScreen.hideAsync as jest.Mock).mockClear();
 
+      // FirstLaunchGate (not AppNavigator directly): splash-hiding now
+      // lives in the how-to-play gate, which only starts loading once
+      // ThemeProvider's own delayed load below has already resolved, so
+      // this still proves the splash waits for both theme and the flag.
       await render(
         <SafeAreaProvider>
           <ThemeProvider store={createDelayedStore()}>
-            <AppNavigator />
+            <FirstLaunchGate />
           </ThemeProvider>
         </SafeAreaProvider>,
       );
@@ -237,6 +263,24 @@ describe('App', () => {
         await new Promise((resolve) => setTimeout(resolve, STORE_DELAY_MS + 50));
       });
       expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('(011-AE5) should render neither Home nor How to play while the how-to-play flag read is still pending', async () => {
+      // Kills the mutant that drops FirstLaunchGate's "return null until
+      // isLoaded": without that guard, AppNavigator would mount with
+      // whatever hasSeenHowToPlay default it falls back to while this
+      // read never settles, rendering one screen or the other.
+      const mocked = jest.requireMock('./src/game/device-store') as DeviceStoreMockModule;
+      const defaultGetItem = async (key: string) => mocked.__entries.get(key) ?? null;
+      (deviceStore.getItem as jest.Mock).mockImplementation((key: string) =>
+        key === HOW_TO_PLAY_SEEN_KEY ? new Promise<string | null>(() => undefined) : defaultGetItem(key),
+      );
+
+      await render(<App />);
+      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.queryByLabelText('HARFHANE')).toBeNull();
+
+      (deviceStore.getItem as jest.Mock).mockImplementation(defaultGetItem);
     });
 
     it('(011-AE4) should not mount the themed app, and so never hide the splash, while fonts are still loading', async () => {
@@ -253,6 +297,51 @@ describe('App', () => {
 
       await render(<App />);
       expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+    });
+  });
+
+  describe('first launch (R7)', () => {
+    it('(011-AE5) should show How to play on a fresh install, then go straight home on the next launch after closing it', async () => {
+      // Overrides this test's own beforeEach (which assumes a returning
+      // user) with any value other than the seen sentinel, reproducing
+      // what a fresh install's missing key resolves to: "not seen".
+      await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'not-seen-yet');
+
+      const firstLaunch = await render(<App />);
+      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
+      expect(screen.queryByLabelText('HARFHANE')).toBeNull();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText('Oyna'));
+      });
+      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      await act(async () => {
+        firstLaunch.unmount();
+      });
+
+      // Re-mounts App against the same persisted device store (the shared
+      // mock's Map carries the write from closing How to play above), which
+      // is this test's stand-in for "the next launch".
+      await render(<App />);
+      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+    });
+
+    it('(011-AE5) should go home directly on hardware back from How to play on first launch', async () => {
+      await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'not-seen-yet');
+      const addSpy = jest.spyOn(BackHandler, 'addEventListener');
+
+      await render(<App />);
+      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
+
+      let handled = false;
+      await act(async () => {
+        handled = latestBackHandler(addSpy)();
+      });
+      expect(handled).toBe(true);
+      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+
+      addSpy.mockRestore();
     });
   });
 

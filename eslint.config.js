@@ -51,9 +51,4 @@ export default defineConfig([
     files: [`${FRONTEND}/public/push-handler.js`],
     languageOptions: { globals: globals.serviceworker },
   },
-  {
-    files: [`${FRONTEND}/public/_worker.js`],
-    languageOptions: { globals: { ...globals.worker, HTMLRewriter: 'readonly' } },
-    rules: { 'no-empty': ['error', { allowEmptyCatch: true }] },
-  },
 ])
