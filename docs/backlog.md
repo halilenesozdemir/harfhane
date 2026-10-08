@@ -63,11 +63,19 @@ word scheduled in the future, refuse activating a `rejected` word).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
-- Audit unused files, hooks, routes, API endpoints and migrations-only tables before moving game logic into `packages/shared`.
-- Plan web ↔ mobile routing: store links, deep links, "get the app" banner.
-- Found by `knip` (Plan 009 U7): `apps/backend/src/routes/words.ts:51` (`GET /words/challenge/:wordId`)
-  has no frontend caller left now that the dead `useChallengeWord` hook is gone. Decide whether to
-  delete the route too.
+- Audit done (2026-10-08): `pnpm knip` is clean and a manual grep for unused hooks/routes/components
+  found nothing beyond the items resolved below and the root TDK scrape files tracked in a companion
+  PR (see "Architecture review findings" below).
+- `GET /words/challenge/:wordId` (`apps/backend/src/routes/words.ts`) had no caller: the dead
+  `useChallengeWord` hook was already gone, and `useSessionChallenge`/`challengeUrl` (GamePage,
+  GameOverModal, SharePreview) are a local session-progress tracker and a client-built share link —
+  neither ever called this route. Deleted the route, `getWordById` (`word-service.ts`) and
+  `findWordById` (`word-repository.ts`) with their tests.
+- `apps/frontend/public/_worker.js` was a bare `env.ASSETS.fetch(request)` passthrough that only
+  forced Cloudflare Pages into Advanced Mode; `_headers`/`_redirects` still apply with it gone.
+  Deleted it and its `eslint.config.js` override.
+- Plan web ↔ mobile routing (store links, deep links, "get the app" banner): still open, post-launch —
+  not part of this cleanup pass.
 
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
@@ -159,9 +167,11 @@ and already removed end to end in #54.
 - **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
   `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
   version the storage schema, key daily saves by the server's `date`.
-- **Deletions.** `apps/frontend/public/_worker.js` is now a passthrough that forces Pages Functions mode;
-  `/api/words/challenge/:wordId` lets anyone walk the answer pool by id; root TDK scrape files (`tdk-seed.sql`,
-  `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`) conflict with Invariant 3.
+- **Deletions.** Root TDK scrape files (`tdk-seed.sql`, `tdk-wordlist.sql`, `scrape-words.ts`,
+  `build-tdk-wordlist.mjs`) conflict with Invariant 3 — deletion tracked in a companion PR to keep
+  that pure-deletion diff separate from the code changes here. `apps/frontend/public/_worker.js`
+  (a passthrough that forced Pages Functions mode) and `/api/words/challenge/:wordId` (no caller
+  left) are deleted in this pass.
 - **Web player experience.** `min-h-screen` instead of `dvh` on game pages; no safe-area padding under the
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
