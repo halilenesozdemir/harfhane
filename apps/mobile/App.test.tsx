@@ -257,12 +257,9 @@ describe('App', () => {
   });
 
   describe('haptics (Plan 011 U3)', () => {
-    // This is the real path: GameScreen passes no isHapticsEnabled prop to Keyboard, so
-    // Keyboard reads its own useHapticsSettings() on mount, and Settings is a separate
-    // route navigated to and from, not a sibling sharing React state. A test that only
-    // exercises the isHapticsEnabled prop (Keyboard.test.tsx) can't prove this path: it
-    // would keep passing even if the Settings switch were never wired to setEnabled, if
-    // setEnabled never persisted, or if parseHapticsEnabled always returned true.
+    // The real path: Settings is a separate route, and GameScreen reads the stored setting
+    // through useGame() when the game mounts. A Keyboard-only prop test can't prove that the
+    // switch is wired to setEnabled, that it persists, or that the stored value is parsed.
     it('should stop the key-tap haptic after Titreşim is switched off in Settings (011-AE3)', async () => {
       await render(<App />);
       await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
