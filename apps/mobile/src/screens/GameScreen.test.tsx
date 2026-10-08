@@ -152,21 +152,24 @@ describe('GameScreen', () => {
     }
   });
 
-  it('should give no key-tap haptic for a key pressed while the previous row is still revealing (M4, isInputBlocked includes isEnterBlocked)', async () => {
+  it('should keep the normal key-tap haptic for a letter during the post-guess Enter block, but give none for Enter itself (M4, isSubmitBlocked is Enter-only)', async () => {
     jest.useFakeTimers();
     try {
       await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
       await screen.findByLabelText('Gönder');
       await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // wrong guess; still playing, now revealing
 
+      // A letter typed during the Enter block must stay snappy: normal haptic, and it lands.
       mockPerformAndroidHapticsAsync.mockClear();
       await act(async () => fireEvent.press(screen.getByTestId('key-A')));
-      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('keyboard-tap');
-
-      await act(async () => jest.advanceTimersByTime(ENTER_UNBLOCK_MS));
-      mockPerformAndroidHapticsAsync.mockClear();
-      await act(async () => fireEvent.press(screen.getByTestId('key-B')));
       expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('A');
+
+      // Enter itself is still blocked here (M4): no haptic, and the guess does not submit.
+      mockPerformAndroidHapticsAsync.mockClear();
+      await act(async () => fireEvent.press(screen.getByTestId('key-ENTER')));
+      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('A');
     } finally {
       jest.useRealTimers();
     }
@@ -434,6 +437,66 @@ describe('GameScreen', () => {
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
     const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(within(fill).getByText('1')).toBeTruthy();
+  });
+
+  it("should show game 2's own distribution, not game 1's stale one, once game 2's stats write resolves (B2)", async () => {
+    interface HoldableStore extends KeyValueStore {
+      holdWrites(): void;
+      releaseWrites(): void;
+    }
+    function createHoldableStore(): HoldableStore {
+      const entries = new Map<string, string>();
+      const heldCommits: Array<() => void> = [];
+      let writesHeld = false;
+      return {
+        getItem: async (key) => entries.get(key) ?? null,
+        setItem: (key, value) =>
+          new Promise<void>((resolve) => {
+            const commit = () => {
+              entries.set(key, value);
+              resolve();
+            };
+            if (writesHeld) {
+              heldCommits.push(commit);
+              return;
+            }
+            commit();
+          }),
+        holdWrites() {
+          writesHeld = true;
+        },
+        releaseWrites() {
+          writesHeld = false;
+          while (heldCommits.length > 0) heldCommits.shift()?.();
+        },
+      };
+    }
+
+    await enableReduceMotion();
+    const store = createHoldableStore();
+    const api = createApi();
+    (api.fetchRandomWord as jest.Mock)
+      .mockResolvedValueOnce({ word: { word: 'KALEM' }, wordId: 9 })
+      .mockResolvedValueOnce({ word: { word: 'KAPAK' }, wordId: 10 });
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={store} today={today} />);
+    await screen.findByLabelText('Gönder');
+
+    // Game 1: win in 1 guess, and let its stats write resolve before game 2 starts.
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await waitFor(() => expect(within(screen.getByTestId('gameover-distribution-1-fill')).getByText('1')).toBeTruthy());
+
+    // Game 2's stats write is held pending (simulating slow I/O) while it plays out.
+    store.holdWrites();
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-new-word')));
+    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'B', 'A', 'K', 'ENTER']); // game 2, guess 1: wrong
+    await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // game 2, guess 2: win
+    expect(screen.getByTestId('gameover-card')).toBeTruthy();
+
+    await act(async () => store.releaseWrites());
+    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-2-fill'));
     expect(within(fill).getByText('1')).toBeTruthy();
   });
 
