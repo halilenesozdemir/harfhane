@@ -69,10 +69,8 @@ produces the same output files under `data/words/`.
   normalized word into a calibration half and a held-out eval half. Reports accept
   precision/recall and recall for the family-protecting reject reasons (`sensitive`,
   `proper_noun`, `foreign`), naming a miss by the golden entry's id, never the word. Fails
-  closed on anything that would prove nothing (a held-out word missing/duplicated in the
-  candidate, an empty held-out set, no `sensitive` rejects, zero predicted accepts), gated
-  on `LABEL_ACCEPT_PRECISION_MIN = 0.95` / `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls
-  a model.
+  closed on anything that proves nothing, gated on `LABEL_ACCEPT_PRECISION_MIN = 0.95` /
+  `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls a model.
 - `test_eval_labels.py`: unittest suite for the eval scorer.
 
 ## Unlimited pool

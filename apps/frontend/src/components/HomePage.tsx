@@ -50,7 +50,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       <div className="w-full max-w-md space-y-3">
         <button
           onClick={() => onSelectMode("daily", dailyLength)}
-          className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+          className="w-full bg-correct-depth text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
@@ -58,7 +58,10 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
             </div>
             <div className="text-left">
               <h2 className="text-xl font-bold">Günlük Oyun</h2>
-              <p className="text-white/75 text-sm">Günün {dailyLength} harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
+              {/* /75 opacity failed WCAG AA contrast against bg-correct (axe: 3.15,
+                  needs 4.5); /90 clears it while keeping the subtitle visually
+                  lighter than the heading above it. */}
+              <p className="text-white/90 text-sm">Günün {dailyLength} harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
             </div>
           </div>
         </button>
@@ -86,7 +89,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
                 onClick={() => setPickedLength(len)}
                 className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                   selectedLength === len
-                    ? "bg-present text-white shadow-sm"
+                    ? "bg-present text-present-fg shadow-sm"
                     : "bg-tile-empty text-text-secondary hover:bg-tile-filled"
                 }`}
               >

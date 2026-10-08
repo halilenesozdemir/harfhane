@@ -4,15 +4,14 @@ code enforces).
 
 The golden set (`data/words/review/labels-5.jsonl`) is split by a hash of each entry's
 normalized word (KTD1): half calibrate prompts, the other half is held out and scored
-against a "candidate" — a model's attempt at labelling those same words. Hashing the
-word (not file position) keeps the split stable as the golden file changes elsewhere.
-Never calls a model itself (KTD2), so it runs in CI without API keys.
+against a "candidate" model attempt at labelling those same words. Hashing the word (not
+file position) keeps the split stable as the golden file changes elsewhere. Never calls a
+model itself (KTD2), so it runs in CI without API keys.
 
-Fail-closed, not fail-open (see `passes_thresholds`): refuses to pass whenever it
-cannot prove the batch trustworthy — a held-out word missing or duplicated in the
-candidate, an empty held-out set, no `sensitive` rejects to measure recall against, or
-zero predicted "accept" decisions. A miss is reported by the golden entry's id
-("G<n>"), never the word, since a miss may be a slur or other sensitive word.
+Fail-closed, not fail-open (see `passes_thresholds`): refuses to pass on anything that
+would prove nothing -- a held-out word missing/duplicated in the candidate, an empty
+held-out set, no `sensitive` rejects to measure recall against, or zero predicted
+"accept" decisions. A miss is reported by the golden entry's id ("G<n>"), never the word.
 
     python3 scripts/words/eval_labels.py --golden PATH --candidate PATH
 """

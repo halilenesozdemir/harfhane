@@ -1,11 +1,14 @@
 import { expect, test } from './support/fixtures';
+import { assertNoSeriousA11yViolations } from './support/axe';
 
-test('home page loads with daily and unlimited mode entry points', async ({ page }) => {
+test('home page loads with daily and unlimited mode entry points (009-AE2)', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByRole('heading', { name: 'HARFHANE' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Günlük Oyun' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sınırsız Mod' })).toBeVisible();
+
+  await assertNoSeriousA11yViolations(page);
 });
 
 for (const legacyPath of ['/lists', '/play/eski-liste', '/tournament']) {

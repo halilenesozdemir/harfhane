@@ -129,6 +129,16 @@ class PassesThresholdsTests(unittest.TestCase):
         base.update(overrides)
         return base
 
+    def test_thresholds_are_pinned_to_the_plan_010_r5_literal_values(self):
+        # Independent of LABEL_ACCEPT_PRECISION_MIN/LABEL_SENSITIVE_RECALL_MIN's current
+        # value, so a mutant that changes either constant still fails this test.
+        self.assertEqual(LABEL_ACCEPT_PRECISION_MIN, 0.95)
+        self.assertEqual(LABEL_SENSITIVE_RECALL_MIN, 0.98)
+        self.assertTrue(passes_thresholds(**self._ok(accept_precision=0.95)))
+        self.assertFalse(passes_thresholds(**self._ok(accept_precision=0.949)))
+        self.assertTrue(passes_thresholds(**self._ok(sensitive_recall=0.98)))
+        self.assertFalse(passes_thresholds(**self._ok(sensitive_recall=0.979)))
+
     def test_accept_precision_boundary_at_the_minimum_and_at_090(self):
         self.assertTrue(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN)))
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN - 0.001)))
@@ -180,9 +190,8 @@ class EvaluateIntegrationTests(unittest.TestCase):
         self.assertEqual(all_reject_report["accept"]["precision"], 0.0)
 
     def test_fails_on_an_all_accept_candidate_with_lowercase_words(self):
-        # Before normalization, lowercase candidate words silently failed to match
-        # the uppercase golden words and looked like "nothing was accepted" --
-        # including the sensitive reject, which would have looked "caught".
+        # Before normalization, lowercase candidate words looked unmatched -- including
+        # the sensitive reject, which would have looked "caught".
         held_out = [golden_accept(f"A{i}") for i in range(10)] + [golden_reject("S0", "sensitive")]
         candidate = [candidate_accept(f"a{i}") for i in range(10)] + [candidate_accept("s0")]
         report = self._evaluate_with_held_out(held_out, candidate)
@@ -198,9 +207,8 @@ class EvaluateIntegrationTests(unittest.TestCase):
         self.assertFalse(missing_report["passes"])
         self.assertIn("G1", missing_report["integrity"]["missing"])
 
-        # Regression for a "last write wins" bug: if the duplicate check only
-        # inspected the final entry for a word, an accept-then-reject duplicate
-        # would look like a clean single reject and silently pass.
+        # Regression: a "last write wins" dict build let an accept-then-reject
+        # duplicate look like a clean single reject.
         duplicate_held_out = [golden_reject("S0", "sensitive")]
         duplicate_report = self._evaluate_with_held_out(
             duplicate_held_out, [candidate_accept("S0"), candidate_reject("S0", "sensitive")]
