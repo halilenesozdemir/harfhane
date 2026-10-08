@@ -392,9 +392,12 @@ changing them.
 ## Label eval candidate is not bound to the batch it vets (Plan 010 U5/U6, 2026-10-08)
 `scripts/words/validate_labels.py --eval-candidate` isn't tied to the labelling run it vets (no
 prompt version or model id recorded/checked); a stale, unrelated candidate file passes the gate
-just as well as the real one, once it is not literally the golden file (blocked separately: see
-`eval_labels.py`'s copied-decisions check). Needed once prompt calibration or model-swap tracking
-lands.
+just as well as the real one, as long as it is not literally the golden file (only that exact case
+is blocked, by the `--eval-candidate`/`--golden` realpath check in `validate_labels.py`). A
+candidate file that copies the golden set's held-out decisions under a different path is not
+detected at all (the `_copies_golden_decisions` heuristic that used to flag this was removed: it
+was trivially bypassed by changing one reject reason, and it blocked a legitimately perfect
+candidate). Needed once prompt calibration or model-swap tracking lands.
 
 ## test_eval_labels.py doesn't pin which hash half is held-out (2026-10-08)
 `eval_labels.split_golden()`'s hash bucketing decides which half calibrates prompts and which is
