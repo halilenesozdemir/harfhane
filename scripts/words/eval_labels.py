@@ -53,8 +53,7 @@ def _check_row_shape(entry, index: int) -> None:
 
 
 def load_candidate(path: str) -> list:
-    # No ids added: these words are about to be imported, not golden-set entries
-    # that must stay out of reports.
+    # No ids: these words are about to be imported, not golden-set entries.
     with open(path, encoding="utf-8") as handle:
         labels = [json.loads(line) for line in handle if line.strip()]
     for index, label in enumerate(labels):
