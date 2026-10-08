@@ -82,12 +82,25 @@ describe('GameOverDistribution', () => {
     expect(within(firstFill).getByText('1')).toBeTruthy();
   });
 
-  it('should include the just-finished game in the unlimited distribution', async () => {
+  it('should show the just-finished game in the unlimited distribution once useResultRecorder has saved it', async () => {
+    // Item 8's reveal/bounce gate means GameOverCard only ever mounts after useResultRecorder's
+    // write has landed (unlimited has no "reopen a finished game" path, so every mount follows a
+    // just-happened win/loss) — this hook trusts that write instead of racing and re-adding on
+    // top of it, or the bar would show 2 for a game that only happened once.
     const store = createMemoryStore();
-    await saveUnlimitedStats(store, 5, createInitialUnlimitedStats());
+    await saveUnlimitedStats(store, 5, { ...createInitialUnlimitedStats(), guessDistribution: [0, 1, 0, 0, 0, 0] });
     await renderDistribution({ store, mode: 'unlimited', dailyDate: null, guessCount: 2 });
     const secondRow = await screen.findByTestId('gameover-distribution-2');
     expect(within(secondRow).getByText('1')).toBeTruthy();
+  });
+
+  it('should not double it when the unlimited result was already recorded, unlike a racing optimistic add would', async () => {
+    const store = createMemoryStore();
+    await saveUnlimitedStats(store, 5, { ...createInitialUnlimitedStats(), guessDistribution: [1, 0, 0, 0, 0, 0] });
+    await renderDistribution({ store, mode: 'unlimited', dailyDate: null, guessCount: 1 });
+    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
+    expect(within(firstFill).getByText('1')).toBeTruthy();
+    expect(within(firstFill).queryByText('2')).toBeNull();
   });
 
   it('should not add to any bar when the daily game was lost (every bar stays empty with no prior stats)', async () => {

@@ -61,8 +61,13 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
   const isFinished = session.game.gameStatus !== 'playing';
   const reduceMotion = useReduceMotion();
   const reveal = useRevealState(session, session.solution.length, reduceMotion);
-  // A fast player's next Enter must not land mid-flip (R2); letters and backspace stay live.
-  const onSubmit = reveal.isRevealing ? NOOP : game.onSubmit;
+  // A fast player's next Enter must not land mid-flip (M4 exception); letters and backspace stay
+  // live throughout (only Enter, and only until the last tile's colour is shown — item 7).
+  const onSubmit = reveal.isEnterBlocked ? NOOP : game.onSubmit;
+  // Lead decision: the game-over card (and its share/countdown) waits for the reveal flip and the
+  // win bounce to finish, same as web's 1500ms wait — a restored, already-finished game has
+  // neither running, so its card still shows immediately.
+  const isGameOverReady = isFinished && !reveal.isRevealing && !reveal.celebrateRow;
   return (
     <>
       <GameGrid
@@ -75,6 +80,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
         isRevealing={reveal.isRevealing}
         shakeRow={reveal.shakeRow}
         celebrateRow={reveal.celebrateRow}
+        reduceMotion={reduceMotion}
       />
       {!isFinished && (
         <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
@@ -82,7 +88,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
       {mode === 'daily' && !isFinished && (
         <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
       )}
-      {isFinished && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
+      {isGameOverReady && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
         <GameOverCard
           mode={mode}
           wordLength={wordLength}
@@ -96,14 +102,15 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           today={today}
           onNewGame={game.startNewGame}
         />
-      ) : (
+      ) : null}
+      {!isFinished && (
         <Keyboard
           keyboardStatus={session.game.keyboardStatus}
           onLetter={game.onLetter}
           onDelete={game.onDelete}
           onSubmit={onSubmit}
           isHapticsEnabled={game.isHapticsEnabled}
-          isInputBlocked={session.isSubmitting || reveal.isRevealing}
+          isInputBlocked={session.isSubmitting || reveal.isEnterBlocked}
         />
       )}
     </>

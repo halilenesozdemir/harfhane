@@ -4,7 +4,8 @@ import type { ApiClient } from '../lib/api';
 import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
 import { GameScreen } from './GameScreen';
 import { loadDailyStats } from '../stats/stats';
-import { saveRevealedHints } from '../game/game-storage';
+import { saveGameState, saveRevealedHints } from '../game/game-storage';
+import { dailyGameKey } from '../game/game-state';
 import { dailyGameNumber, selectResultMessage } from '../components/gameOverMessages';
 import { shortGuessMessage } from '../game/game-session';
 import { parseMs } from '../utils/ms';
@@ -17,8 +18,16 @@ jest.mock('expo-haptics', () => ({
 
 const today = () => '2026-10-05';
 const DAILY_WORD_LENGTH = 5;
+const STAGGER_MS = parseMs(base.motionStagger);
 // Matches useRevealState's wordLength * motion-stagger + motion-flip.
-const REVEAL_DURATION_MS = DAILY_WORD_LENGTH * parseMs(base.motionStagger) + parseMs(base.motionFlip);
+const REVEAL_DURATION_MS = DAILY_WORD_LENGTH * STAGGER_MS + parseMs(base.motionFlip);
+// A winning row's card also waits for the win-bounce wave to finish (item 8, web parity).
+const WIN_BOUNCE_MS = DAILY_WORD_LENGTH * STAGGER_MS + parseMs(base.motionBounce);
+const WON_GAME_OVER_READY_MS = REVEAL_DURATION_MS + WIN_BOUNCE_MS;
+
+async function advancePastGameOverGate(hasWon: boolean) {
+  await act(async () => jest.advanceTimersByTime(hasWon ? WON_GAME_OVER_READY_MS : REVEAL_DURATION_MS));
+}
 
 function createApi(): ApiClient {
   return {
@@ -41,16 +50,56 @@ async function pressKeys(values: readonly string[]) {
 
 describe('GameScreen', () => {
   it('should show the game-over card with a deterministic win title when the daily word is guessed with the keyboard (011-AE1)', async () => {
-    const onBack = jest.fn();
-    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={onBack} api={createApi()} store={createMemoryStore()} today={today} />);
-    await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    jest.useFakeTimers();
+    try {
+      const onBack = jest.fn();
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={onBack} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+      const expectedTitle = selectResultMessage('daily', 'won', 1, dailyGameNumber(today()));
+      expect(screen.getByText(expectedTitle)).toBeTruthy();
+      expect(screen.getByTestId('gameover-share')).toBeTruthy();
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('key-ENTER')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should show neither the keyboard nor the game-over card while the winning row is still revealing or bouncing', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+      expect(screen.queryByTestId('key-ENTER')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
+      // The flip is done but the win bounce is still playing — still neither.
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+      expect(screen.queryByTestId('key-ENTER')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(WIN_BOUNCE_MS));
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should show the game-over card immediately for a daily game restored already finished, with no reveal or bounce running', async () => {
+    const store = createMemoryStore();
+    await saveGameState(store, dailyGameKey(today(), 5), {
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      currentGuess: '',
+      gameStatus: 'won',
+      keyboardStatus: {},
+    });
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     expect(await screen.findByTestId('gameover-card')).toBeTruthy();
-    const expectedTitle = selectResultMessage('daily', 'won', 1, dailyGameNumber(today()));
-    expect(await screen.findByText(expectedTitle)).toBeTruthy();
-    expect(await screen.findByTestId('gameover-share')).toBeTruthy();
-    expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
-    expect(screen.queryByTestId('key-ENTER')).toBeNull();
   });
 
   it('should ignore Enter while the previous row is still revealing, then accept it once the reveal finishes', async () => {
@@ -73,27 +122,34 @@ describe('GameScreen', () => {
   });
 
   it('should offer a new word in the game-over card when an unlimited game is over, and fetch a fresh word when pressed', async () => {
-    const api = createApi();
-    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
-    await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
-    expect(await screen.findByTestId('gameover-card')).toBeTruthy();
-    expect(screen.queryByTestId('gameover-countdown')).toBeNull();
-    expect(screen.queryByTestId('key-ENTER')).toBeNull();
-    expect(api.fetchRandomWord).toHaveBeenCalledTimes(1);
+    jest.useFakeTimers();
+    try {
+      const api = createApi();
+      await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      expect(screen.queryByTestId('key-ENTER')).toBeNull();
+      expect(api.fetchRandomWord).toHaveBeenCalledTimes(1);
 
-    await act(async () => fireEvent.press(await screen.findByTestId('gameover-new-word')));
-    await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
-    expect(screen.queryByTestId('gameover-card')).toBeNull();
-    expect(await screen.findByTestId('tile-0-0')).toBeTruthy();
+      await act(async () => fireEvent.press(screen.getByTestId('gameover-new-word')));
+      await waitFor(() => expect(api.fetchRandomWord).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+      expect(screen.getByTestId('tile-0-0')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should record the daily result in stats when the game finishes', async () => {
+    // Stats record off the session's game status directly (useResultRecorder), not the
+    // game-over card's gated appearance, so this never needs to wait out the reveal/bounce.
     const store = createMemoryStore();
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
     await waitFor(async () => {
       const stats = await loadDailyStats(store, 5);
       expect(stats.gamesPlayed).toBe(1);
@@ -169,19 +225,25 @@ describe('GameScreen', () => {
   });
 
   it('should hide the hint control and stop marking the trailing row once the daily game is won', async () => {
-    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
-    const hintButton = await screen.findByLabelText('İpucu göster');
-    await act(async () => fireEvent.press(hintButton));
-    await screen.findByTestId('hint-text');
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      const hintButton = await screen.findByLabelText('İpucu göster');
+      await act(async () => fireEvent.press(hintButton));
+      await screen.findByTestId('hint-text');
 
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      expect(screen.queryByTestId('hint-button')).toBeNull();
+      expect(screen.queryByTestId('hint-text')).toBeNull();
+      // Without the isPlaying guard this trailing row would still show "K, ipucu" from the
+      // (now stale) revealed position — the hint was at position 0.
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('boş');
 
-    expect(screen.queryByTestId('hint-button')).toBeNull();
-    expect(screen.queryByTestId('hint-text')).toBeNull();
-    // Without the isPlaying guard this trailing row would still show "K, ipucu" from the
-    // (now stale) revealed position — the hint was at position 0.
-    expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('boş');
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should hide the hint control and stop marking the trailing row once the daily game is lost', async () => {
@@ -217,28 +279,33 @@ describe('GameScreen', () => {
   });
 
   it('should count a 1-guess unlimited win and a 1-guess daily win each as "1" in their own distribution, not double-counted (011-N5)', async () => {
-    const store = createMemoryStore();
-    const unlimitedApi = createApi();
-    (unlimitedApi.fetchRandomWord as jest.Mock).mockResolvedValue({ word: { word: 'KALEM' }, wordId: 9 });
-    const unlimitedView = await renderWithTheme(
-      <GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={unlimitedApi} store={store} today={today} />,
-    );
-    await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
-    const unlimitedRow1Fill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(unlimitedRow1Fill).getByText('1')).toBeTruthy();
-    await act(async () => unlimitedView.unmount());
+    jest.useFakeTimers();
+    try {
+      const store = createMemoryStore();
+      const unlimitedApi = createApi();
+      (unlimitedApi.fetchRandomWord as jest.Mock).mockResolvedValue({ word: { word: 'KALEM' }, wordId: 9 });
+      const unlimitedView = await renderWithTheme(
+        <GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={unlimitedApi} store={store} today={today} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      const unlimitedRow1Fill = screen.getByTestId('gameover-distribution-1-fill');
+      expect(within(unlimitedRow1Fill).getByText('1')).toBeTruthy();
+      await act(async () => unlimitedView.unmount());
 
-    const dailyView = await renderWithTheme(
-      <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />,
-    );
-    await screen.findByLabelText('Gönder');
-    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await screen.findByTestId('gameover-card');
-    const dailyRow1Fill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(dailyRow1Fill).getByText('1')).toBeTruthy();
-    await act(async () => dailyView.unmount());
+      const dailyView = await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      const dailyRow1Fill = screen.getByTestId('gameover-distribution-1-fill');
+      expect(within(dailyRow1Fill).getByText('1')).toBeTruthy();
+      await act(async () => dailyView.unmount());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should not trigger the key-tap haptic when a key is pressed while a guess is still being validated', async () => {

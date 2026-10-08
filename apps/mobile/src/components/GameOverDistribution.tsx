@@ -5,7 +5,7 @@ import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
-import { loadDailyStats, loadUnlimitedStats, recordDailyResult, recordUnlimitedResult } from '../stats/stats';
+import { loadDailyStats, loadUnlimitedStats, recordDailyResult } from '../stats/stats';
 import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
@@ -24,18 +24,18 @@ export function useDisplayDistribution(
   useEffect(() => {
     let isCurrent = true;
     const won = gameStatus === 'won';
-    // Reopening an already-finished daily game (Geri, then back in) remounts this card after
-    // useResultRecorder already saved the result once. Recording it again here would double-count
-    // the just-played guess count's bar, so a daily game whose stored lastPlayedDate already
-    // matches this one is shown as-is, not re-added. Unlimited has no persisted "reopen a
-    // finished game" path (a fresh mount always starts a brand-new word), so it always adds —
-    // there is nothing stored yet to double-count against.
+    // GameOverCard only mounts once the row's reveal (and, on a win, the bounce) has finished
+    // (item 8's gate) — by then useResultRecorder's write for this result has always already
+    // landed, for both modes, so this always trusts storage rather than racing it. Reopening an
+    // already-finished daily game (Geri, then back in) reads the same already-stored bar; an
+    // unlimited game never persists a "reopen a finished game" state (a fresh mount always starts
+    // a brand-new word), so every unlimited mount here corresponds to a write that already ran.
     const load = (mode === 'daily'
       ? loadDailyStats(store, wordLength).then((stats) => {
           const date = dailyDate ?? today();
           return stats.lastPlayedDate === date ? stats.guessDistribution : recordDailyResult(stats, won, guessCount, date).guessDistribution;
         })
-      : loadUnlimitedStats(store, wordLength).then((stats) => recordUnlimitedResult(stats, won, guessCount).guessDistribution)
+      : loadUnlimitedStats(store, wordLength).then((stats) => stats.guessDistribution)
     // A rejected AsyncStorage read (I/O error, corrupt native module) must not become an unhandled
     // promise rejection: the card simply renders without a distribution section (null), the same
     // as while the read is still pending.

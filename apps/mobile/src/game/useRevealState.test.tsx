@@ -67,6 +67,29 @@ describe('useRevealState', () => {
     expect(result.current.isRevealing).toBe(false);
   });
 
+  it('should unblock Enter at the last tile\'s colour midpoint, before the row\'s full flip settles (M4 exception)', async () => {
+    const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
+    const committed = makeSession({ game: { ...makeSession().game, guesses: ['KAPAK'], evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']], gameStatus: 'playing' } });
+    await act(async () => rerender({ session: committed, reduceMotion: false }));
+    expect(result.current.isEnterBlocked).toBe(true);
+
+    const enterUnblockMs = (WORD_LENGTH - 1) * STAGGER_MS + FLIP_MS / 2;
+    await act(async () => jest.advanceTimersByTime(enterUnblockMs - 1));
+    expect(result.current.isEnterBlocked).toBe(true);
+    // Still revealing (the full flip has not settled) even though Enter has just unblocked.
+    expect(result.current.isRevealing).toBe(true);
+
+    await act(async () => jest.advanceTimersByTime(1));
+    expect(result.current.isEnterBlocked).toBe(false);
+  });
+
+  it('should not block Enter when reduce motion is enabled', async () => {
+    const { result, rerender } = await setup({ session: makeSession(), reduceMotion: true });
+    const committed = makeSession({ game: { ...makeSession().game, guesses: ['KAPAK'], evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']], gameStatus: 'playing' } });
+    await act(async () => rerender({ session: committed, reduceMotion: true }));
+    expect(result.current.isEnterBlocked).toBe(false);
+  });
+
   it('should not start revealing when reduce motion is enabled (011-AE2)', async () => {
     const { result, rerender } = await setup({ session: makeSession(), reduceMotion: true });
     const committed = makeSession({ game: { ...makeSession().game, guesses: ['KAPAK'], evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']], gameStatus: 'playing' } });
