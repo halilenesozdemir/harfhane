@@ -126,6 +126,20 @@ def score_reason_recall(held_out: list, candidate_by_word: dict, reason: str) ->
     return {"recall": recall, "total": total, "misses": misses}
 
 
+def _copies_golden_decisions(held_out: list, candidate_by_word: dict) -> bool:
+    # A candidate that is the golden file itself (or an exact copy of its held-out
+    # decisions) proves the gate runs, not that the labelling run earned a pass.
+    if not held_out:
+        return False
+    for entry in held_out:
+        candidate = candidate_by_word.get(entry["word"])
+        if candidate is None or candidate.get("decision") != entry.get("decision"):
+            return False
+        if entry.get("decision") == "reject" and candidate.get("reason") != entry.get("reason"):
+            return False
+    return True
+
+
 def passes_thresholds(
     *,
     accept_precision: float,
@@ -134,11 +148,12 @@ def passes_thresholds(
     held_out_count: int,
     missing: list,
     duplicate: list,
+    copied: bool,
 ) -> bool:
     # The single place that decides pass/fail, kept pure and keyword-only so the
     # `>=` boundary and the threshold constants can be pinned with plain numbers in
     # tests. Fails closed: any integrity gap, or nothing to measure, is a fail.
-    if missing or duplicate:
+    if missing or duplicate or copied:
         return False
     if held_out_count == 0 or sensitive_total == 0:
         return False
@@ -156,6 +171,7 @@ def evaluate(golden: list, candidate: list) -> dict:
     missing = [entry["id"] for entry in held_out if candidate_counts[entry["word"]] == 0]
     duplicate = [entry["id"] for entry in held_out if candidate_counts[entry["word"]] > 1]
     extra_candidate_words = sum(1 for word in candidate_counts if word not in held_out_words)
+    copied = _copies_golden_decisions(held_out, candidate_by_word)
 
     accept = score_accept(held_out, candidate_by_word)
     reject_reason_recall = {
@@ -169,6 +185,7 @@ def evaluate(golden: list, candidate: list) -> dict:
         held_out_count=len(held_out),
         missing=missing,
         duplicate=duplicate,
+        copied=copied,
     )
 
     return {
@@ -179,6 +196,7 @@ def evaluate(golden: list, candidate: list) -> dict:
             "missing": missing,
             "duplicate": duplicate,
             "extra_candidate_words": extra_candidate_words,
+            "copied_from_golden": copied,
         },
         "thresholds": {
             "accept_precision_min": LABEL_ACCEPT_PRECISION_MIN,

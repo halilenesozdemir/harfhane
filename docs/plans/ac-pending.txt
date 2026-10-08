@@ -19,5 +19,4 @@
 
 010-AE1  Plan 010 U1 (packages/shared strict flags + ts-reset), not started
 010-AE2  Plan 010 U4 (branded WordLength/TurkeyDate types), not started
-010-AE4  Plan 010 U6 (unlimited import threshold gate), implemented on feat/label-eval-import-gate (PR stacked on #105), not yet merged
 011-AE7  Plan 011 U7 (mobile UI standard redesign) not started

@@ -5,6 +5,8 @@ import os
 import sys
 from collections import Counter
 
+import eval_labels
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REVIEW_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "data", "words", "review")
 
@@ -104,13 +106,61 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Validate model-written answer labels.")
     parser.add_argument("--length", type=int, required=True)
     parser.add_argument("--pool", choices=["daily", "unlimited"], default="daily")
+    # Plan 010 R5: the unlimited pool has no owner review, so a model-labelled batch
+    # must first be measured against the golden set. --eval-candidate is the model's
+    # labels for the golden set's held-out half (scripts/words/eval_labels.py); the
+    # daily pool ignores both flags, since owner review is its quality gate.
+    parser.add_argument("--golden", default=None)
+    parser.add_argument("--eval-candidate", default=None)
     return parser.parse_args()
+
+
+# Errors a malformed or mismatched golden/candidate file can raise while loading or
+# scoring: narrow on purpose so an unrelated bug is never silently swallowed here.
+LABEL_EVAL_LOAD_ERRORS = (OSError, ValueError, KeyError, json.JSONDecodeError)
+
+
+def _eval_gate_reason(reason: str) -> tuple:
+    print(f"label eval gate: {reason}", file=sys.stderr)
+    return False, None
+
+
+def unlimited_label_eval_passes(length: int, golden_path: str, eval_candidate_path: str) -> tuple:
+    """Plan 010 R5 (AE4): importing a model-labelled unlimited batch is blocked
+    unless its labelling run also scored above threshold on the golden set. No
+    `--eval-candidate` means no measured run yet, so this fails closed rather than
+    trusting an unmeasured batch."""
+    if not eval_candidate_path:
+        return _eval_gate_reason("--eval-candidate is required for --pool unlimited")
+    golden_path = golden_path or os.path.join(REVIEW_DIR, LABEL_FILES["daily"].format(length=length))
+    if not os.path.exists(golden_path):
+        return _eval_gate_reason(f"golden file not found: {golden_path}")
+    if not os.path.exists(eval_candidate_path):
+        return _eval_gate_reason(f"eval candidate file not found: {eval_candidate_path}")
+    if os.path.realpath(golden_path) == os.path.realpath(eval_candidate_path):
+        return _eval_gate_reason("--eval-candidate must not be the golden file itself")
+    try:
+        golden = eval_labels.load_golden(golden_path)
+        candidate = eval_labels.load_candidate(eval_candidate_path)
+        report = eval_labels.evaluate(golden, candidate)
+    except LABEL_EVAL_LOAD_ERRORS as exc:
+        return _eval_gate_reason(f"failed to score eval candidate: {exc}")
+    return report["passes"], report
+
+
+def _remove_stale_review_csv(review_path: str) -> None:
+    # A failed run must never leave a review CSV behind: it would be either a
+    # partial write from this run or, worse, a stale file from an earlier
+    # successful run for a now-rejected batch (Plan 010 N6).
+    if os.path.exists(review_path):
+        os.remove(review_path)
 
 
 def main():
     args = parse_args()
     pool_path = os.path.join(REVIEW_DIR, POOL_FILES[args.pool].format(length=args.length))
     labels_path = os.path.join(REVIEW_DIR, LABEL_FILES[args.pool].format(length=args.length))
+    review_path = os.path.join(REVIEW_DIR, REVIEW_FILES[args.pool].format(length=args.length))
     pool_words = load_lines(pool_path)
     labels = load_labels(labels_path)
     report = validate(labels, pool_words)
@@ -118,8 +168,14 @@ def main():
     # A review CSV is only written from a clean, complete label set, so import never sees
     # partial data.
     if has_blocking_errors(report):
+        _remove_stale_review_csv(review_path)
         sys.exit(1)
-    review_path = os.path.join(REVIEW_DIR, REVIEW_FILES[args.pool].format(length=args.length))
+    if args.pool == "unlimited":
+        passed, eval_report = unlimited_label_eval_passes(args.length, args.golden, args.eval_candidate)
+        print(json.dumps({"label_eval": eval_report}, ensure_ascii=False, indent=2))
+        if not passed:
+            _remove_stale_review_csv(review_path)
+            sys.exit(1)
     write_review_csv(review_path, report["accepted"])
 
 
