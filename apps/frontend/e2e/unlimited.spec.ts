@@ -1,14 +1,20 @@
 import { expect, test } from './support/fixtures';
+import { assertNoSeriousA11yViolations } from './support/axe';
 import { forceClipboardShareFallback, getCopiedShareText, keyButton, playGuess, tile, waitForBoardReady } from './support/game';
 
-test('unlimited mode can be won and "new word" starts a fresh game', async ({ page, api }) => {
+test('unlimited mode can be won and "new word" starts a fresh game (009-AE2)', async ({ page, api }) => {
   await api.stubRandomWord(5, [{ word: 'KALEM' }, { word: 'MASAL' }]);
   await api.stubValidate(() => true);
 
   await page.goto('/unlimited/5');
+  await waitForBoardReady(page);
+  await assertNoSeriousA11yViolations(page);
 
   await playGuess(page, 'KALEM'.split(''));
   await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+  // Key state: the unlimited game-over modal, which (unlike the daily one)
+  // also renders the "Tekrar Oyna" button.
+  await assertNoSeriousA11yViolations(page);
 
   await keyButton(page, 'Tekrar Oyna').click();
 

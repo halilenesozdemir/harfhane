@@ -199,7 +199,7 @@ function GameOverModal({
           {!isUnlimited && isNewDayAvailable && (
             <button
               onClick={handleNewDay}
-              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in cursor-pointer"
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-brand hover:bg-brand/90 text-brand-fg flex items-center justify-center gap-2 transition-all duration-200 animate-bounce-in cursor-pointer"
             >
               <RotateCcw size={20} />
               Yeni Oyunu Başlat
@@ -218,7 +218,7 @@ function GameOverModal({
 
           <button
             onClick={share}
-            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-correct hover:bg-correct/90 text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+            className="w-full py-3 px-4 rounded-md font-bold text-lg bg-brand hover:bg-brand/90 text-brand-fg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
           >
             {failed ? (
               <>
@@ -241,7 +241,7 @@ function GameOverModal({
           {isUnlimited && (
             <button
               onClick={onPlayAgain}
-              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present hover:bg-present/90 text-white flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
+              className="w-full py-3 px-4 rounded-md font-bold text-lg bg-present hover:bg-present/90 text-present-fg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer"
             >
               <RotateCcw size={20} />
               Tekrar Oyna
