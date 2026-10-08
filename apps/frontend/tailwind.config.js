@@ -14,6 +14,7 @@ export default {
         brand: 'rgb(var(--hh-brand-rgb) / <alpha-value>)',
         'brand-fg': 'var(--hh-brand-fg)',
         'correct-fg': 'var(--hh-correct-fg)',
+        'correct-depth': 'var(--hh-correct-depth)',
         'present-fg': 'var(--hh-present-fg)',
         'absent-fg': 'var(--hh-absent-fg)',
         'key-fg': 'var(--hh-key-fg)',
