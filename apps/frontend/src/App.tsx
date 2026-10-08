@@ -50,6 +50,9 @@ function reloadOnChunkError(): never {
 
 const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
+// Draft (007 U5): not linked from any navigation, footer or sitemap until
+// the owner approves the text (007 U6); PrivacyPage itself sets noindex.
+const PrivacyPage = lazy(() => import('./components/PrivacyPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();
 const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
@@ -126,6 +129,7 @@ function AppRoutes(): React.JSX.Element {
       <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
         <Routes>
           <Route path="/" element={<HomeRoute />} />
+          <Route path="/gizlilik" element={<PrivacyPage />} />
           <Route path="/lists" element={<Navigate to="/" replace />} />
           <Route path="/play/:slug" element={<Navigate to="/" replace />} />
           <Route path="/c/:wordId" element={<Navigate to="/" replace />} />
