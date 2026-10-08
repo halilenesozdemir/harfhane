@@ -59,6 +59,14 @@ produces the same output files under `data/words/`.
     go to `unlimited-N.csv` (`word` column only).
   - Exits 1 without writing the CSV when there are any errors.
 - `test_validate_labels.py`: unittest suite for the validator.
+- `eval_labels.py --golden PATH --candidate PATH` (Plan 010 U5): scores a model-written
+  labels batch against the golden set (`labels-N.jsonl`), split by a hash of each entry's
+  normalized word into a calibration half and a held-out eval half. Reports accept
+  precision/recall and recall for the family-protecting reject reasons (`sensitive`,
+  `proper_noun`, `foreign`), naming a miss by the golden entry's id, never the word. Fails
+  closed on anything that proves nothing, gated on `LABEL_ACCEPT_PRECISION_MIN = 0.95` /
+  `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls a model.
+- `test_eval_labels.py`: unittest suite for the eval scorer.
 
 ## Unlimited pool
 
