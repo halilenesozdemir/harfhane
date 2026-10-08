@@ -1,8 +1,17 @@
+import { CircleQuestionMark, ChartColumn, Flame, Settings } from 'lucide-react-native';
 import { useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { CONTENT_MAX_WIDTH, FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
-import type { ThemeColors } from '../theme';
+import { TopBar } from '../ui/TopBar';
+import { IconButton } from '../ui/IconButton';
+import { Chip } from '../ui/Chip';
+import { AppText } from '../ui/Typography';
+import { HomeHero } from '../home/HomeHero';
+import { DailyCard } from '../home/DailyCard';
+import { UnlimitedCard } from '../home/UnlimitedCard';
+import { useHomeStatus } from '../home/useHomeStatus';
+import { CONTENT_MAX_WIDTH, ICON_SIZE, SCREEN_PADDING, SPACING } from '../ui/layout';
+import type { KeyValueStore } from '../game/game-storage';
 import type { WordLength } from '../stats/stats';
 
 export type HomeScreenMode = 'daily' | 'unlimited';
@@ -14,54 +23,41 @@ export interface HomeScreenProps {
   readonly onOpenHowToPlay: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenStats: (length: WordLength) => void;
+  readonly store: KeyValueStore;
   /** R1: lengths the unlimited-mode picker offers; defaults to every scheduled length. */
   readonly playableLengths?: readonly WordLength[];
+  /** Injectable clock for `useHomeStatus` (tests only); defaults to the real time. */
+  readonly now?: () => Date;
 }
 
 export const DEFAULT_WORD_LENGTH: WordLength = 5;
 const SCHEDULED_WORD_LENGTHS: readonly WordLength[] = [4, 5, 6];
-const LENGTH_OPTION_HEIGHT = 36;
 
-// R5: the home title is an H-A-R-F tile row, matching the web splash
-// screen's brand mark (apps/frontend/src/components/SplashScreen.tsx)
-// instead of a plain "HARFHANE" wordmark.
-const TITLE_LETTERS = ['H', 'A', 'R', 'F'] as const;
-const TITLE_TILE_SIZE = 40;
-const TITLE_ACCESSIBILITY_LABEL = 'HARFHANE';
-// Caps how far the title letters scale with the system font setting so they
-// never overflow the fixed-size tile.
-const TITLE_MAX_FONT_SIZE_MULTIPLIER = 1.2;
-
-function titleTileColor(colors: ThemeColors, index: number): string {
-  return index % 2 === 0 ? colors.correct : colors.present;
+function streakAccessibilityLabel(length: WordLength, streak: number): string {
+  return `${length} harf, ${streak} günlük seri`;
 }
 
-// Each tile's text uses the fg token for its own background, not a single
-// shared one: correct's fg is white, present's is a dark token, since
-// present's background is light (WCAG contrast, not a cosmetic choice).
-function titleTileFg(colors: ThemeColors, index: number): string {
-  return index % 2 === 0 ? colors.correctFg : colors.presentFg;
-}
-
-function HomeTitle() {
-  const { colors } = useTheme();
+function LengthPicker({
+  playableLengths,
+  selectedLength,
+  onSelectLength,
+}: {
+  playableLengths: readonly WordLength[];
+  selectedLength: WordLength;
+  onSelectLength: (length: WordLength) => void;
+}) {
+  if (playableLengths.length <= 1) return null;
   return (
-    <View
-      style={styles.titleRow}
-      accessible
-      accessibilityRole="header"
-      accessibilityLabel={TITLE_ACCESSIBILITY_LABEL}
-      testID="home-title-row"
-    >
-      {TITLE_LETTERS.map((letter, index) => (
-        <View key={letter} style={[styles.titleTile, { backgroundColor: titleTileColor(colors, index) }]}>
-          <Text
-            style={[styles.titleTileLabel, { color: titleTileFg(colors, index) }]}
-            maxFontSizeMultiplier={TITLE_MAX_FONT_SIZE_MULTIPLIER}
-          >
-            {letter}
-          </Text>
-        </View>
+    <View style={styles.lengthRow} accessibilityLabel="Kelime uzunluğu" testID="home-length-row">
+      {playableLengths.map((length) => (
+        <Chip
+          key={length}
+          variant="length"
+          label={`${length} harf`}
+          selected={selectedLength === length}
+          accessibilityLabel={`${length} harfli kelime seç`}
+          onPress={() => onSelectLength(length)}
+        />
       ))}
     </View>
   );
@@ -74,166 +70,59 @@ export function HomeScreen({
   onOpenHowToPlay,
   onOpenSettings,
   onOpenStats,
+  store,
   playableLengths = SCHEDULED_WORD_LENGTHS,
+  now,
 }: HomeScreenProps) {
   const { colors } = useTheme();
+  const { status, countdown } = useHomeStatus(store, selectedLength, now);
+  const isDailyFinished = status !== null && (status.state.kind === 'won' || status.state.kind === 'lost');
+  const displayedStreak = status?.displayedStreak ?? 0;
 
   const handleStartDaily = useCallback(() => onStart('daily', selectedLength), [onStart, selectedLength]);
   const handleStartUnlimited = useCallback(() => onStart('unlimited', selectedLength), [onStart, selectedLength]);
   const handleOpenStats = useCallback(() => onOpenStats(selectedLength), [onOpenStats, selectedLength]);
 
+  const streakChip =
+    displayedStreak > 0 ? (
+      <Chip
+        variant="streak"
+        icon={<Flame size={ICON_SIZE.sm} color={colors.text} />}
+        label={String(displayedStreak)}
+        accessibilityLabel={streakAccessibilityLabel(selectedLength, displayedStreak)}
+        onPress={handleOpenStats}
+      />
+    ) : undefined;
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <HomeTitle />
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Türkçe kelime oyunu</Text>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Günlük oyunu ${selectedLength} harfle başlat`}
-        onPress={handleStartDaily}
-        style={[styles.card, { backgroundColor: colors.correct }]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.correctFg }]}>Günlük Oyun</Text>
-        <Text style={[styles.cardBody, { color: colors.correctFg }]}>
-          {`Günün ${selectedLength} harfli kelimesi. Herkes aynı kelimeyi çözer.`}
-        </Text>
-      </Pressable>
-
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Sınırsız modu ${selectedLength} harfle başlat`}
-          onPress={handleStartUnlimited}
-        >
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Sınırsız Mod</Text>
-          <Text style={[styles.cardBody, { color: colors.textMuted }]}>
-            Dilediğin kadar oyna. Her seferinde yeni kelime.
-          </Text>
-        </Pressable>
-        {playableLengths.length > 1 && (
-          <View style={styles.lengthRow}>
-            {playableLengths.map((length) => (
-              <LengthOption key={length} length={length} isSelected={selectedLength === length} onSelect={onSelectLength} />
-            ))}
-          </View>
-        )}
-      </View>
-
-      <View style={styles.menuRow}>
-        <MenuLink label="Nasıl oynanır" onPress={onOpenHowToPlay} />
-        <MenuLink label="İstatistikler" onPress={handleOpenStats} />
-        <MenuLink label="Ayarlar" onPress={onOpenSettings} />
-      </View>
+    <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+      <TopBar
+        variant="home"
+        leading={streakChip}
+        trailing={[
+          <IconButton key="help" icon={<CircleQuestionMark size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="Nasıl oynanır sayfasını aç" onPress={onOpenHowToPlay} />,
+          <IconButton key="stats" icon={<ChartColumn size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="İstatistikleri aç" onPress={handleOpenStats} />,
+          <IconButton key="settings" icon={<Settings size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="Ayarları aç" onPress={onOpenSettings} />,
+        ]}
+      />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <HomeHero />
+          <AppText role="bodyLarge" color={colors.textMuted}>
+            Türkçe kelime oyunu
+          </AppText>
+          <DailyCard wordLength={selectedLength} status={status} countdown={countdown} onPress={handleStartDaily} />
+          <LengthPicker playableLengths={playableLengths} selectedLength={selectedLength} onSelectLength={onSelectLength} />
+          <UnlimitedCard wordLength={selectedLength} isDailyFinished={isDailyFinished} onPress={handleStartUnlimited} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
-interface MenuLinkProps {
-  readonly label: string;
-  readonly onPress: () => void;
-}
-
-function MenuLink({ label, onPress }: MenuLinkProps) {
-  const { colors } = useTheme();
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.menuLink}>
-      <Text style={[styles.menuLinkLabel, { color: colors.textMuted }]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-interface LengthOptionProps {
-  readonly length: WordLength;
-  readonly isSelected: boolean;
-  readonly onSelect: (length: WordLength) => void;
-}
-
-function LengthOption({ length, isSelected, onSelect }: LengthOptionProps) {
-  const { colors } = useTheme();
-  const handlePress = useCallback(() => onSelect(length), [onSelect, length]);
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${length} harfli kelime seç`}
-      accessibilityState={{ selected: isSelected }}
-      onPress={handlePress}
-      style={[styles.lengthOption, { backgroundColor: isSelected ? colors.brand : colors.tileEmptyBg }]}
-    >
-      <Text style={[styles.lengthLabel, { color: isSelected ? colors.brandFg : colors.textMuted }]}>
-        {length} harf
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.lg,
-    gap: SPACING.md,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  titleTile: {
-    width: TITLE_TILE_SIZE,
-    height: TITLE_TILE_SIZE,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleTileLabel: {
-    fontFamily: FONT_FAMILY_DISPLAY,
-    fontSize: FONT_SIZE.title,
-  },
-  subtitle: {
-    fontSize: FONT_SIZE.bodyLarge,
-    marginBottom: SPACING.lg,
-  },
-  card: {
-    width: '100%',
-    maxWidth: CONTENT_MAX_WIDTH,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
-  },
-  cardTitle: {
-    fontFamily: FONT_FAMILY_DISPLAY,
-    fontSize: FONT_SIZE.title,
-    marginBottom: SPACING.xs,
-  },
-  cardBody: {
-    fontSize: FONT_SIZE.body,
-  },
-  lengthRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.lg,
-  },
-  lengthOption: {
-    flex: 1,
-    height: LENGTH_OPTION_HEIGHT,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lengthLabel: {
-    fontSize: FONT_SIZE.body,
-    fontWeight: '700',
-  },
-  menuRow: {
-    flexDirection: 'row',
-    gap: SPACING.lg,
-    marginTop: SPACING.lg,
-  },
-  menuLink: {
-    padding: SPACING.sm,
-  },
-  menuLinkLabel: {
-    fontSize: FONT_SIZE.body,
-    fontWeight: '600',
-  },
+  screen: { flex: 1 },
+  scrollContent: { alignItems: 'center', paddingHorizontal: SCREEN_PADDING, paddingBottom: SPACING.xxxl },
+  content: { width: '100%', maxWidth: CONTENT_MAX_WIDTH, gap: SPACING.xxl },
+  lengthRow: { flexDirection: 'row', gap: SPACING.sm },
 });

@@ -74,7 +74,7 @@ async function openAndClose(openLabel: string, title: string) {
   await fireEvent.press(screen.getByLabelText(openLabel));
   expect(await screen.findByText(title)).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Kapat'));
-  expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+  expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 }
 
 function latestBackHandler(addSpy: jest.SpyInstance): () => boolean {
@@ -94,26 +94,26 @@ describe('App', () => {
 
   it('should reach the game screen from home when daily is started and go back', async () => {
     await render(<App />);
-    await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+    await fireEvent.press(screen.getByTestId('home-daily-card'));
     expect(await screen.findByText('Günlük · 5 harf')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Geri'));
-    expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+    expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
   });
 
   it('should open and close HowToPlay, Settings and Stats from home', async () => {
     await render(<App />);
-    await openAndClose('Nasıl oynanır', 'Nasıl Oynanır?');
-    await openAndClose('Ayarlar', 'Ayarlar');
-    await openAndClose('İstatistikler', 'İstatistikler');
+    await openAndClose('Nasıl oynanır sayfasını aç', 'Nasıl Oynanır?');
+    await openAndClose('Ayarları aç', 'Ayarlar');
+    await openAndClose('İstatistikleri aç', 'İstatistikler');
   });
 
   it('should keep the selected word length after returning from a game', async () => {
     await render(<App />);
     await fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    await fireEvent.press(screen.getByLabelText('Günlük oyunu 6 harfle başlat'));
+    await fireEvent.press(screen.getByTestId('home-daily-card'));
     expect(await screen.findByText('Günlük · 6 harf')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Geri'));
-    expect(await screen.findByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
+    expect(await screen.findByText('Günün 6 harfli kelimesi')).toBeTruthy();
   });
 
   it('should pop the stack on hardware back from game or stats, and leave home unhandled', async () => {
@@ -122,23 +122,23 @@ describe('App', () => {
 
     expect(latestBackHandler(addSpy)()).toBe(false);
 
-    await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+    await fireEvent.press(screen.getByTestId('home-daily-card'));
     await screen.findByText('Günlük · 5 harf');
     let handledGame = false;
     await act(async () => {
       handledGame = latestBackHandler(addSpy)();
     });
     expect(handledGame).toBe(true);
-    expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+    expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
-    await fireEvent.press(screen.getByLabelText('İstatistikler'));
+    await fireEvent.press(screen.getByLabelText('İstatistikleri aç'));
     await screen.findByLabelText('Kapat');
     let handledStats = false;
     await act(async () => {
       handledStats = latestBackHandler(addSpy)();
     });
     expect(handledStats).toBe(true);
-    expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+    expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
     addSpy.mockRestore();
   });
@@ -161,7 +161,7 @@ describe('App', () => {
   it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [5] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
     expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
     expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
   });
@@ -169,7 +169,7 @@ describe('App', () => {
   it('should prefer length 5 as the daily default when 4, 5 and 6 are all playable', async () => {
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 5, 6] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
   });
 
   it('should fall back to the first playable length when 5 is not playable', async () => {
@@ -177,7 +177,7 @@ describe('App', () => {
     // ([5]) would make this show "5 harfle başlat" instead of "4".
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 6] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 4 harfli kelimesi')).toBeTruthy();
   });
 
   it('(008-AE1) should show the cached lengths immediately, then switch to the freshly fetched lengths once they load', async () => {
@@ -189,14 +189,14 @@ describe('App', () => {
 
     await render(<App />);
     // Cache applied before the fetch resolves: default length is 4 (5 isn't in [4, 6]).
-    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 4 harfli kelimesi')).toBeTruthy();
 
     await act(async () => {
       resolveFetch({ lengths: [5] });
     });
     // The fetch result ([5]) wins once it arrives, proving it isn't ignored
     // and a slower cache read can't overwrite it afterwards.
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
   });
 
   describe('splash screen hold (R6)', () => {
@@ -278,7 +278,7 @@ describe('App', () => {
 
       await render(<App />);
       expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
-      expect(screen.queryByLabelText('HARFHANE')).toBeNull();
+      expect(screen.queryByLabelText('Harfhane')).toBeNull();
 
       (deviceStore.getItem as jest.Mock).mockImplementation(defaultGetItem);
     });
@@ -296,7 +296,7 @@ describe('App', () => {
       (useFonts as jest.Mock).mockReturnValueOnce([false, new Error('font load failed')]);
 
       await render(<App />);
-      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
     });
   });
 
@@ -309,12 +309,12 @@ describe('App', () => {
 
       const firstLaunch = await render(<App />);
       expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
-      expect(screen.queryByLabelText('HARFHANE')).toBeNull();
+      expect(screen.queryByLabelText('Harfhane')).toBeNull();
 
       await act(async () => {
         fireEvent.press(screen.getByLabelText('Oyna'));
       });
-      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
       await act(async () => {
         firstLaunch.unmount();
       });
@@ -323,7 +323,7 @@ describe('App', () => {
       // mock's Map carries the write from closing How to play above), which
       // is this test's stand-in for "the next launch".
       await render(<App />);
-      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
       expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
     });
 
@@ -339,7 +339,7 @@ describe('App', () => {
         handled = latestBackHandler(addSpy)();
       });
       expect(handled).toBe(true);
-      expect(await screen.findByLabelText('HARFHANE')).toBeTruthy();
+      expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
       addSpy.mockRestore();
     });
@@ -351,7 +351,7 @@ describe('App', () => {
     // switch is wired to setEnabled, that it persists, or that the stored value is parsed.
     it('should stop the key-tap haptic after Titreşim is switched off in Settings (011-AE3)', async () => {
       await render(<App />);
-      await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+      await fireEvent.press(screen.getByTestId('home-daily-card'));
       await screen.findByText('Günlük · 5 harf');
       await screen.findByTestId('key-A');
 
@@ -360,7 +360,7 @@ describe('App', () => {
       expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
 
       await fireEvent.press(screen.getByLabelText('Geri'));
-      await fireEvent.press(screen.getByLabelText('Ayarlar'));
+      await fireEvent.press(screen.getByLabelText('Ayarları aç'));
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
@@ -369,7 +369,7 @@ describe('App', () => {
       await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
       await fireEvent.press(screen.getByLabelText('Kapat'));
 
-      await fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
+      await fireEvent.press(screen.getByTestId('home-daily-card'));
       await screen.findByTestId('key-A');
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));

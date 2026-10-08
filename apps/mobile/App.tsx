@@ -68,6 +68,7 @@ function RouteView({
       onOpenHowToPlay={onOpenHowToPlay}
       onOpenSettings={onOpenSettings}
       onOpenStats={onOpenStats}
+      store={deviceStore}
     />
   );
 }
