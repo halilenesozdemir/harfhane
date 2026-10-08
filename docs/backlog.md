@@ -264,3 +264,72 @@ From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calend
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
+
+## Keyboard still owns its own useHapticsSettings() call alongside the GameScreen prop (2026-10-07)
+`GameScreen.tsx` now passes `isHapticsEnabled={game.isHapticsEnabled}` and
+`isInputBlocked={session.isSubmitting}` to `Keyboard` (PR #87/#94 merged, so this was no longer
+off limits). `Keyboard`'s own `useHapticsSettings()` call stays as a fallback for callers that
+don't pass the prop (several `Keyboard.test.tsx` cases render it standalone), so there are two
+hook instances live during a real game: `useGame`'s and `Keyboard`'s own, both reading the same
+AsyncStorage key. Harmless today (the prop always wins via `??`), but worth collapsing to one
+instance if `Keyboard` ever drops its standalone use case.
+
+## Un-awaited `fireEvent`/`fireEvent.press` calls caused order-dependent test failures (2026-10-07)
+RNTL 14's `fireEvent` and `fireEvent.press` both return `Promise<void>`; a few mobile test files
+called them without `await` (often inside an `act(async () => {...})` wrapper, which doesn't make
+the inner call awaited). The dangling promise could still be pending when the next `act()` call in
+the file started, printing "You seem to have overlapping act() calls" and, in at least one case,
+corrupting a later test's `screen` queries. Fixed in `Keyboard.test.tsx`, `SettingsScreen.test.tsx`
+and `App.test.tsx` by awaiting every call directly (`await fireEvent.press(...)`, no `act()`
+wrapper needed). `@typescript-eslint/no-floating-promises` would catch this class of bug, but it
+needs type-aware linting (`parserOptions.project`), which `eslint.config.js` doesn't set up for
+any workspace yet — enabling it is a repo-wide change, not specific to mobile tests, so it's left
+here rather than done as part of this fix. Worth doing once the gate's lint step can afford the
+slower typed run; audit the rest of `apps/mobile/src/**/*.test.tsx` and `apps/frontend` for the
+same pattern at the same time.
+
+## Web hint control sits too close to the keyboard (owner, 2026-10-07)
+The hint control above the on-screen keyboard has no breathing room from it on web; add spacing
+between them.
+
+## Web desktop layout looks like a stretched mobile layout (owner: mobile first, 2026-10-07)
+On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
+desktop layout is post-launch work; mobile ships first.
+
+## Turkish casing bug in StatsScreen (found while fixing PR #87, 2026-10-07)
+`apps/mobile/src/screens/StatsScreen.tsx:144` (`sectionTitle` style) applies
+`textTransform: 'uppercase'` to the Turkish string "Tahmin Dağılımı" (line 51), which is
+locale-unaware and renders "TAHMIN DAĞILIMI" with a dotless I instead of the correct
+"TAHMİN DAĞILIMI". Same bug class fixed in
+`apps/mobile/src/components/GameOverDistribution.tsx` (drop the transform, write the literal
+string). `StatsScreen.tsx` is outside the file ownership of Plan 011 U1; whoever owns it should
+apply the same fix.
+
+## Mobile share/title number comes from the device date, not the server (2026-10-07)
+`apps/mobile/src/components/GameOverCard.tsx` computes the daily game number from the device's
+local `dailyDate` string via `dailyGameNumber()` (mirroring the backend's formula), instead of the
+server's own `gameNumber` from `/words/daily` — `GameSession` does not carry it today, and
+PR #88 owns `game/useGame.ts`/`game-session.ts`. Once #88 merges, thread `gameNumber` (and `date`)
+from the `/words/daily` response into `GameSession` and have `GameOverCard` read it from there
+instead of recomputing it locally, matching how the web app already uses the server's
+`gameNumber` (`apps/frontend/src/components/GameOverModal.tsx`). A device with a wrong clock is
+the only way the two values could currently disagree.
+
+## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
+`getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
+*next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight
+has actually passed (the parent has not yet swapped in the new day's word), the countdown wraps
+around to `23:59:59` and starts counting down a full day again, while the card still shows
+yesterday's finished game. Not fixed here: needs the parent to react to the day boundary (e.g.
+re-fetch/reset session) rather than the countdown display alone.
+
+## Mobile U7b: game-over card touch targets and button hierarchy (2026-10-07)
+Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
+- `GameOverCard`'s "Paylaş" and "Yeni kelime" buttons are ~45 dp tall (`SPACING.md` vertical
+  padding plus `FONT_SIZE.bodyLarge` text), under the 48 dp minimum touch target
+  (`docs/design/mobile-ui-standard.md`).
+- "Yeni kelime" currently uses `colors.present`/`colors.presentFg` (a primary-looking fill) but is
+  a secondary action next to "Paylaş"; it should use the secondary pairing
+  (`colors.surface` + `colors.surfaceBorder`) instead.
+- "Paylaş" has no icon; it should get a Lucide `Share2` icon next to the label, matching the icon
+  convention used elsewhere in the mobile UI standard.
