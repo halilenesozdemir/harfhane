@@ -330,3 +330,32 @@ Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
   (`colors.surface` + `colors.surfaceBorder`) instead.
 - "Paylaş" has no icon; it should get a Lucide `Share2` icon next to the label, matching the icon
   convention used elsewhere in the mobile UI standard.
+
+## Plan 009 R3: axe coverage only reaches four journeys so far (2026-10-08)
+`apps/frontend/e2e/support/axe.ts` (`assertNoSeriousA11yViolations`) is wired into home, daily
+(in-progress guess and the won game-over modal), and unlimited (on load and its won game-over
+modal). Not yet scanned: the daily loss journey (`Oyun Bitti` heading state, `daily.spec.ts`), the
+hint flow (the revealed-hint pill and the hint-exhausted state), the Turkish-keyboard journey
+(`keyboard.spec.ts`), the legacy-redirect journeys (`home.spec.ts`'s `/lists`, `/play/...`,
+`/tournament` redirects), and a reload-restore state (`a finished daily game survives a reload`).
+Add scans to these once a future plan unit touches `apps/frontend/e2e/**` again, or as a dedicated
+follow-up.
+
+## Remaining `text-white` on bg-correct/bg-present spots not covered by any axe scan (2026-10-08)
+Found while fixing Plan 009 R3's real color-contrast violations (PR #107): the same
+`text-white`-on-brand-color pattern that failed axe on `HomePage.tsx` and `GameOverModal.tsx`
+also appears in components no current Playwright journey visits, so axe never ran against them
+and they were left unfixed to keep that PR scoped to what the scan actually caught:
+- `apps/frontend/src/components/SplashScreen.tsx:61` — splash tile letters, `text-white` on
+  alternating `bg-correct`/`bg-present`.
+- `apps/frontend/src/components/StatsModal.tsx:33` — guess-distribution bar label, `text-white`
+  on `bg-correct`/`bg-absent`.
+- `apps/frontend/src/components/InstallPrompt.tsx:84` — install button, `text-white` on
+  `bg-correct`.
+- `apps/frontend/src/components/SettingsModal.tsx:20` — selected-option pill, `text-white` on
+  `bg-correct`.
+- `apps/frontend/src/components/GameErrorScreen.tsx:19` — retry button, `text-white` on
+  `bg-tile-correct`.
+Fix the same way: swap `text-white` for the semantic `-fg` token (`text-correct-fg` /
+`text-present-fg`), or scan these screens first to confirm which ones actually fail before
+changing them.

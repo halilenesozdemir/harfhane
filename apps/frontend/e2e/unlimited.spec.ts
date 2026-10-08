@@ -12,6 +12,9 @@ test('unlimited mode can be won and "new word" starts a fresh game (009-AE2)', a
 
   await playGuess(page, 'KALEM'.split(''));
   await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
+  // Key state: the unlimited game-over modal, which (unlike the daily one)
+  // also renders the "Tekrar Oyna" button.
+  await assertNoSeriousA11yViolations(page);
 
   await keyButton(page, 'Tekrar Oyna').click();
 

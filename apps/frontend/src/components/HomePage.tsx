@@ -50,7 +50,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       <div className="w-full max-w-md space-y-3">
         <button
           onClick={() => onSelectMode("daily", dailyLength)}
-          className="w-full bg-correct hover:bg-correct/90 text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+          className="w-full bg-correct-depth text-white rounded-2xl p-5 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
