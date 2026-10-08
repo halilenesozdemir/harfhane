@@ -245,35 +245,31 @@ class MainCliTests(unittest.TestCase):
             for label in labels:
                 handle.write(json.dumps(label, ensure_ascii=False) + "\n")
 
+    def _run(self, tmp, golden, candidate):
+        golden_path, candidate_path = os.path.join(tmp, "golden.jsonl"), os.path.join(tmp, "candidate.jsonl")
+        self._write_jsonl(golden_path, golden)
+        self._write_jsonl(candidate_path, candidate)
+        argv = ["eval_labels.py", "--golden", golden_path, "--candidate", candidate_path]
+        with patch.object(sys, "argv", argv):
+            el.main()
+
     def test_exits_nonzero_when_the_report_does_not_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
-            golden_path = os.path.join(tmp, "golden.jsonl")
-            candidate_path = os.path.join(tmp, "candidate.jsonl")
-            self._write_jsonl(golden_path, [golden_accept(f"A{i}") for i in range(50)])
-            self._write_jsonl(candidate_path, [])
-            argv = ["eval_labels.py", "--golden", golden_path, "--candidate", candidate_path]
-            with patch.object(sys, "argv", argv):
-                with self.assertRaises(SystemExit) as ctx:
-                    el.main()
+            with self.assertRaises(SystemExit) as ctx:
+                self._run(tmp, [golden_accept(f"A{i}") for i in range(50)], [])
             self.assertEqual(ctx.exception.code, 1)
 
     def test_exits_zero_when_the_report_passes(self):
+        # A candidate matching every golden word exactly covers whichever half the
+        # real (unpatched) hash split puts into held-out.
+        golden = [golden_accept(f"A{i}") for i in range(200)] + [
+            golden_reject(f"S{i}", "sensitive") for i in range(20)
+        ]
+        candidate = [candidate_accept(f"A{i}") for i in range(200)] + [
+            candidate_reject(f"S{i}", "sensitive") for i in range(20)
+        ]
         with tempfile.TemporaryDirectory() as tmp:
-            golden_path = os.path.join(tmp, "golden.jsonl")
-            candidate_path = os.path.join(tmp, "candidate.jsonl")
-            # A candidate that matches every golden word exactly covers whichever
-            # half the real (unpatched) hash split puts into held-out.
-            golden = [golden_accept(f"A{i}") for i in range(200)] + [
-                golden_reject(f"S{i}", "sensitive") for i in range(20)
-            ]
-            candidate = [candidate_accept(f"A{i}") for i in range(200)] + [
-                candidate_reject(f"S{i}", "sensitive") for i in range(20)
-            ]
-            self._write_jsonl(golden_path, golden)
-            self._write_jsonl(candidate_path, candidate)
-            argv = ["eval_labels.py", "--golden", golden_path, "--candidate", candidate_path]
-            with patch.object(sys, "argv", argv):
-                el.main()
+            self._run(tmp, golden, candidate)
 
 
 if __name__ == "__main__":
