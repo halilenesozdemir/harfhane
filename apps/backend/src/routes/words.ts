@@ -6,7 +6,6 @@ import {
   getDailyWord,
   getPlayableLengths,
   getRandomWord,
-  getWordById,
   validateWord,
 } from '../services/word-service';
 import { gameRateLimiter } from '../middleware/rate-limiter';
@@ -45,15 +44,6 @@ words.get(
 
 words.get('/lengths', (c) => {
   const result = getPlayableLengths(c.env.PLAYABLE_WORD_LENGTHS);
-  return c.json({ data: result });
-});
-
-words.get('/challenge/:wordId', async (c) => {
-  const wordId = Number(c.req.param('wordId'));
-  if (!Number.isInteger(wordId) || wordId <= 0) {
-    return c.json({ error: { code: 'BAD_REQUEST', message: 'Geçersiz kelime ID' } }, 400);
-  }
-  const result = await getWordById(c.env.DB, wordId);
   return c.json({ data: result });
 });
 
