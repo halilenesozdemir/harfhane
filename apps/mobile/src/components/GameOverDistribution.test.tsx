@@ -19,12 +19,13 @@ interface DistributionHarnessProps {
   readonly guessCount: number;
   readonly dailyDate: string | null;
   readonly today: () => string;
+  readonly recordedDistribution: readonly number[] | null;
 }
 
 // Mirrors how GameOverCard wires the hook into the component, so these tests exercise the same
 // integration the real card relies on (loading stats, deriving the display value, highlighting).
-function DistributionHarness({ store, mode, wordLength, gameStatus, guessCount, dailyDate, today }: DistributionHarnessProps) {
-  const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today);
+function DistributionHarness({ store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution }: DistributionHarnessProps) {
+  const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
   if (distribution === null) return null;
   return <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />;
 }
@@ -38,6 +39,7 @@ function renderDistribution(overrides: Partial<DistributionHarnessProps> = {}) {
     guessCount: 1,
     dailyDate: DAILY_DATE,
     today: () => DAILY_DATE,
+    recordedDistribution: null,
     ...overrides,
   };
   return renderWithTheme(<DistributionHarness {...props} />);

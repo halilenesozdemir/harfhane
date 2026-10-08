@@ -55,9 +55,10 @@ interface GameBoardProps {
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
   readonly today: GameDependencies['today'];
+  readonly recordedDistribution: readonly number[] | null;
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today }: GameBoardProps) {
+function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   const reduceMotion = useReduceMotion();
   const reveal = useRevealState(session, session.solution.length, reduceMotion);
@@ -101,6 +102,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           store={store}
           today={today}
           onNewGame={game.startNewGame}
+          recordedDistribution={recordedDistribution}
         />
       ) : null}
       {!isFinished && (
@@ -110,7 +112,8 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           onDelete={game.onDelete}
           onSubmit={onSubmit}
           isHapticsEnabled={game.isHapticsEnabled}
-          isInputBlocked={session.isSubmitting || reveal.isEnterBlocked}
+          isInputBlocked={session.isSubmitting}
+          isSubmitBlocked={session.isSubmitting || reveal.isEnterBlocked}
         />
       )}
     </>
@@ -125,9 +128,10 @@ interface GameBodyProps {
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
   readonly today: GameDependencies['today'];
+  readonly recordedDistribution: readonly number[] | null;
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBodyProps) {
+function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -138,13 +142,25 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today }: GameBo
       </View>
     );
   }
-  return <GameBoard session={session} mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />;
+  return (
+    <GameBoard
+      session={session}
+      mode={mode}
+      wordLength={wordLength}
+      game={game}
+      hint={hint}
+      colors={colors}
+      store={store}
+      today={today}
+      recordedDistribution={recordedDistribution}
+    />
+  );
 }
 
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store, today });
-  useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,
     mode,
@@ -161,7 +177,16 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
         </Pressable>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{`${MODE_TITLES[mode]} · ${wordLength} harf`}</Text>
       </View>
-      <GameBody mode={mode} wordLength={wordLength} game={game} hint={hint} colors={colors} store={store} today={today} />
+      <GameBody
+        mode={mode}
+        wordLength={wordLength}
+        game={game}
+        hint={hint}
+        colors={colors}
+        store={store}
+        today={today}
+        recordedDistribution={justRecordedDistribution}
+      />
     </View>
   );
 }
