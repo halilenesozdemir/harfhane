@@ -129,6 +129,16 @@ class PassesThresholdsTests(unittest.TestCase):
         base.update(overrides)
         return base
 
+    def test_thresholds_are_pinned_to_the_plan_010_r5_literal_values(self):
+        # Independent of LABEL_ACCEPT_PRECISION_MIN/LABEL_SENSITIVE_RECALL_MIN's current
+        # value, so a mutant that changes either constant still fails this test.
+        self.assertEqual(LABEL_ACCEPT_PRECISION_MIN, 0.95)
+        self.assertEqual(LABEL_SENSITIVE_RECALL_MIN, 0.98)
+        self.assertTrue(passes_thresholds(**self._ok(accept_precision=0.95)))
+        self.assertFalse(passes_thresholds(**self._ok(accept_precision=0.949)))
+        self.assertTrue(passes_thresholds(**self._ok(sensitive_recall=0.98)))
+        self.assertFalse(passes_thresholds(**self._ok(sensitive_recall=0.979)))
+
     def test_accept_precision_boundary_at_the_minimum_and_at_090(self):
         self.assertTrue(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN)))
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN - 0.001)))
