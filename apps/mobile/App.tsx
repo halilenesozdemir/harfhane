@@ -8,6 +8,7 @@ import { useCallback, useEffect, useReducer, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
+import { loadHasSeenHowToPlay, markHowToPlaySeen } from './src/first-launch-store';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
@@ -37,6 +38,7 @@ interface RouteViewProps {
   readonly onOpenSettings: () => void;
   readonly onOpenStats: (length: WordLength) => void;
   readonly onBack: () => void;
+  readonly isHowToPlayFirstLaunch: boolean;
 }
 
 function RouteView({
@@ -49,11 +51,12 @@ function RouteView({
   onOpenSettings,
   onOpenStats,
   onBack,
+  isHowToPlayFirstLaunch,
 }: RouteViewProps) {
   if (route.screen === 'game') {
     return <GameScreen mode={route.mode} wordLength={route.length} onBack={onBack} api={api} store={deviceStore} />;
   }
-  if (route.screen === 'howToPlay') return <HowToPlayScreen onClose={onBack} />;
+  if (route.screen === 'howToPlay') return <HowToPlayScreen onClose={onBack} isFirstLaunch={isHowToPlayFirstLaunch} />;
   if (route.screen === 'settings') return <SettingsScreen onClose={onBack} />;
   if (route.screen === 'stats') return <StatsContainer length={route.length} store={deviceStore} onClose={onBack} />;
   return (
@@ -69,10 +72,74 @@ function RouteView({
   );
 }
 
-export function AppNavigator() {
+// R7/AE5: whether the how-to-play-seen flag has finished loading, and what
+// it said. Loading starts as "not seen" so a rejecting read never blocks
+// the gate open (see first-launch-store.ts); FirstLaunchGate below renders
+// nothing until isLoaded, so AppNavigator only ever mounts with the real,
+// already-settled answer — never an optimistic guess to correct later.
+interface HowToPlayGate {
+  readonly isLoaded: boolean;
+  readonly hasSeenHowToPlay: boolean;
+}
+
+const INITIAL_HOW_TO_PLAY_GATE: HowToPlayGate = { isLoaded: false, hasSeenHowToPlay: false };
+
+function useHowToPlayGate(): [HowToPlayGate, () => void] {
+  const [gate, setGate] = useState<HowToPlayGate>(INITIAL_HOW_TO_PLAY_GATE);
+
+  useEffect(() => {
+    let isCurrent = true;
+    void loadHasSeenHowToPlay(deviceStore).then((hasSeenHowToPlay) => {
+      if (!isCurrent) return;
+      setGate({ isLoaded: true, hasSeenHowToPlay });
+    });
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  const markSeen = useCallback(() => {
+    // A failed write just means How to play shows again next launch —
+    // never worth crashing the close action over.
+    void markHowToPlaySeen(deviceStore).catch(() => undefined);
+    setGate((current) => ({ ...current, hasSeenHowToPlay: true }));
+  }, []);
+
+  return [gate, markSeen];
+}
+
+// R6/AE4 + R7/AE5: renders nothing until the how-to-play-seen flag has
+// loaded, holding the native splash up for it exactly like ThemeProvider
+// (its parent here) already does for the theme preference. AppNavigator
+// only ever mounts below with the real, settled flag value, so it never
+// needs to correct an optimistic guess after the fact.
+export function FirstLaunchGate() {
+  const [howToPlayGate, markHowToPlaySeenOnce] = useHowToPlayGate();
+
+  useEffect(() => {
+    if (!howToPlayGate.isLoaded) return;
+    void SplashScreen.hideAsync();
+  }, [howToPlayGate.isLoaded]);
+
+  if (!howToPlayGate.isLoaded) return null;
+  return <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />;
+}
+
+interface AppNavigatorProps {
+  readonly hasSeenHowToPlay: boolean;
+  readonly onHowToPlaySeen: () => void;
+}
+
+export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigatorProps) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const [state, dispatch] = useReducer(reduceNavigation, undefined, createInitialNavigationState);
+  // hasSeenHowToPlay is only ever read here, as the reducer's one-time
+  // initial-state decision; everything else below (the Oyna/Kapat choice,
+  // the goBack handler) tracks its own local copy instead of re-reading
+  // this prop, so a later change to it can never retroactively alter a
+  // decision this component already made on mount.
+  const [state, dispatch] = useReducer(reduceNavigation, hasSeenHowToPlay, createInitialNavigationState);
+  const [hasSeenHowToPlayLocally, setHasSeenHowToPlayLocally] = useState(hasSeenHowToPlay);
   const playableLengths = usePlayableLengths(api, deviceStore);
   // null means "no explicit pick yet"; resolveSelectedLength also falls
   // back whenever a previous pick stops being playable (derived, not an
@@ -81,20 +148,24 @@ export function AppNavigator() {
   const selectedLength = resolveSelectedLength(pickedLength, playableLengths);
   const route = currentRoute(state);
 
+  // R7/AE5: going back out of How to play — from its own close/Oyna action
+  // (RouteView's onBack, below) or the Android hardware back handler —
+  // marks it seen exactly once, right in the handler that leaves the
+  // route, not as a passive effect watching for the transition.
+  const goBack = useCallback(() => {
+    if (route.screen === 'howToPlay' && !hasSeenHowToPlayLocally) {
+      setHasSeenHowToPlayLocally(true);
+      onHowToPlaySeen();
+    }
+    dispatch({ type: 'back' });
+  }, [route, hasSeenHowToPlayLocally, onHowToPlaySeen]);
+
   const handleHardwareBack = useCallback(() => {
     if (!canGoBack(state)) return false;
-    dispatch({ type: 'back' });
+    goBack();
     return true;
-  }, [state]);
+  }, [state, goBack]);
   useHardwareBackHandler(handleHardwareBack);
-
-  // AppNavigator only mounts once ThemeProvider has finished loading the
-  // stored theme preference (R6/AE4), so this effect firing is itself the
-  // "theme and stored state are ready" signal; fonts are gated separately
-  // in App() below, before this tree is even mounted.
-  useEffect(() => {
-    void SplashScreen.hideAsync();
-  }, []);
 
   const handleStart = useCallback(
     (mode: HomeScreenMode, length: WordLength) => dispatch({ type: 'push', route: { screen: 'game', mode, length } }),
@@ -103,7 +174,7 @@ export function AppNavigator() {
   const handleOpenHowToPlay = useCallback(() => dispatch({ type: 'push', route: { screen: 'howToPlay' } }), []);
   const handleOpenSettings = useCallback(() => dispatch({ type: 'push', route: { screen: 'settings' } }), []);
   const handleOpenStats = useCallback((length: WordLength) => dispatch({ type: 'push', route: { screen: 'stats', length } }), []);
-  const handleBack = useCallback(() => dispatch({ type: 'back' }), []);
+  const handleBack = goBack;
 
   const insetStyle = {
     paddingTop: insets.top,
@@ -124,6 +195,7 @@ export function AppNavigator() {
         onOpenSettings={handleOpenSettings}
         onOpenStats={handleOpenStats}
         onBack={handleBack}
+        isHowToPlayFirstLaunch={!hasSeenHowToPlayLocally}
       />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </View>
@@ -141,7 +213,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider store={deviceStore}>
-        <AppNavigator />
+        <FirstLaunchGate />
       </ThemeProvider>
     </SafeAreaProvider>
   );
