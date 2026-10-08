@@ -5,6 +5,10 @@ import type { ThemeColors } from '../theme';
 
 export interface HowToPlayScreenProps {
   readonly onClose: () => void;
+  // R7/AE5: a first launch that has never seen this screen gets a welcoming
+  // primary action instead of the plain "Kapat" close button; both lead to
+  // the same place (home), so they share onClose.
+  readonly isFirstLaunch?: boolean;
 }
 
 type ExampleStatus = 'correct' | 'present' | 'absent' | null;
@@ -89,8 +93,9 @@ function ExampleBlock({ row }: { readonly row: ExampleRow }) {
   );
 }
 
-export function HowToPlayScreen({ onClose }: HowToPlayScreenProps) {
+export function HowToPlayScreen({ onClose, isFirstLaunch = false }: HowToPlayScreenProps) {
   const { colors } = useTheme();
+  const primaryLabel = isFirstLaunch ? 'Oyna' : 'Kapat';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -112,11 +117,11 @@ export function HowToPlayScreen({ onClose }: HowToPlayScreenProps) {
       </ScrollView>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Kapat"
+        accessibilityLabel={primaryLabel}
         onPress={onClose}
         style={[styles.closeButton, { backgroundColor: colors.correct }]}
       >
-        <Text style={[styles.closeLabel, { color: colors.correctFg }]}>Kapat</Text>
+        <Text style={[styles.closeLabel, { color: colors.correctFg }]}>{primaryLabel}</Text>
       </Pressable>
     </View>
   );

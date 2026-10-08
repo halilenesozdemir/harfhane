@@ -81,23 +81,6 @@ export async function findRandomWord(
   return row ? { entry: toWordEntry(row), id: row.id } : null;
 }
 
-export async function findWordById(
-  db: Env['DB'],
-  wordId: number
-): Promise<{ entry: WordEntry; id: number } | null> {
-  const row = await db
-    .prepare(
-      `SELECT id, word, meaning, context, category
-       FROM words
-       WHERE id = ? AND is_active = 1 AND source != 'user'
-       LIMIT 1`
-    )
-    .bind(wordId)
-    .first<WordRow>();
-
-  return row ? { entry: toWordEntry(row), id: row.id } : null;
-}
-
 export async function wordExists(db: Env['DB'], word: string): Promise<boolean> {
   const normalized = normalizeWord(word);
   const row = await db
