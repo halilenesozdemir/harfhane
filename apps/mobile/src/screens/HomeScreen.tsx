@@ -75,7 +75,7 @@ export function HomeScreen({
   now,
 }: HomeScreenProps) {
   const { colors } = useTheme();
-  const { status, countdown } = useHomeStatus(store, selectedLength, now);
+  const { status } = useHomeStatus(store, selectedLength, now);
   const isDailyFinished = status !== null && (status.state.kind === 'won' || status.state.kind === 'lost');
   const displayedStreak = status?.displayedStreak ?? 0;
 
@@ -111,7 +111,7 @@ export function HomeScreen({
           <AppText role="bodyLarge" color={colors.textMuted}>
             Türkçe kelime oyunu
           </AppText>
-          <DailyCard wordLength={selectedLength} status={status} countdown={countdown} onPress={handleStartDaily} />
+          <DailyCard wordLength={selectedLength} status={status} now={now} onPress={handleStartDaily} />
           <LengthPicker playableLengths={playableLengths} selectedLength={selectedLength} onSelectLength={onSelectLength} />
           <UnlimitedCard wordLength={selectedLength} isDailyFinished={isDailyFinished} onPress={handleStartUnlimited} />
         </View>
