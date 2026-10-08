@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import App, { AppNavigator } from './App';
+import App, { AppNavigator, FirstLaunchGate } from './App';
 import { ThemeProvider } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { deviceStore } from './src/game/device-store';
@@ -154,7 +154,7 @@ describe('App', () => {
     await render(
       <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 320, height: 640 }, insets }}>
         <ThemeProvider store={createMemoryStore()}>
-          <AppNavigator />
+          <AppNavigator hasSeenHowToPlay onHowToPlaySeen={() => undefined} />
         </ThemeProvider>
       </SafeAreaProvider>,
     );
@@ -252,10 +252,14 @@ describe('App', () => {
     it('(011-AE4) should hide the splash screen only after stored state has loaded', async () => {
       (SplashScreen.hideAsync as jest.Mock).mockClear();
 
+      // FirstLaunchGate (not AppNavigator directly): splash-hiding now
+      // lives in the how-to-play gate, which only starts loading once
+      // ThemeProvider's own delayed load below has already resolved, so
+      // this still proves the splash waits for both theme and the flag.
       await render(
         <SafeAreaProvider>
           <ThemeProvider store={createDelayedStore()}>
-            <AppNavigator />
+            <FirstLaunchGate />
           </ThemeProvider>
         </SafeAreaProvider>,
       );
@@ -265,6 +269,24 @@ describe('App', () => {
         await new Promise((resolve) => setTimeout(resolve, STORE_DELAY_MS + 50));
       });
       expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('(011-AE5) should render neither Home nor How to play while the how-to-play flag read is still pending', async () => {
+      // Kills the mutant that drops FirstLaunchGate's "return null until
+      // isLoaded": without that guard, AppNavigator would mount with
+      // whatever hasSeenHowToPlay default it falls back to while this
+      // read never settles, rendering one screen or the other.
+      const mocked = jest.requireMock('./src/game/device-store') as DeviceStoreMockModule;
+      const defaultGetItem = async (key: string) => mocked.__entries.get(key) ?? null;
+      (deviceStore.getItem as jest.Mock).mockImplementation((key: string) =>
+        key === HOW_TO_PLAY_SEEN_KEY ? new Promise<string | null>(() => undefined) : defaultGetItem(key),
+      );
+
+      await render(<App />);
+      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.queryByLabelText('HARFHANE')).toBeNull();
+
+      (deviceStore.getItem as jest.Mock).mockImplementation(defaultGetItem);
     });
 
     it('(011-AE4) should not mount the themed app, and so never hide the splash, while fonts are still loading', async () => {

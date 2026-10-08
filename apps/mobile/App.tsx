@@ -4,7 +4,7 @@ import { Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2/800ExtraBold';
 import { useFonts } from '@expo-google-fonts/baloo-2/useFonts';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
@@ -74,9 +74,9 @@ function RouteView({
 
 // R7/AE5: whether the how-to-play-seen flag has finished loading, and what
 // it said. Loading starts as "not seen" so a rejecting read never blocks
-// the gate open (see first-launch-store.ts), but the gate itself still
-// waits for isLoaded before deciding the initial route or hiding the
-// splash, so there is no flash of Home before How to play.
+// the gate open (see first-launch-store.ts); FirstLaunchGate below renders
+// nothing until isLoaded, so AppNavigator only ever mounts with the real,
+// already-settled answer — never an optimistic guess to correct later.
 interface HowToPlayGate {
   readonly isLoaded: boolean;
   readonly hasSeenHowToPlay: boolean;
@@ -99,23 +99,47 @@ function useHowToPlayGate(): [HowToPlayGate, () => void] {
   }, []);
 
   const markSeen = useCallback(() => {
-    void markHowToPlaySeen(deviceStore);
+    // A failed write just means How to play shows again next launch —
+    // never worth crashing the close action over.
+    void markHowToPlaySeen(deviceStore).catch(() => undefined);
     setGate((current) => ({ ...current, hasSeenHowToPlay: true }));
   }, []);
 
   return [gate, markSeen];
 }
 
-export function AppNavigator() {
+// R6/AE4 + R7/AE5: renders nothing until the how-to-play-seen flag has
+// loaded, holding the native splash up for it exactly like ThemeProvider
+// (its parent here) already does for the theme preference. AppNavigator
+// only ever mounts below with the real, settled flag value, so it never
+// needs to correct an optimistic guess after the fact.
+export function FirstLaunchGate() {
+  const [howToPlayGate, markHowToPlaySeenOnce] = useHowToPlayGate();
+
+  useEffect(() => {
+    if (!howToPlayGate.isLoaded) return;
+    void SplashScreen.hideAsync();
+  }, [howToPlayGate.isLoaded]);
+
+  if (!howToPlayGate.isLoaded) return null;
+  return <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />;
+}
+
+interface AppNavigatorProps {
+  readonly hasSeenHowToPlay: boolean;
+  readonly onHowToPlaySeen: () => void;
+}
+
+export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigatorProps) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const [howToPlayGate, markHowToPlaySeenOnce] = useHowToPlayGate();
-  const [state, dispatch] = useReducer(
-    reduceNavigation,
-    howToPlayGate.hasSeenHowToPlay,
-    createInitialNavigationState,
-  );
-  const previousRoute = useRef<Route | null>(null);
+  // hasSeenHowToPlay is only ever read here, as the reducer's one-time
+  // initial-state decision; everything else below (the Oyna/Kapat choice,
+  // the goBack handler) tracks its own local copy instead of re-reading
+  // this prop, so a later change to it can never retroactively alter a
+  // decision this component already made on mount.
+  const [state, dispatch] = useReducer(reduceNavigation, hasSeenHowToPlay, createInitialNavigationState);
+  const [hasSeenHowToPlayLocally, setHasSeenHowToPlayLocally] = useState(hasSeenHowToPlay);
   const playableLengths = usePlayableLengths(api, deviceStore);
   // null means "no explicit pick yet"; resolveSelectedLength also falls
   // back whenever a previous pick stops being playable (derived, not an
@@ -124,40 +148,24 @@ export function AppNavigator() {
   const selectedLength = resolveSelectedLength(pickedLength, playableLengths);
   const route = currentRoute(state);
 
+  // R7/AE5: going back out of How to play — from its own close/Oyna action
+  // (RouteView's onBack, below) or the Android hardware back handler —
+  // marks it seen exactly once, right in the handler that leaves the
+  // route, not as a passive effect watching for the transition.
+  const goBack = useCallback(() => {
+    if (route.screen === 'howToPlay' && !hasSeenHowToPlayLocally) {
+      setHasSeenHowToPlayLocally(true);
+      onHowToPlaySeen();
+    }
+    dispatch({ type: 'back' });
+  }, [route, hasSeenHowToPlayLocally, onHowToPlaySeen]);
+
   const handleHardwareBack = useCallback(() => {
     if (!canGoBack(state)) return false;
-    dispatch({ type: 'back' });
+    goBack();
     return true;
-  }, [state]);
+  }, [state, goBack]);
   useHardwareBackHandler(handleHardwareBack);
-
-  // The reducer's lazy init above ran before the how-to-play gate finished
-  // loading, so it optimistically assumed "not seen" (How to play on top of
-  // home). Once the real answer says "seen", drop that assumption before
-  // anything renders (this component still returns null below until
-  // isLoaded, so the correction is never visible as a flash).
-  useEffect(() => {
-    if (howToPlayGate.isLoaded && howToPlayGate.hasSeenHowToPlay) dispatch({ type: 'reset' });
-  }, [howToPlayGate.isLoaded, howToPlayGate.hasSeenHowToPlay]);
-
-  // R7/AE5: closing How to play by any route (the screen's own close/Oyna
-  // action, the Android hardware back handler above, or a future push past
-  // it) marks it seen exactly once, the moment it stops being the current
-  // route.
-  useEffect(() => {
-    const wasHowToPlay = previousRoute.current?.screen === 'howToPlay';
-    if (wasHowToPlay && route.screen !== 'howToPlay' && !howToPlayGate.hasSeenHowToPlay) markHowToPlaySeenOnce();
-    previousRoute.current = route;
-  }, [route, howToPlayGate.hasSeenHowToPlay, markHowToPlaySeenOnce]);
-
-  // AppNavigator only mounts once ThemeProvider has finished loading the
-  // stored theme preference (R6/AE4); the how-to-play-seen flag loads in
-  // the same gate (R7/AE5) so the splash stays up until both are ready and
-  // the first route is already decided correctly before the first paint.
-  useEffect(() => {
-    if (!howToPlayGate.isLoaded) return;
-    void SplashScreen.hideAsync();
-  }, [howToPlayGate.isLoaded]);
 
   const handleStart = useCallback(
     (mode: HomeScreenMode, length: WordLength) => dispatch({ type: 'push', route: { screen: 'game', mode, length } }),
@@ -166,12 +174,7 @@ export function AppNavigator() {
   const handleOpenHowToPlay = useCallback(() => dispatch({ type: 'push', route: { screen: 'howToPlay' } }), []);
   const handleOpenSettings = useCallback(() => dispatch({ type: 'push', route: { screen: 'settings' } }), []);
   const handleOpenStats = useCallback((length: WordLength) => dispatch({ type: 'push', route: { screen: 'stats', length } }), []);
-  const handleBack = useCallback(() => dispatch({ type: 'back' }), []);
-
-  // All hooks above must run on every render (Rules of Hooks), so this
-  // conditional return — which keeps the splash up and renders nothing
-  // until the how-to-play gate resolves — comes only after every hook call.
-  if (!howToPlayGate.isLoaded) return null;
+  const handleBack = goBack;
 
   const insetStyle = {
     paddingTop: insets.top,
@@ -192,7 +195,7 @@ export function AppNavigator() {
         onOpenSettings={handleOpenSettings}
         onOpenStats={handleOpenStats}
         onBack={handleBack}
-        isHowToPlayFirstLaunch={!howToPlayGate.hasSeenHowToPlay}
+        isHowToPlayFirstLaunch={!hasSeenHowToPlayLocally}
       />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </View>
@@ -210,7 +213,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider store={deviceStore}>
-        <AppNavigator />
+        <FirstLaunchGate />
       </ThemeProvider>
     </SafeAreaProvider>
   );
