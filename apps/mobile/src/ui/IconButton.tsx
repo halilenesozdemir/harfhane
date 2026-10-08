@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { RADIUS, TOUCH_TARGET } from './layout';
+import { DISABLED_OPACITY, RADIUS, TOUCH_TARGET } from './layout';
 
 export interface IconButtonProps {
   /** A sized, coloured Lucide icon element; this component only places it. */
@@ -42,5 +42,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: DISABLED_OPACITY },
 });

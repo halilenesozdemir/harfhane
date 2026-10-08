@@ -34,6 +34,9 @@ export const TOUCH_TARGET = 48;
 /** M3 small centre-aligned top app bar height (mobile-ui-standard.md, section 8). */
 export const TOP_BAR_HEIGHT = 64;
 
+/** Disabled opacity for any pressable (Button K3, IconButton). */
+export const DISABLED_OPACITY = 0.5;
+
 /**
  * Lucide icon sizes by context (mobile-ui-standard.md, section 6, I2).
  * @deferred No screen passes a sized Lucide icon into these primitives yet
