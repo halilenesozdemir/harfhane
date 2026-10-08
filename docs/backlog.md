@@ -435,11 +435,20 @@ isn't gated by the eval gate. `review-5.csv` is regenerable from `labels-5.jsonl
 re-run and git-recoverable (`git checkout -- data/words/review/review-5.csv`), but this is worth
 a second look if the daily-pool cleanup should instead be scoped to `--pool unlimited` only.
 
-## Mobile home redesign stacked PRs (Plan 011 U7c, 2026-10-08)
-U7c ships as stacked PRs to stay under the 500-line/15-file PR cap: today-status.ts +
-StatsScreen's displayed streak (merged first), then `HomeHero`/`DailyCard`/`UnlimitedCard`/
-`useHomeStatus` as standalone, not-yet-wired components (this PR; `knip.jsonc`'s
-`apps/mobile.ignore` keeps them off the unused-files report), then `HomeScreen.tsx` wiring them
-in (next PR, which also removes the `knip.jsonc` ignore entries since they gain a real importer),
-then `App.tsx` passing `store` into `HomeScreen` plus the `App.test.tsx` label updates. Remove
-this note once the wiring PR has merged.
+## Flaky test quarantine: GameScreen.test.tsx win title (011-AE1, 2026-10-08)
+`should show the game-over card with a deterministic win title when the daily word is guessed
+with the keyboard (011-AE1)` (`apps/mobile/src/screens/GameScreen.test.tsx:65`) timed out once in
+CI during Plan 011 U7c review (run 37762150965), passing on rerun. Per the flaky-test policy
+(`AGENTS.md`), quarantined here rather than silently rerun; fix the root cause (likely
+`advancePastGameOverGate`'s real-timer/fake-timer interaction under CI load) or delete within a
+week of this entry.
+
+## apps/mobile stats.ts yesterdayOf uses local time, breaks across a DST transition (2026-10-08)
+`yesterdayOf` (`apps/mobile/src/stats/stats.ts:48-52`) builds `yesterday` with `new Date(today)` +
+`date.setDate(date.getDate() - 1)`, both evaluated in the device's local time zone. In a positive-
+offset DST zone (e.g. `TZ=Europe/Berlin`), the day after a fall-back transition (2026-10-26 in that
+zone) computes `yesterday` as 2026-10-24 instead of 2026-10-25, so `recordDailyResult` wrongly
+treats a streak as broken (or wrongly keeps one alive) right after the transition.
+`apps/mobile/src/home/today-status.ts`'s own `yesterdayOf` (Plan 011 U7c) already parses/formats
+in UTC and does not have this bug; fix `stats.ts` to share that one implementation instead of
+duplicating a second, broken one.
