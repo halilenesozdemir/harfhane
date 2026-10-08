@@ -298,6 +298,16 @@ title, an asymmetric leading slot for the streak chip, up to three trailing acti
 U7c still has to build the streak chip itself and wire `HomeScreen` to the variant, per
 `docs/design/mobile-redesign-spec.md` section B.
 
+`Button`/`Card` (the follow-up PR above) are likewise not wired into any screen; U7b/U7c adopt them
+in `GameScreen`, `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard` and
+`HomeScreen`. Nunito body text (`docs/design/mobile-ui-standard.md` section 2) also stays open;
+`Button`/`Card` text still uses the system font since adding `@expo-google-fonts/nunito` needs
+touching `App.tsx`'s font loading, out of scope for a files-only unit.
+
+`Chip`, `DepthTile` and `AppText` (a third PR, based on `Button`/`Card`) are likewise unwired: U7c
+builds the home streak chip, mode cards' status rows and length selector (`Chip`), the hero
+H-A-R-F tiles and a mode card's icon tile (`DepthTile`), and adopts `AppText` for card text (CA3).
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
