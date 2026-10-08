@@ -4,10 +4,10 @@
     ".": {
       "entry": ["scripts/*.mjs", "scripts/*.ts", "scripts/*.test.mjs"],
       "project": ["scripts/**/*.{js,mjs,ts}"],
-      // wrangler: auto-import.ts, enrich-meanings.ts, import-curated.ts and
-      // seed-db.ts shell out to the wrangler CLI but hardcode `harfhane-db
-      // --remote`; already tracked in docs/backlog.md ("Legacy migrations
-      // folder") pending a retire-or-repoint decision.
+      // wrangler: import-curated.ts and seed-db.ts shell out to the wrangler
+      // CLI but hardcode `harfhane-db --remote`; already tracked in
+      // docs/backlog.md ("Legacy migrations folder") pending a
+      // retire-or-repoint decision.
       // maestro: Maestro CLI is installed outside npm (docs/guides/mobile-run.md, Plan 009 KTD3).
       "ignoreBinaries": ["wrangler", "maestro"]
     },
