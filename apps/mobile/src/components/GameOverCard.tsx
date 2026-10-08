@@ -23,6 +23,9 @@ export interface GameOverCardProps {
   readonly today?: () => string;
   readonly now?: () => Date;
   readonly onNewGame: () => void;
+  // useResultRecorder's own computed distribution for a game that just finished this session —
+  // see useDisplayDistribution's doc comment for why this must win over a storage read.
+  readonly recordedDistribution?: readonly number[] | null;
 }
 
 const UNLIMITED_MODE_TEXT = 'Sınırsız';
@@ -149,12 +152,13 @@ export function GameOverCard({
   today = getTodayString,
   now = defaultNow,
   onNewGame,
+  recordedDistribution = null,
 }: GameOverCardProps) {
   const { colors } = useTheme();
   const guessCount = guesses.length;
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
-  const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today);
+  const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
   const countdown = useCountdown(mode === 'daily', now);
   useResultAnnouncement(title);
 

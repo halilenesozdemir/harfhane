@@ -5,7 +5,7 @@ import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
-import { loadDailyStats, loadUnlimitedStats, recordDailyResult, recordUnlimitedResult } from '../stats/stats';
+import { loadDailyStats, loadUnlimitedStats, recordDailyResult } from '../stats/stats';
 import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
@@ -19,33 +19,44 @@ export function useDisplayDistribution(
   guessCount: number,
   dailyDate: string | null,
   today: () => string,
+  // useResultRecorder's own computed result for a game that *just* finished this session — using
+  // it directly, instead of reading storage, closes a race: GameOverCard can mount in the same
+  // commit as the game finishing (under reduce motion, where there is no reveal/bounce gate), and
+  // React runs a child's effect before its parent's, so this hook's own storage read could run
+  // before useResultRecorder's write landed, showing the just-played game's bar as empty. null
+  // means either that write hasn't resolved yet (briefly, right after a just-played finish) or
+  // there was no write this session at all (a restored, already-finished game) — both fall back
+  // to reading storage below, same as before.
+  recordedDistribution: readonly number[] | null,
 ): readonly number[] | null {
-  const [distribution, setDistribution] = useState<readonly number[] | null>(null);
+  const [loadedDistribution, setLoadedDistribution] = useState<readonly number[] | null>(null);
   useEffect(() => {
+    // recordedDistribution already has the answer — nothing to load, and no storage read can
+    // ever win or lose a race against it below (it is returned directly, not copied into state).
+    if (recordedDistribution !== null) return undefined;
     let isCurrent = true;
     const won = gameStatus === 'won';
-    // Reopening an already-finished daily game (Geri, then back in) remounts this card after
-    // useResultRecorder already saved the result once. Recording it again here would double-count
-    // the just-played guess count's bar, so a daily game whose stored lastPlayedDate already
-    // matches this one is shown as-is, not re-added. Unlimited has no persisted "reopen a
-    // finished game" path (a fresh mount always starts a brand-new word), so it always adds —
-    // there is nothing stored yet to double-count against.
+    // Reopening an already-finished daily game (Geri, then back in) reads the same already-stored
+    // bar. An unlimited game never persists a "reopen a finished game" state (a fresh mount
+    // always starts a brand-new word), so this storage-read path for unlimited only runs for the
+    // brief window before useResultRecorder's own write resolves (recordedDistribution above is
+    // what lands moments later).
     const load = (mode === 'daily'
       ? loadDailyStats(store, wordLength).then((stats) => {
           const date = dailyDate ?? today();
           return stats.lastPlayedDate === date ? stats.guessDistribution : recordDailyResult(stats, won, guessCount, date).guessDistribution;
         })
-      : loadUnlimitedStats(store, wordLength).then((stats) => recordUnlimitedResult(stats, won, guessCount).guessDistribution)
+      : loadUnlimitedStats(store, wordLength).then((stats) => stats.guessDistribution)
     // A rejected AsyncStorage read (I/O error, corrupt native module) must not become an unhandled
     // promise rejection: the card simply renders without a distribution section (null), the same
     // as while the read is still pending.
     ).catch(() => null);
-    load.then((value) => isCurrent && setDistribution(value));
+    load.then((value) => isCurrent && setLoadedDistribution(value));
     return () => {
       isCurrent = false;
     };
-  }, [store, mode, wordLength, gameStatus, guessCount, dailyDate, today]);
-  return distribution;
+  }, [store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution]);
+  return recordedDistribution ?? loadedDistribution;
 }
 
 interface DistributionRowProps {

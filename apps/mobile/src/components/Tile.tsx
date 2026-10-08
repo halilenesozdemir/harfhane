@@ -100,7 +100,14 @@ function useFlipAnimation(isRevealing: boolean, revealDelayMs: number, reduceMot
   // pattern) instead of setting it from inside the effect below.
   if (isRevealing !== wasRevealing) {
     setWasRevealing(isRevealing);
-    if (isRevealing) setColorRevealed(reduceMotion);
+    if (isRevealing) {
+      setColorRevealed(reduceMotion);
+    } else {
+      // Safety net: if isRevealing turns false before this tile's own midpoint timer fired (the
+      // parent's reveal window ending early relative to a row committed partway through it),
+      // this must not leave the tile stuck uncoloured forever.
+      setColorRevealed(true);
+    }
   }
   // Reduce motion can turn on mid-flip (a colour that had not reached its midpoint yet must not
   // stay hidden forever): show the evaluated colour the moment that setting flips, independent
