@@ -102,6 +102,45 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should show no game-over card one millisecond before the loss reveal gate ends, then show it right after', async () => {
+    const api = createApi();
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // wrong guess against KALEM
+        await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
+      }
+      await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']); // 6th and final wrong guess: the game is lost
+
+      await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS - 1));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(1));
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should show no game-over card one millisecond before the win reveal-and-bounce gate ends, then show it right after', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // win in 1 guess
+
+      await act(async () => jest.advanceTimersByTime(WON_GAME_OVER_READY_MS - 1));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+
+      await act(async () => jest.advanceTimersByTime(1));
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show the game-over card immediately for a daily game restored already finished, with no reveal or bounce running', async () => {
     const store = createMemoryStore();
     await saveGameState(store, dailyGameKey(today(), 5), {
