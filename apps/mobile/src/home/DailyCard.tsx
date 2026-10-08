@@ -9,17 +9,29 @@ import { Button } from '../ui/Button';
 import { DepthTile } from '../ui/DepthTile';
 import { AppText } from '../ui/Typography';
 import { DEPTH, ICON_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { useCountdown } from './useCountdown';
 import type { ButtonVariant } from '../ui/Button';
 import type { ThemeColors } from '../theme';
 import type { WordLength } from '../stats/stats';
 import type { TodayState, TodayStatus } from './today-status';
 
+// A stable module-level reference, see useHomeStatus.ts's defaultNow for why
+// a fresh arrow function as a default parameter value would be wrong here.
+function defaultNow(): Date {
+  return new Date();
+}
+
 export interface DailyCardProps {
   readonly wordLength: WordLength;
   /** Null while the stored stats and daily game state are still loading. */
   readonly status: TodayStatus | null;
-  readonly countdown: string;
   readonly onPress: () => void;
+  /** Injectable clock for the midnight countdown (tests only); defaults to the real time. */
+  readonly now?: () => Date;
+}
+
+function isCountdownVisible(state: TodayState | null): boolean {
+  return state !== null && (state.kind === 'won' || state.kind === 'lost');
 }
 
 const ICON_TILE_SIZE = 48;
@@ -59,9 +71,12 @@ function StatusRow({ state, countdown, colors }: { state: TodayState | null; cou
 }
 
 /** The daily mode card (mobile-redesign-spec.md section B): one pressable target whose status row and CTA follow `getTodayStatus`. */
-export function DailyCard({ wordLength, status, countdown, onPress }: DailyCardProps) {
+export function DailyCard({ wordLength, status, onPress, now = defaultNow }: DailyCardProps) {
   const { colors } = useTheme();
   const cta = dailyCta(status?.state ?? null);
+  // E: ticks once a second only while the countdown chip is actually shown,
+  // so the rest of the home screen is unaffected by this card's own clock.
+  const countdown = useCountdown(now, isCountdownVisible(status?.state ?? null));
 
   return (
     <Card onPress={onPress} accessibilityLabel={dailyAccessibilityLabel(wordLength, status?.state ?? null)} padding={SPACING.xl} testID="home-daily-card">
