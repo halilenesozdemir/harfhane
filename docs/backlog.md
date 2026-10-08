@@ -36,10 +36,11 @@ reason; details here.
   system dark mode still works today via the app's own DayNight theme and `useColorScheme`. Decide
   whether to install `expo-updates` for OTA updates (Faz 2/3) and `expo-system-ui` to let
   `userInterfaceStyle` take effect natively.
-- `scripts/scrape-words.ts` (missing `node-html-parser` dependency) and
-  `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
+- `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
   already covered by the "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc`
-  ignores them rather than reinstalling dependencies for scripts pending a retire-or-repoint decision.
+  ignores them rather than reinstalling a dependency for scripts pending a retire-or-repoint decision.
+  (`scripts/scrape-words.ts` itself, and the TDK scrape files it fed, were deleted — see "Web cleanup
+  before the shared engine" below.)
 
 ## Anonymous player analytics (2026-10-06)
 Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
@@ -63,11 +64,17 @@ word scheduled in the future, refuse activating a `rejected` word).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
-- Audit unused files, hooks, routes, API endpoints and migrations-only tables before moving game logic into `packages/shared`.
-- Plan web ↔ mobile routing: store links, deep links, "get the app" banner.
-- Found by `knip` (Plan 009 U7): `apps/backend/src/routes/words.ts:51` (`GET /words/challenge/:wordId`)
-  has no frontend caller left now that the dead `useChallengeWord` hook is gone. Decide whether to
-  delete the route too.
+- Audit done (2026-10-08): `pnpm knip` is clean and a manual grep for unused hooks/routes/components
+  found nothing beyond the items resolved below.
+- Root TDK scrape files (`tdk-seed.sql`, `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`)
+  conflicted with Invariant 3 (no TDK data) and had no other reference anywhere in the repo
+  (`scraped-words.json`, `new-words.sql`, `seed.sql` and `curated-words.json` are separate, still-used
+  files and were left alone). Deleted all four, plus the stale `node-html-parser` `ignoreDependencies`
+  entry in `knip.jsonc` that existed only for `scrape-words.ts`.
+- `GET /words/challenge/:wordId` and `apps/frontend/public/_worker.js` were also found dead by this
+  audit; deleted in a companion PR (kept separate from this pure-deletion diff).
+- Plan web ↔ mobile routing (store links, deep links, "get the app" banner): still open, post-launch —
+  not part of this cleanup pass.
 
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
@@ -159,9 +166,10 @@ and already removed end to end in #54.
 - **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
   `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
   version the storage schema, key daily saves by the server's `date`.
-- **Deletions.** `apps/frontend/public/_worker.js` is now a passthrough that forces Pages Functions mode;
-  `/api/words/challenge/:wordId` lets anyone walk the answer pool by id; root TDK scrape files (`tdk-seed.sql`,
-  `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`) conflict with Invariant 3.
+- **Deletions.** `apps/frontend/public/_worker.js` and `/api/words/challenge/:wordId` are deleted in a
+  companion PR (kept separate from this PR's pure-deletion diff); the root TDK scrape files
+  (`tdk-seed.sql`, `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`) that conflicted with
+  Invariant 3 are deleted here.
 - **Web player experience.** `min-h-screen` instead of `dvh` on game pages; no safe-area padding under the
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the

@@ -4,10 +4,6 @@
     ".": {
       "entry": ["scripts/*.mjs", "scripts/*.ts", "scripts/*.test.mjs"],
       "project": ["scripts/**/*.{js,mjs,ts}"],
-      // node-html-parser: scripts/scrape-words.ts is one of the legacy word
-      // scripts already flagged in docs/backlog.md ("Legacy docs review" /
-      // Invariant 3 conflict); not reinstalling a dep for retired code.
-      "ignoreDependencies": ["node-html-parser"],
       // wrangler: auto-import.ts, enrich-meanings.ts, import-curated.ts and
       // seed-db.ts shell out to the wrangler CLI but hardcode `harfhane-db
       // --remote`; already tracked in docs/backlog.md ("Legacy migrations
