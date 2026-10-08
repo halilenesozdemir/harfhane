@@ -1,5 +1,5 @@
 export type { TileStatus, TimeCountdown } from './types';
-export { normalizeChar, normalizeWord, evaluateGuess, checkGameStatus } from './evaluate';
+export { normalizeChar, normalizeWord, evaluateGuess, checkGameStatus, MAX_GUESSES } from './evaluate';
 export { updateKeyboardStatus } from './keyboard';
 export { generateShareText } from './share';
 export { getTimeUntilMidnight, getTodayString, getGameNumber } from './time';

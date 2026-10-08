@@ -1,5 +1,6 @@
 import { CalendarDays, CircleCheck, CircleX, Clock } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import { MAX_GUESSES } from '@harfhane/shared';
 import type { ReactNode } from 'react';
 import { useTheme } from '../ThemeProvider';
 import { Card } from '../ui/Card';
@@ -33,22 +34,22 @@ function dailyCta(state: TodayState | null): { readonly label: string; readonly 
 function dailyAccessibilityLabel(length: WordLength, state: TodayState | null): string {
   const base = `Günlük oyun, ${length} harf`;
   if (state === null || state.kind === 'not-started') return `${base}, yeni kelime hazır`;
-  if (state.kind === 'in-progress') return `${base}, ${state.guesses}/6 tahmin`;
-  if (state.kind === 'won') return `${base}, bugün çözüldü, ${state.guesses}/6`;
+  if (state.kind === 'in-progress') return `${base}, ${state.guesses}/${MAX_GUESSES} tahmin`;
+  if (state.kind === 'won') return `${base}, bugün çözüldü, ${state.guesses}/${MAX_GUESSES}`;
   return `${base}, bugün çözülemedi`;
 }
 
 function StatusRow({ state, countdown, colors }: { state: TodayState | null; countdown: string; colors: ThemeColors }) {
   if (state === null) return null;
   if (state.kind === 'not-started') return <Chip variant="status" label="Yeni kelime hazır" />;
-  if (state.kind === 'in-progress') return <Chip variant="status" label={`${state.guesses}/6 tahmin`} />;
+  if (state.kind === 'in-progress') return <Chip variant="status" label={`${state.guesses}/${MAX_GUESSES} tahmin`} />;
   const isWon = state.kind === 'won';
   const resultIcon: ReactNode = isWon ? (
     <CircleCheck size={ICON_SIZE.sm} color={colors.correctText} />
   ) : (
     <CircleX size={ICON_SIZE.sm} color={colors.textMuted} />
   );
-  const resultLabel = isWon ? `Çözüldü · ${state.guesses}/6` : 'Bu sefer olmadı';
+  const resultLabel = isWon ? `Çözüldü · ${state.guesses}/${MAX_GUESSES}` : 'Bu sefer olmadı';
   return (
     <>
       <Chip variant="status" icon={resultIcon} label={resultLabel} color={isWon ? colors.correctText : undefined} />
