@@ -291,12 +291,13 @@ no screen (the owner approved starting U7a in parallel with U1-U6's open PRs sin
 files). `ICON_SIZE` and `SCREEN_PADDING` (`apps/mobile/src/ui/layout.ts`) were tagged `@deferred`
 for knip since nothing imported them yet; U7b/U7c wire `IconButton`/`TopBar` into `GameScreen`,
 `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard` and `HomeScreen`, at which point
-both constants gain real importers and the tags come off. `SCREEN_PADDING`'s tag is off as of
-Plan 011 U7c's `HomeScreen.tsx` prep edit (still the old screen; it just adopts the constant for
-its existing padding value). `ICON_SIZE` stays `@deferred` a little longer: its only importers so
-far are `HomeHero`/`DailyCard`/`UnlimitedCard`, which `knip.jsonc` itself ignores (not yet wired
-into any screen), and knip does not count an ignored file's imports as real usage; the tag comes
-off once `HomeScreen.tsx` is redesigned to import it directly. `TopBar`'s `leading`/`trailing`
+both constants gain real importers and the tags come off. Both tags are off as of Plan 011 U7c:
+`SCREEN_PADDING` from the `HomeScreen.tsx` prep edit (still the old screen; it just adopts the
+constant for its existing padding value), and `ICON_SIZE` once `HomeHero`/`DailyCard`/
+`UnlimitedCard` got their own test files (knip counts a component as really used once anything
+outside it imports it, including its own test, so the `knip.jsonc` ignore entries this plan unit
+briefly carried for those three files came off too — they were only ever needed between adding the
+files and giving them their own tests). `TopBar`'s `leading`/`trailing`
 are plain `ReactNode` slots; `lucide-react-native` landed on `main` via #93, so U7b/U7c can now
 compose the actual `IconButton` + Lucide icon elements directly. `TopBar`'s `variant="home"` (no
 title, an asymmetric leading slot for the streak chip, up to three trailing actions) is in place;
