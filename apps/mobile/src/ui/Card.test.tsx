@@ -19,7 +19,7 @@ function assertCardPropsAreDiscriminated() {
 void assertCardPropsAreDiscriminated;
 
 describe('Card', () => {
-  it('should have no back layer when static (D3)', async () => {
+  it('should have no back layer when static, a 1 dp surfaceBorder edge (C4), RADIUS.lg (16), and 16 dp default padding (CA1, D3)', async () => {
     await renderWithTheme(
       <Card testID="daily-stats">
         <Text>Oyun 12</Text>
@@ -29,36 +29,9 @@ describe('Card', () => {
     expect(style.backgroundColor).toBe(themes.light.surface);
     expect(style.borderBottomWidth).toBeUndefined();
     expect(screen.queryByTestId('daily-stats-back')).toBeNull();
-  });
-
-  it('should draw a 1 dp surfaceBorder edge so the card boundary never relies on depth alone (C4)', async () => {
-    await renderWithTheme(
-      <Card testID="daily-stats">
-        <Text>Oyun 12</Text>
-      </Card>,
-    );
-    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
     expect(style.borderWidth).toBe(1);
     expect(style.borderColor).toBe(themes.light.surfaceBorder);
-  });
-
-  it('should use RADIUS.lg (16) for the card corner radius (CA1)', async () => {
-    await renderWithTheme(
-      <Card testID="daily-stats">
-        <Text>Oyun 12</Text>
-      </Card>,
-    );
-    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
     expect(style.borderRadius).toBe(16);
-  });
-
-  it('should default padding to 16 dp (CA1)', async () => {
-    await renderWithTheme(
-      <Card testID="daily-stats">
-        <Text>Oyun 12</Text>
-      </Card>,
-    );
-    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
     expect(style.padding).toBe(16);
   });
 
