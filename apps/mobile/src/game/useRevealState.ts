@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base } from '@harfhane/ui-tokens';
 import { parseMs } from '../utils/ms';
 import type { GameSession } from './game-session';
@@ -49,13 +49,15 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
     }
   }
 
+  const bounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!isRevealing) return undefined;
     const revealTimer = setTimeout(() => {
       setIsRevealing(false);
       if (session.game.gameStatus !== 'won') return;
       setCelebrateRow(true);
-      setTimeout(() => setCelebrateRow(false), wordLength * STAGGER_MS + BOUNCE_MS);
+      bounceTimerRef.current = setTimeout(() => setCelebrateRow(false), wordLength * STAGGER_MS + BOUNCE_MS);
     }, revealDurationMs(wordLength));
     return () => clearTimeout(revealTimer);
     // guessCount restarts this timer when a new row commits while isRevealing is still (already)
@@ -64,6 +66,18 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
     // not re-run (isRevealing's own value never flipped), leaving the new row governed by the
     // stale timer from the previous row and cut off before its own tiles reach their midpoint.
   }, [isRevealing, wordLength, session.game.gameStatus, guessCount]);
+
+  // A mount-once effect, deliberately separate from the one above: that effect's cleanup also
+  // runs on every reveal-timer rerun (isRevealing flipping true->false triggers it, which is
+  // exactly when bounceTimerRef just got set by the very same timer callback), so clearing
+  // bounceTimerRef there would immediately cancel the bounce timer it just scheduled. Clearing it
+  // only here, on true unmount, avoids that self-cancellation while still freeing a bounce timer
+  // left pending if the component unmounts mid-celebration.
+  useEffect(() => {
+    return () => {
+      if (bounceTimerRef.current !== null) clearTimeout(bounceTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isEnterBlocked) return undefined;
