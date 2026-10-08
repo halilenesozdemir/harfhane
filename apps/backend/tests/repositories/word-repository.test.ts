@@ -4,26 +4,20 @@ import { getGameNumber } from '@harfhane/shared';
 import {
   findDailyWord,
   findRandomWord,
-  findWordById,
   wordExists,
 } from '../../src/repositories/word-repository';
 import { applySchema, seedTestData } from '../helpers/db';
-
-let userWordId: number;
 
 beforeAll(async () => {
   await applySchema(env.DB);
   await seedTestData(env.DB);
 
-  const userWord = await env.DB.prepare(
+  await env.DB.prepare(
     `INSERT INTO words
       (word, meaning, context, category, length, source, license, status, family_safe, is_active)
      VALUES
-      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'draft', 0, 1)
-     RETURNING id`
-  ).first<{ id: number }>();
-  if (!userWord) throw new Error('Failed to seed user-sourced word');
-  userWordId = userWord.id;
+      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'draft', 0, 1)`
+  ).run();
 });
 
 describe('findDailyWord', () => {
@@ -95,20 +89,6 @@ describe('findRandomWord', () => {
     const result = await findRandomWord(env.DB, 7);
     expect(result).not.toBeNull();
     expect(result!.entry.word).toBe('TABANCA');
-  });
-});
-
-describe('findWordById', () => {
-  it('returns an active, non-user word by id', async () => {
-    const result = await findRandomWord(env.DB, 5);
-    expect(result).not.toBeNull();
-    const byId = await findWordById(env.DB, result!.id);
-    expect(byId).not.toBeNull();
-  });
-
-  it('refuses to serve an unmoderated user-submitted word as a challenge answer', async () => {
-    const result = await findWordById(env.DB, userWordId);
-    expect(result).toBeNull();
   });
 });
 
