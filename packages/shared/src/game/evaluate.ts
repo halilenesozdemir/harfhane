@@ -50,7 +50,7 @@ export const evaluateGuess = (guess: string, solution: string): TileStatus[] => 
   return result;
 };
 
-const MAX_GUESSES = 6;
+export const MAX_GUESSES = 6;
 
 export const checkGameStatus = (guesses: string[], solution: string): 'won' | 'lost' | 'playing' => {
   const lastGuess = guesses[guesses.length - 1];

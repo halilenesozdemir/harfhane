@@ -78,16 +78,7 @@ describe('useHomeStatus', () => {
     expect(result.current.status?.state).toEqual({ kind: 'in-progress', guesses: 1 });
   });
 
-  it('should tick the countdown every second', async () => {
-    const { result } = await setup(createMemoryStore(storedStats({})));
-    const first = result.current.countdown;
-    await act(async () => {
-      jest.advanceTimersByTime(1000);
-    });
-    expect(result.current.countdown).not.toBe(first);
-  });
-
-  it('should recompute the daily status once the countdown crosses midnight', async () => {
+  it('should recompute the daily status once the Turkey day rolls over', async () => {
     jest.setSystemTime(new Date(JUST_BEFORE_MIDNIGHT));
     const store = createMemoryStore({
       ...storedStats({ lastPlayedDate: '2026-10-08' }),
@@ -134,7 +125,7 @@ describe('useHomeStatus', () => {
     expect(result.current.status?.state).toEqual({ kind: 'not-started' });
   });
 
-  it('should not re-create the countdown interval or the AppState subscription on a re-render', async () => {
+  it('should not re-create the day-check interval or the AppState subscription on a re-render', async () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
     const store = createMemoryStore(storedStats({}));
@@ -147,6 +138,63 @@ describe('useHomeStatus', () => {
 
     expect(setIntervalSpy.mock.calls.length).toBe(intervalCallsAfterMount);
     expect(addEventListenerSpy.mock.calls.length).toBe(listenerCallsAfterMount);
+  });
+
+  it('should not trigger a fresh load on a tick that does not cross the Turkey day boundary', async () => {
+    const store = createMemoryStore(storedStats({}));
+    const { result } = await setup(store);
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    const statusBeforeTick = result.current.status;
+
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // Same length, status and day: the day-check interval ran but found no
+    // change, so useLoadedStatus's effect must not have re-run (same object
+    // reference, not just an equal one).
+    expect(result.current.status).toBe(statusBeforeTick);
+  });
+
+  it('should fall back to a not-started/streak-0 status when the store rejects', async () => {
+    const store: KeyValueStore = {
+      getItem: () => Promise.reject(new Error('storage unavailable')),
+      setItem: async () => undefined,
+    };
+    const { result } = await setup(store);
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.status).toEqual({ displayedStreak: 0, state: { kind: 'not-started' } });
+  });
+
+  it('should clear the status while a new length loads, instead of showing the previous length\'s status', async () => {
+    const lengthFive: WordLength = 5;
+    const lengthSix: WordLength = 6;
+    let resolveSix!: (value: string | null) => void;
+    const store: KeyValueStore = {
+      getItem: (key) => {
+        if (key === dailyStatsKey(lengthFive)) {
+          const stats: DailyStats = { gamesPlayed: 1, gamesWon: 1, currentStreak: 3, maxStreak: 3, guessDistribution: [0, 0, 1, 0, 0, 0], lastPlayedDate: '2026-10-08' };
+          return Promise.resolve(JSON.stringify(stats));
+        }
+        if (key === dailyStatsKey(lengthSix)) return new Promise((resolve) => { resolveSix = resolve; });
+        return Promise.resolve(null);
+      },
+      setItem: async () => undefined,
+    };
+    const { result, rerender } = await renderHook(({ length }: { length: WordLength }) => useHomeStatus(store, length), {
+      initialProps: { length: lengthFive },
+    });
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.status?.displayedStreak).toBe(3);
+
+    await act(async () => rerender({ length: lengthSix }));
+    expect(result.current.status).toBeNull();
+
+    await act(async () => {
+      resolveSix(null);
+    });
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.status?.displayedStreak).toBe(0);
   });
 
   it('should not mix up stats from a previous length when the selected length changes before its load settles', async () => {
