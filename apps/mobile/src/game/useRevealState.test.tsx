@@ -116,6 +116,63 @@ describe('useRevealState', () => {
     expect(result.current.celebrateRow).toBe(false);
   });
 
+  it('should restart its reveal timer when a new row commits while the previous row is still revealing (B1)', async () => {
+    const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
+    const row0 = makeSession({
+      game: { ...makeSession().game, guesses: ['KABAK'], evaluations: [['correct', 'correct', 'absent', 'correct', 'correct']], gameStatus: 'playing' },
+    });
+    await act(async () => rerender({ session: row0, reduceMotion: false }));
+    expect(result.current.isRevealing).toBe(true);
+
+    // Commit row 1 right when row 0's Enter unblocks (M4), well before row 0's own reveal window
+    // (STAGGER_MS * WORD_LENGTH + FLIP_MS) would end on its own.
+    const enterUnblockMs = (WORD_LENGTH - 1) * STAGGER_MS + FLIP_MS / 2;
+    await act(async () => jest.advanceTimersByTime(enterUnblockMs));
+    const row1 = makeSession({
+      game: {
+        ...makeSession().game,
+        guesses: ['KABAK', 'KAPAK'],
+        evaluations: [row0.game.evaluations[0] ?? [], ['correct', 'correct', 'correct', 'correct', 'correct']],
+        gameStatus: 'playing',
+      },
+    });
+    await act(async () => rerender({ session: row1, reduceMotion: false }));
+    expect(result.current.isRevealing).toBe(true);
+
+    // At this point row 0's own (un-restarted) timer would already have fired — only a restarted
+    // timer, driven by row 1's own commit, keeps isRevealing true here.
+    await act(async () => jest.advanceTimersByTime(400));
+    expect(result.current.isRevealing).toBe(true);
+  });
+
+  it('should clear its pending bounce timer on unmount, not merely leave it to fire after the component is gone', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    try {
+      const { result, rerender, unmount } = await setup({ session: makeSession(), reduceMotion: false });
+      const won = makeSession({ game: { ...makeSession().game, guesses: ['KAPAK'], evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']], gameStatus: 'won' } });
+      await act(async () => rerender({ session: won, reduceMotion: false }));
+      // Let the reveal flip finish and the bounce start, but unmount before the bounce's own timer fires.
+      await act(async () => jest.advanceTimersByTime(WORD_LENGTH * STAGGER_MS + FLIP_MS));
+      expect(result.current.celebrateRow).toBe(true);
+
+      const bounceDurationMs = WORD_LENGTH * STAGGER_MS + BOUNCE_MS;
+      const bounceCallIndex = setTimeoutSpy.mock.calls.findIndex(([, ms]) => ms === bounceDurationMs);
+      expect(bounceCallIndex).toBeGreaterThanOrEqual(0);
+      const bounceTimerId = setTimeoutSpy.mock.results[bounceCallIndex]?.value;
+
+      await act(async () => unmount());
+      // A cleared bounce timer must be gone, not merely left to fire its (now pointless)
+      // setCelebrateRow(false) later — compared by reference (===), since two distinct Timeout
+      // objects can print identically without being the same pending timer.
+      const clearedTheBounceTimer = clearTimeoutSpy.mock.calls.some((call) => call[0] === bounceTimerId);
+      expect(clearedTheBounceTimer).toBe(true);
+    } finally {
+      setTimeoutSpy.mockRestore();
+      clearTimeoutSpy.mockRestore();
+    }
+  });
+
   it('should shake the current row when a guess is rejected without adding a row', async () => {
     const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
     const rejected = makeSession({ message: 'Kelime listede yok', rejectionCount: 1 });
