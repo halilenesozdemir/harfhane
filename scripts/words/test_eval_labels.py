@@ -173,8 +173,11 @@ class EvaluateIntegrationTests(unittest.TestCase):
         held_out = [golden_accept(f"A{i}") for i in range(18)] + [
             golden_reject(f"S{i}", "sensitive") for i in range(2)
         ]
+        # A reject reason differing from golden's ("obscure" vs "sensitive") still counts
+        # as caught (score_reason_recall), and keeps this a genuine match rather than a
+        # byte-identical copy of golden's decisions.
         candidate = [candidate_accept(f"A{i}") for i in range(18)] + [
-            candidate_reject(f"S{i}", "sensitive") for i in range(2)
+            candidate_reject(f"S{i}", "obscure") for i in range(2)
         ]
         self.assertTrue(self._evaluate_with_held_out(held_out, candidate)["passes"])
 
@@ -243,6 +246,25 @@ class LoadersTests(unittest.TestCase):
                 handle.write('{"word": "kalem", "decision": "accept"}\n')
             self.assertEqual(load_candidate(path), [{"word": "KALEM", "decision": "accept"}])
 
+    def test_load_golden_and_load_candidate_raise_value_error_on_a_malformed_row(self):
+        # A non-object row, or a non-string "word", must raise ValueError instead of
+        # crashing with an unhandled TypeError/AttributeError (see validate_labels.py).
+        bad_rows = ['"just a string"', "[1, 2]", '{"word": null}', '{"word": 5}']
+        for bad_row in bad_rows:
+            with tempfile.TemporaryDirectory() as tmp:
+                golden_path = os.path.join(tmp, "golden.jsonl")
+                with open(golden_path, "w", encoding="utf-8") as handle:
+                    handle.write('{"word": "A0", "decision": "accept"}\n' + bad_row + "\n")
+                candidate_path = os.path.join(tmp, "candidate.jsonl")
+                with open(candidate_path, "w", encoding="utf-8") as handle:
+                    handle.write(bad_row + "\n")
+                with self.subTest(loader="load_golden", bad_row=bad_row):
+                    with self.assertRaises(ValueError):
+                        load_golden(golden_path)
+                with self.subTest(loader="load_candidate", bad_row=bad_row):
+                    with self.assertRaises(ValueError):
+                        load_candidate(candidate_path)
+
 
 class MainCliTests(unittest.TestCase):
     def _write_jsonl(self, path, labels):
@@ -265,13 +287,14 @@ class MainCliTests(unittest.TestCase):
             self.assertEqual(ctx.exception.code, 1)
 
     def test_exits_zero_when_the_report_passes(self):
-        # A candidate matching every golden word exactly covers whichever half the
-        # real (unpatched) hash split puts into held-out.
+        # Covers whichever half the real (unpatched) hash split puts into held-out. The
+        # reject reason ("obscure" vs golden's "sensitive") differs so this is a genuine
+        # match, not a byte-identical copy of golden's decisions.
         golden = [golden_accept(f"A{i}") for i in range(200)] + [
             golden_reject(f"S{i}", "sensitive") for i in range(20)
         ]
         candidate = [candidate_accept(f"A{i}") for i in range(200)] + [
-            candidate_reject(f"S{i}", "sensitive") for i in range(20)
+            candidate_reject(f"S{i}", "obscure") for i in range(20)
         ]
         with tempfile.TemporaryDirectory() as tmp:
             self._run(tmp, golden, candidate)

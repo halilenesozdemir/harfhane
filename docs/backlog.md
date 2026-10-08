@@ -388,3 +388,26 @@ and they were left unfixed to keep that PR scoped to what the scan actually caug
 Fix the same way: swap `text-white` for the semantic `-fg` token (`text-correct-fg` /
 `text-present-fg`), or scan these screens first to confirm which ones actually fail before
 changing them.
+
+## Label eval candidate is not bound to the batch it vets (Plan 010 U5/U6, 2026-10-08)
+`scripts/words/validate_labels.py --eval-candidate` isn't tied to the labelling run it vets (no
+prompt version or model id recorded/checked); a stale, unrelated candidate file passes the gate
+just as well as the real one, as long as it is not literally the golden file (only that exact case
+is blocked, by the `--eval-candidate`/`--golden` realpath check in `validate_labels.py`). A
+candidate file that copies the golden set's held-out decisions under a different path is not
+detected at all (the `_copies_golden_decisions` heuristic that used to flag this was removed: it
+was trivially bypassed by changing one reject reason, and it blocked a legitimately perfect
+candidate). Needed once prompt calibration or model-swap tracking lands.
+
+## test_eval_labels.py doesn't pin which hash half is held-out (2026-10-08)
+`eval_labels.split_golden()`'s hash bucketing decides which half calibrates prompts and which is
+held out for scoring, but no test pins bucket `0` to calibration and `1` to held-out specifically
+(only that the two halves partition the set). Needed once prompt calibration reads the
+calibration half, so a silent bucket swap doesn't go unnoticed.
+
+## validate_labels.py's daily-pool cleanup also deletes a stale committed review CSV (2026-10-08)
+`validate_labels.py main()`'s `_remove_stale_review_csv` runs for the daily pool too: a labels
+file with blocking errors deletes `data/words/review/review-5.csv` even though the daily pool
+isn't gated by the eval gate. `review-5.csv` is regenerable from `labels-5.jsonl` by a clean
+re-run and git-recoverable (`git checkout -- data/words/review/review-5.csv`), but this is worth
+a second look if the daily-pool cleanup should instead be scoped to `--pool unlimited` only.

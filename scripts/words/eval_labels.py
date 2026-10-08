@@ -40,10 +40,24 @@ def normalize_word(word: str) -> str:
     return tr_upper(unicodedata.normalize("NFC", word.strip()))
 
 
+def _check_row_shape(entry, index: int) -> None:
+    # A row that isn't a JSON object, or whose "word" isn't a string, used to crash
+    # with an unhandled TypeError/AttributeError deep in normalize_word() and leave a
+    # stale review CSV behind (validate_labels.py). Fail closed here instead, with a
+    # ValueError the caller's except clause already handles.
+    if not isinstance(entry, dict):
+        raise ValueError(f"label row {index} is not a JSON object: {entry!r}")
+    word = entry.get("word")
+    if not isinstance(word, str):
+        raise ValueError(f"label row {index} has a non-string 'word': {word!r}")
+
+
 def load_candidate(path: str) -> list:
     # No ids: these words are about to be imported, not golden-set entries.
     with open(path, encoding="utf-8") as handle:
         labels = [json.loads(line) for line in handle if line.strip()]
+    for index, label in enumerate(labels):
+        _check_row_shape(label, index)
     return [{**label, "word": normalize_word(label["word"])} for label in labels]
 
 
@@ -54,6 +68,7 @@ def _prepare_golden(golden: list) -> list:
     prepared = []
     seen = set()
     for index, entry in enumerate(golden):
+        _check_row_shape(entry, index)
         word = normalize_word(entry["word"])
         if word in seen:
             raise ValueError(f"duplicate golden word at entry {index} (normalized: {word!r})")
