@@ -58,7 +58,10 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
             </div>
             <div className="text-left">
               <h2 className="text-xl font-bold">Günlük Oyun</h2>
-              <p className="text-white/75 text-sm">Günün {dailyLength} harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
+              {/* /75 opacity failed WCAG AA contrast against bg-correct (axe: 3.15,
+                  needs 4.5); /90 clears it while keeping the subtitle visually
+                  lighter than the heading above it. */}
+              <p className="text-white/90 text-sm">Günün {dailyLength} harfli kelimesi. Herkes aynı kelimeyi çözer.</p>
             </div>
           </div>
         </button>
@@ -86,7 +89,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
                 onClick={() => setPickedLength(len)}
                 className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                   selectedLength === len
-                    ? "bg-present text-white shadow-sm"
+                    ? "bg-present text-present-fg shadow-sm"
                     : "bg-tile-empty text-text-secondary hover:bg-tile-filled"
                 }`}
               >
