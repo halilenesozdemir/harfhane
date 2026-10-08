@@ -222,4 +222,25 @@ describe('PATCH /api/admin/words/:id', () => {
     const body = (await res.json()) as { data: { is_active: number } };
     expect(body.data.is_active).toBe(0);
   });
+
+  it('should return 200 when deactivating a word whose only daily schedule is in the past', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active, pool)
+       VALUES ('OYUNF', 5, 'test', 'test', 'approved', 1, 1, 'daily')`
+    ).run();
+    const wordRow = await env.DB.prepare('SELECT id FROM words WHERE word = ?').bind('OYUNF').first<{ id: number }>();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+      .bind(wordRow?.id, '2000-01-01')
+      .run();
+
+    const res = await SELF.fetch(`http://example.com/api/admin/words/${wordRow?.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ is_active: false }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: { is_active: number } };
+    expect(body.data.is_active).toBe(0);
+  });
 });

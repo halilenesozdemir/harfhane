@@ -4,16 +4,25 @@ const {
   adminFindDailyScheduleMock,
   adminGetStatsMock,
   adminAutoFillScheduleMock,
+  adminFindWordByIdMock,
+  adminWordScheduledOnOrAfterMock,
+  adminSetWordActiveMock,
 } = vi.hoisted(() => ({
   adminFindDailyScheduleMock: vi.fn().mockResolvedValue([]),
   adminGetStatsMock: vi.fn().mockResolvedValue({}),
   adminAutoFillScheduleMock: vi.fn().mockResolvedValue({ scheduled: 0, skipped: 0 }),
+  adminFindWordByIdMock: vi.fn(),
+  adminWordScheduledOnOrAfterMock: vi.fn(),
+  adminSetWordActiveMock: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('../../src/repositories/admin-repository', () => ({
   adminFindDailySchedule: adminFindDailyScheduleMock,
   adminGetStats: adminGetStatsMock,
   adminAutoFillSchedule: adminAutoFillScheduleMock,
+  adminFindWordById: adminFindWordByIdMock,
+  adminWordScheduledOnOrAfter: adminWordScheduledOnOrAfterMock,
+  adminSetWordActive: adminSetWordActiveMock,
 }));
 
 afterEach(() => {
@@ -21,6 +30,9 @@ afterEach(() => {
   adminFindDailyScheduleMock.mockClear();
   adminGetStatsMock.mockClear();
   adminAutoFillScheduleMock.mockClear();
+  adminFindWordByIdMock.mockClear();
+  adminWordScheduledOnOrAfterMock.mockClear();
+  adminSetWordActiveMock.mockClear();
 });
 
 describe('getDailySchedule Turkey day boundary', () => {
@@ -86,5 +98,19 @@ describe('autoFillDailySchedule Turkey day boundary', () => {
     await autoFillDailySchedule({} as never, 7);
 
     expect(adminAutoFillScheduleMock).toHaveBeenCalledWith({}, '2026-06-15', '2026-06-22');
+  });
+});
+
+describe('toggleWordActive Turkey day boundary', () => {
+  it('should check the future schedule against the Turkey calendar day, not the UTC day, when deactivating', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-08T22:30:00Z'));
+    adminFindWordByIdMock.mockResolvedValue({ id: 1, status: 'approved' });
+    adminWordScheduledOnOrAfterMock.mockResolvedValue(false);
+    const { toggleWordActive } = await import('../../src/services/admin-service');
+
+    await toggleWordActive({} as never, 1, false);
+
+    expect(adminWordScheduledOnOrAfterMock).toHaveBeenCalledWith({}, 1, '2026-10-09');
   });
 });
