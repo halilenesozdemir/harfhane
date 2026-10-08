@@ -97,7 +97,14 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           onNewGame={game.startNewGame}
         />
       ) : (
-        <Keyboard keyboardStatus={session.game.keyboardStatus} onLetter={game.onLetter} onDelete={game.onDelete} onSubmit={onSubmit} />
+        <Keyboard
+          keyboardStatus={session.game.keyboardStatus}
+          onLetter={game.onLetter}
+          onDelete={game.onDelete}
+          onSubmit={onSubmit}
+          isHapticsEnabled={game.isHapticsEnabled}
+          isInputBlocked={session.isSubmitting || reveal.isRevealing}
+        />
       )}
     </>
   );

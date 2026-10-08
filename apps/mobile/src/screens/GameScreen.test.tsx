@@ -9,6 +9,12 @@ import { dailyGameNumber, selectResultMessage } from '../components/gameOverMess
 import { shortGuessMessage } from '../game/game-session';
 import { parseMs } from '../utils/ms';
 
+const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-haptics', () => ({
+  AndroidHaptics: { Keyboard_Tap: 'keyboard-tap', Confirm: 'confirm', Reject: 'reject' },
+  performAndroidHapticsAsync: (...args: unknown[]) => mockPerformAndroidHapticsAsync(...args),
+}));
+
 const today = () => '2026-10-05';
 const DAILY_WORD_LENGTH = 5;
 // Matches useRevealState's wordLength * motion-stagger + motion-flip.
@@ -233,5 +239,22 @@ describe('GameScreen', () => {
     const dailyRow1Fill = await screen.findByTestId('gameover-distribution-1-fill');
     expect(within(dailyRow1Fill).getByText('1')).toBeTruthy();
     await act(async () => dailyView.unmount());
+  });
+
+  it('should not trigger the key-tap haptic when a key is pressed while a guess is still being validated', async () => {
+    let resolveValidate!: (value: { isValid: boolean }) => void;
+    const api = createApi();
+    api.validateWord = jest.fn(() => new Promise((resolve) => { resolveValidate = resolve; }));
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    await waitFor(() => expect(api.validateWord).toHaveBeenCalledTimes(1));
+
+    mockPerformAndroidHapticsAsync.mockClear();
+    await fireEvent.press(screen.getByTestId('key-A'));
+
+    expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('keyboard-tap');
+
+    await act(async () => resolveValidate({ isValid: true }));
   });
 });
