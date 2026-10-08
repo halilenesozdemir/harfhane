@@ -266,6 +266,14 @@ in `GameScreen`, `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCa
 `Button`/`Card` text still uses the system font since adding `@expo-google-fonts/nunito` needs
 touching `App.tsx`'s font loading, out of scope for a files-only unit.
 
+`Chip`, `DepthTile` and the `AppText` typography helper (a third PR, based on the `Button`/`Card`
+PR above) are likewise unwired: U7c builds the home top bar's streak chip (`Chip` `variant="streak"`
+composed with a Lucide `Flame` icon), the mode cards' status rows (`Chip` `variant="status"`) and
+length selector (`Chip` `variant="length"`), the hero H-A-R-F tiles and a mode card's icon tile
+(`DepthTile`), and adopts `AppText` for card titles/body/captions (CA3). `DepthTile`'s `radius` and
+`letterFontSize` have no caller yet; both are plain optional props with sensible defaults, not
+knip-flagged since they are parameters, not top-level exports.
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
