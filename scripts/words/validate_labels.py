@@ -157,20 +157,12 @@ def _remove_stale_review_csv(review_path: str) -> None:
 
 
 def _eval_gate_failure_reasons(report: dict) -> list:
-    """Concrete reasons the gate failed, for a report that *ran* (as opposed to the
-    early-exit reasons `_eval_gate_reason` already prints, such as a missing file).
-    Without this, a failing threshold check printed nothing to stderr: the reason
-    was buried in the stdout JSON only."""
+    # Concrete reasons a report that *ran* still failed (unlike _eval_gate_reason's
+    # early-exit reasons); without this a failing threshold printed nothing to
+    # stderr, only to the stdout JSON.
     thresholds = report["thresholds"]
-    integrity = report["integrity"]
     sensitive = report["reject_reason_recall"]["sensitive"]
     reasons = []
-    if integrity["missing"]:
-        reasons.append(f"held-out words missing from candidate: {', '.join(integrity['missing'])}")
-    if integrity["duplicate"]:
-        reasons.append(f"held-out words duplicated in candidate: {', '.join(integrity['duplicate'])}")
-    if report["held_out_count"] == 0:
-        reasons.append("no held-out golden words to measure against")
     if sensitive["total"] == 0:
         reasons.append("no sensitive rejects in held-out")
     accept_precision = report["accept"]["precision"]
@@ -202,8 +194,7 @@ def main():
             passed, eval_report = unlimited_label_eval_passes(args.length, args.golden, args.eval_candidate)
             print(json.dumps({"label_eval": eval_report}, ensure_ascii=False, indent=2))
         finally:
-            # No exception from here must ever leave a stale CSV behind, even one
-            # `unlimited_label_eval_passes` doesn't itself catch.
+            # No exception here must leave a stale CSV behind.
             if not passed:
                 _remove_stale_review_csv(review_path)
         if not passed:

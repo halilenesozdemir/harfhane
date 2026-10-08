@@ -246,31 +246,24 @@ class LoadersTests(unittest.TestCase):
                 handle.write('{"word": "kalem", "decision": "accept"}\n')
             self.assertEqual(load_candidate(path), [{"word": "KALEM", "decision": "accept"}])
 
-    def test_load_golden_raises_value_error_on_a_malformed_row(self):
-        # A non-object row or a non-string "word" must fail closed with a clear
-        # ValueError, not crash the process with an unhandled TypeError/AttributeError
-        # and leave a stale review CSV behind (see validate_labels.py).
+    def test_load_golden_and_load_candidate_raise_value_error_on_a_malformed_row(self):
+        # A non-object row, or a non-string "word", must raise ValueError instead of
+        # crashing with an unhandled TypeError/AttributeError (see validate_labels.py).
         bad_rows = ['"just a string"', "[1, 2]", '{"word": null}', '{"word": 5}']
         for bad_row in bad_rows:
-            with self.subTest(bad_row=bad_row):
-                with tempfile.TemporaryDirectory() as tmp:
-                    path = os.path.join(tmp, "golden.jsonl")
-                    with open(path, "w", encoding="utf-8") as handle:
-                        handle.write('{"word": "A0", "decision": "accept"}\n')
-                        handle.write(bad_row + "\n")
+            with tempfile.TemporaryDirectory() as tmp:
+                golden_path = os.path.join(tmp, "golden.jsonl")
+                with open(golden_path, "w", encoding="utf-8") as handle:
+                    handle.write('{"word": "A0", "decision": "accept"}\n' + bad_row + "\n")
+                candidate_path = os.path.join(tmp, "candidate.jsonl")
+                with open(candidate_path, "w", encoding="utf-8") as handle:
+                    handle.write(bad_row + "\n")
+                with self.subTest(loader="load_golden", bad_row=bad_row):
                     with self.assertRaises(ValueError):
-                        load_golden(path)
-
-    def test_load_candidate_raises_value_error_on_a_malformed_row(self):
-        bad_rows = ['"just a string"', "[1, 2]", '{"word": null}', '{"word": 5}']
-        for bad_row in bad_rows:
-            with self.subTest(bad_row=bad_row):
-                with tempfile.TemporaryDirectory() as tmp:
-                    path = os.path.join(tmp, "candidate.jsonl")
-                    with open(path, "w", encoding="utf-8") as handle:
-                        handle.write(bad_row + "\n")
+                        load_golden(golden_path)
+                with self.subTest(loader="load_candidate", bad_row=bad_row):
                     with self.assertRaises(ValueError):
-                        load_candidate(path)
+                        load_candidate(candidate_path)
 
 
 class MainCliTests(unittest.TestCase):
