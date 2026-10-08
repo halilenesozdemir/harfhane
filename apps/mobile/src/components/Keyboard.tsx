@@ -13,12 +13,11 @@ export interface KeyboardProps {
   readonly onDelete: () => void;
   readonly onSubmit: () => void;
   /**
-   * Overrides the "Titreşim" setting for the key-tap haptic. Pass `useGame()`'s
-   * `isHapticsEnabled` once the parent screen reads it; omitting it falls back to this
-   * component's own `useHapticsSettings()` call so it still works stand-alone.
+   * Overrides the "Titreşim" setting for the key-tap haptic (GameScreen passes `useGame()`'s
+   * value); omitting it falls back to this component's own `useHapticsSettings()` call.
    */
   readonly isHapticsEnabled?: boolean;
-  /** Suppresses the key-tap haptic once the game is over or a guess is in flight. */
+  /** Suppresses the key-tap haptic while a guess is being validated. */
   readonly isInputBlocked?: boolean;
 }
 

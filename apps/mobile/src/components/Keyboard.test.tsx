@@ -77,15 +77,8 @@ async function renderKeyboard({ keyboardStatus = {}, isHapticsEnabled, isInputBl
 }
 
 describe('Keyboard', () => {
-  // This test shares one real useHapticsSettings() instance between a Titreşim Switch and
-  // Keyboard's isHapticsEnabled prop -- the closest integration to SettingsScreen and
-  // Keyboard sharing the real hook+store. It stays untagged: the AE3 ("switched off in
-  // Settings, pressing a key triggers no haptic") acceptance example is proven by the real
-  // navigation path in App.test.tsx instead, since in production GameScreen passes no
-  // isHapticsEnabled prop and Settings is a separate route -- this test only proves the prop
-  // wiring, not that real path. It runs first to prove the suite is no longer order-dependent
-  // now that every fireEvent/fireEvent.press call below is awaited (RNTL 14 returns promises
-  // from both; a dangling one used to overlap with later `act()` calls in this file).
+  // Proves only the isHapticsEnabled prop wiring; AE3's real navigation path is in
+  // App.test.tsx. Runs first to show the file no longer depends on test order.
   it('should stop triggering the key-tap haptic once the Titreşim switch is turned off', async () => {
     // Self-proving: if the hook's load never actually ran (e.g. its setState were a no-op),
     // isEnabled would stay false from the very start and the first assertion below --
