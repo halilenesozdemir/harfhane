@@ -23,6 +23,15 @@ interface TurkeyClock {
 
 const COUNTDOWN_TICK_MS = 1000;
 
+// A stable module-level reference: a fresh arrow function as the default
+// parameter value would be re-created on every render, forever changing
+// useTurkeyClock's effect dependency and re-creating its interval/AppState
+// subscription on every render (countdown drift, a frozen clock in the
+// worst case) instead of once on mount.
+function defaultNow(): Date {
+  return new Date();
+}
+
 function readClock(now: () => Date): TurkeyClock {
   const { hours, minutes, seconds } = getTimeUntilMidnight(now());
   return { today: getTodayString(now()), countdown: `${hours}:${minutes}:${seconds}` };
@@ -68,7 +77,7 @@ function useLoadedStatus(store: KeyValueStore, length: WordLength, today: string
 }
 
 /** Drives the daily mode card (mobile-redesign-spec.md section B): today's state, the displayed streak and the midnight countdown. */
-export function useHomeStatus(store: KeyValueStore, length: WordLength, now: () => Date = () => new Date()): UseHomeStatusResult {
+export function useHomeStatus(store: KeyValueStore, length: WordLength, now: () => Date = defaultNow): UseHomeStatusResult {
   const { today, countdown } = useTurkeyClock(now);
   const status = useLoadedStatus(store, length, today);
   return { status, countdown };
