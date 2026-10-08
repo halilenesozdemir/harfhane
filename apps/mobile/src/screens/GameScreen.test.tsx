@@ -152,24 +152,21 @@ describe('GameScreen', () => {
     }
   });
 
-  it('should keep the normal key-tap haptic for a letter during the post-guess Enter block, but give none for Enter itself (M4, isSubmitBlocked is Enter-only)', async () => {
+  it('should give no key-tap haptic for a key pressed while the previous row is still revealing (M4, isInputBlocked includes isEnterBlocked)', async () => {
     jest.useFakeTimers();
     try {
       await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
       await screen.findByLabelText('Gönder');
       await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // wrong guess; still playing, now revealing
 
-      // A letter typed during the Enter block must stay snappy: normal haptic, and it lands.
       mockPerformAndroidHapticsAsync.mockClear();
       await act(async () => fireEvent.press(screen.getByTestId('key-A')));
-      expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
-      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('A');
+      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('keyboard-tap');
 
-      // Enter itself is still blocked here (M4): no haptic, and the guess does not submit.
+      await act(async () => jest.advanceTimersByTime(ENTER_UNBLOCK_MS));
       mockPerformAndroidHapticsAsync.mockClear();
-      await act(async () => fireEvent.press(screen.getByTestId('key-ENTER')));
-      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalled();
-      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).toBe('A');
+      await act(async () => fireEvent.press(screen.getByTestId('key-B')));
+      expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
     } finally {
       jest.useRealTimers();
     }

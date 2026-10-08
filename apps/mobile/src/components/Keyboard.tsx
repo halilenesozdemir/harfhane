@@ -17,15 +17,8 @@ export interface KeyboardProps {
    * value); omitting it falls back to this component's own `useHapticsSettings()` call.
    */
   readonly isHapticsEnabled?: boolean;
-  /** Suppresses the key-tap haptic for a letter or backspace press while a guess is being validated. */
+  /** Suppresses the key-tap haptic while a guess is being validated. */
   readonly isInputBlocked?: boolean;
-  /**
-   * Suppresses the key-tap haptic for an Enter press only — while validating, and through the
-   * post-guess reveal window (M4), when GameScreen already turns the submit itself into a no-op.
-   * Letters and backspace keep their normal haptic throughout that window (owner decision: typing
-   * ahead must stay snappy even though Enter itself does nothing yet).
-   */
-  readonly isSubmitBlocked?: boolean;
 }
 
 const ENTER_KEY = 'ENTER';
@@ -60,21 +53,18 @@ export function Keyboard({
   onSubmit,
   isHapticsEnabled,
   isInputBlocked = false,
-  isSubmitBlocked = false,
 }: KeyboardProps) {
   const ownHapticsSettings = useHapticsSettings();
   const resolvedHapticsEnabled = isHapticsEnabled ?? ownHapticsSettings.isEnabled;
 
   const handlePress = useCallback(
     (value: string) => {
-      const isEnter = value === ENTER_KEY;
-      const isBlocked = isEnter ? isSubmitBlocked : isInputBlocked;
-      if (!isBlocked) void keyTap(resolvedHapticsEnabled);
-      if (isEnter) return onSubmit();
+      if (!isInputBlocked) void keyTap(resolvedHapticsEnabled);
+      if (value === ENTER_KEY) return onSubmit();
       if (value === BACKSPACE_KEY) return onDelete();
       onLetter(value);
     },
-    [isInputBlocked, isSubmitBlocked, resolvedHapticsEnabled, onDelete, onLetter, onSubmit],
+    [isInputBlocked, resolvedHapticsEnabled, onDelete, onLetter, onSubmit],
   );
 
   return (
