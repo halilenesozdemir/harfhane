@@ -1,12 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { getTodayString } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
 import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { getDisplayedStreak } from '../home/today-status';
 import type { DailyStats, UnlimitedStats } from '../stats/stats';
 
 export interface StatsScreenProps {
   readonly stats: DailyStats | UnlimitedStats;
   readonly isUnlimited: boolean;
   readonly onClose: () => void;
+  /** mobile-redesign-spec.md section B: the same `getDisplayedStreak` the home screen uses; defaults to the real Turkey day. */
+  readonly today?: string;
 }
 
 const PERCENT_MULTIPLIER = 100;
@@ -26,7 +30,7 @@ function isDailyStats(stats: DailyStats | UnlimitedStats): stats is DailyStats {
   return 'currentStreak' in stats;
 }
 
-export function StatsScreen({ stats, isUnlimited, onClose }: StatsScreenProps) {
+export function StatsScreen({ stats, isUnlimited, onClose, today = getTodayString() }: StatsScreenProps) {
   const { colors } = useTheme();
   const maxDistribution = Math.max(...stats.guessDistribution, 1);
 
@@ -41,7 +45,7 @@ export function StatsScreen({ stats, isUnlimited, onClose }: StatsScreenProps) {
         <StatBox value={winPercentage(stats)} label="Kazanma %" />
         {!isUnlimited && isDailyStats(stats) && (
           <>
-            <StatBox value={stats.currentStreak} label="Seri" />
+            <StatBox value={getDisplayedStreak(stats, today)} label="Seri" />
             <StatBox value={stats.maxStreak} label="En İyi Seri" />
           </>
         )}
