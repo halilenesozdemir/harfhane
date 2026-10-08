@@ -7,7 +7,7 @@ export const securityHeaders = createMiddleware<{ Bindings: Env }>(
 
     c.header(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.harfhane.app https://accounts.google.com https://oauth2.googleapis.com; font-src 'self'; frame-ancestors 'none'"
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.harfhane.app; font-src 'self'; frame-ancestors 'none'"
     );
     c.header('X-Frame-Options', 'DENY');
     c.header('X-Content-Type-Options', 'nosniff');
