@@ -117,6 +117,8 @@ redesign once A-D's open PRs have merged.
     and `GameOverCard` (including the bar-count contrast fix), with their tests.
   - U7c: `HomeScreen` redesign and `apps/mobile/src/home/today-status.ts` (displayed streak,
     today's state, midnight refresh); Stats uses the same displayed streak. AE7: game half tested in U7b, home half here.
+    Owner, 2026-10-08: U7c starts before U7b (the home screen was the more pressing gap); U7b
+    still touches `StatsScreen.tsx` afterwards for its top-bar/button wiring.
   - U7d: `apps/mobile/scripts/generate-brand-assets.mjs`, regenerated `apps/mobile/assets/*.png`,
     `apps/mobile/app.json` `imageWidth`, `apps/mobile/src/components/LaunchIntro.tsx`, its wiring
     in `App.tsx` and the hero `onLayout` hook in `HomeScreen.tsx` (after U7c).

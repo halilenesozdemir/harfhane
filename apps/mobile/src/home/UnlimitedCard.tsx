@@ -47,7 +47,7 @@ export function UnlimitedCard({ wordLength, isDailyFinished, onPress }: Unlimite
         {isDailyFinished ? (
           <Button label="Sınırsız oyna" variant="primary" />
         ) : (
-          <View importantForAccessibility="no-hide-descendants">
+          <View testID="unlimited-chevron" importantForAccessibility="no-hide-descendants">
             <ChevronRight size={ICON_SIZE.md} color={colors.textMuted} />
           </View>
         )}

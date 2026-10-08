@@ -5,7 +5,7 @@ import { dailyStatsKey } from '../stats/stats';
 import { createMemoryStore } from '../test-utils/render-with-theme';
 import { useHomeStatus } from './useHomeStatus';
 import type { KeyValueStore } from '../game/game-storage';
-import type { DailyStats } from '../stats/stats';
+import type { DailyStats, WordLength } from '../stats/stats';
 
 const LENGTH = 5;
 const TODAY = '2026-10-08T10:00:00.000Z';
@@ -21,6 +21,17 @@ function mockAppStateListener(): { fire: (status: string) => void } {
     return { remove: () => undefined } as ReturnType<typeof AppState.addEventListener>;
   });
   return { fire: (status: string) => handler?.(status) };
+}
+
+// Fires the AppState handler and flushes the store's async getItem chain
+// without advancing fake timers: RNTL's `waitFor` would advance them itself
+// while polling, which would let the 1 s interval alone satisfy an
+// assertion this test means to attribute only to the AppState handler.
+async function fireAppStateAndFlush(appState: { fire: (status: string) => void }, status: string): Promise<void> {
+  await act(async () => {
+    appState.fire(status);
+    for (let i = 0; i < 6; i += 1) await Promise.resolve();
+  });
 }
 
 function storedStats(overrides: Partial<DailyStats>): Readonly<Record<string, string>> {
@@ -102,8 +113,69 @@ describe('useHomeStatus', () => {
     await waitFor(() => expect(result.current.status).not.toBeNull());
     expect(result.current.status?.state).toEqual({ kind: 'not-started' });
 
+    // No timer ever advances past this point: the only way `today` can
+    // change to 2026-10-09 below is the AppState 'active' handler, not the
+    // 1 s countdown interval (M7: a surviving mutant removed that handler
+    // and the test still passed, because a subsequent `waitFor` silently
+    // advanced fake timers for it).
     jest.setSystemTime(new Date('2026-10-09T10:00:00.000Z'));
-    await act(async () => appState.fire('active'));
-    await waitFor(() => expect(result.current.status?.state).toEqual({ kind: 'lost' }));
+    await fireAppStateAndFlush(appState, 'active');
+    expect(result.current.status?.state).toEqual({ kind: 'lost' });
+  });
+
+  it('should not recompute the daily status on an unrelated AppState event', async () => {
+    const appState = mockAppStateListener();
+    const store = createMemoryStore(storedStats({}));
+    const { result } = await setup(store);
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+
+    jest.setSystemTime(new Date('2026-10-09T10:00:00.000Z'));
+    await fireAppStateAndFlush(appState, 'background');
+    expect(result.current.status?.state).toEqual({ kind: 'not-started' });
+  });
+
+  it('should not re-create the countdown interval or the AppState subscription on a re-render', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
+    const store = createMemoryStore(storedStats({}));
+    const { rerender } = await setup(store);
+    const intervalCallsAfterMount = setIntervalSpy.mock.calls.length;
+    const listenerCallsAfterMount = addEventListenerSpy.mock.calls.length;
+
+    await act(async () => rerender(undefined));
+    await act(async () => rerender(undefined));
+
+    expect(setIntervalSpy.mock.calls.length).toBe(intervalCallsAfterMount);
+    expect(addEventListenerSpy.mock.calls.length).toBe(listenerCallsAfterMount);
+  });
+
+  it('should not mix up stats from a previous length when the selected length changes before its load settles', async () => {
+    const lengthFive: WordLength = 5;
+    const lengthSix: WordLength = 6;
+    let resolveFive!: (value: string | null) => void;
+    const store: KeyValueStore = {
+      getItem: (key) => {
+        if (key === dailyStatsKey(lengthFive)) return new Promise((resolve) => { resolveFive = resolve; });
+        if (key === dailyStatsKey(lengthSix)) {
+          const stats: DailyStats = { gamesPlayed: 2, gamesWon: 2, currentStreak: 7, maxStreak: 7, guessDistribution: [0, 0, 0, 0, 0, 0], lastPlayedDate: '2026-10-08' };
+          return Promise.resolve(JSON.stringify(stats));
+        }
+        return Promise.resolve(null);
+      },
+      setItem: async () => undefined,
+    };
+    const { result, rerender } = await renderHook(({ length }: { length: WordLength }) => useHomeStatus(store, length), {
+      initialProps: { length: lengthFive },
+    });
+    await act(async () => rerender({ length: lengthSix }));
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.status?.displayedStreak).toBe(7);
+
+    // The length-5 load settles after length 6 already resolved; without the
+    // isCurrent guard this stale response would overwrite the correct state.
+    await act(async () => {
+      resolveFive(JSON.stringify({ gamesPlayed: 1, gamesWon: 0, currentStreak: 1, maxStreak: 1, guessDistribution: [0, 0, 0, 0, 0, 0], lastPlayedDate: '2026-10-01' }));
+    });
+    expect(result.current.status?.displayedStreak).toBe(7);
   });
 });

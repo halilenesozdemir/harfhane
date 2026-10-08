@@ -26,7 +26,7 @@ describe('getDisplayedStreak', () => {
     expect(getDisplayedStreak(statsWithStreak(3, YESTERDAY), TODAY)).toBe(3);
   });
 
-  it('should return zero when the last played date is two days ago (011-AE7)', () => {
+  it('should return zero when the last played date is two days ago', () => {
     expect(getDisplayedStreak(statsWithStreak(3, TWO_DAYS_AGO), TODAY)).toBe(0);
   });
 
