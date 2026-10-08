@@ -70,27 +70,6 @@ describe('daily_words_require_active_word trigger', () => {
     ).rejects.toThrow();
   });
 
-  it('should reject scheduling when the word is draft regardless of pool', async () => {
-    // source='user' so the table CHECK permits is_active=1 without status='approved'.
-    const wordId = await insertWord({ word: 'TASLA', status: 'draft', pool: 'daily', source: 'user' });
-
-    await expect(
-      env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
-        .bind(wordId, '2026-03-03')
-        .run()
-    ).rejects.toThrow();
-  });
-
-  it('should reject scheduling when the word is not family-safe regardless of pool', async () => {
-    const wordId = await insertWord({ word: 'ACIMA', familySafe: 0, pool: 'daily', source: 'user' });
-
-    await expect(
-      env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
-        .bind(wordId, '2026-03-04')
-        .run()
-    ).rejects.toThrow();
-  });
-
   it('should reject scheduling when the word is inactive regardless of pool', async () => {
     const wordId = await insertWord({ word: 'ARASI', isActive: 0, pool: 'daily' });
 

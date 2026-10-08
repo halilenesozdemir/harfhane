@@ -66,10 +66,14 @@ describe('adminAutoFillSchedule with full stock', () => {
   });
 
   it('should not schedule a user-submitted word when filling the schedule', async () => {
+    // status/family_safe are 'approved'/1 (not 'draft'/0): the words CHECK no longer has
+    // a source = 'user' escape (0003_drop_removed_features.sql), so an active row must be
+    // approved and family-safe regardless of source. autoFillLength must still exclude
+    // source = 'user' on its own merits.
     await env.DB
       .prepare(
         `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
-         VALUES ('KULLA', 5, 'user', 'user-submitted', 'draft', 0, 1)`
+         VALUES ('KULLA', 5, 'user', 'user-submitted', 'approved', 1, 1)`
       )
       .run();
 

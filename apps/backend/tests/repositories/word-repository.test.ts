@@ -12,11 +12,15 @@ beforeAll(async () => {
   await applySchema(env.DB);
   await seedTestData(env.DB);
 
+  // status/family_safe are 'approved'/1 here (not 'draft'/0) because the words CHECK no
+  // longer has a source = 'user' escape (0003_drop_removed_features.sql) — an active row
+  // must be approved and family-safe regardless of source. source = 'user' still has to be
+  // excluded by the read queries below, moderated or not.
   await env.DB.prepare(
     `INSERT INTO words
       (word, meaning, context, category, length, source, license, status, family_safe, is_active)
      VALUES
-      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'draft', 0, 1)`
+      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'approved', 1, 1)`
   ).run();
 });
 
@@ -73,7 +77,7 @@ describe('findRandomWord', () => {
     expect(['isim', 'sıfat', 'fiil']).toContain(result!.entry.category);
   });
 
-  it('never returns an unmoderated user-submitted word', async () => {
+  it('never returns a user-submitted word, even one marked approved and active', async () => {
     const result = await findRandomWord(env.DB, 6);
     expect(result).toBeNull();
   });
