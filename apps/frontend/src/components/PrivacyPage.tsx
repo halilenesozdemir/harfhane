@@ -71,8 +71,8 @@ const PrivacyPage = (): React.JSX.Element => {
               <li>
                 Kötüye kullanımı (aşırı istek) önlemek için sunucumuz, bu isteklerdeki IP adresinizi kısa süreli
                 olarak işler: IP adresi ve istek yolu, isteği sınırlamak amacıyla sunucu belleğinde (bir
-                Cloudflare Worker&apos;ın geçici belleğinde) birkaç dakikalık bir pencere boyunca sayılır, veritabanına
-                yazılmaz ve Worker yeniden başladığında kaybolur.
+                Cloudflare Worker&apos;ın geçici belleğinde) sayım bir dakikalık pencerede yapılır; kayıt
+                veritabanına yazılmaz, Worker&apos;ın geçici belleğinde Worker yeniden başlayana kadar kalabilir.
               </li>
               <li>
                 Bu istekler ve web sayfasının statik dosyaları, barınma sağlayıcımız Cloudflare&apos;in altyapısından
@@ -103,27 +103,33 @@ const PrivacyPage = (): React.JSX.Element => {
             <p>
               2026-10-05&apos;teki kapsam kararından önce Harfhane&apos;de hesap, oturum açma ve sunucu tarafında
               oyun sonucu kaydı vardı. Bu özelliklerin kodu kaldırılmıştır, ancak o dönemde oluşturulmuş olabilecek
-              veriler (e-posta, kullanıcı adı, şifre özeti, oyun sonuçları, push bildirim aboneliği, şifre
-              sıfırlama kayıtları gibi) veritabanı şemasından henüz silinmemiştir; bu tabloları kalıcı olarak
-              silecek göç (migration) hazırlanmış ama sahibin onayı beklenmektedir ve bu onay/uygulama henüz
-              gerçekleşmemiştir. Bu nedenle, o döneme ait bir hesabınız varsa, verilerinizin halen veritabanında
-              bulunabileceğini varsaymalısınız.
+              veriler (e-posta, kullanıcı adı, şifre özeti, Google hesap kimliği (google_id), e-posta bildirim
+              tercihi, oyun sonuçları, kullanıcıların oluşturduğu kelime listeleri ve yorumlar, düello ve turnuva
+              sonuçları, XP ve rozetler, push bildirim aboneliği, şifre sıfırlama kayıtları gibi) veritabanı
+              şemasından henüz silinmemiştir; bu tabloları kalıcı olarak silecek işlem hazırlanmış ama sahibin
+              onayı beklenmektedir ve bu onay/uygulama henüz gerçekleşmemiştir. Bu veriler silininceye kadar
+              herhangi bir işleme amacıyla kullanılmaz. Bu nedenle, o döneme ait bir hesabınız varsa,
+              verilerinizin halen veritabanında bulunabileceğini varsaymalısınız.
             </p>
             <p>
-              Eski hesabınızla ilgili verilerin silinmesini talep etmek için [İLETİŞİM E-POSTASI] adresine
-              yazabilirsiniz; talebiniz aşağıdaki &quot;Haklarınız&quot; bölümünde açıklanan süre içinde
-              yanıtlanır.
+              Eski hesabınızla ilgili verilerin önceden silinmesini talep etmek için [İLETİŞİM E-POSTASI]
+              adresine yazabilirsiniz; talebiniz aşağıdaki &quot;Başvuru Yolu&quot; bölümünde açıklanan süre
+              içinde sonuçlandırılır.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">İşleme Amacı ve Hukuki Sebep (KVKK m.5)</h2>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Günün/rastgele kelimeyi sunma ve tahmininizi doğrulama: sözleşmenin ifası / meşru menfaat.</li>
+              <li>
+                Günün kelimesini veya rastgele kelimeyi sunma ve tahmininizi doğrulama: KVKK m.5/2-c (istediğiniz
+                oyun hizmetinin sağlanması için gerekli olması).
+              </li>
               <li>İstek sınırlama (rate limiting) için IP adresinin geçici işlenmesi: meşru menfaat (KVKK m.5/2-f).</li>
               <li>
-                Eski hesap verileri (yukarıdaki bölüm): o dönemde sözleşmenin ifası amacıyla toplanmıştı; bugün
-                aktif bir işleme amacı yoktur, drop migration onaylanana kadar sistemde kalmaktadır.
+                Eski hesap verileri (yukarıdaki bölüm): o dönemde KVKK m.5/2-c kapsamında toplanmıştı; bu veriler
+                silinmek üzere planlanmıştır, silininceye kadar herhangi bir işleme amacıyla kullanılmaz, Başvuru
+                Yolu üzerinden daha önce silinmesini talep edebilirsiniz.
               </li>
             </ul>
           </section>
@@ -132,7 +138,7 @@ const PrivacyPage = (): React.JSX.Element => {
             <h2 className="text-lg font-semibold">Toplama Yöntemi</h2>
             <p>
               Yukarıda sayılan veriler, uygulamayı kullanırken otomatik yöntemlerle ve elektronik ortamda (tarayıcı
-              veya mobil uygulama üzerinden sunucumuza yapılan isteklerle) toplanır; manuel veya kağıt üzerinden
+              veya mobil uygulama üzerinden sunucumuza yapılan isteklerle) toplanır; manuel veya kâğıt üzerinden
               bir veri toplama yoktur.
             </p>
           </section>
@@ -141,14 +147,17 @@ const PrivacyPage = (): React.JSX.Element => {
             <h2 className="text-lg font-semibold">Saklama Süreleri</h2>
             <ul className="list-disc pl-6 space-y-1">
               <li>Cihazınızdaki oyun verileri: siz silene veya uygulamayı kaldırana kadar.</li>
-              <li>İstek sınırlama için bellekteki IP kaydı: birkaç dakikalık pencere, veritabanına yazılmaz.</li>
+              <li>
+                İstek sınırlama için bellekteki IP kaydı: bir dakikalık sayım penceresi; kayıt veritabanına
+                yazılmaz, Worker&apos;ın geçici belleğinde Worker yeniden başlayana kadar kalabilir.
+              </li>
               <li>
                 Cloudflare&apos;in kendi erişim günlükleri: Cloudflare&apos;in kendi politikasına/hesap ayarına
                 bağlı. [SAHİP KONTROL ETMELİ.]
               </li>
               <li>
-                Eski hesap verileri: drop migration&apos;ın sahip onayıyla uygulanmasına kadar veritabanında
-                kalır; bu süre henüz belirlenmemiştir.
+                Eski hesap verileri: silme işleminin sahip onayıyla uygulanmasına kadar veritabanında kalır; bu
+                süre içinde herhangi bir işleme amacıyla kullanılmaz ve henüz kesin bir tarih belirlenmemiştir.
               </li>
             </ul>
           </section>
@@ -205,7 +214,7 @@ const PrivacyPage = (): React.JSX.Element => {
               yazılı olarak, Kayıtlı Elektronik Posta (KEP) adresi, güvenli elektronik imza, mobil imza ya da
               Harfhane&apos;ye önceden bildirip sistemde kayıtlı bulunan bir e-posta adresi üzerinden
               kullanabilirsiniz. Başvurunuzu [İLETİŞİM E-POSTASI] adresine iletebilirsiniz; talebinizi, KVKK m.13/2
-              uyarınca en geç <strong>30 gün</strong> içinde yanıtlamayı hedefliyoruz.
+              uyarınca en geç <strong>30 gün</strong> içinde sonuçlandırırız.
             </p>
           </section>
 

@@ -59,10 +59,20 @@ describe('PrivacyPage', () => {
     render(<PrivacyPage />);
     const text = normalizedBodyText();
     expect(text).toContain(
-      "Kötüye kullanımı (aşırı istek) önlemek için sunucumuz, bu isteklerdeki IP adresinizi kısa süreli olarak işler: IP adresi ve istek yolu, isteği sınırlamak amacıyla sunucu belleğinde (bir Cloudflare Worker'ın geçici belleğinde) birkaç dakikalık bir pencere boyunca sayılır, veritabanına yazılmaz ve Worker yeniden başladığında kaybolur."
+      "Kötüye kullanımı (aşırı istek) önlemek için sunucumuz, bu isteklerdeki IP adresinizi kısa süreli olarak işler: IP adresi ve istek yolu, isteği sınırlamak amacıyla sunucu belleğinde (bir Cloudflare Worker'ın geçici belleğinde) sayım bir dakikalık pencerede yapılır; kayıt veritabanına yazılmaz, Worker'ın geçici belleğinde Worker yeniden başlayana kadar kalabilir."
     );
     // Must not claim the codebase is blind to this (it reads the IP itself).
     expect(text).not.toMatch(/Harfhane kod tabanından görünmez/);
+  });
+
+  // Meaning-level: a mutant flipping "yazılmaz" -> "yazılır" (claiming the
+  // rate-limit hit is persisted to D1) must fail this, not just drop a word.
+  it('should state the in-memory rate-limit record is not written to the database (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "İstek sınırlama için bellekteki IP kaydı: bir dakikalık sayım penceresi; kayıt veritabanına yazılmaz, Worker'ın geçici belleğinde Worker yeniden başlayana kadar kalabilir."
+    );
   });
 
   it('should list the daily, random and lengths endpoints, not only "günün kelimesi" (007-AE1)', () => {
@@ -80,10 +90,28 @@ describe('PrivacyPage', () => {
     expect(text).toContain(
       "2026-10-05'teki kapsam kararından önce Harfhane'de hesap, oturum açma ve sunucu tarafında oyun sonucu kaydı vardı."
     );
+    // Every legacy data category the reviewer named, not just account basics.
+    for (const legacyField of [
+      'Google hesap kimliği (google_id)',
+      'e-posta bildirim tercihi',
+      'kullanıcıların oluşturduğu kelime listeleri ve yorumlar',
+      'düello ve turnuva sonuçları',
+      'XP ve rozetler',
+    ]) {
+      expect(text).toContain(legacyField);
+    }
     expect(text).toContain(
       'Bu nedenle, o döneme ait bir hesabınız varsa, verilerinizin halen veritabanında bulunabileceğini varsaymalısınız.'
     );
     expect(text).not.toMatch(/(veriler(iniz)?|hesabınız).{0,40}(silinmiştir|tamamen silin|kalıcı olarak silin)/);
+  });
+
+  // Meaning-level: a mutant flipping "kullanılmaz" -> "kullanılır" (claiming
+  // the legacy data IS actively used) must fail this.
+  it('should state legacy data is not used for any processing purpose until it is deleted (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain('Bu veriler silininceye kadar herhangi bir işleme amacıyla kullanılmaz.');
   });
 
   it('should mention Cloudflare Pages/Workers IP processing and Google Play\'s own download/crash data policy (007-AE1)', () => {
@@ -145,16 +173,35 @@ describe('PrivacyPage', () => {
     );
   });
 
-  it('should describe the application procedure (Tebliğ methods) and the 30-day KVKK m.13/2 response period (007-AE1)', () => {
+  it('should describe the application procedure (Tebliğ methods) and the 30-day KVKK m.13/2 response obligation (007-AE1)', () => {
     render(<PrivacyPage />);
     const text = normalizedBodyText();
     expect(text).toMatch(/Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ/);
     expect(text).toMatch(/Kayıtlı Elektronik Posta \(KEP\)/);
     expect(text).toContain('30 gün');
     expect(text).toMatch(/KVKK m\.13\/2/);
+    // KVKK m.13/2 is an obligation on the controller, not a target we aim
+    // for — "sonuçlandırırız", not "yanıtlamayı hedefliyoruz".
+    expect(text).toContain('en geç 30 gün içinde sonuçlandırırız.');
   });
 
-  it('should set a noindex meta tag, while noting this is a client-side hint, not a guaranteed exclusion', () => {
+  it('should cite a single, specific legal basis for serving the daily/random word (not a vague "contract or legitimate interest") (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      'Günün kelimesini veya rastgele kelimeyi sunma ve tahmininizi doğrulama: KVKK m.5/2-c (istediğiniz oyun hizmetinin sağlanması için gerekli olması).'
+    );
+    expect(text).not.toMatch(/sözleşmenin ifası \/ meşru menfaat/);
+  });
+
+  // Meaning-level: a mutant flipping "satılmaz" -> "satılır" must fail this.
+  it('should state data is not sold or shared with third parties for marketing (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain('Verileriniz satılmaz veya pazarlama amacıyla üçüncü taraflarla paylaşılmaz.');
+  });
+
+  it('should set a noindex meta tag on the page', () => {
     render(<PrivacyPage />);
     expect(getRobotsMetaContent()).toBe('noindex');
   });
