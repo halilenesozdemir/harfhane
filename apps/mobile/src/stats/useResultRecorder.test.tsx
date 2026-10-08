@@ -168,14 +168,17 @@ describe('useResultRecorder', () => {
     expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
   });
 
-  it('should still record a later daily result for the same mode and length when an earlier save for that key rejected', async () => {
+  it('should still record a daily result after an earlier save for that key rejected inside recordResult', async () => {
     const store = createFirstWriteRejectingStore();
     const { rerender } = await renderHook(
       ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
       { initialProps: { session: buildSession('ready', 'playing') } },
     );
 
-    // Game 1's save rejects (first setItem call) but must not break the shared write queue.
+    // Game 1's save rejects (first setItem call); recordResult's own catch (useResultRecorder.ts:54)
+    // swallows it, so this only proves that catch, not the pendingWrites queue hardening — a
+    // rejecting store here never leaves a rejected promise in the queue, since recordResult's
+    // returned promise never actually rejects.
     await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
     await flushPendingWrites();
 
@@ -183,6 +186,31 @@ describe('useResultRecorder', () => {
     await rerender({ session: buildSession('loading', 'playing') });
     await rerender({ session: buildSession('ready', 'playing') });
     await rerender({ session: buildSession('ready', 'lost', ['A', 'B', 'C', 'D', 'E', 'F']) });
+    await flushPendingWrites();
+
+    const stats = await loadDailyStats(store, 5);
+    expect(stats.gamesPlayed).toBe(1);
+  });
+
+  it('should still record a later daily result for the same mode and length after an earlier result rejected from recordResult itself', async () => {
+    const store = createMemoryStore();
+    const corruptedDate = 'not-a-date';
+    const { rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], corruptedDate) } },
+    );
+
+    // Game 1's dailyDate is corrupted (e.g. restored from damaged storage): recordDailyResult
+    // throws computing yesterdayOf() on an invalid date, so recordResult's own promise rejects —
+    // unlike a load/save failure, this is not caught inside recordResult, so it actually reaches
+    // the pendingWrites queue and the hook's own .then(), exercising both of their catches.
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], corruptedDate) });
+    await flushPendingWrites();
+
+    // Game 2 uses a valid date; its write must still go through the shared per-key queue.
+    await rerender({ session: buildSession('loading', 'playing', [], TODAY) });
+    await rerender({ session: buildSession('ready', 'playing', [], TODAY) });
+    await rerender({ session: buildSession('ready', 'lost', ['A', 'B', 'C', 'D', 'E', 'F'], TODAY) });
     await flushPendingWrites();
 
     const stats = await loadDailyStats(store, 5);
@@ -232,11 +260,12 @@ describe('useResultRecorder', () => {
     await rerender({ session: buildSession('ready', 'playing', [], null) });
     expect(result.current.justRecordedDistribution).toBeNull();
 
-    // Game 1's held write resolves only now, after game 2 has already started.
+    // Game 1's held write resolves only now, after game 2 has already started. Wait for the
+    // write to actually land in the store (not a fixed number of microtask ticks), so this
+    // assertion cannot pass vacuously before game 1's write has even settled.
     await act(async () => {
       store.releaseWrites();
-      await Promise.resolve();
-      await Promise.resolve();
+      await waitUntil(async () => (await loadUnlimitedStats(store, 5)).gamesPlayed === 1);
     });
 
     expect(result.current.justRecordedDistribution).toBeNull();

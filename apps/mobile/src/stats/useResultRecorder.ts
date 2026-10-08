@@ -112,9 +112,16 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
       guessCount: game.guesses.length,
       dailyDate,
       today,
-    }).then((distribution) => {
-      if (isCurrent) setJustRecordedDistribution(distribution);
-    });
+    })
+      .then((distribution) => {
+        if (isCurrent) setJustRecordedDistribution(distribution);
+      })
+      .catch(() => {
+        // recordResult's own catches (and the pendingWrites queue catch) already cover the
+        // realistic failure paths; this is a last-resort guard against an unhandled rejection
+        // reaching the console if one of those is ever regressed.
+        if (isCurrent) setJustRecordedDistribution(null);
+      });
     return () => {
       isCurrent = false;
     };
