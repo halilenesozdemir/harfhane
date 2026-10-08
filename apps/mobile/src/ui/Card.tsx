@@ -55,13 +55,13 @@ export function Card(props: CardProps) {
       onPressOut={onPressOut}
       style={{ paddingBottom: restingDepth }}
     >
-      <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { backgroundColor: colors.surfaceDepth }]} />
+      <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { top: restingDepth, backgroundColor: colors.surfaceDepth }]} />
       {renderFace(testID ? `${testID}-face` : undefined, padding, colors.surface, colors.surfaceBorder, translateY, children)}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  backLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: RADIUS.lg },
+  backLayer: { position: 'absolute', left: 0, right: 0, bottom: 0, borderRadius: RADIUS.lg },
   face: { borderRadius: RADIUS.lg, borderWidth: 1 },
 });

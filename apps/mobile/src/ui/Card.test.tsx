@@ -1,5 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { Animated, Text } from 'react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Card, type CardProps } from './Card';
 import { DEPTH } from './layout';
@@ -39,6 +39,31 @@ describe('Card', () => {
     );
     const backStyle = flattenStyle(screen.getByTestId('daily-card-back').props.style);
     expect(backStyle.backgroundColor).toBe(themes.light.surfaceDepth);
+  });
+
+  it('should offset the back layer by the resting depth so the edge shows below the face at rest (D2)', async () => {
+    await renderWithTheme(
+      <Card testID="daily-card" onPress={() => undefined} accessibilityLabel="Günlük oyun, 5 harf, bugün çözüldü">
+        <Text>Günlük</Text>
+      </Card>,
+    );
+    const backStyle = flattenStyle(screen.getByTestId('daily-card-back').props.style);
+    expect(backStyle.top).toBe(DEPTH.md);
+  });
+
+  it('should animate the face down on pressIn and back to rest on pressOut via the motion constants (M1)', async () => {
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    await renderWithTheme(
+      <Card testID="daily-card" onPress={() => undefined} accessibilityLabel="Günlük oyun, 5 harf, bugün çözüldü">
+        <Text>Günlük</Text>
+      </Card>,
+    );
+
+    await act(async () => fireEvent(screen.getByTestId('daily-card'), 'pressIn'));
+    expect(timingSpy).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: DEPTH.md - 1, useNativeDriver: true }));
+
+    await act(async () => fireEvent(screen.getByTestId('daily-card'), 'pressOut'));
+    expect(timingSpy).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ toValue: 0, useNativeDriver: true }));
   });
 
   it('should reserve the resting depth as a constant outer paddingBottom, unaffected by press (D2/M3)', async () => {

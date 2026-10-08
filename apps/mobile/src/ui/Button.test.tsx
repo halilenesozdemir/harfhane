@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { Button } from './Button';
+import { DEPTH } from './layout';
 import { ThemeProvider } from '../ThemeProvider';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import type { KeyValueStore } from '../game/game-storage';
@@ -46,6 +47,12 @@ describe('Button', () => {
   it('should render no back layer for the tertiary variant (no depth)', async () => {
     await renderWithTheme(<Button label="Tümünü gör" onPress={() => undefined} variant="tertiary" testID="btn" />);
     expect(screen.queryByTestId('btn-back')).toBeNull();
+  });
+
+  it('should offset the back layer by the resting depth so the edge shows below the face at rest (D2)', async () => {
+    await renderWithTheme(<Button label="Oyna" onPress={() => undefined} testID="btn" />);
+    const backStyle = flattenStyle(screen.getByTestId('btn-back').props.style);
+    expect(backStyle.top).toBe(DEPTH.md);
   });
 
   it('should call onPress when pressed', async () => {
