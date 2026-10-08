@@ -12,6 +12,11 @@ export interface GameSession {
   readonly isSubmitting: boolean;
   readonly storageKey: string | null;
   readonly dailyDate: string | null;
+  // Increments on every rejection (an unlisted word, a connection error, or a too-short guess),
+  // even when the message text repeats within useGame's 2s display window — the shake animation
+  // (useRevealState) watches this instead of message identity so a second same-text rejection
+  // still shakes (web parity: apps/frontend/src/hooks/useGameState.ts shakes unconditionally).
+  readonly rejectionCount: number;
 }
 
 export type SessionAction =
@@ -48,6 +53,7 @@ export function createSession(): GameSession {
     isSubmitting: false,
     storageKey: null,
     dailyDate: null,
+    rejectionCount: 0,
   };
 }
 
@@ -62,7 +68,9 @@ export function finishedMessage(game: GameState, solution: string): string | nul
 }
 
 function reducePending(session: GameSession, action: SessionAction): GameSession {
-  if (action.type === 'rejected') return { ...session, isSubmitting: false, message: action.message };
+  if (action.type === 'rejected') {
+    return { ...session, isSubmitting: false, message: action.message, rejectionCount: session.rejectionCount + 1 };
+  }
   if (action.type !== 'guess') return session;
   const game = applyGuess({ ...session.game, currentGuess: action.word }, session.solution);
   return { ...session, game, isSubmitting: false, message: finishedMessage(game, session.solution) };
@@ -83,7 +91,10 @@ export function reduceSession(session: GameSession, action: SessionAction): Game
     const { solution, wordId, game, storageKey, dailyDate } = action;
     return { ...createSession(), phase: 'ready', solution, wordId, game, storageKey, dailyDate };
   }
-  if (action.type === 'message') return { ...session, message: action.message };
+  if (action.type === 'message') {
+    const rejectionCount = action.message !== null ? session.rejectionCount + 1 : session.rejectionCount;
+    return { ...session, message: action.message, rejectionCount };
+  }
   return session.phase === 'ready' ? reduceReady(session, action) : session;
 }
 

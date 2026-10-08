@@ -22,6 +22,7 @@ function buildSession(
     isSubmitting: false,
     storageKey: null,
     dailyDate,
+    rejectionCount: 0,
     game: { guesses: [...guesses], evaluations: [], currentGuess: '', gameStatus, keyboardStatus: {} },
   };
 }
