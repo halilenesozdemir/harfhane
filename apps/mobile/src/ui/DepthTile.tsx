@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS } from './layout';
+import { FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS, TILE_LETTER_MAX_FONT_SCALE } from './layout';
 
 export interface DepthTileProps {
   /** A single letter, drawn in `foreground` (C1: each letter carries its own fill's `*Fg`). */
@@ -34,7 +34,14 @@ export function DepthTile({ letter, icon, fill, foreground, depthColor, size, de
       <View style={[styles.back, { backgroundColor: depthColor, borderRadius: radius }]} />
       <View style={[styles.face, { width: size, height: size, backgroundColor: fill, borderRadius: radius }]}>
         {icon}
-        {letter ? <Text style={[styles.letter, { color: foreground, fontSize: letterFontSize }]}>{letter}</Text> : null}
+        {letter ? (
+          <Text
+            style={[styles.letter, { color: foreground, fontSize: letterFontSize, lineHeight: letterFontSize }]}
+            maxFontSizeMultiplier={TILE_LETTER_MAX_FONT_SCALE}
+          >
+            {letter}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

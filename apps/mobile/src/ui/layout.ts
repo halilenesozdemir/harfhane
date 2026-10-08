@@ -80,6 +80,13 @@ export const CHIP_HEIGHT = {
 } as const;
 
 /**
+ * Letters inside a fixed-size game control (tile, key, hero tile) cap the
+ * system font scale so they never overflow their box (mobile-ui-standard.md
+ * T3).
+ */
+export const TILE_LETTER_MAX_FONT_SCALE = 1.2;
+
+/**
  * R4: Baloo 2 ExtraBold, matching the web tokens' `font-display`
  * (`packages/ui-tokens/tokens.json`). Owned here so Tile and Key can adopt
  * it without this agent editing those files (see PR follow-up).
