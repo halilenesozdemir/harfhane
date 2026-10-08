@@ -71,7 +71,57 @@ function createControllableStore(): ControllableStore {
   };
 }
 
+function createRejectingWriteStore(): KeyValueStore {
+  const entries = new Map<string, string>();
+  return {
+    getItem: async (key) => entries.get(key) ?? null,
+    setItem: async () => {
+      throw new Error('AsyncStorage unavailable');
+    },
+  };
+}
+
 describe('useResultRecorder', () => {
+  it('should expose the just-recorded distribution once the write resolves (B2)', async () => {
+    const store = createMemoryStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], null) } },
+    );
+    expect(result.current.justRecordedDistribution).toBeNull();
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], null) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
+  });
+
+  it('should not expose a distribution for a game restored already finished (nothing was just recorded)', async () => {
+    const store = createMemoryStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('loading', 'playing') } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedDistribution).toBeNull();
+  });
+
+  it('should still expose the computed distribution when the storage write fails', async () => {
+    const store = createRejectingWriteStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], null) } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], null) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
+  });
+
   it('should record once when a daily game transitions from playing to won', async () => {
     const store = createMemoryStore();
     const { rerender } = await renderHook(

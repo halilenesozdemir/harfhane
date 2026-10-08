@@ -1,11 +1,13 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { base } from '@harfhane/ui-tokens';
+import { AccessibilityInfo, Animated } from 'react-native';
+import { base, themes } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
-import { createMemoryStore, renderWithTheme } from '../test-utils/render-with-theme';
+import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { GameScreen } from './GameScreen';
 import { loadDailyStats } from '../stats/stats';
 import { saveGameState, saveRevealedHints } from '../game/game-storage';
 import { dailyGameKey } from '../game/game-state';
+import type { KeyValueStore } from '../game/game-storage';
 import { dailyGameNumber, selectResultMessage } from '../components/gameOverMessages';
 import { shortGuessMessage } from '../game/game-session';
 import { parseMs } from '../utils/ms';
@@ -24,9 +26,20 @@ const REVEAL_DURATION_MS = DAILY_WORD_LENGTH * STAGGER_MS + parseMs(base.motionF
 // A winning row's card also waits for the win-bounce wave to finish (item 8, web parity).
 const WIN_BOUNCE_MS = DAILY_WORD_LENGTH * STAGGER_MS + parseMs(base.motionBounce);
 const WON_GAME_OVER_READY_MS = REVEAL_DURATION_MS + WIN_BOUNCE_MS;
+// Matches useRevealState's enterBlockDurationMs: (wordLength - 1) * stagger + flip / 2.
+const ENTER_UNBLOCK_MS = (DAILY_WORD_LENGTH - 1) * STAGGER_MS + parseMs(base.motionFlip) / 2;
 
 async function advancePastGameOverGate(hasWon: boolean) {
   await act(async () => jest.advanceTimersByTime(hasWon ? WON_GAME_OVER_READY_MS : REVEAL_DURATION_MS));
+}
+
+async function enableReduceMotion(): Promise<void> {
+  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+  // Let useReduceMotion's effect resolve before the player's first action, or the game would
+  // commit its first guess still reading the pre-resolution default (false).
+  await act(async () => {
+    await Promise.resolve();
+  });
 }
 
 function createApi(): ApiClient {
@@ -116,6 +129,72 @@ describe('GameScreen', () => {
       await act(async () => jest.advanceTimersByTime(REVEAL_DURATION_MS));
       await pressKeys(['ENTER']); // the exact same guess now goes through
       expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).not.toBe('A');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should accept Enter once the row reaches its colour midpoint, not only once the full flip settles (M4 exception, M3)', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // wrong guess against KİTAP; game keeps playing
+
+      await pressKeys(['A', 'B', 'A', 'B', 'A']);
+      // isEnterBlocked (the gate) unblocks well before isRevealing (the full flip) ends.
+      await act(async () => jest.advanceTimersByTime(ENTER_UNBLOCK_MS));
+      expect(ENTER_UNBLOCK_MS).toBeLessThan(REVEAL_DURATION_MS);
+      await pressKeys(['ENTER']);
+      expect(screen.getByTestId('tile-1-0').props.accessibilityLabel).not.toBe('A');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should give no key-tap haptic for a key pressed while the previous row is still revealing (M4, isInputBlocked includes isEnterBlocked)', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // wrong guess; still playing, now revealing
+
+      mockPerformAndroidHapticsAsync.mockClear();
+      await act(async () => fireEvent.press(screen.getByTestId('key-A')));
+      expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('keyboard-tap');
+
+      await act(async () => jest.advanceTimersByTime(ENTER_UNBLOCK_MS));
+      mockPerformAndroidHapticsAsync.mockClear();
+      await act(async () => fireEvent.press(screen.getByTestId('key-B')));
+      expect(mockPerformAndroidHapticsAsync).toHaveBeenCalledWith('keyboard-tap');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should colour every tile of a new row even when it commits while the previous row is still revealing (B1 repro)', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']); // row 0: wrong guess, starts revealing (1000 ms)
+
+      // Row 0 unblocks Enter at 650 ms (well before its own 1000 ms isRevealing window ends).
+      await act(async () => jest.advanceTimersByTime(ENTER_UNBLOCK_MS));
+      await pressKeys(['T', 'A', 'K', 'O', 'P', 'ENTER']); // row 1 commits at +650 ms, starts its own reveal
+
+      // Step forward in small increments past row 1's own full reveal window — if the stale
+      // timer from row 0 (which would fire at +1000 ms, only 350 ms into row 1's own window)
+      // cuts isRevealing early, row 1's later columns' midpoint timers get cancelled and their
+      // tiles stay uncoloured (#ffffff) forever.
+      for (let elapsed = 0; elapsed < REVEAL_DURATION_MS + 100; elapsed += 50) {
+        await act(async () => jest.advanceTimersByTime(50));
+      }
+
+      for (let col = 0; col < 5; col += 1) {
+        const tile = screen.getByTestId(`tile-1-${col}`);
+        expect(flattenStyle(tile.props.style).backgroundColor).not.toBe(themes.light.surface);
+      }
     } finally {
       jest.useRealTimers();
     }
@@ -278,6 +357,18 @@ describe('GameScreen', () => {
     expect(screen.queryByTestId('gameover-card')).toBeNull();
   });
 
+  it('should shake the active row when a too-short guess is submitted (M5)', async () => {
+    // The shake sequence's step duration (motionShake / 9 steps) is distinct from the pop,
+    // flip and bounce durations, so this does not get a false positive from the K/A key pops.
+    const shakeStepMs = parseMs(base.motionShake) / 9;
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'ENTER']);
+    const shakeCall = timingSpy.mock.calls.find((call) => (call[1] as { duration?: number }).duration === shakeStepMs);
+    expect(shakeCall).toBeTruthy();
+  });
+
   it('should count a 1-guess unlimited win and a 1-guess daily win each as "1" in their own distribution, not double-counted (011-N5)', async () => {
     jest.useFakeTimers();
     try {
@@ -306,6 +397,44 @@ describe('GameScreen', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('should show the just-finished game in the unlimited distribution with reduce motion on (B2)', async () => {
+    await enableReduceMotion();
+    const store = createMemoryStore();
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
+    // Reduce motion means the card mounts in the very same commit the game finishes (no reveal
+    // gate) — if the display raced useResultRecorder's write instead of using its own result,
+    // this would show no fill at all, not "1".
+    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(within(fill).getByText('1')).toBeTruthy();
+  });
+
+  it('should show the just-finished game in the daily distribution with reduce motion on (B2)', async () => {
+    await enableReduceMotion();
+    const store = createMemoryStore();
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(within(fill).getByText('1')).toBeTruthy();
+  });
+
+  it('should still show the just-played result on screen when the stats write fails (B2)', async () => {
+    await enableReduceMotion();
+    const rejectingStore: KeyValueStore = {
+      getItem: async () => null,
+      setItem: async () => {
+        throw new Error('AsyncStorage unavailable');
+      },
+    };
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={rejectingStore} today={today} />);
+    await screen.findByLabelText('Gönder');
+    await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
+    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(within(fill).getByText('1')).toBeTruthy();
   });
 
   it('should not trigger the key-tap haptic when a key is pressed while a guess is still being validated', async () => {

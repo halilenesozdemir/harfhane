@@ -58,7 +58,12 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
       setTimeout(() => setCelebrateRow(false), wordLength * STAGGER_MS + BOUNCE_MS);
     }, revealDurationMs(wordLength));
     return () => clearTimeout(revealTimer);
-  }, [isRevealing, wordLength, session.game.gameStatus]);
+    // guessCount restarts this timer when a new row commits while isRevealing is still (already)
+    // true — isEnterBlocked's shorter window (M4 exception) lets a fast player submit before the
+    // previous row's full isRevealing window ends, and without guessCount here this effect would
+    // not re-run (isRevealing's own value never flipped), leaving the new row governed by the
+    // stale timer from the previous row and cut off before its own tiles reach their midpoint.
+  }, [isRevealing, wordLength, session.game.gameStatus, guessCount]);
 
   useEffect(() => {
     if (!isEnterBlocked) return undefined;
