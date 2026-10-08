@@ -29,7 +29,7 @@ function ControlledHomeScreen({ onStart = noop, onOpenHowToPlay = noop, onOpenSe
 describe('HomeScreen', () => {
   it('should render the Turkish title and mode cards', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
-    expect(screen.getByLabelText('HARFHANE')).toBeTruthy();
+    expect(screen.getByLabelText('Harfhane')).toBeTruthy();
     expect(screen.getByText('Günlük Oyun')).toBeTruthy();
     expect(screen.getByText('Sınırsız Mod')).toBeTruthy();
   });
@@ -58,7 +58,7 @@ describe('HomeScreen', () => {
     const titleRow = screen.getByTestId('home-title-row');
     expect(titleRow.props.accessible).toBe(true);
     expect(titleRow.props.accessibilityRole).toBe('header');
-    expect(titleRow.props.accessibilityLabel).toBe('HARFHANE');
+    expect(titleRow.props.accessibilityLabel).toBe('Harfhane');
   });
 
   it('(011-R5) should cap the title letters from growing past the tile on a large system font', async () => {
@@ -122,7 +122,7 @@ describe('HomeScreen', () => {
     const onOpenHowToPlay = jest.fn();
     await renderWithTheme(<ControlledHomeScreen onOpenHowToPlay={onOpenHowToPlay} />);
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('Nasıl oynanır'));
+      fireEvent.press(screen.getByLabelText('Nasıl oynanır sayfasını aç'));
     });
     expect(onOpenHowToPlay).toHaveBeenCalledTimes(1);
   });
@@ -131,7 +131,7 @@ describe('HomeScreen', () => {
     const onOpenSettings = jest.fn();
     await renderWithTheme(<ControlledHomeScreen onOpenSettings={onOpenSettings} />);
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('Ayarlar'));
+      fireEvent.press(screen.getByLabelText('Ayarları aç'));
     });
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
@@ -143,7 +143,7 @@ describe('HomeScreen', () => {
       fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
     });
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('İstatistikler'));
+      fireEvent.press(screen.getByLabelText('İstatistikleri aç'));
     });
     expect(onOpenStats).toHaveBeenCalledWith(6);
   });

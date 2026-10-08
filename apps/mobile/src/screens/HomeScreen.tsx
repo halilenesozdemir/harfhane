@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { CONTENT_MAX_WIDTH, FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { CONTENT_MAX_WIDTH, FONT_FAMILY_DISPLAY, FONT_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
 import type { ThemeColors } from '../theme';
 import type { WordLength } from '../stats/stats';
 
@@ -27,7 +27,8 @@ const LENGTH_OPTION_HEIGHT = 36;
 // instead of a plain "HARFHANE" wordmark.
 const TITLE_LETTERS = ['H', 'A', 'R', 'F'] as const;
 const TITLE_TILE_SIZE = 40;
-const TITLE_ACCESSIBILITY_LABEL = 'HARFHANE';
+// Plan 011 U7c prep: matches the redesigned hero's label ahead of that cutover.
+const TITLE_ACCESSIBILITY_LABEL = 'Harfhane';
 // Caps how far the title letters scale with the system font setting so they
 // never overflow the fixed-size tile.
 const TITLE_MAX_FONT_SIZE_MULTIPLIER = 1.2;
@@ -88,6 +89,7 @@ export function HomeScreen({
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>Türkçe kelime oyunu</Text>
 
       <Pressable
+        testID="home-daily-card"
         accessibilityRole="button"
         accessibilityLabel={`Günlük oyunu ${selectedLength} harfle başlat`}
         onPress={handleStartDaily}
@@ -120,9 +122,9 @@ export function HomeScreen({
       </View>
 
       <View style={styles.menuRow}>
-        <MenuLink label="Nasıl oynanır" onPress={onOpenHowToPlay} />
-        <MenuLink label="İstatistikler" onPress={handleOpenStats} />
-        <MenuLink label="Ayarlar" onPress={onOpenSettings} />
+        <MenuLink label="Nasıl oynanır" accessibilityLabel="Nasıl oynanır sayfasını aç" onPress={onOpenHowToPlay} />
+        <MenuLink label="İstatistikler" accessibilityLabel="İstatistikleri aç" onPress={handleOpenStats} />
+        <MenuLink label="Ayarlar" accessibilityLabel="Ayarları aç" onPress={onOpenSettings} />
       </View>
     </View>
   );
@@ -130,13 +132,15 @@ export function HomeScreen({
 
 interface MenuLinkProps {
   readonly label: string;
+  /** Plan 011 U7c prep: matches the redesigned top bar's icon-button label ahead of that cutover. */
+  readonly accessibilityLabel: string;
   readonly onPress: () => void;
 }
 
-function MenuLink({ label, onPress }: MenuLinkProps) {
+function MenuLink({ label, accessibilityLabel, onPress }: MenuLinkProps) {
   const { colors } = useTheme();
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.menuLink}>
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.menuLink}>
       <Text style={[styles.menuLinkLabel, { color: colors.textMuted }]}>{label}</Text>
     </Pressable>
   );
@@ -172,7 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: SPACING.lg,
+    padding: SCREEN_PADDING,
     gap: SPACING.md,
   },
   titleRow: {
