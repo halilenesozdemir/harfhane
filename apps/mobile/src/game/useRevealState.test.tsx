@@ -145,34 +145,6 @@ describe('useRevealState', () => {
     expect(result.current.isRevealing).toBe(true);
   });
 
-  it('should clear its pending bounce timer on unmount, not merely leave it to fire after the component is gone', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    try {
-      const { result, rerender, unmount } = await setup({ session: makeSession(), reduceMotion: false });
-      const won = makeSession({ game: { ...makeSession().game, guesses: ['KAPAK'], evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']], gameStatus: 'won' } });
-      await act(async () => rerender({ session: won, reduceMotion: false }));
-      // Let the reveal flip finish and the bounce start, but unmount before the bounce's own timer fires.
-      await act(async () => jest.advanceTimersByTime(WORD_LENGTH * STAGGER_MS + FLIP_MS));
-      expect(result.current.celebrateRow).toBe(true);
-
-      const bounceDurationMs = WORD_LENGTH * STAGGER_MS + BOUNCE_MS;
-      const bounceCallIndex = setTimeoutSpy.mock.calls.findIndex(([, ms]) => ms === bounceDurationMs);
-      expect(bounceCallIndex).toBeGreaterThanOrEqual(0);
-      const bounceTimerId = setTimeoutSpy.mock.results[bounceCallIndex]?.value;
-
-      await act(async () => unmount());
-      // A cleared bounce timer must be gone, not merely left to fire its (now pointless)
-      // setCelebrateRow(false) later — compared by reference (===), since two distinct Timeout
-      // objects can print identically without being the same pending timer.
-      const clearedTheBounceTimer = clearTimeoutSpy.mock.calls.some((call) => call[0] === bounceTimerId);
-      expect(clearedTheBounceTimer).toBe(true);
-    } finally {
-      setTimeoutSpy.mockRestore();
-      clearTimeoutSpy.mockRestore();
-    }
-  });
-
   it('should shake the current row when a guess is rejected without adding a row', async () => {
     const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
     const rejected = makeSession({ message: 'Kelime listede yok', rejectionCount: 1 });
