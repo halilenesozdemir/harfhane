@@ -30,7 +30,11 @@
       // expo-updates/expo-system-ui: implied by app.json (OTA updates
       // default-enabled, userInterfaceStyle "automatic") but not installed;
       // decision needed on OTA updates, tracked in docs/backlog.md.
-      "ignoreDependencies": ["expo-updates", "expo-system-ui"]
+      "ignoreDependencies": ["expo-updates", "expo-system-ui"],
+      // HomeHero/DailyCard/UnlimitedCard: Plan 011 U7c home components, not
+      // yet wired into HomeScreen.tsx (a stacked follow-up PR). See
+      // docs/backlog.md.
+      "ignore": ["src/home/HomeHero.tsx", "src/home/DailyCard.tsx", "src/home/UnlimitedCard.tsx"]
     },
     "packages/shared": {
       "project": ["src/**/*.ts"],

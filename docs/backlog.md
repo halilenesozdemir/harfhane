@@ -434,3 +434,12 @@ file with blocking errors deletes `data/words/review/review-5.csv` even though t
 isn't gated by the eval gate. `review-5.csv` is regenerable from `labels-5.jsonl` by a clean
 re-run and git-recoverable (`git checkout -- data/words/review/review-5.csv`), but this is worth
 a second look if the daily-pool cleanup should instead be scoped to `--pool unlimited` only.
+
+## Mobile home redesign stacked PRs (Plan 011 U7c, 2026-10-08)
+U7c ships as stacked PRs to stay under the 500-line/15-file PR cap: today-status.ts +
+StatsScreen's displayed streak (merged first), then `HomeHero`/`DailyCard`/`UnlimitedCard`/
+`useHomeStatus` as standalone, not-yet-wired components (this PR; `knip.jsonc`'s
+`apps/mobile.ignore` keeps them off the unused-files report), then `HomeScreen.tsx` wiring them
+in (next PR, which also removes the `knip.jsonc` ignore entries since they gain a real importer),
+then `App.tsx` passing `store` into `HomeScreen` plus the `App.test.tsx` label updates. Remove
+this note once the wiring PR has merged.
