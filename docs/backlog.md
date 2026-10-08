@@ -252,6 +252,29 @@ local achievements, share image (needs a dependency), sound (off by default), vi
 timed mode. Local reminders need an owner decision against the no-push scope cut. Revisit after the
 closed test; promote chosen items into a plan.
 
+## Keyboard still owns its own useHapticsSettings() call alongside the GameScreen prop (2026-10-07)
+`GameScreen.tsx` now passes `isHapticsEnabled={game.isHapticsEnabled}` and
+`isInputBlocked={session.isSubmitting}` to `Keyboard` (PR #87/#94 merged, so this was no longer
+off limits). `Keyboard`'s own `useHapticsSettings()` call stays as a fallback for callers that
+don't pass the prop (several `Keyboard.test.tsx` cases render it standalone), so there are two
+hook instances live during a real game: `useGame`'s and `Keyboard`'s own, both reading the same
+AsyncStorage key. Harmless today (the prop always wins via `??`), but worth collapsing to one
+instance if `Keyboard` ever drops its standalone use case.
+
+## Un-awaited `fireEvent`/`fireEvent.press` calls caused order-dependent test failures (2026-10-07)
+RNTL 14's `fireEvent` and `fireEvent.press` both return `Promise<void>`; a few mobile test files
+called them without `await` (often inside an `act(async () => {...})` wrapper, which doesn't make
+the inner call awaited). The dangling promise could still be pending when the next `act()` call in
+the file started, printing "You seem to have overlapping act() calls" and, in at least one case,
+corrupting a later test's `screen` queries. Fixed in `Keyboard.test.tsx`, `SettingsScreen.test.tsx`
+and `App.test.tsx` by awaiting every call directly (`await fireEvent.press(...)`, no `act()`
+wrapper needed). `@typescript-eslint/no-floating-promises` would catch this class of bug, but it
+needs type-aware linting (`parserOptions.project`), which `eslint.config.js` doesn't set up for
+any workspace yet — enabling it is a repo-wide change, not specific to mobile tests, so it's left
+here rather than done as part of this fix. Worth doing once the gate's lint step can afford the
+slower typed run; audit the rest of `apps/mobile/src/**/*.test.tsx` and `apps/frontend` for the
+same pattern at the same time.
+
 ## Web hint control sits too close to the keyboard (owner, 2026-10-07)
 The hint control above the on-screen keyboard has no breathing room from it on web; add spacing
 between them.

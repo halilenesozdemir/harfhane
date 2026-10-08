@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { getTodayString, normalizeWord } from '@harfhane/shared';
 import type { ApiClient } from '../lib/api';
+import { reject as rejectHaptic, win as winHaptic } from '../lib/haptics';
+import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { createInitialState, dailyGameKey } from './game-state';
+import type { GameStatus } from './game-state';
 import { loadGameState, saveGameState } from './game-storage';
 import type { KeyValueStore } from './game-storage';
 import { CONNECTION_ERROR_MESSAGE, INVALID_WORD_MESSAGE, createSession, reduceSession, submitBlocker } from './game-session';
@@ -20,6 +23,7 @@ export interface UseGameOptions extends GameDependencies {
 
 export interface UseGameResult {
   readonly session: GameSession;
+  readonly isHapticsEnabled: boolean;
   onLetter(letter: string): void;
   onDelete(): void;
   onSubmit(): void;
@@ -78,34 +82,64 @@ function useMessageTimeout(session: GameSession, dispatch: (action: SessionActio
   }, [session.message, isPlaying, dispatch]);
 }
 
-function useSubmit(options: UseGameOptions, session: GameSession, dispatch: (action: SessionAction) => void) {
+function useWinHaptics(session: GameSession, isHapticsEnabled: boolean) {
+  const previousStatusRef = useRef<GameStatus | null>(null);
+  useEffect(() => {
+    if (session.phase !== 'ready') {
+      previousStatusRef.current = null;
+      return;
+    }
+    const previousStatus = previousStatusRef.current;
+    const hasJustWon = session.game.gameStatus === 'won' && previousStatus !== null && previousStatus !== 'won';
+    if (hasJustWon) void winHaptic(isHapticsEnabled);
+    previousStatusRef.current = session.game.gameStatus;
+  }, [session.phase, session.game.gameStatus, isHapticsEnabled]);
+}
+
+function useSubmit(
+  options: UseGameOptions,
+  session: GameSession,
+  dispatch: (action: SessionAction) => void,
+  isHapticsEnabled: boolean,
+) {
   const { api } = options;
   const isInFlight = useRef(false);
   return useCallback(() => {
     const blocker = isInFlight.current ? '' : submitBlocker(session);
-    if (blocker !== null) return void (blocker && dispatch({ type: 'message', message: blocker }));
+    if (blocker !== null) {
+      if (blocker) {
+        void rejectHaptic(isHapticsEnabled);
+        dispatch({ type: 'message', message: blocker });
+      }
+      return;
+    }
     const word = session.game.currentGuess;
     isInFlight.current = true;
     dispatch({ type: 'submitted' });
     api
       .validateWord(word)
-      .then(({ isValid }) => dispatch(isValid ? { type: 'guess', word } : { type: 'rejected', message: INVALID_WORD_MESSAGE }))
+      .then(({ isValid }) => {
+        if (!isValid) void rejectHaptic(isHapticsEnabled);
+        dispatch(isValid ? { type: 'guess', word } : { type: 'rejected', message: INVALID_WORD_MESSAGE });
+      })
       .catch(() => dispatch({ type: 'rejected', message: CONNECTION_ERROR_MESSAGE }))
       .finally(() => {
         isInFlight.current = false;
       });
-  }, [api, session, dispatch]);
+  }, [api, session, dispatch, isHapticsEnabled]);
 }
 
 export function useGame(options: UseGameOptions): UseGameResult {
   const [session, dispatch] = useReducer(reduceSession, undefined, createSession);
   const [round, setRound] = useState(0);
+  const { isEnabled: isHapticsEnabled } = useHapticsSettings(options.store);
   useSessionLoader(options, dispatch, round);
   useDailyPersistence(options.store, session);
   useMessageTimeout(session, dispatch);
-  const onSubmit = useSubmit(options, session, dispatch);
+  useWinHaptics(session, isHapticsEnabled);
+  const onSubmit = useSubmit(options, session, dispatch, isHapticsEnabled);
   const onLetter = useCallback((letter: string) => dispatch({ type: 'letter', letter }), []);
   const onDelete = useCallback(() => dispatch({ type: 'delete' }), []);
   const startNewGame = useCallback(() => setRound((current) => current + 1), []);
-  return { session, onLetter, onDelete, onSubmit, startNewGame };
+  return { session, isHapticsEnabled, onLetter, onDelete, onSubmit, startNewGame };
 }
