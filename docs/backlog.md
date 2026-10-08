@@ -271,6 +271,20 @@ then, write new rules so the factory part stays separable from product rules.
 game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
 wire mobile's own hint state through once #87 merges, matching the web wiring above.
 
+## Mobile UI primitives wiring (Plan 011 U7a, follow-up in U7b/U7c)
+U7a (split across PR #97 `IconButton`/`TopBar`/`layout.ts` and a follow-up PR `Button`/`Card`,
+based on #97) added the mobile UI standard's layout constants and shared primitives, but changed
+no screen (the owner approved starting U7a in parallel with U1-U6's open PRs since it only adds
+files). `ICON_SIZE` and `SCREEN_PADDING` (`apps/mobile/src/ui/layout.ts`) are tagged `@deferred`
+for knip since nothing imports them yet; U7b/U7c wire `IconButton`/`TopBar` into `GameScreen`,
+`StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard` and `HomeScreen`, at which point
+both constants gain real importers and the tags should come off. `TopBar`'s `leading`/`trailing`
+are plain `ReactNode` slots; `lucide-react-native` landed on `main` via #93, so U7b/U7c can now
+compose the actual `IconButton` + Lucide icon elements directly. `TopBar`'s `variant="home"` (no
+title, an asymmetric leading slot for the streak chip, up to three trailing actions) is in place;
+U7c still has to build the streak chip itself and wire `HomeScreen` to the variant, per
+`docs/design/mobile-redesign-spec.md` section B.
+
 ## Engagement ideas after launch (owner undecided, 2026-10-06)
 From `docs/research/2026-10-06-mobile-polish-engagement.md`: local streak calendar, hard mode,
 local achievements, share image (needs a dependency), sound (off by default), visual themed weeks,
