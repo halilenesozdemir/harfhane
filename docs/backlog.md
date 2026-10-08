@@ -36,10 +36,11 @@ reason; details here.
   system dark mode still works today via the app's own DayNight theme and `useColorScheme`. Decide
   whether to install `expo-updates` for OTA updates (Faz 2/3) and `expo-system-ui` to let
   `userInterfaceStyle` take effect natively.
-- `scripts/scrape-words.ts` (missing `node-html-parser` dependency) and
-  `scripts/{auto-import,enrich-meanings,import-curated,seed-db}.ts` (missing `wrangler` binary) are
-  already covered by the "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc`
-  ignores them rather than reinstalling dependencies for scripts pending a retire-or-repoint decision.
+- `scripts/{import-curated,seed-db}.ts` (missing `wrangler` binary) are already covered by the
+  "Legacy migrations folder" and "Legacy docs review" items below; `knip.jsonc` ignores them rather
+  than reinstalling a dependency for scripts pending a retire-or-repoint decision. (`scripts/
+  scrape-words.ts`, `auto-import.ts` and `enrich-meanings.ts` were deleted instead — see "Web cleanup
+  before the shared engine" below.)
 
 ## Anonymous player analytics (2026-10-06)
 Accounts, server-side game results, XP/badges/freeze, leaderboard and push/email reminders were removed end to
@@ -63,11 +64,37 @@ word scheduled in the future, refuse activating a `rejected` word).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
-- Audit unused files, hooks, routes, API endpoints and migrations-only tables before moving game logic into `packages/shared`.
-- Plan web ↔ mobile routing: store links, deep links, "get the app" banner.
-- Found by `knip` (Plan 009 U7): `apps/backend/src/routes/words.ts:51` (`GET /words/challenge/:wordId`)
-  has no frontend caller left now that the dead `useChallengeWord` hook is gone. Decide whether to
-  delete the route too.
+- Audit done (2026-10-08): `pnpm knip` is clean and a manual grep for unused hooks/routes/components
+  found nothing beyond the items resolved below.
+- `GET /words/challenge/:wordId` (`apps/backend/src/routes/words.ts`) had no caller: the dead
+  `useChallengeWord` hook was already gone, and `useSessionChallenge`/`challengeUrl` (GamePage,
+  GameOverModal, SharePreview) are a local session-progress tracker and a client-built share link —
+  neither ever called this route. Deleted the route, `getWordById` (`word-service.ts`) and
+  `findWordById` (`word-repository.ts`) with their tests (#106, merged).
+- `apps/frontend/public/_worker.js` was a bare `env.ASSETS.fetch(request)` passthrough that only
+  forced Cloudflare Pages into Advanced Mode; `_headers`/`_redirects` still apply with it gone.
+  Deleted it and its `eslint.config.js` override (#106, merged).
+- Root TDK scrape/fetch files conflicted with Invariant 3 (no TDK data) and had no other reference
+  anywhere in the repo: `tdk-seed.sql`, `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`
+  (sourced a third-party word list, not TDK, but fed the TDK files and had a missing dependency),
+  `auto-import.ts` and `enrich-meanings.ts` (both call `sozluk.gov.tr` directly) were all deleted, plus
+  `new-words.sql` (generated only by `fetch-more-words.mjs`, itself also deleted for calling
+  `sozluk.gov.tr`, with no other producer or consumer). `seed.sql` and `curated-words.json` are
+  unrelated and still used (by the active `scripts/words/export_seed_sql.py` pipeline and
+  `import-curated.ts` respectively) and were left alone; `scraped-words.json` had no producer or
+  consumer left once `scrape-words.ts` and `auto-import.ts` were gone, so its `.gitignore` entry was
+  removed too. Words now carry no TDK-sourced meanings (owner decision); `import-curated.ts` and
+  `seed-db.ts` still hardcode `harfhane-db --remote` and are tracked separately below ("Legacy
+  migrations folder") pending a retire-or-repoint decision — unrelated to the Invariant 3 issue, so
+  left untouched here. Also dropped the `node-html-parser` `knip.jsonc` ignore that existed only for
+  `scrape-words.ts`, and narrowed its `wrangler`-binary comment to the two scripts still affected.
+- Plan web ↔ mobile routing (store links, deep links, "get the app" banner): still open, post-launch —
+  not part of this cleanup pass.
+- `apps/frontend/public/_headers`'s CSP `connect-src` still allow-lists `https://accounts.google.com`
+  and `https://oauth2.googleapis.com`, leftovers from the removed Google sign-in feature (no code in
+  `apps/frontend/src` or `apps/mobile/src` references Google OAuth any more). Editing that file was
+  blocked by the local agent permission system ("Modify Shared Resources"); needs the owner to either
+  grant the edit permission or remove the two origins directly.
 
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
@@ -78,7 +105,8 @@ The web app carries code from many experiments; removed features such as challen
 - Point the root `scripts/` (which target `harfhane-db`) at the new pipeline, or retire them.
   `schedule-new-words.mjs`, `schedule-daily-words.ts` and the generated `schedule-new-words.sql`
   were deleted at the cutover binding switch (would have silently written to the now-dead
-  `harfhane-db`). `enrich-meanings.ts`, `auto-import.ts`, `import-curated.ts` and `seed-db.ts`
+  `harfhane-db`); `enrich-meanings.ts` and `auto-import.ts` were deleted for a separate reason
+  (Invariant 3 — see "Web cleanup before the shared engine"). `import-curated.ts` and `seed-db.ts`
   still hardcode `harfhane-db --remote` and were not touched — same risk, needs the same
   retire-or-repoint decision before anyone runs them again.
 - Until then `eslint.config.js` ignores them (Plan 003 lints `apps/` and `packages/` only; without the ignore ESLint parses root `*.js` with defaults and fails), so `no-console` and unused-code rules do not reach them.
@@ -159,9 +187,6 @@ and already removed end to end in #54.
 - **Shared engine.** Game-session reducer, stats and storage-key schema exist twice (mobile `src/game`,
   `src/stats`; web `useGameState.ts`, `useGameStats.ts`). Move the mobile versions into `packages/shared`,
   version the storage schema, key daily saves by the server's `date`.
-- **Deletions.** `apps/frontend/public/_worker.js` is now a passthrough that forces Pages Functions mode;
-  `/api/words/challenge/:wordId` lets anyone walk the answer pool by id; root TDK scrape files (`tdk-seed.sql`,
-  `tdk-wordlist.sql`, `scrape-words.ts`, `build-tdk-wordlist.mjs`) conflict with Invariant 3.
 - **Web player experience.** `min-h-screen` instead of `dvh` on game pages; no safe-area padding under the
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
