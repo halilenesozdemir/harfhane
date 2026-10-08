@@ -93,7 +93,7 @@ export function Button(props: ButtonProps) {
   const outerStyle = [styles.outer, { height: faceHeight + restingDepth }, disabled && styles.disabled];
   const backLayer =
     hasDepth && look.depthColor ? (
-      <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { backgroundColor: look.depthColor }]} />
+      <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { top: restingDepth, backgroundColor: look.depthColor }]} />
     ) : null;
   const face = renderFace(testID ? `${testID}-face` : undefined, variant, look, faceHeight, translateY, icon, label);
 
@@ -126,7 +126,7 @@ export function Button(props: ButtonProps) {
 
 const styles = StyleSheet.create({
   outer: { borderRadius: RADIUS.md },
-  backLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: RADIUS.md },
+  backLayer: { position: 'absolute', left: 0, right: 0, bottom: 0, borderRadius: RADIUS.md },
   face: {
     flexDirection: 'row',
     alignItems: 'center',
