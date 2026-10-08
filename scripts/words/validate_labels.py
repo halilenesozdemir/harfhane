@@ -115,19 +115,36 @@ def parse_args():
     return parser.parse_args()
 
 
+# Errors a malformed or mismatched golden/candidate file can raise while loading or
+# scoring: narrow on purpose so an unrelated bug is never silently swallowed here.
+LABEL_EVAL_LOAD_ERRORS = (OSError, ValueError, KeyError, json.JSONDecodeError)
+
+
+def _eval_gate_reason(reason: str) -> tuple:
+    print(f"label eval gate: {reason}", file=sys.stderr)
+    return False, None
+
+
 def unlimited_label_eval_passes(length: int, golden_path: str, eval_candidate_path: str) -> tuple:
     """Plan 010 R5 (AE4): importing a model-labelled unlimited batch is blocked
     unless its labelling run also scored above threshold on the golden set. No
     `--eval-candidate` means no measured run yet, so this fails closed rather than
     trusting an unmeasured batch."""
     if not eval_candidate_path:
-        return False, None
+        return _eval_gate_reason("--eval-candidate is required for --pool unlimited")
     golden_path = golden_path or os.path.join(REVIEW_DIR, LABEL_FILES["daily"].format(length=length))
-    if not os.path.exists(golden_path) or not os.path.exists(eval_candidate_path):
-        return False, None
-    golden = eval_labels.load_golden(golden_path)
-    candidate = eval_labels.load_candidate(eval_candidate_path)
-    report = eval_labels.evaluate(golden, candidate)
+    if not os.path.exists(golden_path):
+        return _eval_gate_reason(f"golden file not found: {golden_path}")
+    if not os.path.exists(eval_candidate_path):
+        return _eval_gate_reason(f"eval candidate file not found: {eval_candidate_path}")
+    if os.path.realpath(golden_path) == os.path.realpath(eval_candidate_path):
+        return _eval_gate_reason("--eval-candidate must not be the golden file itself")
+    try:
+        golden = eval_labels.load_golden(golden_path)
+        candidate = eval_labels.load_candidate(eval_candidate_path)
+        report = eval_labels.evaluate(golden, candidate)
+    except LABEL_EVAL_LOAD_ERRORS as exc:
+        return _eval_gate_reason(f"failed to score eval candidate: {exc}")
     return report["passes"], report
 
 

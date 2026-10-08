@@ -1,6 +1,8 @@
 import unittest
 
+import contextlib
 import csv
+import io
 import json
 import os
 import sys
@@ -139,14 +141,25 @@ class MainCliHelpers:
         with patch.object(vl, "REVIEW_DIR", tmp), patch.object(sys, "argv", ["validate_labels.py"] + argv):
             vl.main()
 
+    def _run_main_capturing_stderr(self, tmp, argv):
+        stderr = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx:
+            with contextlib.redirect_stderr(stderr):
+                self._run_main(tmp, argv)
+        return ctx.exception.code, stderr.getvalue()
+
     def _write_passing_eval(self, tmp):
-        # The candidate matches every golden word exactly (accept + sensitive-reject
-        # rows), so whichever half the real hash split puts into held-out, it is
-        # fully covered and both accept precision and sensitive recall are 1.0.
+        # The candidate matches every golden word's decision (accept + sensitive-reject
+        # rows), so whichever half the real hash split puts into held-out, it is fully
+        # covered and both accept precision and sensitive recall are 1.0. The reject
+        # reason ("obscure" vs golden's "sensitive") differs so this is a genuine match,
+        # not a byte-identical copy of golden's decisions.
         golden = [{"word": f"A{i}", "decision": "accept"} for i in range(60)]
         golden += [{"word": f"S{i}", "decision": "reject", "reason": "sensitive"} for i in range(10)]
+        candidate = [{"word": f"A{i}", "decision": "accept"} for i in range(60)]
+        candidate += [{"word": f"S{i}", "decision": "reject", "reason": "obscure"} for i in range(10)]
         self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(label) for label in golden) + "\n")
-        self._write(tmp, "candidate.jsonl", "\n".join(json.dumps(label) for label in golden) + "\n")
+        self._write(tmp, "candidate.jsonl", "\n".join(json.dumps(label) for label in candidate) + "\n")
 
 
 class MainIntegrationTests(MainCliHelpers, unittest.TestCase):
@@ -195,25 +208,35 @@ class UnlimitedImportEvalGateTests(MainCliHelpers, unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
 
     def test_exits_nonzero_and_writes_no_csv_below_accept_precision_010_AE4(self):
+        # Held-out: 18 true accepts (candidate accepts all), 2 false accepts (golden
+        # rejects, candidate wrongly accepts) -> accept precision 18/20 = 0.90, below
+        # the 0.95 minimum. 5 sensitive rejects, all correctly caught (recall 1.0), so
+        # the fail here is specifically the accept-precision threshold, not a vacuous
+        # "no sensitive rejects to measure" short-circuit.
         with tempfile.TemporaryDirectory() as tmp:
             self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
             self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
-            golden = []
-            for i in range(20):
-                golden.append(json.dumps({"word": f"C{i}", "decision": "accept"}))
-                golden.append(json.dumps({"word": f"R{i}", "decision": "reject", "reason": "other"}))
-            self._write(tmp, "labels-5.jsonl", "\n".join(golden) + "\n")
-            candidate = [json.dumps({"word": f"C{i}", "decision": "accept"}) for i in range(20)]
-            candidate += [json.dumps({"word": f"R{i}", "decision": "accept"}) for i in range(20)]
+            held_out = (
+                [{"word": f"A{i}", "decision": "accept", "id": f"G{i}"} for i in range(18)]
+                + [{"word": f"R{i}", "decision": "reject", "reason": "other", "id": f"G{18 + i}"} for i in range(2)]
+                + [{"word": f"S{i}", "decision": "reject", "reason": "sensitive", "id": f"G{20 + i}"} for i in range(5)]
+            )
+            self._write(tmp, "labels-5.jsonl", "\n".join(json.dumps(entry) for entry in held_out) + "\n")
+            candidate = (
+                [json.dumps({"word": f"A{i}", "decision": "accept"}) for i in range(18)]
+                + [json.dumps({"word": f"R{i}", "decision": "accept"}) for i in range(2)]
+                + [json.dumps({"word": f"S{i}", "decision": "reject", "reason": "sensitive"}) for i in range(5)]
+            )
             self._write(tmp, "candidate.jsonl", "\n".join(candidate) + "\n")
-            with self.assertRaises(SystemExit) as ctx:
-                self._run_main(
-                    tmp,
-                    [
-                        "--length", "5", "--pool", "unlimited",
-                        "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
-                    ],
-                )
+            with patch.object(vl.eval_labels, "split_golden", return_value=([], held_out)):
+                with self.assertRaises(SystemExit) as ctx:
+                    self._run_main(
+                        tmp,
+                        [
+                            "--length", "5", "--pool", "unlimited",
+                            "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                        ],
+                    )
             self.assertEqual(ctx.exception.code, 1)
             self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
 
@@ -281,6 +304,128 @@ class UnlimitedImportEvalGateTests(MainCliHelpers, unittest.TestCase):
             self._write(tmp, "review-5.csv", "word\r\nSTALEWORD\r\n")
             with self.assertRaises(SystemExit):
                 self._run_main(tmp, ["--length", "5"])
+            self.assertFalse(os.path.exists(stale_path))
+
+    def test_prints_a_specific_reason_for_each_way_the_gate_cannot_be_measured(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._write_passing_eval(tmp)
+
+            code, stderr = self._run_main_capturing_stderr(tmp, ["--length", "5", "--pool", "unlimited"])
+            self.assertEqual(code, 1)
+            self.assertIn("--eval-candidate is required", stderr)
+
+            missing_candidate = os.path.join(tmp, "does-not-exist.jsonl")
+            code, stderr = self._run_main_capturing_stderr(
+                tmp, ["--length", "5", "--pool", "unlimited", "--eval-candidate", missing_candidate]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("eval candidate file not found", stderr)
+            self.assertIn(missing_candidate, stderr)
+
+            self._write(tmp, "unlimited-pool-9.txt", "KALEMLERİ\n")
+            self._write(tmp, "labels-unlimited-9.jsonl", '{"word": "KALEMLERİ", "decision": "accept"}\n')
+            missing_golden = os.path.join(tmp, "labels-9.jsonl")
+            code, stderr = self._run_main_capturing_stderr(
+                tmp,
+                [
+                    "--length", "9", "--pool", "unlimited",
+                    "--golden", missing_golden,
+                    "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                ],
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("golden file not found", stderr)
+            self.assertIn(missing_golden, stderr)
+
+    def test_blocks_when_the_eval_candidate_is_the_golden_file_itself(self):
+        # Passing the golden file as --eval-candidate (directly, or via --golden X
+        # --eval-candidate X) must not score as a measured, trustworthy run.
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._write_passing_eval(tmp)
+            golden_path = os.path.join(tmp, "labels-5.jsonl")
+
+            code, stderr = self._run_main_capturing_stderr(
+                tmp, ["--length", "5", "--pool", "unlimited", "--eval-candidate", golden_path]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("must not be the golden file itself", stderr)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "unlimited-5.csv")))
+
+            code, _ = self._run_main_capturing_stderr(
+                tmp,
+                [
+                    "--length", "5", "--pool", "unlimited",
+                    "--golden", golden_path, "--eval-candidate", golden_path,
+                ],
+            )
+            self.assertEqual(code, 1)
+
+    def test_prints_a_reason_and_removes_the_stale_csv_when_the_candidate_file_is_malformed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._write_passing_eval(tmp)
+            self._write(tmp, "candidate.jsonl", "{not valid json\n")
+            stale_path = os.path.join(tmp, "unlimited-5.csv")
+            self._write(tmp, "unlimited-5.csv", "word\r\nSTALEWORD\r\n")
+
+            code, stderr = self._run_main_capturing_stderr(
+                tmp,
+                [
+                    "--length", "5", "--pool", "unlimited",
+                    "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                ],
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("failed to score eval candidate", stderr)
+            self.assertFalse(os.path.exists(stale_path))
+
+    def test_prints_a_reason_and_removes_the_stale_csv_when_a_golden_row_has_no_word(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._write(tmp, "labels-5.jsonl", '{"decision": "accept"}\n')  # no "word" key
+            self._write(tmp, "candidate.jsonl", '{"word": "A0", "decision": "accept"}\n')
+            stale_path = os.path.join(tmp, "unlimited-5.csv")
+            self._write(tmp, "unlimited-5.csv", "word\r\nSTALEWORD\r\n")
+
+            code, stderr = self._run_main_capturing_stderr(
+                tmp,
+                [
+                    "--length", "5", "--pool", "unlimited",
+                    "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                ],
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("failed to score eval candidate", stderr)
+            self.assertFalse(os.path.exists(stale_path))
+
+    def test_prints_a_reason_and_removes_the_stale_csv_on_a_duplicate_golden_word(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(tmp, "unlimited-pool-5.txt", "KALEM\n")
+            self._write(tmp, "labels-unlimited-5.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            self._write(
+                tmp,
+                "labels-5.jsonl",
+                '{"word": "KALEM", "decision": "accept"}\n{"word": "kalem", "decision": "accept"}\n',
+            )
+            self._write(tmp, "candidate.jsonl", '{"word": "KALEM", "decision": "accept"}\n')
+            stale_path = os.path.join(tmp, "unlimited-5.csv")
+            self._write(tmp, "unlimited-5.csv", "word\r\nSTALEWORD\r\n")
+
+            code, stderr = self._run_main_capturing_stderr(
+                tmp,
+                [
+                    "--length", "5", "--pool", "unlimited",
+                    "--eval-candidate", os.path.join(tmp, "candidate.jsonl"),
+                ],
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("failed to score eval candidate", stderr)
             self.assertFalse(os.path.exists(stale_path))
 
 

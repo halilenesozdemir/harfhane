@@ -124,7 +124,7 @@ class PassesThresholdsTests(unittest.TestCase):
     def _ok(self, **overrides):
         base = dict(
             accept_precision=1.0, sensitive_recall=1.0, sensitive_total=1,
-            held_out_count=1, missing=[], duplicate=[],
+            held_out_count=1, missing=[], duplicate=[], copied=False,
         )
         base.update(overrides)
         return base
@@ -155,7 +155,7 @@ class PassesThresholdsTests(unittest.TestCase):
 
     def test_fails_on_any_integrity_or_coverage_gap(self):
         gaps = dict(
-            held_out_count=0, sensitive_total=0, missing=["G0"], duplicate=["G0"],
+            held_out_count=0, sensitive_total=0, missing=["G0"], duplicate=["G0"], copied=True,
         )
         for field, value in gaps.items():
             with self.subTest(field=field):
@@ -173,8 +173,11 @@ class EvaluateIntegrationTests(unittest.TestCase):
         held_out = [golden_accept(f"A{i}") for i in range(18)] + [
             golden_reject(f"S{i}", "sensitive") for i in range(2)
         ]
+        # A reject reason differing from golden's ("obscure" vs "sensitive") still counts
+        # as caught (score_reason_recall), and keeps this a genuine match rather than a
+        # byte-identical copy of golden's decisions.
         candidate = [candidate_accept(f"A{i}") for i in range(18)] + [
-            candidate_reject(f"S{i}", "sensitive") for i in range(2)
+            candidate_reject(f"S{i}", "obscure") for i in range(2)
         ]
         self.assertTrue(self._evaluate_with_held_out(held_out, candidate)["passes"])
 
@@ -215,6 +218,17 @@ class EvaluateIntegrationTests(unittest.TestCase):
         )
         self.assertFalse(duplicate_report["passes"])
         self.assertIn("G0", duplicate_report["integrity"]["duplicate"])
+
+    def test_fails_when_the_candidate_copies_every_held_out_decision_from_golden(self):
+        # Passing the golden file itself as the candidate (or copying its held-out
+        # decisions) must not look like a measured run that happened to score 1.0.
+        held_out = [golden_accept(f"A{i}") for i in range(10)] + [golden_reject("S0", "sensitive")]
+        copied_candidate = [candidate_accept(f"A{i}") for i in range(10)] + [
+            candidate_reject("S0", "sensitive")
+        ]
+        report = self._evaluate_with_held_out(held_out, copied_candidate)
+        self.assertTrue(report["integrity"]["copied_from_golden"])
+        self.assertFalse(report["passes"])
 
 
 class LoadersTests(unittest.TestCase):
@@ -265,13 +279,14 @@ class MainCliTests(unittest.TestCase):
             self.assertEqual(ctx.exception.code, 1)
 
     def test_exits_zero_when_the_report_passes(self):
-        # A candidate matching every golden word exactly covers whichever half the
-        # real (unpatched) hash split puts into held-out.
+        # Covers whichever half the real (unpatched) hash split puts into held-out. The
+        # reject reason ("obscure" vs golden's "sensitive") differs so this is a genuine
+        # match, not a byte-identical copy of golden's decisions.
         golden = [golden_accept(f"A{i}") for i in range(200)] + [
             golden_reject(f"S{i}", "sensitive") for i in range(20)
         ]
         candidate = [candidate_accept(f"A{i}") for i in range(200)] + [
-            candidate_reject(f"S{i}", "sensitive") for i in range(20)
+            candidate_reject(f"S{i}", "obscure") for i in range(20)
         ]
         with tempfile.TemporaryDirectory() as tmp:
             self._run(tmp, golden, candidate)
