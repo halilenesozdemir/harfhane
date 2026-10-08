@@ -62,12 +62,40 @@ describe('Button', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
+  it('should expose accessibilityRole="button" on the pressable path', async () => {
+    await renderWithTheme(<Button label="Oyna" onPress={() => undefined} />);
+    expect(screen.getByLabelText('Oyna').props.accessibilityRole).toBe('button');
+  });
+
+  it('should use the brandDepth colour for the primary back layer and surfaceDepth for secondary', async () => {
+    const { rerender } = await renderWithTheme(<Button label="Oyna" onPress={() => undefined} testID="btn" />);
+    expect(flattenStyle(screen.getByTestId('btn-back').props.style).backgroundColor).toBe(themes.light.brandDepth);
+
+    await rerender(<ThemeProvider store={createMemoryStore()} waitForStoredTheme={false}><Button label="Yeni kelime" onPress={() => undefined} variant="secondary" testID="btn" /></ThemeProvider>);
+    expect(flattenStyle(screen.getByTestId('btn-back').props.style).backgroundColor).toBe(themes.light.surfaceDepth);
+  });
+
+  it('should set the primary face height to 52 dp', async () => {
+    await renderWithTheme(<Button label="Oyna" onPress={() => undefined} testID="btn" />);
+    expect(flattenStyle(screen.getByTestId('btn-face').props.style).height).toBe(52);
+  });
+
   it('should lower opacity and drop the back layer when disabled (K3)', async () => {
     await renderWithTheme(<Button label="Oyna" onPress={() => undefined} disabled testID="btn" />);
     const target = screen.getByLabelText('Oyna');
     expect(target.props.accessibilityState).toEqual({ disabled: true });
     expect(flattenStyle(target.props.style).opacity).toBe(0.5);
     expect(screen.queryByTestId('btn-back')).toBeNull();
+  });
+
+  it('should keep the outer height at 56 for both enabled and disabled primary buttons (D2)', async () => {
+    const { rerender } = await renderWithTheme(<Button label="Oyna" onPress={() => undefined} testID="btn" />);
+    const enabledHeight = flattenStyle(screen.getByTestId('btn').props.style).height;
+    expect(enabledHeight).toBe(56);
+
+    await rerender(<ThemeProvider store={createMemoryStore()} waitForStoredTheme={false}><Button label="Oyna" onPress={() => undefined} disabled testID="btn" /></ThemeProvider>);
+    const disabledHeight = flattenStyle(screen.getByTestId('btn').props.style).height;
+    expect(disabledHeight).toBe(56);
   });
 
   it('should not call onPress when disabled', async () => {
