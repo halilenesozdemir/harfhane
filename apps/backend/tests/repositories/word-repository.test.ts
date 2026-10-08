@@ -15,11 +15,15 @@ beforeAll(async () => {
   await applySchema(env.DB);
   await seedTestData(env.DB);
 
+  // status/family_safe are 'approved'/1 here (not 'draft'/0) because the words CHECK no
+  // longer has a source = 'user' escape (0003_drop_removed_features.sql) — an active row
+  // must be approved and family-safe regardless of source. source = 'user' still has to be
+  // excluded by the read queries below, moderated or not.
   const userWord = await env.DB.prepare(
     `INSERT INTO words
       (word, meaning, context, category, length, source, license, status, family_safe, is_active)
      VALUES
-      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'draft', 0, 1)
+      ('KUZGUN', 'Kuzgun kuşu', 'Kuzgun uçtu.', 'isim', 6, 'user', 'user-submitted', 'approved', 1, 1)
      RETURNING id`
   ).first<{ id: number }>();
   if (!userWord) throw new Error('Failed to seed user-sourced word');
@@ -79,7 +83,7 @@ describe('findRandomWord', () => {
     expect(['isim', 'sıfat', 'fiil']).toContain(result!.entry.category);
   });
 
-  it('never returns an unmoderated user-submitted word', async () => {
+  it('never returns a user-submitted word, even one marked approved and active', async () => {
     const result = await findRandomWord(env.DB, 6);
     expect(result).toBeNull();
   });
@@ -106,7 +110,7 @@ describe('findWordById', () => {
     expect(byId).not.toBeNull();
   });
 
-  it('refuses to serve an unmoderated user-submitted word as a challenge answer', async () => {
+  it('refuses to serve a user-submitted word as a challenge answer', async () => {
     const result = await findWordById(env.DB, userWordId);
     expect(result).toBeNull();
   });

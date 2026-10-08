@@ -58,8 +58,20 @@ migration (numbered after Plan 008's `0002_word_pools.sql`), every table `apps/b
 `tournament_results`. Also add the guard-rail changes already scoped for this same migration (drop the
 `source = 'user'` escape in the `words` CHECK, a `BEFORE UPDATE` guard on `daily_words`, block deactivating a
 word scheduled in the future, refuse activating a `rejected` word).
-- Writing the migration file is agent work. Applying it to the remote database needs explicit owner approval
-  (Invariant 4) — remote D1 writes are never done without it.
+- Done: `apps/backend/db/migrations/0003_drop_removed_features.sql` is written (14 tables, not 13 — this
+  entry's own list has 14 names; drops them in child-before-parent order), plus all four guard-rail changes.
+  Covered by `apps/backend/tests/db/drop-removed-features-migration.test.ts` (dropped/kept tables, game
+  queries still work, the CHECK and all three triggers). Code search before writing it found no remaining
+  backend route/service/repository/script/cron/test touching any of the 14 tables — only
+  `0001_baseline.sql` still declared them. The full test suite (146 tests) and backend typecheck pass with
+  it applied locally; `deploy-backend.yml` only runs `wrangler deploy`/`deployments status`/`rollback`, never
+  `wrangler d1 migrations apply` or `d1 execute`, so merging this does not apply the migration remotely.
+- Applying it to the remote `harfhane` database needs explicit owner approval (Invariant 4) — remote D1
+  writes are never done without it. When approved, the owner runs, in this order:
+  1. Back up first (never into the repo): `wrangler d1 export harfhane --remote --output ~/Backups/harfhane/harfhane-$(date +%Y%m%d%H%M%S).sql` (run from `apps/backend`).
+  2. Dry-run locally first: `wrangler d1 migrations apply harfhane --local` (from `apps/backend`), then
+     spot-check the local copy.
+  3. Apply remotely: `wrangler d1 migrations apply harfhane --remote` (from `apps/backend`).
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
