@@ -123,7 +123,7 @@ function HomeRoute(): React.JSX.Element {
   );
 }
 
-function AppRoutes(): React.JSX.Element {
+export function AppRoutes(): React.JSX.Element {
   return (
     <>
       <Suspense fallback={<div className="min-h-screen bg-bg-primary" />}>
