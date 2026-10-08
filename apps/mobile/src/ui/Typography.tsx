@@ -15,11 +15,7 @@ export interface AppTextProps extends Omit<ComponentProps<typeof Text>, 'style' 
 
 const DISPLAY_FONT_ROLES: ReadonlySet<TextRole> = new Set(['display', 'headline', 'title', 'titleSmall']);
 
-/**
- * One role per card anatomy slot (CA3): a consistent fontSize/lineHeight
- * pair from the typography table (mobile-ui-standard.md section 2), so a
- * card never mixes more than its two allowed sizes plus `caption`.
- */
+/** One role per card anatomy slot (CA3): fontSize/lineHeight from the typography table (section 2). */
 export function AppText({ role, color, weight, style, children, ...rest }: AppTextProps) {
   const { colors } = useTheme();
   const isDisplayFont = DISPLAY_FONT_ROLES.has(role);

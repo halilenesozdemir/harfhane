@@ -79,11 +79,7 @@ export const CHIP_HEIGHT = {
   length: 40,
 } as const;
 
-/**
- * Letters inside a fixed-size game control (tile, key, hero tile) cap the
- * system font scale so they never overflow their box (mobile-ui-standard.md
- * T3).
- */
+/** Letters in a fixed-size game control (tile, key, hero tile) cap the system font scale (T3). */
 export const TILE_LETTER_MAX_FONT_SCALE = 1.2;
 
 /**
