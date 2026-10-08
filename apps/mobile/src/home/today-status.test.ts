@@ -33,6 +33,11 @@ describe('getDisplayedStreak', () => {
   it('should return zero when nothing has ever been played', () => {
     expect(getDisplayedStreak(statsWithStreak(0, null), TODAY)).toBe(0);
   });
+
+  it('should return zero when the last played date is in the future', () => {
+    const TOMORROW = '2026-10-09';
+    expect(getDisplayedStreak(statsWithStreak(3, TOMORROW), TODAY)).toBe(0);
+  });
 });
 
 describe('getTodayStatus', () => {

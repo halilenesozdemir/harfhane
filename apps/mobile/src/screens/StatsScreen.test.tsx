@@ -32,6 +32,16 @@ describe('StatsScreen', () => {
     expect(screen.getByTestId('stat-En İyi Seri').props.children).toBe(5);
   });
 
+  it('should use the Turkey day (not the UTC day) for the default today when not given', async () => {
+    jest.useFakeTimers();
+    // 22:00 UTC on 2026-10-08 is 01:00 on 2026-10-09 in Turkey (UTC+3).
+    jest.setSystemTime(new Date('2026-10-08T22:00:00Z'));
+    const stats = { ...createInitialDailyStats(), currentStreak: 4, maxStreak: 5, lastPlayedDate: '2026-10-09' };
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} />);
+    expect(screen.getByTestId('stat-Seri').props.children).toBe(4);
+    jest.useRealTimers();
+  });
+
   it('should show the games won total instead of a streak for unlimited stats', async () => {
     const stats = { ...createInitialUnlimitedStats(), gamesPlayed: 2, gamesWon: 2 };
     await renderWithTheme(<StatsScreen stats={stats} isUnlimited={true} onClose={() => undefined} />);
