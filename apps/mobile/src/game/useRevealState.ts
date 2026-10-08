@@ -49,20 +49,22 @@ function useRevealTiming(session: GameSession, wordLength: number, reduceMotion:
 }
 
 // A rejection (too-short guess, an unlisted word, a connection error) leaves the row's guess
-// count unchanged but sets a new message — that is what tells this apart from a row that was
+// count unchanged but bumps rejectionCount — that is what tells this apart from a row that was
 // just committed (which also sets a message, but with the guess count moving forward).
+// rejectionCount, not message identity, drives this: useGame clears the message after 2s, so two
+// rejections with the same text within that window must still both shake (web parity).
 function useShakeTiming(session: GameSession, reduceMotion: boolean) {
   const [shakeRow, setShakeRow] = useState(false);
   const [prevGuessCount, setPrevGuessCount] = useState(session.game.guesses.length);
-  const [prevMessage, setPrevMessage] = useState(session.message);
+  const [prevRejectionCount, setPrevRejectionCount] = useState(session.rejectionCount);
 
   const guessCount = session.game.guesses.length;
-  if (guessCount !== prevGuessCount || session.message !== prevMessage) {
+  if (guessCount !== prevGuessCount || session.rejectionCount !== prevRejectionCount) {
     const rowUnchanged = guessCount === prevGuessCount;
-    const isNewMessage = session.message !== null && session.message !== prevMessage;
+    const rejectionIncreased = session.rejectionCount > prevRejectionCount;
     setPrevGuessCount(guessCount);
-    setPrevMessage(session.message);
-    if (!reduceMotion && isNewMessage && rowUnchanged && session.game.gameStatus === 'playing') {
+    setPrevRejectionCount(session.rejectionCount);
+    if (!reduceMotion && rejectionIncreased && rowUnchanged && session.game.gameStatus === 'playing') {
       setShakeRow(true);
     }
   }

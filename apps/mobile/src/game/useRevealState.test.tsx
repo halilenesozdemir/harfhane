@@ -26,6 +26,7 @@ function makeSession(overrides: Partial<GameSession> = {}): GameSession {
     isSubmitting: false,
     storageKey: null,
     dailyDate: null,
+    rejectionCount: 0,
     ...overrides,
   };
 }
@@ -94,11 +95,26 @@ describe('useRevealState', () => {
 
   it('should shake the current row when a guess is rejected without adding a row', async () => {
     const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
-    const rejected = makeSession({ message: 'Kelime listede yok' });
+    const rejected = makeSession({ message: 'Kelime listede yok', rejectionCount: 1 });
     await act(async () => rerender({ session: rejected, reduceMotion: false }));
     expect(result.current.shakeRow).toBe(true);
     await act(async () => jest.advanceTimersByTime(SHAKE_MS));
     expect(result.current.shakeRow).toBe(false);
+  });
+
+  it('should shake again on a second rejection with the same message text within useGame\'s 2s message window', async () => {
+    const { result, rerender } = await setup({ session: makeSession(), reduceMotion: false });
+    const firstRejection = makeSession({ message: 'Kelime listede yok', rejectionCount: 1 });
+    await act(async () => rerender({ session: firstRejection, reduceMotion: false }));
+    expect(result.current.shakeRow).toBe(true);
+    await act(async () => jest.advanceTimersByTime(SHAKE_MS));
+    expect(result.current.shakeRow).toBe(false);
+
+    // Same message text, still displayed (useGame only clears it after 2s) — only rejectionCount
+    // moved, which is exactly what a message-identity check would miss.
+    const secondRejection = makeSession({ message: 'Kelime listede yok', rejectionCount: 2 });
+    await act(async () => rerender({ session: secondRejection, reduceMotion: false }));
+    expect(result.current.shakeRow).toBe(true);
   });
 
   it('should not shake when the message change comes from a newly committed winning row', async () => {
@@ -113,7 +129,7 @@ describe('useRevealState', () => {
 
   it('should not shake when reduce motion is enabled', async () => {
     const { result, rerender } = await setup({ session: makeSession(), reduceMotion: true });
-    const rejected = makeSession({ message: 'Kelime listede yok' });
+    const rejected = makeSession({ message: 'Kelime listede yok', rejectionCount: 1 });
     await act(async () => rerender({ session: rejected, reduceMotion: true }));
     expect(result.current.shakeRow).toBe(false);
   });
