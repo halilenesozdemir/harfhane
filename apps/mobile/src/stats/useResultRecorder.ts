@@ -80,6 +80,18 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
   const previousStatusRef = useRef(game.gameStatus);
   const [justRecordedDistribution, setJustRecordedDistribution] = useState<readonly number[] | null>(null);
 
+  // Adjust state when a new game starts loading (React's "adjusting state when a prop changes"
+  // pattern, same as useRevealState) instead of from inside the effect below: "Yeni kelime"
+  // dispatches 'loading' before the next word resolves, and without this the previous game's
+  // distribution kept showing in GameOverDistribution until the new game's own finish resolved
+  // its write (B2) — recordedDistribution !== null short-circuits that component's own storage
+  // read, so a stale value here is never replaced by a fresh one in between.
+  const [previousPhase, setPreviousPhase] = useState(phase);
+  if (phase !== previousPhase) {
+    setPreviousPhase(phase);
+    if (phase === 'loading') setJustRecordedDistribution(null);
+  }
+
   useEffect(() => {
     const wasReadyPlaying = previousPhaseRef.current === 'ready' && previousStatusRef.current === 'playing';
     const isNowFinished = phase === 'ready' && game.gameStatus !== 'playing';
