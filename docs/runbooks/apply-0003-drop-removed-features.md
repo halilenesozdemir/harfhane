@@ -1,9 +1,12 @@
 # Runbook: apply `0003_drop_removed_features.sql` to the remote `harfhane` database
 
-Owner-only. This migration drops 14 tables left over from removed features
-(`docs/backlog.md` "Drop migration: every table left over from removed features")
-and rebuilds `words` with a tighter CHECK. Invariant 4 (`AGENTS.md`) requires the
-owner to run every step below; no agent runs any `--remote` command.
+**Prerequisite:** #118, #119 and #120 merged and the backend deployed; only then
+does the owner apply 0003.
+
+Owner-only. Drops 14 tables left over from removed features (`docs/backlog.md`
+"Drop migration: every table left over from removed features") and rebuilds
+`words` with a tighter CHECK. Invariant 4 (`AGENTS.md`) requires the owner to run
+every step below; no agent runs any `--remote` command.
 
 Do not run this within an hour of the daily cron (`crons = ["0 17 * * *"]` in
 `apps/backend/wrangler.toml`, 17:00 UTC) — a migration mid-cron-run risks the
@@ -32,18 +35,16 @@ npx wrangler d1 execute harfhane --remote --command "SELECT name FROM sqlite_mas
 npx wrangler d1 execute harfhane --remote --command "SELECT COUNT(*) FROM users;"
 npx wrangler d1 execute harfhane --remote --command "SELECT seq FROM sqlite_sequence WHERE name='words';"
 npx wrangler d1 execute harfhane --remote --command "SELECT MAX(id) FROM words;"
+npx wrangler d1 execute harfhane --remote --command "SELECT COUNT(*) FROM words;"
 ```
-Expect, respectively: only `0001_baseline.sql` and `0002_word_pools.sql` listed (0003 not
-yet applied); `0` (no active word already violates the tightened CHECK — if this is
-not `0`, stop and fix those rows first, the migration will otherwise fail); all 14
-table names present; only `daily_words_require_active_word` (0001/0002's trigger —
-0003 adds three more only once applied); the `users` row count, recorded here for the
-record — **those rows, and all personal data in them, are deleted permanently by this
-migration except for what the step 1 backup holds**; and `seq`/`MAX(id)` for `words`,
-recorded so step 4 can confirm `seq` came back unchanged (0003 saves and restores it
-across the table rebuild — otherwise a later insert could reuse an id freed by a
-previously deleted row, and an old `/api/words/challenge/:wordId` link would resolve
-to the wrong word).
+Expect, respectively: only `0001_baseline.sql`/`0002_word_pools.sql` listed (0003 not
+yet applied); `0` (an active word already violating the tightened CHECK — fix it first,
+or the migration fails); all 14 table names present; only `daily_words_require_active_word`
+(0003 adds three more); the `users` row count — **those rows and all personal data in
+them are deleted permanently by this migration except for what the step 1 backup
+holds**; `seq`/`MAX(id)`/row count for `words`, all recorded so step 4 can confirm the
+rebuild changed none of them (a `seq` drift would let a future insert reuse an id a
+stale `/api/words/challenge/:wordId` link already points at).
 
 ## 3. Rehearse on a local copy of the production export
 
