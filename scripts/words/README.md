@@ -60,19 +60,15 @@ produces the same output files under `data/words/`.
   - Exits 1 without writing the CSV when there are any errors.
 - `test_validate_labels.py`: unittest suite for the validator.
 - `eval_labels.py --golden PATH --candidate PATH` (Plan 010 U5): scores a model-written
-  labels batch against the golden set (the owner-reviewed `labels-N.jsonl`). The golden set
-  is split by a hash of each entry's normalized word — half calibrate prompts, the other
-  half is the held-out eval set the candidate is actually scored against. Reports accept
-  precision/recall and recall for the three family-protecting reject reasons (`sensitive`,
-  `proper_noun`, `foreign`); a miss is named by the golden entry's id, never the word, since
-  a miss can be a slur or other sensitive word. Fails closed (reports `"passes": false`,
-  CLI exits 1) whenever it cannot actually prove the batch trustworthy: a held-out word
-  missing or duplicated in the candidate, an empty held-out set, no `sensitive` rejects to
-  measure recall against, or zero predicted "accept" decisions. Gated on
-  `LABEL_ACCEPT_PRECISION_MIN = 0.95` and `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls a
-  model; it only scores an already-written labels file, so it runs in CI without API keys.
-- `test_eval_labels.py`: unittest suite for the eval scorer, including the threshold
-  boundaries and the fail-closed cases above.
+  labels batch against the golden set (`labels-N.jsonl`), split by a hash of each entry's
+  normalized word into a calibration half and a held-out eval half. Reports accept
+  precision/recall and recall for the family-protecting reject reasons (`sensitive`,
+  `proper_noun`, `foreign`), naming a miss by the golden entry's id, never the word. Fails
+  closed on anything that would prove nothing (a held-out word missing/duplicated in the
+  candidate, an empty held-out set, no `sensitive` rejects, zero predicted accepts), gated
+  on `LABEL_ACCEPT_PRECISION_MIN = 0.95` / `LABEL_SENSITIVE_RECALL_MIN = 0.98`. Never calls
+  a model.
+- `test_eval_labels.py`: unittest suite for the eval scorer.
 
 ## Unlimited pool
 

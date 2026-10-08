@@ -347,12 +347,7 @@ Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
   convention used elsewhere in the mobile UI standard.
 
 ## Label eval candidate is not bound to the batch it is supposed to vet (2026-10-08)
-`scripts/words/eval_labels.py` (Plan 010 U5/U6) scores a `--eval-candidate` file against the
-golden set's held-out half, and `validate_labels.py --pool unlimited` trusts a passing report
-before writing `unlimited-N.csv`. Nothing ties that candidate file to the actual unlimited
-batch's labelling run — a stale or unrelated candidate file (same prompt tested earlier, or a
-different model/run entirely) would pass the gate just as well as the one that actually produced
-`labels-unlimited-N.jsonl`. Consider requiring the candidate file (or the CLI invocation) to carry
-a prompt version or model id that both the eval report and the import step record and compare,
-so a batch can only be imported using the eval run that actually measured its own labelling
-process.
+`scripts/words/eval_labels.py` (Plan 010 U5/U6) scores a candidate file against the golden
+set's held-out half; nothing ties that file to the actual unlimited batch's labelling run, so
+a stale or unrelated candidate would pass the gate just as well. Consider recording a prompt
+version or model id that the eval report and the import step both check.

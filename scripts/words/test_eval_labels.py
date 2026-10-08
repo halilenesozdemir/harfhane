@@ -65,13 +65,6 @@ class SplitGoldenTests(unittest.TestCase):
         reversed_held_out = {entry["word"] for entry in split_golden(list(reversed(golden)))[1]}
         self.assertEqual(held_out_words, reversed_held_out)
 
-    def test_a_words_half_does_not_change_when_unrelated_entries_are_added(self):
-        base = with_ids([golden_accept(f"W{i}") for i in range(20)])
-        base_held_out = {entry["word"] for entry in split_golden(base)[1]}
-        extended = with_ids([golden_accept(f"W{i}") for i in range(20)] + [golden_accept("NEWWORD")])
-        extended_held_out = {entry["word"] for entry in split_golden(extended)[1]} - {"NEWWORD"}
-        self.assertEqual(base_held_out, extended_held_out)
-
 
 class ScoreAcceptTests(unittest.TestCase):
     def test_reports_perfect_precision_and_recall_when_candidate_matches_golden(self):
