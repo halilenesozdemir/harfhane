@@ -37,7 +37,13 @@ export const TOP_BAR_HEIGHT = 64;
 /** Disabled opacity for any pressable (Button K3, IconButton). */
 export const DISABLED_OPACITY = 0.5;
 
-/** Lucide icon sizes by context (mobile-ui-standard.md, section 6, I2). */
+/**
+ * Lucide icon sizes by context (mobile-ui-standard.md, section 6, I2).
+ * @deferred Only imported by `knip.jsonc`-ignored home components so far
+ * (HomeHero/DailyCard/UnlimitedCard, not yet wired into a screen); knip
+ * treats an ignored file's imports as not counting. The tag comes off once
+ * `HomeScreen.tsx` itself imports it. See docs/backlog.md.
+ */
 export const ICON_SIZE = {
   sm: 16,
   md: 20,
