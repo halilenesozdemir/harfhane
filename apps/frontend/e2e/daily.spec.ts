@@ -1,4 +1,5 @@
 import { expect, test } from './support/fixtures';
+import { assertNoSeriousA11yViolations } from './support/axe';
 import {
   backspaceOnScreen,
   forceClipboardShareFallback,
@@ -17,7 +18,7 @@ const DAILY_WORDS: Record<4 | 5 | 6, { solution: string; wrongGuess: string }> =
 };
 
 for (const wordLength of [4, 5, 6] as const) {
-  test(`daily mode (${wordLength} letters) can be won`, async ({ page, api }) => {
+  test(`daily mode (${wordLength} letters) can be won (009-AE2)`, async ({ page, api }) => {
     const { solution, wrongGuess } = DAILY_WORDS[wordLength];
     await api.stubDailyWord(wordLength, { word: solution });
     await api.stubValidate(() => true);
@@ -28,6 +29,9 @@ for (const wordLength of [4, 5, 6] as const) {
     await typeOnScreen(page, wrongGuess.split(''));
     await backspaceOnScreen(page);
     await typeOnScreen(page, [wrongGuess.slice(-1)]);
+    // Key state: a guess sits on the board, unsubmitted — scan before
+    // the submit resolves and the board re-renders for the next guess.
+    await assertNoSeriousA11yViolations(page);
     await submitAndWaitForReveal(page, wordLength);
     await expect(tile(page, wordLength, 0, 0)).toHaveAttribute('data-status', /correct|present|absent/);
 
@@ -37,6 +41,8 @@ for (const wordLength of [4, 5, 6] as const) {
     for (let col = 0; col < wordLength; col += 1) {
       await expect(tile(page, wordLength, 1, col)).toHaveAttribute('data-status', 'correct');
     }
+    // Key state: the game-over modal is open on top of the board.
+    await assertNoSeriousA11yViolations(page);
   });
 }
 
