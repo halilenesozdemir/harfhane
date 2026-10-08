@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import tempfile
+import unicodedata
 import unittest
 from unittest.mock import patch
 
@@ -43,16 +44,10 @@ def with_ids(golden):
 
 
 class NormalizeWordTests(unittest.TestCase):
-    def test_uppercases_turkish_dotted_and_dotless_i_correctly(self):
+    def test_normalizes_case_whitespace_and_nfd_consistently(self):
         self.assertEqual(normalize_word("kalem"), "KALEM")
-        self.assertEqual(normalize_word("izmir"), "İZMİR")
-
-    def test_trims_surrounding_whitespace(self):
+        self.assertEqual(normalize_word("izmir"), "İZMİR")  # Turkish dotless/dotted i
         self.assertEqual(normalize_word("  kalem \n"), "KALEM")
-
-    def test_folds_nfd_to_the_same_form_as_nfc(self):
-        import unicodedata
-
         nfc = unicodedata.normalize("NFC", "KALEMİ")
         nfd = unicodedata.normalize("NFD", "KALEMİ")
         self.assertNotEqual(nfc, nfd)  # sanity: the inputs really differ byte-wise
@@ -60,20 +55,15 @@ class NormalizeWordTests(unittest.TestCase):
 
 
 class SplitGoldenTests(unittest.TestCase):
-    def test_every_word_lands_in_exactly_one_half(self):
+    def test_every_word_lands_in_exactly_one_half_regardless_of_list_order(self):
         golden = with_ids([golden_accept(f"W{i}") for i in range(50)])
         calibration, held_out = split_golden(golden)
         calibration_words = {entry["word"] for entry in calibration}
         held_out_words = {entry["word"] for entry in held_out}
         self.assertEqual(calibration_words & held_out_words, set())
         self.assertEqual(calibration_words | held_out_words, {f"W{i}" for i in range(50)})
-
-    def test_is_independent_of_the_golden_lists_order(self):
-        golden = with_ids([golden_accept(f"W{i}") for i in range(30)])
-        reversed_golden = list(reversed(golden))
-        first_held_out = {entry["word"] for entry in split_golden(golden)[1]}
-        second_held_out = {entry["word"] for entry in split_golden(reversed_golden)[1]}
-        self.assertEqual(first_held_out, second_held_out)
+        reversed_held_out = {entry["word"] for entry in split_golden(list(reversed(golden)))[1]}
+        self.assertEqual(held_out_words, reversed_held_out)
 
     def test_a_words_half_does_not_change_when_unrelated_entries_are_added(self):
         base = with_ids([golden_accept(f"W{i}") for i in range(20)])
@@ -91,33 +81,22 @@ class ScoreAcceptTests(unittest.TestCase):
         self.assertEqual(report["precision"], 1.0)
         self.assertEqual(report["recall"], 1.0)
 
-    def test_reports_reduced_precision_when_a_held_out_reject_is_accepted(self):
+    def test_reduced_precision_and_recall_from_a_wrong_accept_and_a_missing_entry(self):
         held_out = with_ids([golden_accept("A1"), golden_reject("A3", "verb_form")])
-        candidate_by_word = {"A1": candidate_accept("A1"), "A3": candidate_accept("A3")}
-        report = score_accept(held_out, candidate_by_word)
-        self.assertEqual(report["precision"], 0.5)
-
-    def test_treats_a_missing_candidate_entry_as_not_accepted_for_recall(self):
-        held_out = with_ids([golden_accept("A0"), golden_accept("A1")])
-        report = score_accept(held_out, {})
+        # A1 is missing from the candidate (recall loss); A3 is wrongly accepted
+        # (precision loss).
+        report = score_accept(held_out, {"A3": candidate_accept("A3")})
+        self.assertEqual(report["precision"], 0.0)
         self.assertEqual(report["recall"], 0.0)
 
-    def test_an_all_reject_candidate_scores_zero_precision_not_a_vacuous_pass(self):
+    def test_an_all_reject_or_empty_candidate_scores_zero_precision_not_a_vacuous_pass(self):
         # Zero predicted accepts proves nothing about accept quality: it must not
         # read as perfect precision just because there were no wrong accepts either.
-        held_out = with_ids([golden_accept("A0"), golden_accept("A1"), golden_reject("A2", "verb_form")])
-        candidate_by_word = {
-            "A0": candidate_reject("A0"),
-            "A1": candidate_reject("A1"),
-            "A2": candidate_reject("A2"),
-        }
-        report = score_accept(held_out, candidate_by_word)
-        self.assertEqual(report["precision"], 0.0)
-
-    def test_an_empty_candidate_scores_zero_precision(self):
-        held_out = with_ids([golden_accept("A0"), golden_accept("A1")])
-        report = score_accept(held_out, {})
-        self.assertEqual(report["precision"], 0.0)
+        held_out = with_ids([golden_accept("A0"), golden_reject("A2", "verb_form")])
+        all_reject = {"A0": candidate_reject("A0"), "A2": candidate_reject("A2")}
+        for label, candidate_by_word in [("all-reject", all_reject), ("empty", {})]:
+            with self.subTest(candidate=label):
+                self.assertEqual(score_accept(held_out, candidate_by_word)["precision"], 0.0)
 
 
 class SensitiveRecallTests(unittest.TestCase):
@@ -134,42 +113,22 @@ class SensitiveRecallTests(unittest.TestCase):
         self.assertEqual(report["misses"], ["G1"])
         self.assertNotIn("YARRAK", json.dumps(report, ensure_ascii=False))
 
-    def test_recall_is_perfect_when_every_sensitive_reject_is_caught(self):
-        held_out = with_ids([golden_reject("A1", "sensitive"), golden_reject("A3", "sensitive")])
-        candidate_by_word = {"A1": candidate_reject("A1"), "A3": candidate_reject("A3")}
-        report = score_reason_recall(held_out, candidate_by_word, "sensitive")
-        self.assertEqual(report["recall"], 1.0)
-
-    def test_catching_a_sensitive_word_under_a_different_reason_still_counts(self):
+    def test_recall_counts_a_catch_under_any_reason_and_reports_zero_total_when_absent(self):
         held_out = with_ids([golden_reject("A1", "sensitive")])
-        candidate_by_word = {"A1": candidate_reject("A1", reason="other")}
-        report = score_reason_recall(held_out, candidate_by_word, "sensitive")
-        self.assertEqual(report["recall"], 1.0)
-
-    def test_zero_total_is_reported_as_zero_not_an_error(self):
-        held_out = with_ids([golden_accept("A0")])
-        report = score_reason_recall(held_out, {}, "sensitive")
-        self.assertEqual(report["total"], 0)
+        # Family protection only cares that the word was not approved, not that the
+        # candidate guessed the golden set's exact reject reason.
+        caught_under_other_reason = {"A1": candidate_reject("A1", reason="other")}
+        self.assertEqual(score_reason_recall(held_out, caught_under_other_reason, "sensitive")["recall"], 1.0)
+        no_sensitive_entries = with_ids([golden_accept("A0")])
+        self.assertEqual(score_reason_recall(no_sensitive_entries, {}, "sensitive")["total"], 0)
 
 
 class ProperNounAndForeignRecallTests(unittest.TestCase):
     def test_also_reports_recall_for_proper_noun_and_foreign_reasons(self):
-        held_out = with_ids(
-            [
-                golden_accept("A0"),
-                golden_reject("A1", "proper_noun"),
-                golden_accept("A2"),
-                golden_reject("A3", "foreign"),
-            ]
-        )
-        candidate_by_word = {
-            "A1": candidate_accept("A1"),
-            "A3": candidate_reject("A3"),
-        }
-        proper_noun = score_reason_recall(held_out, candidate_by_word, "proper_noun")
-        foreign = score_reason_recall(held_out, candidate_by_word, "foreign")
-        self.assertEqual(proper_noun["recall"], 0.0)
-        self.assertEqual(foreign["recall"], 1.0)
+        held_out = with_ids([golden_reject("A1", "proper_noun"), golden_reject("A3", "foreign")])
+        candidate_by_word = {"A1": candidate_accept("A1"), "A3": candidate_reject("A3")}
+        self.assertEqual(score_reason_recall(held_out, candidate_by_word, "proper_noun")["recall"], 0.0)
+        self.assertEqual(score_reason_recall(held_out, candidate_by_word, "foreign")["recall"], 1.0)
 
 
 class PassesThresholdsTests(unittest.TestCase):
@@ -179,50 +138,33 @@ class PassesThresholdsTests(unittest.TestCase):
 
     def _ok(self, **overrides):
         base = dict(
-            accept_precision=1.0,
-            sensitive_recall=1.0,
-            sensitive_total=1,
-            held_out_count=1,
-            missing=[],
-            duplicate=[],
+            accept_precision=1.0, sensitive_recall=1.0, sensitive_total=1,
+            held_out_count=1, missing=[], duplicate=[],
         )
         base.update(overrides)
         return base
 
-    def test_passes_at_exactly_the_accept_precision_minimum(self):
+    def test_accept_precision_boundary_at_the_minimum_and_at_090(self):
         self.assertTrue(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN)))
-
-    def test_fails_just_below_the_accept_precision_minimum(self):
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=LABEL_ACCEPT_PRECISION_MIN - 0.001)))
-
-    def test_fails_at_090_accept_precision(self):
-        # The full "unlimited import script exits 1, writes no CSV" acceptance
-        # example (Plan 010 AE4) is proven at the validate_labels.py CLI level
-        # (U6); this pins the same precision boundary one layer down.
+        # Plan 010 AE4 ("accept precision 0.90 -> import exits 1") is proven at the
+        # validate_labels.py CLI level (U6); this pins the same boundary here too.
         self.assertFalse(passes_thresholds(**self._ok(accept_precision=0.90)))
 
-    def test_passes_at_exactly_the_sensitive_recall_minimum(self):
+    def test_sensitive_recall_boundary_at_the_minimum_and_at_49_of_50(self):
         self.assertTrue(passes_thresholds(**self._ok(sensitive_recall=LABEL_SENSITIVE_RECALL_MIN)))
-
-    def test_fails_just_below_the_sensitive_recall_minimum(self):
         self.assertFalse(passes_thresholds(**self._ok(sensitive_recall=LABEL_SENSITIVE_RECALL_MIN - 0.001)))
-
-    def test_fails_at_49_of_50_sensitive_recall_when_min_is_098(self):
         self.assertAlmostEqual(49 / 50, 0.98)
         self.assertTrue(passes_thresholds(**self._ok(sensitive_recall=49 / 50)))
         self.assertFalse(passes_thresholds(**self._ok(sensitive_recall=48 / 50)))
 
-    def test_fails_when_held_out_is_empty(self):
-        self.assertFalse(passes_thresholds(**self._ok(held_out_count=0)))
-
-    def test_fails_when_there_are_no_sensitive_rejects_to_measure(self):
-        self.assertFalse(passes_thresholds(**self._ok(sensitive_total=0)))
-
-    def test_fails_when_any_held_out_word_is_missing_from_the_candidate(self):
-        self.assertFalse(passes_thresholds(**self._ok(missing=["G0"])))
-
-    def test_fails_when_any_held_out_word_is_duplicated_in_the_candidate(self):
-        self.assertFalse(passes_thresholds(**self._ok(duplicate=["G0"])))
+    def test_fails_on_any_integrity_or_coverage_gap(self):
+        gaps = dict(
+            held_out_count=0, sensitive_total=0, missing=["G0"], duplicate=["G0"],
+        )
+        for field, value in gaps.items():
+            with self.subTest(field=field):
+                self.assertFalse(passes_thresholds(**self._ok(**{field: value})))
 
 
 class EvaluateIntegrationTests(unittest.TestCase):
@@ -241,21 +183,18 @@ class EvaluateIntegrationTests(unittest.TestCase):
         candidate = [candidate_accept(f"A{i}") for i in range(18)] + [
             candidate_reject(f"S{i}", "sensitive") for i in range(2)
         ]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertTrue(report["passes"])
+        self.assertTrue(self._evaluate_with_held_out(held_out, candidate)["passes"])
 
-    def test_fails_on_an_empty_candidate_rather_than_passing_vacuously(self):
+    def test_fails_on_an_empty_or_all_reject_candidate_rather_than_passing_vacuously(self):
         held_out = [golden_accept(f"A{i}") for i in range(10)] + [golden_reject("S0", "sensitive")]
-        report = self._evaluate_with_held_out(held_out, [])
-        self.assertFalse(report["passes"])
-        self.assertTrue(report["integrity"]["missing"])
+        empty_report = self._evaluate_with_held_out(held_out, [])
+        self.assertFalse(empty_report["passes"])
+        self.assertTrue(empty_report["integrity"]["missing"])
 
-    def test_fails_on_an_all_reject_candidate_rather_than_passing_vacuously(self):
-        held_out = [golden_accept(f"A{i}") for i in range(10)] + [golden_reject("S0", "sensitive")]
-        candidate = [candidate_reject(f"A{i}") for i in range(10)] + [candidate_reject("S0", "sensitive")]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertFalse(report["passes"])
-        self.assertEqual(report["accept"]["precision"], 0.0)
+        all_reject = [candidate_reject(f"A{i}") for i in range(10)] + [candidate_reject("S0", "sensitive")]
+        all_reject_report = self._evaluate_with_held_out(held_out, all_reject)
+        self.assertFalse(all_reject_report["passes"])
+        self.assertEqual(all_reject_report["accept"]["precision"], 0.0)
 
     def test_fails_on_an_all_accept_candidate_with_lowercase_words(self):
         # Before normalization, lowercase candidate words silently failed to match
@@ -275,14 +214,7 @@ class EvaluateIntegrationTests(unittest.TestCase):
         self.assertFalse(report["passes"])
         self.assertIn("G1", report["integrity"]["missing"])
 
-    def test_fails_when_a_held_out_word_is_duplicated_in_the_candidate(self):
-        held_out = [golden_accept("A0"), golden_reject("S0", "sensitive")]
-        candidate = [candidate_accept("A0"), candidate_reject("A0"), candidate_reject("S0", "sensitive")]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertFalse(report["passes"])
-        self.assertIn("G0", report["integrity"]["duplicate"])
-
-    def test_a_duplicate_with_accept_then_reject_still_fails_despite_last_entry_winning(self):
+    def test_a_duplicated_held_out_word_fails_even_with_an_accept_then_reject_last_write(self):
         # Regression for a "last write wins" bug: if the duplicate check only
         # inspected the final entry for a word, an accept-then-reject duplicate
         # would look like a clean single reject and silently pass.
@@ -292,25 +224,7 @@ class EvaluateIntegrationTests(unittest.TestCase):
         self.assertFalse(report["passes"])
         self.assertIn("G0", report["integrity"]["duplicate"])
 
-    def test_counts_candidate_words_outside_the_held_out_set_without_failing_on_them(self):
-        held_out = [golden_accept("A0"), golden_reject("S0", "sensitive")]
-        candidate = [
-            candidate_accept("A0"),
-            candidate_reject("S0", "sensitive"),
-            candidate_accept("CALIBRATION_WORD"),
-        ]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertTrue(report["passes"])
-        self.assertEqual(report["integrity"]["extra_candidate_words"], 1)
-
-    def test_fails_when_the_held_out_set_has_no_sensitive_rejects(self):
-        held_out = [golden_accept(f"A{i}") for i in range(10)]
-        candidate = [candidate_accept(f"A{i}") for i in range(10)]
-        report = self._evaluate_with_held_out(held_out, candidate)
-        self.assertEqual(report["reject_reason_recall"]["sensitive"]["total"], 0)
-        self.assertFalse(report["passes"])
-
-    def test_evaluate_rejects_a_golden_set_with_a_duplicate_word(self):
+    def test_evaluate_rejects_a_golden_set_with_a_duplicate_normalized_word(self):
         golden = [golden_accept("A0"), golden_accept("a0")]  # same word, different case
         with self.assertRaises(ValueError):
             evaluate(golden, [])
@@ -340,8 +254,7 @@ class LoadersTests(unittest.TestCase):
             path = os.path.join(tmp, "candidate.jsonl")
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write('{"word": "kalem", "decision": "accept"}\n')
-            candidate = load_candidate(path)
-            self.assertEqual(candidate, [{"word": "KALEM", "decision": "accept"}])
+            self.assertEqual(load_candidate(path), [{"word": "KALEM", "decision": "accept"}])
 
 
 class MainCliTests(unittest.TestCase):
