@@ -3,7 +3,12 @@ appId: host.exp.exponent
 # Settings screen's theme switch actually applies, not just doesn't crash: the "Koyu Tema"
 # segment becomes selected and the rest of the screen stays usable.
 - runFlow: subflows/open-fresh.yaml
-- tapOn: "Ayarlar"
+# Expo Go's floating dev-tools button sits on top of the top bar's settings icon (Expo Go
+# only; release builds have no such overlay). Drag it out of the way before tapping.
+- swipe:
+    start: 90%, 10%
+    end: 90%, 60%
+- tapOn: "Ayarları aç"
 - extendedWaitUntil:
     visible: "Yüksek kontrast"
     timeout: 15000
@@ -12,4 +17,4 @@ appId: host.exp.exponent
     text: "Koyu Tema"
     selected: true
 - tapOn: "Kapat"
-- assertVisible: "Sınırsız Mod"
+- assertVisible: { id: "home-unlimited-card" }

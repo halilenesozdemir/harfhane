@@ -20,12 +20,12 @@ appId: host.exp.exponent
     timeout: 15000
 - tapOn: "Oyna"
 - extendedWaitUntil:
-    visible: "HARFHANE"
+    visible: { id: "home-hero" }
     timeout: 15000
 
 - stopApp
 - runFlow: subflows/open-resume.yaml
 - extendedWaitUntil:
-    visible: "HARFHANE"
+    visible: { id: "home-hero" }
     timeout: 15000
 - assertNotVisible: "Nasıl Oynanır?"

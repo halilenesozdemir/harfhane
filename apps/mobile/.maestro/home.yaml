@@ -1,10 +1,10 @@
 appId: host.exp.exponent
 ---
-# Home screen renders its title, both game-mode cards and the menu links.
+# Home screen renders the hero, both game-mode cards and the three top-bar icon actions.
 - runFlow: subflows/open-fresh.yaml
-- assertVisible: "HARFHANE"
-- assertVisible: "Günlük Oyun"
-- assertVisible: "Sınırsız Mod"
-- assertVisible: "Nasıl oynanır"
-- assertVisible: "İstatistikler"
-- assertVisible: "Ayarlar"
+- assertVisible: { id: "home-hero" }
+- assertVisible: { id: "home-daily-card" }
+- assertVisible: { id: "home-unlimited-card" }
+- assertVisible: "Nasıl oynanır sayfasını aç"
+- assertVisible: "İstatistikleri aç"
+- assertVisible: "Ayarları aç"
