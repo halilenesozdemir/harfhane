@@ -73,15 +73,14 @@ describe('GameOverDistribution', () => {
     // one guess on DAILY_DATE) before the card mounts — e.g. after Geri then reopening the game.
     await saveDailyStats(store, 5, { ...createInitialDailyStats(), guessDistribution: [1, 0, 0, 0, 0, 0], lastPlayedDate: DAILY_DATE });
     await renderDistribution({ store, guessCount: 1 });
-    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(firstFill).getByText('1')).toBeTruthy();
-    expect(within(firstFill).queryByText('2')).toBeNull();
+    const firstCount = await screen.findByTestId('gameover-distribution-1-count');
+    expect(firstCount).toHaveTextContent('1');
   });
 
   it('should add the result once when a daily game finishes for the first time (no prior lastPlayedDate match)', async () => {
     await renderDistribution({ guessCount: 1 });
-    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(firstFill).getByText('1')).toBeTruthy();
+    const firstCount = await screen.findByTestId('gameover-distribution-1-count');
+    expect(firstCount).toHaveTextContent('1');
   });
 
   it('should show the just-finished game in the unlimited distribution once useResultRecorder has saved it', async () => {
@@ -100,9 +99,8 @@ describe('GameOverDistribution', () => {
     const store = createMemoryStore();
     await saveUnlimitedStats(store, 5, { ...createInitialUnlimitedStats(), guessDistribution: [1, 0, 0, 0, 0, 0] });
     await renderDistribution({ store, mode: 'unlimited', dailyDate: null, guessCount: 1 });
-    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(firstFill).getByText('1')).toBeTruthy();
-    expect(within(firstFill).queryByText('2')).toBeNull();
+    const firstCount = await screen.findByTestId('gameover-distribution-1-count');
+    expect(firstCount).toHaveTextContent('1');
   });
 
   it('should not add to any bar when the daily game was lost (every bar stays empty with no prior stats)', async () => {
@@ -122,9 +120,8 @@ describe('GameOverDistribution', () => {
     // unrecorded result and double-counted.
     await saveDailyStats(store, 5, { ...createInitialDailyStats(), guessDistribution: [1, 0, 0, 0, 0, 0], lastPlayedDate: '2026-01-03' });
     await renderDistribution({ store, dailyDate: '2026-01-03', today: () => '2026-01-04', guessCount: 1 });
-    const firstFill = await screen.findByTestId('gameover-distribution-1-fill');
-    expect(within(firstFill).getByText('1')).toBeTruthy();
-    expect(within(firstFill).queryByText('2')).toBeNull();
+    const firstCount = await screen.findByTestId('gameover-distribution-1-count');
+    expect(firstCount).toHaveTextContent('1');
   });
 
   it('should render with no distribution, not an unhandled rejection, when the stats read fails', async () => {
@@ -147,27 +144,28 @@ describe('GameOverDistribution', () => {
     expect(flattenStyle(sixthRowFill.props.style)['backgroundColor']).not.toBe(COLORS.correct);
   });
 
-  it('should use correctFg (not brandFg) for the count text colour when a bar is highlighted (011-N3)', async () => {
-    // Light-scheme brandFg and correctFg both happen to be white, so this test must render in the
-    // dark scheme (correctFg #ffffff vs brandFg #1c1611 there) to actually distinguish the two
-    // tokens — a mutant hard-coding colors.brandFg for the highlighted case would otherwise still
-    // pass in light mode.
-    const darkColors = getThemeColors({ scheme: 'dark', isHighContrast: false });
-    await renderWithTheme(
-      <Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />,
-      { 'harfhane:theme': '"dark"' },
-    );
-    await waitFor(() => {
-      const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
-      expect(flattenStyle(countText.props.style)['color']).toBe(darkColors.correctFg);
-    });
-    const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
-    expect(flattenStyle(countText.props.style)['color']).not.toBe(darkColors.brandFg);
+  it('should render the count outside the coloured fill, in `text`, when the bar has a count (mobile-ui-standard.md C2)', async () => {
+    // A 12 dp count inside the bar fails contrast on both fills (correctFg on correct is
+    // 4.33:1, brandFg on brand is worse): the fix moves it off the fill entirely.
+    await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
+    const fill = screen.getByTestId('gameover-distribution-2-fill');
+    expect(within(fill).queryByText('1')).toBeNull();
+    const countText = screen.getByTestId('gameover-distribution-2-count');
+    expect(countText).toHaveTextContent('1');
+    expect(flattenStyle(countText.props.style)['color']).toBe(COLORS.text);
   });
 
-  it('should use brandFg for the count text colour when a bar is not highlighted', async () => {
+  it('should keep the count in `text` even when the bar is not highlighted', async () => {
     await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="lost" guessCount={2} />);
-    const countText = within(screen.getByTestId('gameover-distribution-2-fill')).getByText('1');
-    expect(flattenStyle(countText.props.style)['color']).toBe(COLORS.brandFg);
+    const countText = screen.getByTestId('gameover-distribution-2-count');
+    expect(flattenStyle(countText.props.style)['color']).toBe(COLORS.text);
+  });
+
+  it('should reserve the same fixed-width count slot when a row has no count, so bar tracks stay comparable', async () => {
+    await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
+    const emptyRowCount = flattenStyle(screen.getByTestId('gameover-distribution-1-count').props.style);
+    const filledRowCount = flattenStyle(screen.getByTestId('gameover-distribution-2-count').props.style);
+    expect(emptyRowCount.width).toBe(filledRowCount.width);
+    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('');
   });
 });
