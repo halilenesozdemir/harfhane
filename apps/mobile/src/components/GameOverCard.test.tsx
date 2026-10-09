@@ -52,7 +52,8 @@ describe('GameOverCard', () => {
 
     // The just-won third bar is highlighted (kills a dropped-<Distribution/> or isWon=false mutant).
     const thirdFill = await screen.findByTestId('gameover-distribution-3-fill');
-    expect(within(thirdFill).getByText('1')).toBeTruthy();
+    expect(within(thirdFill).queryByText('1')).toBeNull();
+    expect(screen.getByTestId('gameover-distribution-3-count')).toHaveTextContent('1');
     const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
     expect(flattenStyle(thirdFill.props.style)['backgroundColor']).toBe(colors.correct);
 
