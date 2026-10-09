@@ -24,7 +24,13 @@ const GLYPH_HEIGHT = 92;
 // safe zone and the splash's circular mask, which the owner's reference geometry (sized for the
 // full-bleed launcher icon) does not by itself. Not specified by the owner; a generator-level
 // design choice, documented here and in the PR.
-const ADAPTIVE_SAFE_ZONE_SCALE = 0.72;
+//
+// Android's adaptive-icon safe zone keeps every opaque pixel within a 66 dp radius of a 108 dp
+// icon, i.e. 1024 / 108 * 33 ≈ 312.9 px on this canvas. The mark's farthest opaque pixel from
+// its own bounding-box centre is ≈511 px before any shrink (see the geometry test in
+// generate-brand-assets.test.mjs), so 0.58 keeps it at ≈297 px — inside the safe radius with
+// margin, not just under it.
+const ADAPTIVE_SAFE_ZONE_SCALE = 0.58;
 const SPLASH_MASK_SCALE = 0.55;
 
 // "H" glyph outline extracted once from Baloo2_800ExtraBold.ttf
@@ -45,6 +51,66 @@ const H_GLYPH_BBOX = { x1: 65, y1: -617, x2: 607, y2: 8 };
 const H_GLYPH_CENTER_X = (H_GLYPH_BBOX.x1 + H_GLYPH_BBOX.x2) / 2;
 const H_GLYPH_CENTER_Y = (H_GLYPH_BBOX.y1 + H_GLYPH_BBOX.y2) / 2;
 const H_GLYPH_UNIT_HEIGHT = H_GLYPH_BBOX.y2 - H_GLYPH_BBOX.y1;
+
+/** The 4 corners of a `tileSvg` rect (face + depth edge), rotated the same way it is drawn. */
+function rotatedTileCorners({ left, top, size, depth, rotationDeg }, scale) {
+  const x = left * scale;
+  const y = top * scale;
+  const w = size * scale;
+  const d = depth * scale;
+  const centerX = x + w / 2;
+  const centerY = y + w / 2;
+  const rad = (rotationDeg * Math.PI) / 180;
+  const corners = [
+    [x, y],
+    [x + w, y],
+    [x + w, y + w + d],
+    [x, y + w + d],
+  ];
+  return corners.map(([px, py]) => {
+    const dx = px - centerX;
+    const dy = py - centerY;
+    return [centerX + dx * Math.cos(rad) - dy * Math.sin(rad), centerY + dx * Math.sin(rad) + dy * Math.cos(rad)];
+  });
+}
+
+/** The 4 corners of the "H" glyph's bounding box, transformed the same way `hGlyphSvg` draws it. */
+function rotatedGlyphCorners(tile, glyphHeight, scale) {
+  const centerX = (tile.left + tile.size / 2) * scale;
+  const centerY = (tile.top + tile.size / 2) * scale;
+  const rad = (tile.rotationDeg * Math.PI) / 180;
+  const glyphScale = (glyphHeight * scale) / H_GLYPH_UNIT_HEIGHT;
+  const corners = [
+    [H_GLYPH_BBOX.x1, H_GLYPH_BBOX.y1],
+    [H_GLYPH_BBOX.x2, H_GLYPH_BBOX.y1],
+    [H_GLYPH_BBOX.x2, H_GLYPH_BBOX.y2],
+    [H_GLYPH_BBOX.x1, H_GLYPH_BBOX.y2],
+  ];
+  return corners.map(([gx, gy]) => {
+    const lx = (gx - H_GLYPH_CENTER_X) * glyphScale;
+    const ly = (gy - H_GLYPH_CENTER_Y) * glyphScale;
+    return [centerX + lx * Math.cos(rad) - ly * Math.sin(rad), centerY + lx * Math.sin(rad) + ly * Math.cos(rad)];
+  });
+}
+
+/** The mark's own bounding-box centre at `CANVAS_SCALE` (both tiles plus the "H" glyph), used to
+ * re-centre it on the canvas before `centeredMarkSvg`/`monochromeMarkSvg` scale it down â€” the
+ * reference geometry's bbox centre is not the canvas centre, so scaling about the canvas centre
+ * alone does not centre the shrunk mark. */
+function markBboxCenter() {
+  const points = [
+    ...rotatedTileCorners(PRESENT_TILE, CANVAS_SCALE),
+    ...rotatedTileCorners(CORRECT_TILE, CANVAS_SCALE),
+    ...rotatedGlyphCorners(CORRECT_TILE, GLYPH_HEIGHT, CANVAS_SCALE),
+  ];
+  const xs = points.map(([x]) => x);
+  const ys = points.map(([, y]) => y);
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+}
+
+const MARK_CENTER = markBboxCenter();
+const MARK_OFFSET_X = CANVAS_SIZE / 2 - MARK_CENTER.x;
+const MARK_OFFSET_Y = CANVAS_SIZE / 2 - MARK_CENTER.y;
 
 function readColorToken(theme, key, themeName) {
   const value = theme[key];
@@ -122,32 +188,39 @@ function wrapSvg(content, { backgroundFill } = {}) {
   `;
 }
 
-/** `markSvg` draws the mark around its own canvas-relative position; re-centre it at `scale`
- * so a shrunk mark (adaptive safe zone, splash mask) stays in the middle of the canvas. */
+/** `markSvg` draws the mark around its own canvas-relative position, whose bounding box is not
+ * centred on the canvas; re-centre it (via `MARK_OFFSET_X`/`MARK_OFFSET_Y`) and then scale it
+ * about the canvas centre, so a shrunk mark (adaptive safe zone, splash mask) stays centred
+ * instead of drifting with its own off-centre reference geometry. */
 function centeredMarkSvg(theme, scale) {
   const center = CANVAS_SIZE / 2;
   return `
     <g transform="translate(${center} ${center}) scale(${scale}) translate(${-center} ${-center})">
-      ${markSvg(theme, 1)}
+      <g transform="translate(${MARK_OFFSET_X} ${MARK_OFFSET_Y})">
+        ${markSvg(theme, 1)}
+      </g>
     </g>
   `;
 }
 
 /** A single-colour silhouette for the Android monochrome icon: the "H" is cut out of the tiles
- * (even-odd fill) so it stays visible once the system applies its own tint. */
+ * (even-odd fill) so it stays visible once the system applies its own tint. Uses the same
+ * single-scale, re-centred transform as `centeredMarkSvg` (the earlier version applied the
+ * safe-zone scale twice and left the mark off-centre). */
 function monochromeMarkSvg(scale, fill) {
-  const canvasScale = CANVAS_SCALE * scale;
   const center = CANVAS_SIZE / 2;
-  const glyph = hGlyphSvg(CORRECT_TILE, GLYPH_HEIGHT, canvasScale, "black");
+  const glyph = hGlyphSvg(CORRECT_TILE, GLYPH_HEIGHT, CANVAS_SCALE, "black");
   return `
     <g transform="translate(${center} ${center}) scale(${scale}) translate(${-center} ${-center})">
-      <mask id="h-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}">
-        <rect width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="white" />
-        ${glyph}
-      </mask>
-      <g mask="url(#h-cutout)">
-        ${tileSvg({ ...PRESENT_TILE, fill, depthFill: fill }, canvasScale)}
-        ${tileSvg({ ...CORRECT_TILE, fill, depthFill: fill }, canvasScale)}
+      <g transform="translate(${MARK_OFFSET_X} ${MARK_OFFSET_Y})">
+        <mask id="h-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}">
+          <rect width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="white" />
+          ${glyph}
+        </mask>
+        <g mask="url(#h-cutout)">
+          ${tileSvg({ ...PRESENT_TILE, fill, depthFill: fill }, CANVAS_SCALE)}
+          ${tileSvg({ ...CORRECT_TILE, fill, depthFill: fill }, CANVAS_SCALE)}
+        </g>
       </g>
     </g>
   `;
