@@ -41,7 +41,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
       />
       <View style={styles.body}>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SettingsRow label="Tema" isFirst stacked>
+          <SettingsRow label="Tema" isFirst stacked borderColor={colors.surfaceBorder}>
             <View style={styles.segmentedControl}>
               {THEME_OPTIONS.map((option) => (
                 <ThemeSegment
