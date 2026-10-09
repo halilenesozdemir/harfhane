@@ -1,4 +1,4 @@
-import { configure, fireEvent, resetToDefaults, screen } from '@testing-library/react-native';
+import { act, configure, fireEvent, resetToDefaults, screen } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
 import { DailyCard } from './DailyCard';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -19,32 +19,51 @@ describe('DailyCard', () => {
   beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
   afterAll(() => resetToDefaults());
 
-  it('should show the not-started status chip and a primary "Oyna" CTA, with no countdown', async () => {
+  it('should show the not-started status chip and a primary "Oyna" CTA, with no countdown, when the daily game has not started', async () => {
     await renderWithTheme(<DailyCard wordLength={WORD_LENGTH} status={statusFor({ kind: 'not-started' })} now={NOW} onPress={() => undefined} />);
     expect(screen.getByText('Yeni kelime hazır')).toBeTruthy();
     expect(screen.queryByText(COUNTDOWN)).toBeNull();
     expect(flattenStyle(screen.getByText('Oyna').props.style).color).toBe(themes.light.brandFg);
   });
 
-  it('should show the in-progress guess count and a primary "Devam et" CTA, with no countdown', async () => {
+  it('should show the in-progress guess count and a primary "Devam et" CTA, with no countdown, when the daily game is in progress', async () => {
     await renderWithTheme(<DailyCard wordLength={WORD_LENGTH} status={statusFor({ kind: 'in-progress', guesses: 2 })} now={NOW} onPress={() => undefined} />);
     expect(screen.getByText('2/6 tahmin')).toBeTruthy();
     expect(screen.queryByText(COUNTDOWN)).toBeNull();
     expect(flattenStyle(screen.getByText('Devam et').props.style).color).toBe(themes.light.brandFg);
   });
 
-  it('should show the solved status in correctText, the countdown, and a secondary "Sonucu gör" CTA', async () => {
+  it('should show the solved status in correctText, the countdown, and a secondary "Sonucu gör" CTA, when the daily game is won', async () => {
     await renderWithTheme(<DailyCard wordLength={WORD_LENGTH} status={statusFor({ kind: 'won', guesses: 3 })} now={NOW} onPress={() => undefined} />);
     expect(flattenStyle(screen.getByText('Çözüldü · 3/6').props.style).color).toBe(themes.light.correctText);
     expect(screen.getByText(COUNTDOWN)).toBeTruthy();
     expect(flattenStyle(screen.getByText('Sonucu gör').props.style).color).toBe(themes.light.text);
   });
 
-  it('should show the lost status (not in correctText), the countdown, and a secondary "Sonucu gör" CTA', async () => {
+  it('should show the lost status (not in correctText), the countdown, and a secondary "Sonucu gör" CTA, when the daily game is lost', async () => {
     await renderWithTheme(<DailyCard wordLength={WORD_LENGTH} status={statusFor({ kind: 'lost' })} now={NOW} onPress={() => undefined} />);
     expect(flattenStyle(screen.getByText('Bu sefer olmadı').props.style).color).not.toBe(themes.light.correctText);
     expect(screen.getByText(COUNTDOWN)).toBeTruthy();
     expect(flattenStyle(screen.getByText('Sonucu gör').props.style).color).toBe(themes.light.text);
+  });
+
+  it('should advance the countdown on a tick when the daily game is lost', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-10-08T16:47:51.000Z'));
+    try {
+      await renderWithTheme(<DailyCard wordLength={WORD_LENGTH} status={statusFor({ kind: 'lost' })} now={() => new Date()} onPress={() => undefined} />);
+      const countdownPattern = /^\d{2}:\d{2}:\d{2}$/;
+      const firstCountdown = screen.getByText(countdownPattern).props.children;
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      const nextCountdown = screen.getByText(countdownPattern).props.children;
+      expect(nextCountdown).not.toBe(firstCountdown);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should default to a primary "Oyna" CTA and no status chips while status is still loading', async () => {
