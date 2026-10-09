@@ -99,13 +99,14 @@ function SettingsRow({ label, caption, isFirst = false, borderColor, stacked = f
   const { colors } = useTheme();
   return (
     <View
+      testID={`settings-row-${label}`}
       style={[
         styles.row,
         stacked && styles.rowStacked,
         !isFirst && borderColor ? { borderTopWidth: 1, borderTopColor: borderColor } : null,
       ]}
     >
-      <View style={styles.rowText}>
+      <View testID={`settings-row-${label}-text`} style={[styles.rowText, stacked && styles.rowTextStacked]}>
         <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
         {caption ? <Text style={[styles.rowCaption, { color: colors.textMuted }]}>{caption}</Text> : null}
       </View>
@@ -187,6 +188,8 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   rowText: { flex: 1, gap: SPACING.xs },
+  // In a column, flex: 1 means a zero flex-basis: the label box would collapse and the text overlap the options.
+  rowTextStacked: { flex: 0 },
   rowLabel: {
     fontSize: FONT_SIZE.body,
     fontWeight: '600',

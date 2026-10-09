@@ -107,6 +107,13 @@ describe('SettingsScreen', () => {
     expect(option.minHeight).toBe(TOUCH_TARGET);
   });
 
+  it('should stack the Tema label above the theme options without collapsing its box when the row is stacked', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(flattenStyle(screen.getByTestId('settings-row-Tema').props.style).flexDirection).toBe('column');
+    // flex: 1 gives a column child a zero flex-basis, so the label collapses and overlaps the options.
+    expect(flattenStyle(screen.getByTestId('settings-row-Tema-text').props.style).flex ?? 0).toBe(0);
+  });
+
   it('should not draw a top border on the first settings row (the Tema row)', async () => {
     await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
     const firstRowText = screen.getByText('Tema');
