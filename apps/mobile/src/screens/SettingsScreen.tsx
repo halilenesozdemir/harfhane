@@ -1,9 +1,12 @@
-import { useCallback } from 'react';
+import { ArrowLeft } from 'lucide-react-native';
+import { useCallback, type ReactNode } from 'react';
 import Constants from 'expo-constants';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { IconButton } from '../ui/IconButton';
+import { TopBar } from '../ui/TopBar';
+import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import type { ThemePreference } from '../theme';
 
 export interface SettingsScreenProps {
@@ -32,54 +35,82 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <Text style={[styles.title, { color: colors.text }]}>Ayarlar</Text>
+      <TopBar
+        title="Ayarlar"
+        leading={<IconButton icon={<ArrowLeft size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="Geri" onPress={onClose} />}
+      />
+      <View style={styles.body}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+          <SettingsRow label="Tema" isFirst stacked>
+            <View style={styles.segmentedControl}>
+              {THEME_OPTIONS.map((option) => (
+                <ThemeSegment
+                  key={option.value}
+                  value={option.value}
+                  label={option.label}
+                  isActive={preference === option.value}
+                  onSelect={setPreference}
+                />
+              ))}
+            </View>
+          </SettingsRow>
 
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>Tema</Text>
-      <View style={styles.segmentedControl}>
-        {THEME_OPTIONS.map((option) => (
-          <ThemeSegment
-            key={option.value}
-            value={option.value}
-            label={option.label}
-            isActive={preference === option.value}
-            onSelect={setPreference}
-          />
-        ))}
+          <SettingsRow label="Yüksek kontrast" caption="Renk körlüğü dostu renkler" borderColor={colors.surfaceBorder}>
+            <Switch
+              accessibilityLabel="Yüksek kontrast"
+              value={isHighContrast}
+              onValueChange={setHighContrast}
+              trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
+            />
+          </SettingsRow>
+
+          <SettingsRow label="Titreşim" borderColor={colors.surfaceBorder}>
+            <Switch
+              accessibilityLabel="Titreşim"
+              value={isHapticsEnabled}
+              onValueChange={setHapticsEnabled}
+              disabled={!isHapticsLoaded}
+              trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
+            />
+          </SettingsRow>
+        </View>
+
+        {appVersion ? (
+          <Text style={[styles.version, { color: colors.textMuted }]}>Sürüm {appVersion}</Text>
+        ) : null}
       </View>
+    </View>
+  );
+}
 
-      <View style={[styles.row, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.rowLabel, { color: colors.text }]}>Yüksek kontrast (renk körlüğü dostu)</Text>
-        <Switch
-          accessibilityLabel="Yüksek kontrast"
-          value={isHighContrast}
-          onValueChange={setHighContrast}
-          trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
-        />
+interface SettingsRowProps {
+  readonly label: string;
+  readonly caption?: string;
+  readonly isFirst?: boolean;
+  readonly borderColor?: string;
+  // Stacks the label above the children instead of side by side, so a wide
+  // control (e.g. the three-way theme segmented control) keeps each option
+  // at a readable width at narrow screen widths / large font scales.
+  readonly stacked?: boolean;
+  readonly children: ReactNode;
+}
+
+function SettingsRow({ label, caption, isFirst = false, borderColor, stacked = false, children }: SettingsRowProps) {
+  const { colors } = useTheme();
+  return (
+    <View
+      testID={`settings-row-${label}`}
+      style={[
+        styles.row,
+        stacked && styles.rowStacked,
+        !isFirst && borderColor ? { borderTopWidth: 1, borderTopColor: borderColor } : null,
+      ]}
+    >
+      <View testID={`settings-row-${label}-text`} style={[styles.rowText, stacked && styles.rowTextStacked]}>
+        <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
+        {caption ? <Text style={[styles.rowCaption, { color: colors.textMuted }]}>{caption}</Text> : null}
       </View>
-
-      <View style={[styles.row, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.rowLabel, { color: colors.text }]}>Titreşim</Text>
-        <Switch
-          accessibilityLabel="Titreşim"
-          value={isHapticsEnabled}
-          onValueChange={setHapticsEnabled}
-          disabled={!isHapticsLoaded}
-          trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
-        />
-      </View>
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Kapat"
-        onPress={onClose}
-        style={[styles.closeButton, { backgroundColor: colors.correct }]}
-      >
-        <Text style={[styles.closeLabel, { color: colors.correctFg }]}>Kapat</Text>
-      </Pressable>
-
-      {appVersion ? (
-        <Text style={[styles.version, { color: colors.textMuted }]}>Sürüm {appVersion}</Text>
-      ) : null}
+      {children}
     </View>
   );
 }
@@ -101,36 +132,43 @@ function ThemeSegment({ value, label, isActive, onSelect }: ThemeSegmentProps) {
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
       onPress={handlePress}
-      style={[styles.segment, { backgroundColor: isActive ? colors.brand : colors.surface }]}
+      style={[
+        styles.segment,
+        isActive
+          ? { backgroundColor: colors.brand, borderColor: colors.brand }
+          : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+      ]}
     >
-      <Text style={[styles.segmentLabel, { color: isActive ? colors.brandFg : colors.text }]}>{label}</Text>
+      <Text
+        style={[styles.segmentLabel, { color: isActive ? colors.brandFg : colors.text }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
+const MIN_ROW_HEIGHT = 56;
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: SPACING.xl,
-    gap: SPACING.lg,
-  },
-  title: {
-    fontSize: FONT_SIZE.title,
-    fontWeight: '800',
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZE.bodyLarge,
-    fontWeight: '700',
-  },
+  container: { flex: 1 },
+  body: { flex: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: SPACING.sm, paddingBottom: SCREEN_PADDING, gap: SPACING.lg },
+  card: { borderRadius: RADIUS.lg, borderWidth: 1 },
   segmentedControl: {
     flexDirection: 'row',
     gap: SPACING.sm,
   },
   segment: {
     flex: 1,
+    minHeight: TOUCH_TARGET,
     borderRadius: RADIUS.md,
+    borderWidth: 1,
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xs,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   segmentLabel: {
     fontSize: FONT_SIZE.body,
@@ -140,24 +178,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: RADIUS.md,
-    padding: SPACING.lg,
+    minHeight: MIN_ROW_HEIGHT,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md,
   },
+  rowStacked: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  rowText: { flex: 1, gap: SPACING.xs },
+  // In a column, flex: 1 means a zero flex-basis: the label box would collapse and the text overlap the options.
+  rowTextStacked: { flex: 0 },
   rowLabel: {
-    flex: 1,
     fontSize: FONT_SIZE.body,
     fontWeight: '600',
-    marginRight: SPACING.md,
   },
-  closeButton: {
-    marginTop: 'auto',
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.lg,
-    alignItems: 'center',
-  },
-  closeLabel: {
-    fontSize: FONT_SIZE.bodyLarge,
-    fontWeight: '700',
+  rowCaption: {
+    fontSize: FONT_SIZE.caption,
   },
   version: {
     fontSize: FONT_SIZE.caption,

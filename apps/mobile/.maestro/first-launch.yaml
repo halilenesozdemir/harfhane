@@ -1,7 +1,8 @@
 appId: host.exp.exponent
 ---
 # 011-AE5: a fresh install (cleared app state) opens How to play before home; after closing it
-# with its first-launch "Oyna" action, a later launch (no state cleared) goes straight home.
+# with its first-launch "Oynamaya başla" action, a later launch (no state cleared) goes straight
+# home.
 - launchApp:
     clearState: true
 - openLink: "exp://127.0.0.1:8081"
@@ -16,9 +17,9 @@ appId: host.exp.exponent
       - tapOn: "Continue"
       - back
 - extendedWaitUntil:
-    visible: "Nasıl Oynanır?"
+    visible: "Nasıl oynanır"
     timeout: 15000
-- tapOn: "Oyna"
+- tapOn: "Oynamaya başla"
 - extendedWaitUntil:
     visible: { id: "home-hero" }
     timeout: 15000
@@ -28,4 +29,7 @@ appId: host.exp.exponent
 - extendedWaitUntil:
     visible: { id: "home-hero" }
     timeout: 15000
-- assertNotVisible: "Nasıl Oynanır?"
+# "Oynamaya başla" is first launch's own primary action, never shown once the flag is seen —
+# unlike the title "Nasıl oynanır", it has no substring overlap with the home top bar's
+# "Nasıl oynanır sayfasını aç" icon-button label.
+- assertNotVisible: "Oynamaya başla"

@@ -3,8 +3,9 @@ import { themes } from '@harfhane/ui-tokens';
 import { Text } from 'react-native';
 import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
-import { renderWithTheme } from '../test-utils/render-with-theme';
+import { renderWithTheme, flattenStyle } from '../test-utils/render-with-theme';
 import { deviceStore } from '../game/device-store';
+import { TOUCH_TARGET } from '../ui/layout';
 
 const mockExpoConfig: { version?: string } = { version: '1.2.3' };
 jest.mock('expo-constants', () => ({
@@ -44,6 +45,12 @@ describe('SettingsScreen', () => {
     expect(screen.getByLabelText('Yüksek kontrast')).toBeTruthy();
   });
 
+  it('should show the high-contrast supporting line as its own text, not appended to the label', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByText('Yüksek kontrast')).toBeTruthy();
+    expect(screen.getByText('Renk körlüğü dostu renkler')).toBeTruthy();
+  });
+
   it('should switch the active theme colors when the dark segment is pressed', async () => {
     await renderWithTheme(
       <>
@@ -55,10 +62,10 @@ describe('SettingsScreen', () => {
     expect(screen.getByTestId('probe-bg').props.children).toBe(themes.dark.bg);
   });
 
-  it('should call onClose when the close button is pressed', async () => {
+  it('should call onClose when the top bar back button is pressed', async () => {
     const onClose = jest.fn();
     await renderWithTheme(<SettingsScreen onClose={onClose} />);
-    await fireEvent.press(screen.getByLabelText('Kapat'));
+    await fireEvent.press(screen.getByLabelText('Geri'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -84,6 +91,41 @@ describe('SettingsScreen', () => {
     await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
     expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
     expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
+  });
+
+  it('should give an inactive theme option a visible border instead of blending into the card bg', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    const inactiveOption = flattenStyle(screen.getByLabelText('Koyu Tema').props.style);
+    expect(inactiveOption.borderWidth).toBeGreaterThan(0);
+    expect(inactiveOption.borderColor).toBeTruthy();
+    expect(inactiveOption.borderColor).not.toBe(inactiveOption.backgroundColor);
+  });
+
+  it('should keep each theme option at least 48 dp tall to meet the touch target (011-A1)', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    const option = flattenStyle(screen.getByLabelText('Koyu Tema').props.style);
+    expect(option.minHeight).toBe(TOUCH_TARGET);
+  });
+
+  it('should stack the Tema label above the theme options without collapsing its box when the row is stacked', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(flattenStyle(screen.getByTestId('settings-row-Tema').props.style).flexDirection).toBe('column');
+    // flex: 1 gives a column child a zero flex-basis, so the label collapses and overlaps the options.
+    expect(flattenStyle(screen.getByTestId('settings-row-Tema-text').props.style).flex ?? 0).toBe(0);
+  });
+
+  it('should not draw a top border on the first settings row (the Tema row)', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    const firstRowText = screen.getByText('Tema');
+    const row = flattenStyle(firstRowText.parent?.parent?.props.style);
+    expect(row.borderTopWidth).toBeUndefined();
+  });
+
+  it('should draw a top border on a non-first settings row', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    const hapticsRowText = screen.getByText('Titreşim');
+    const row = flattenStyle(hapticsRowText.parent?.parent?.props.style);
+    expect(row.borderTopWidth).toBe(1);
   });
 
   it('should disable the haptics switch until the stored value loads', async () => {

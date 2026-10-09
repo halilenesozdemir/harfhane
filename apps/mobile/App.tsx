@@ -135,8 +135,9 @@ export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigator
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   // hasSeenHowToPlay is only ever read here, as the reducer's one-time
-  // initial-state decision; everything else below (the Oyna/Kapat choice,
-  // the goBack handler) tracks its own local copy instead of re-reading
+  // initial-state decision; everything else below (the "Oynamaya başla"
+  // vs. back-icon choice, the goBack handler) tracks its own local copy
+  // instead of re-reading
   // this prop, so a later change to it can never retroactively alter a
   // decision this component already made on mount.
   const [state, dispatch] = useReducer(reduceNavigation, hasSeenHowToPlay, createInitialNavigationState);
