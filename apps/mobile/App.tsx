@@ -9,7 +9,6 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
 import { loadHasSeenHowToPlay, markHowToPlaySeen } from './src/first-launch-store';
-import { LaunchIntro } from './src/components/LaunchIntro';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
@@ -117,12 +116,6 @@ function useHowToPlayGate(): [HowToPlayGate, () => void] {
 // needs to correct an optimistic guess after the fact.
 export function FirstLaunchGate() {
   const [howToPlayGate, markHowToPlaySeenOnce] = useHowToPlayGate();
-  // Plan 011 U7d: the cold-start intro overlays AppNavigator (already mounted underneath, so
-  // the home screen is ready the instant the intro cross-fades out) and renders itself once per
-  // app lifetime — returning from the background never remounts FirstLaunchGate, so it never
-  // replays.
-  const [isIntroDone, setIsIntroDone] = useState(false);
-  const handleIntroDone = useCallback(() => setIsIntroDone(true), []);
 
   useEffect(() => {
     if (!howToPlayGate.isLoaded) return;
@@ -130,39 +123,15 @@ export function FirstLaunchGate() {
   }, [howToPlayGate.isLoaded]);
 
   if (!howToPlayGate.isLoaded) return null;
-  // While the intro overlay is up, AppNavigator is hidden from accessibility: it's already
-  // mounted underneath (so home is ready the instant the intro cross-fades out, R6/AE4-style),
-  // but its buttons are invisible and must not be reachable by TalkBack or Maestro, and the
-  // Android hardware back handler (registered inside AppNavigator) must not pop navigation or
-  // mark How to play seen while the intro is covering it (Plan 011 U7d AE5 regression).
-  const isIntroActive = !isIntroDone;
-  return (
-    <>
-      <View
-        style={styles.flexFill}
-        importantForAccessibility={isIntroActive ? 'no-hide-descendants' : 'auto'}
-        accessibilityElementsHidden={isIntroActive}
-      >
-        <AppNavigator
-          hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay}
-          onHowToPlaySeen={markHowToPlaySeenOnce}
-          isIntroActive={isIntroActive}
-        />
-      </View>
-      {isIntroActive ? <LaunchIntro onDone={handleIntroDone} /> : null}
-    </>
-  );
+  return <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />;
 }
 
 interface AppNavigatorProps {
   readonly hasSeenHowToPlay: boolean;
   readonly onHowToPlaySeen: () => void;
-  /** Plan 011 U7d: while the launch intro covers the screen, the hardware back button must be
-   * swallowed instead of popping navigation or marking How to play seen underneath it. */
-  readonly isIntroActive?: boolean;
 }
 
-export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen, isIntroActive = false }: AppNavigatorProps) {
+export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigatorProps) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   // hasSeenHowToPlay is only ever read here, as the reducer's one-time
@@ -193,13 +162,10 @@ export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen, isIntroActive 
   }, [route, hasSeenHowToPlayLocally, onHowToPlaySeen]);
 
   const handleHardwareBack = useCallback(() => {
-    // Swallow back while the intro is covering the screen: it must not pop navigation or mark
-    // How to play seen underneath an overlay the user cannot even see past (AE5 regression).
-    if (isIntroActive) return true;
     if (!canGoBack(state)) return false;
     goBack();
     return true;
-  }, [isIntroActive, state, goBack]);
+  }, [state, goBack]);
   useHardwareBackHandler(handleHardwareBack);
 
   const handleStart = useCallback(
@@ -256,5 +222,4 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  flexFill: { flex: 1 },
 });
