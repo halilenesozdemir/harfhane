@@ -59,6 +59,7 @@ describe('useHomeStatus', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   it('should report the displayed streak and today state once loaded', async () => {
@@ -116,13 +117,32 @@ describe('useHomeStatus', () => {
 
   it('should not recompute the daily status on an unrelated AppState event', async () => {
     const appState = mockAppStateListener();
-    const store = createMemoryStore(storedStats({}));
+    // A game for the new day, so that a mutant which drops the `state ===
+    // 'active'' check (recomputing on any AppState event) would flip the
+    // state below instead of accidentally matching it anyway.
+    const store = createMemoryStore({
+      ...storedStats({}),
+      [dailyGameKey('2026-10-09', LENGTH)]: JSON.stringify({ ...createInitialState(), gameStatus: 'won', guesses: ['tahta'] }),
+    });
     const { result } = await setup(store);
     await waitFor(() => expect(result.current.status).not.toBeNull());
 
     jest.setSystemTime(new Date('2026-10-09T10:00:00.000Z'));
     await fireAppStateAndFlush(appState, 'background');
     expect(result.current.status?.state).toEqual({ kind: 'not-started' });
+  });
+
+  it('should clear the day-check interval on unmount', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    const store = createMemoryStore(storedStats({}));
+    const { unmount, result } = await setup(store);
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    const timerId = setIntervalSpy.mock.results[0]?.value as ReturnType<typeof setInterval>;
+
+    await act(async () => unmount());
+
+    expect(clearIntervalSpy).toHaveBeenCalledWith(timerId);
   });
 
   it('should not re-create the day-check interval or the AppState subscription on a re-render', async () => {
