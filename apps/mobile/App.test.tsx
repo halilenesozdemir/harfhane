@@ -113,7 +113,7 @@ describe('App', () => {
     await fireEvent.press(screen.getByTestId('home-daily-card'));
     expect(await screen.findByText('Günlük · 6 harf')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Geri'));
-    expect(await screen.findByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
+    expect(await screen.findByText('Günün 6 harfli kelimesi')).toBeTruthy();
   });
 
   it('should pop the stack on hardware back from game or stats, and leave home unhandled', async () => {
@@ -161,7 +161,7 @@ describe('App', () => {
   it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [5] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
     expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
     expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
   });
@@ -169,7 +169,7 @@ describe('App', () => {
   it('should prefer length 5 as the daily default when 4, 5 and 6 are all playable', async () => {
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 5, 6] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
   });
 
   it('should fall back to the first playable length when 5 is not playable', async () => {
@@ -177,7 +177,7 @@ describe('App', () => {
     // ([5]) would make this show "5 harfle başlat" instead of "4".
     (api.fetchPlayableLengths as jest.Mock).mockResolvedValueOnce({ lengths: [4, 6] });
     await render(<App />);
-    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 4 harfli kelimesi')).toBeTruthy();
   });
 
   it('(008-AE1) should show the cached lengths immediately, then switch to the freshly fetched lengths once they load', async () => {
@@ -189,14 +189,14 @@ describe('App', () => {
 
     await render(<App />);
     // Cache applied before the fetch resolves: default length is 4 (5 isn't in [4, 6]).
-    expect(await screen.findByLabelText('Günlük oyunu 4 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 4 harfli kelimesi')).toBeTruthy();
 
     await act(async () => {
       resolveFetch({ lengths: [5] });
     });
     // The fetch result ([5]) wins once it arrives, proving it isn't ignored
     // and a slower cache read can't overwrite it afterwards.
-    expect(await screen.findByLabelText('Günlük oyunu 5 harfle başlat')).toBeTruthy();
+    expect(await screen.findByText('Günün 5 harfli kelimesi')).toBeTruthy();
   });
 
   describe('splash screen hold (R6)', () => {

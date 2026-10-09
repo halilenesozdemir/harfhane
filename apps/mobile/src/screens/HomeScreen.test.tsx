@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { act, fireEvent, screen } from '@testing-library/react-native';
-import { themes } from '@harfhane/ui-tokens';
+import { act, configure, fireEvent, resetToDefaults, screen, waitFor } from '@testing-library/react-native';
 import { DEFAULT_WORD_LENGTH, HomeScreen } from './HomeScreen';
-import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
+import { createInitialState, dailyGameKey } from '../game/game-state';
+import { flattenStyle, renderWithTheme, createMemoryStore } from '../test-utils/render-with-theme';
 import type { HomeScreenProps } from './HomeScreen';
+import type { KeyValueStore } from '../game/game-storage';
 import type { WordLength } from '../stats/stats';
 
 function noop() {
@@ -12,7 +13,20 @@ function noop() {
 
 type ControlledHomeScreenProps = Partial<Omit<HomeScreenProps, 'selectedLength' | 'onSelectLength'>>;
 
-function ControlledHomeScreen({ onStart = noop, onOpenHowToPlay = noop, onOpenSettings = noop, onOpenStats = noop }: ControlledHomeScreenProps) {
+const FIXED_TODAY = '2026-10-08T10:00:00.000Z';
+function fixedNow(): Date {
+  return new Date(FIXED_TODAY);
+}
+
+function ControlledHomeScreen({
+  onStart = noop,
+  onOpenHowToPlay = noop,
+  onOpenSettings = noop,
+  onOpenStats = noop,
+  store = createMemoryStore(),
+  playableLengths,
+  now = fixedNow,
+}: ControlledHomeScreenProps) {
   const [selectedLength, setSelectedLength] = useState<WordLength>(DEFAULT_WORD_LENGTH);
   return (
     <HomeScreen
@@ -22,151 +36,107 @@ function ControlledHomeScreen({ onStart = noop, onOpenHowToPlay = noop, onOpenSe
       onOpenHowToPlay={onOpenHowToPlay}
       onOpenSettings={onOpenSettings}
       onOpenStats={onOpenStats}
+      store={store}
+      playableLengths={playableLengths}
+      now={now}
     />
   );
 }
 
+function storeWithDailyGame(length: WordLength, today: string, guesses: readonly string[], gameStatus: 'playing' | 'won' | 'lost'): KeyValueStore {
+  const state = { ...createInitialState(), guesses, gameStatus };
+  return createMemoryStore({ [dailyGameKey(today, length)]: JSON.stringify(state) });
+}
+
 describe('HomeScreen', () => {
-  it('should render the Turkish title and mode cards', async () => {
-    await renderWithTheme(<ControlledHomeScreen />);
-    expect(screen.getByLabelText('Harfhane')).toBeTruthy();
-    expect(screen.getByText('Günlük Oyun')).toBeTruthy();
-    expect(screen.getByText('Sınırsız Mod')).toBeTruthy();
-  });
+  // Decorative subtrees (hero tiles, wordmark, a card's CTA) use
+  // importantForAccessibility="no-hide-descendants", so TalkBack reads each
+  // row/card as one unit. Only tests that look inside such a subtree opt in
+  // via `withHiddenElementsVisible`; the rest run under the strict default, so
+  // an icon button wrongly made decorative fails instead of passing.
+  function withHiddenElementsVisible(name: string, test: () => Promise<void>) {
+    it(name, async () => {
+      configure({ defaultIncludeHiddenElements: true });
+      try {
+        await test();
+      } finally {
+        resetToDefaults();
+      }
+    });
+  }
 
-  it('(011-R5) should render the title as an H-A-R-F tile row', async () => {
+  it('should expose the three home actions as icon buttons with their Turkish accessibility labels', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
-    for (const letter of ['H', 'A', 'R', 'F']) {
-      expect(screen.getByText(letter)).toBeTruthy();
+    for (const label of ['Nasıl oynanır sayfasını aç', 'İstatistikleri aç', 'Ayarları aç']) {
+      const button = screen.getByLabelText(label);
+      expect(button.props.accessibilityRole).toBe('button');
+      expect(flattenStyle(button.props.style).width).toBeGreaterThanOrEqual(48);
+      expect(flattenStyle(button.props.style).height).toBeGreaterThanOrEqual(48);
     }
   });
 
-  it('(011-R5) should colour each title tile letter with the fg token matching its own background', async () => {
+  it('should call onOpenHowToPlay when its icon button is pressed', async () => {
+    const onOpenHowToPlay = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onOpenHowToPlay={onOpenHowToPlay} />);
+    await act(async () => fireEvent.press(screen.getByLabelText('Nasıl oynanır sayfasını aç')));
+    expect(onOpenHowToPlay).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onOpenSettings when its icon button is pressed', async () => {
+    const onOpenSettings = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onOpenSettings={onOpenSettings} />);
+    await act(async () => fireEvent.press(screen.getByLabelText('Ayarları aç')));
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onOpenStats with the selected length when its icon button is pressed', async () => {
+    const onOpenStats = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onOpenStats={onOpenStats} />);
+    await act(async () => fireEvent.press(screen.getByLabelText('İstatistikleri aç')));
+    expect(onOpenStats).toHaveBeenCalledWith(DEFAULT_WORD_LENGTH);
+  });
+
+  it('should call onStart with daily mode and the selected length when the daily card is pressed', async () => {
+    const onStart = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
+    await act(async () => fireEvent.press(screen.getByTestId('home-daily-card')));
+    expect(onStart).toHaveBeenCalledWith('daily', DEFAULT_WORD_LENGTH);
+  });
+
+  it('should call onStart with unlimited mode and the selected length when the unlimited card is pressed', async () => {
+    const onStart = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
+    await act(async () => fireEvent.press(screen.getByTestId('home-unlimited-card')));
+    expect(onStart).toHaveBeenCalledWith('unlimited', DEFAULT_WORD_LENGTH);
+  });
+
+  it('should show the not-started status before any load has settled, then update once loaded', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
-    // H and R sit on a correct (green) tile; A and F sit on a present (yellow) tile.
-    // present's background is light, so its fg token must be the dark one, not correctFg's white.
-    for (const letter of ['H', 'R']) {
-      expect(flattenStyle(screen.getByText(letter).props.style).color).toBe(themes.light.correctFg);
-    }
-    for (const letter of ['A', 'F']) {
-      expect(flattenStyle(screen.getByText(letter).props.style).color).toBe(themes.light.presentFg);
-    }
+    await waitFor(() => expect(screen.getByText('Yeni kelime hazır')).toBeTruthy());
   });
 
-  it('(011-R5) should expose the title row as a single header to assistive tech', async () => {
-    await renderWithTheme(<ControlledHomeScreen />);
-    const titleRow = screen.getByTestId('home-title-row');
-    expect(titleRow.props.accessible).toBe(true);
-    expect(titleRow.props.accessibilityRole).toBe('header');
-    expect(titleRow.props.accessibilityLabel).toBe('Harfhane');
+  it('should show the in-progress status with the guess count', async () => {
+    const store = storeWithDailyGame(DEFAULT_WORD_LENGTH, '2026-10-08', ['kalem'], 'playing');
+    await renderWithTheme(<ControlledHomeScreen store={store} />);
+    await waitFor(() => expect(screen.getByText('1/6 tahmin')).toBeTruthy());
   });
 
-  it('(011-R5) should cap the title letters from growing past the tile on a large system font', async () => {
-    await renderWithTheme(<ControlledHomeScreen />);
-    for (const letter of ['H', 'A', 'R', 'F']) {
-      expect(screen.getByText(letter).props.maxFontSizeMultiplier).toBeLessThanOrEqual(1.3);
-    }
-  });
-
-  it('should call onStart with daily mode and the default length of 5', async () => {
-    const onStart = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Günlük oyunu 5 harfle başlat'));
-    });
-    expect(onStart).toHaveBeenCalledWith('daily', 5);
-  });
-
-  it('should call onStart with daily mode and the selected length when it changes', async () => {
-    const onStart = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Günlük oyunu 6 harfle başlat'));
-    });
-    expect(onStart).toHaveBeenCalledWith('daily', 6);
-  });
-
-  it('should call onStart with unlimited mode and the selected length', async () => {
-    const onStart = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Sınırsız modu 6 harfle başlat'));
-    });
-    expect(onStart).toHaveBeenCalledWith('unlimited', 6);
-  });
-
-  it('should default the unlimited length to 5', async () => {
-    const onStart = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onStart={onStart} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Sınırsız modu 5 harfle başlat'));
-    });
-    expect(onStart).toHaveBeenCalledWith('unlimited', 5);
+  withHiddenElementsVisible('should show the lost status and also move the primary action to the unlimited card', async () => {
+    const store = storeWithDailyGame(DEFAULT_WORD_LENGTH, '2026-10-08', new Array(6).fill('tahta'), 'lost');
+    await renderWithTheme(<ControlledHomeScreen store={store} />);
+    await waitFor(() => expect(screen.getByText('Bu sefer olmadı')).toBeTruthy());
+    expect(screen.getByText('Sınırsız oyna')).toBeTruthy();
   });
 
   it('should show the selected length in the daily card text', async () => {
     await renderWithTheme(<ControlledHomeScreen />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    });
-    expect(screen.getByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
-  });
-
-  it('should call onOpenHowToPlay when the how-to-play link is pressed', async () => {
-    const onOpenHowToPlay = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onOpenHowToPlay={onOpenHowToPlay} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Nasıl oynanır sayfasını aç'));
-    });
-    expect(onOpenHowToPlay).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onOpenSettings when the settings link is pressed', async () => {
-    const onOpenSettings = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onOpenSettings={onOpenSettings} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('Ayarları aç'));
-    });
-    expect(onOpenSettings).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call onOpenStats with the selected length when the stats link is pressed', async () => {
-    const onOpenStats = jest.fn();
-    await renderWithTheme(<ControlledHomeScreen onOpenStats={onOpenStats} />);
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText('İstatistikleri aç'));
-    });
-    expect(onOpenStats).toHaveBeenCalledWith(6);
-  });
-
-  it('should reflect an externally controlled selectedLength', async () => {
-    await renderWithTheme(<HomeScreen selectedLength={6} onSelectLength={noop} onStart={noop} onOpenHowToPlay={noop} onOpenSettings={noop} onOpenStats={noop} />);
-    expect(screen.getByText('Günün 6 harfli kelimesi. Herkes aynı kelimeyi çözer.')).toBeTruthy();
+    await act(async () => fireEvent.press(screen.getByLabelText('6 harfli kelime seç')));
+    expect(screen.getByText('Günün 6 harfli kelimesi')).toBeTruthy();
   });
 
   it('(008-AE1) should hide the unlimited-mode length picker when only one length is playable', async () => {
-    await renderWithTheme(
-      <HomeScreen
-        selectedLength={5}
-        onSelectLength={noop}
-        onStart={noop}
-        onOpenHowToPlay={noop}
-        onOpenSettings={noop}
-        onOpenStats={noop}
-        playableLengths={[5]}
-      />
-    );
-    expect(screen.queryByLabelText('4 harfli kelime seç')).toBeNull();
-    expect(screen.queryByLabelText('5 harfli kelime seç')).toBeNull();
+    await renderWithTheme(<ControlledHomeScreen playableLengths={[5]} />);
+    expect(screen.queryByTestId('home-length-row')).toBeNull();
   });
 
   it('should show the length picker for every scheduled length by default', async () => {
@@ -176,17 +146,7 @@ describe('HomeScreen', () => {
   });
 
   it('(008-AE1) should offer only the playable lengths and hide the rest', async () => {
-    await renderWithTheme(
-      <HomeScreen
-        selectedLength={4}
-        onSelectLength={noop}
-        onStart={noop}
-        onOpenHowToPlay={noop}
-        onOpenSettings={noop}
-        onOpenStats={noop}
-        playableLengths={[4, 5]}
-      />
-    );
+    await renderWithTheme(<ControlledHomeScreen playableLengths={[4, 5]} />);
     expect(screen.getByLabelText('4 harfli kelime seç')).toBeTruthy();
     expect(screen.getByLabelText('5 harfli kelime seç')).toBeTruthy();
     expect(screen.queryByLabelText('6 harfli kelime seç')).toBeNull();
