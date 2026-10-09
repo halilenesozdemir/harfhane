@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Animated } from 'react-native';
 import { base, themes } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
@@ -285,6 +285,15 @@ describe('GameScreen', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
+  it('should show an icon back button and a "Günlük"/"5 harf" header split, not "Günlük · 5 harf" (011-AE7)', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    expect(screen.getByLabelText('Geri').props.accessibilityRole).toBe('button');
+    expect(screen.getByText('Günlük')).toBeTruthy();
+    expect(screen.getByText('5 harf')).toBeTruthy();
+    expect(screen.queryByText('Günlük · 5 harf')).toBeNull();
+    expect(screen.getByLabelText('Günlük, 5 harf')).toBeTruthy();
+  });
+
   it('should replace the hint button with the revealed letter once pressed', async () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
     const hintButton = await screen.findByLabelText('İpucu göster');
@@ -423,8 +432,7 @@ describe('GameScreen', () => {
       await screen.findByLabelText('Gönder');
       await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
       await advancePastGameOverGate(true);
-      const unlimitedRow1Fill = screen.getByTestId('gameover-distribution-1-fill');
-      expect(within(unlimitedRow1Fill).getByText('1')).toBeTruthy();
+      expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1');
       await act(async () => unlimitedView.unmount());
 
       const dailyView = await renderWithTheme(
@@ -433,8 +441,7 @@ describe('GameScreen', () => {
       await screen.findByLabelText('Gönder');
       await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
       await advancePastGameOverGate(true);
-      const dailyRow1Fill = screen.getByTestId('gameover-distribution-1-fill');
-      expect(within(dailyRow1Fill).getByText('1')).toBeTruthy();
+      expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1');
       await act(async () => dailyView.unmount());
     } finally {
       jest.useRealTimers();
@@ -450,8 +457,8 @@ describe('GameScreen', () => {
     // Reduce motion means the card mounts in the very same commit the game finishes (no reveal
     // gate) — if the display raced useResultRecorder's write instead of using its own result,
     // this would show no fill at all, not "1".
-    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
-    expect(within(fill).getByText('1')).toBeTruthy();
+    await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1');
   });
 
   it('should show the just-finished game in the daily distribution with reduce motion on (B2)', async () => {
@@ -460,8 +467,8 @@ describe('GameScreen', () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={store} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
-    expect(within(fill).getByText('1')).toBeTruthy();
+    await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1');
   });
 
   it('should still show the just-played result on screen when the stats write fails (B2)', async () => {
@@ -475,8 +482,8 @@ describe('GameScreen', () => {
     await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={rejectingStore} today={today} />);
     await screen.findByLabelText('Gönder');
     await pressKeys(['K', 'İ', 'T', 'A', 'P', 'ENTER']);
-    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
-    expect(within(fill).getByText('1')).toBeTruthy();
+    await waitFor(() => screen.getByTestId('gameover-distribution-1-fill'));
+    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1');
   });
 
   it("should show game 2's own distribution, not game 1's stale one, once game 2's stats write resolves (B2)", async () => {
@@ -523,7 +530,7 @@ describe('GameScreen', () => {
 
     // Game 1: win in 1 guess, and let its stats write resolve before game 2 starts.
     await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
-    await waitFor(() => expect(within(screen.getByTestId('gameover-distribution-1-fill')).getByText('1')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('1'));
 
     // Game 2's stats write is held pending (simulating slow I/O) while it plays out.
     store.holdWrites();
@@ -535,8 +542,8 @@ describe('GameScreen', () => {
     expect(screen.getByTestId('gameover-card')).toBeTruthy();
 
     await act(async () => store.releaseWrites());
-    const fill = await waitFor(() => screen.getByTestId('gameover-distribution-2-fill'));
-    expect(within(fill).getByText('1')).toBeTruthy();
+    await waitFor(() => screen.getByTestId('gameover-distribution-2-fill'));
+    expect(screen.getByTestId('gameover-distribution-2-count')).toHaveTextContent('1');
   });
 
   it('should not trigger the key-tap haptic when a key is pressed while a guess is still being validated', async () => {

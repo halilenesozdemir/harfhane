@@ -95,7 +95,7 @@ describe('App', () => {
   it('should reach the game screen from home when daily is started and go back', async () => {
     await render(<App />);
     await fireEvent.press(screen.getByTestId('home-daily-card'));
-    expect(await screen.findByText('Günlük · 5 harf')).toBeTruthy();
+    expect(await screen.findByLabelText('Günlük, 5 harf')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Geri'));
     expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
   });
@@ -111,7 +111,7 @@ describe('App', () => {
     await render(<App />);
     await fireEvent.press(screen.getByLabelText('6 harfli kelime seç'));
     await fireEvent.press(screen.getByTestId('home-daily-card'));
-    expect(await screen.findByText('Günlük · 6 harf')).toBeTruthy();
+    expect(await screen.findByLabelText('Günlük, 6 harf')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Geri'));
     expect(await screen.findByText('Günün 6 harfli kelimesi')).toBeTruthy();
   });
@@ -123,7 +123,7 @@ describe('App', () => {
     expect(latestBackHandler(addSpy)()).toBe(false);
 
     await fireEvent.press(screen.getByTestId('home-daily-card'));
-    await screen.findByText('Günlük · 5 harf');
+    await screen.findByLabelText('Günlük, 5 harf');
     let handledGame = false;
     await act(async () => {
       handledGame = latestBackHandler(addSpy)();
@@ -352,7 +352,7 @@ describe('App', () => {
     it('should stop the key-tap haptic after Titreşim is switched off in Settings (011-AE3)', async () => {
       await render(<App />);
       await fireEvent.press(screen.getByTestId('home-daily-card'));
-      await screen.findByText('Günlük · 5 harf');
+      await screen.findByLabelText('Günlük, 5 harf');
       await screen.findByTestId('key-A');
 
       mockPerformAndroidHapticsAsync.mockClear();
