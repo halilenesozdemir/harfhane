@@ -3,6 +3,7 @@ import { StatsScreen } from './StatsScreen';
 import { renderWithTheme, flattenStyle } from '../test-utils/render-with-theme';
 import { createInitialDailyStats, createInitialUnlimitedStats } from '../stats/stats';
 import { getThemeColors } from '../theme';
+import { TOUCH_TARGET } from '../ui/layout';
 
 const TODAY = '2026-10-08';
 const TWO_DAYS_AGO = '2026-10-06';
@@ -22,7 +23,24 @@ function renderDailyStats(overrides: Partial<Parameters<typeof StatsScreen>[0]> 
   );
 }
 
+interface RenderedNode {
+  readonly type: string;
+  readonly props: { readonly style?: unknown };
+  readonly children?: readonly (RenderedNode | string)[] | null;
+}
+
+function collectTextTransforms(node: RenderedNode | string | null): unknown[] {
+  if (node === null || typeof node === 'string') return [];
+  const children = node.children ?? [];
+  const own = node.type === 'Text' ? [flattenStyle(node.props.style).textTransform] : [];
+  return [...own, ...children.flatMap((child) => collectTextTransforms(child))];
+}
+
 describe('StatsScreen', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should show win percentage, streak and distribution for daily stats', async () => {
     const stats = {
       ...createInitialDailyStats(),
@@ -55,7 +73,6 @@ describe('StatsScreen', () => {
     const stats = { ...createInitialDailyStats(), currentStreak: 4, maxStreak: 5, lastPlayedDate: '2026-10-09' };
     await renderDailyStats({ stats });
     expect(screen.getByTestId('stat-Seri').props.children).toBe(4);
-    jest.useRealTimers();
   });
 
   it('should show the games won total instead of a streak for unlimited stats, with the mode in the chip', async () => {
@@ -97,5 +114,42 @@ describe('StatsScreen', () => {
     const count = screen.getByTestId('stats-distribution-2-count');
     expect(count).toHaveTextContent('1');
     expect(flattenStyle(count.props.style)['color']).toBe(COLORS.text);
+  });
+
+  it('should not render a count label for a guess row with zero games (011-U7b-C2)', async () => {
+    const stats = { ...createInitialDailyStats(), gamesPlayed: 1, gamesWon: 1, guessDistribution: [0, 1, 0, 0, 0, 0] };
+    await renderDailyStats({ stats });
+    expect(screen.queryByTestId('stats-distribution-1-count')).toBeNull();
+  });
+
+  it('should lay out the stat cards as a 2-column grid and render the exact Turkish labels', async () => {
+    const stats = { ...createInitialDailyStats(), gamesPlayed: 8, gamesWon: 4, currentStreak: 2, maxStreak: 5, lastPlayedDate: TODAY };
+    await renderDailyStats({ stats, today: TODAY });
+    const card = flattenStyle(screen.getByTestId('stat-Oyun-card').props.style);
+    expect(card.width).toBe('48%');
+    expect(card.minHeight).toBeGreaterThanOrEqual(72);
+    expect(card.alignItems).toBe('center');
+    expect(screen.getByText('Tahmin dağılımı')).toBeTruthy();
+    expect(screen.getByText('En iyi seri')).toBeTruthy();
+    expect(screen.getByText('Kazanma %')).toBeTruthy();
+  });
+
+  it('should not use textTransform uppercase on any text in StatsScreen (Turkish casing)', async () => {
+    const stats = { ...createInitialDailyStats(), gamesPlayed: 8, gamesWon: 4, currentStreak: 2, maxStreak: 5, lastPlayedDate: TODAY };
+    const view = await renderDailyStats({ stats, today: TODAY });
+    const roots = view.toJSON() as RenderedNode | readonly RenderedNode[] | null;
+    const transforms = (Array.isArray(roots) ? roots : [roots]).flatMap((node) => collectTextTransforms(node));
+    expect(transforms).not.toContain('uppercase');
+  });
+
+  it('should mark the active mode segment as selected, brand-coloured and at least 48 dp tall (011-A1)', async () => {
+    await renderDailyStats();
+    const daily = screen.getByLabelText('Günlük');
+    const unlimited = screen.getByLabelText('Sınırsız');
+    expect(daily.props.accessibilityState.selected).toBe(true);
+    expect(unlimited.props.accessibilityState.selected).toBe(false);
+    expect(flattenStyle(daily.props.style).backgroundColor).toBe(COLORS.brand);
+    expect(flattenStyle(unlimited.props.style).backgroundColor).not.toBe(COLORS.brand);
+    expect(flattenStyle(daily.props.style).minHeight).toBe(TOUCH_TARGET);
   });
 });

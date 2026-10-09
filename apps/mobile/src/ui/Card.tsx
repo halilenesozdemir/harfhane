@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { DEPTH, RADIUS, SPACING } from './layout';
 import { usePressDepth } from './usePressDepth';
@@ -8,6 +8,9 @@ interface CardBaseProps {
   readonly children: ReactNode;
   readonly padding?: number;
   readonly testID?: string;
+  // Layout-only overrides for the face (e.g. a grid cell's width/minHeight);
+  // never used to change colors or borders, which stay theme-driven above.
+  readonly style?: StyleProp<ViewStyle>;
 }
 
 export type CardProps = CardBaseProps &
@@ -18,9 +21,17 @@ export type CardProps = CardBaseProps &
 
 const PRESSED_DEPTH = 1;
 
-function renderFace(testID: string | undefined, padding: number, backgroundColor: string, borderColor: string, translateY: Animated.Value, children: ReactNode) {
+function renderFace(
+  testID: string | undefined,
+  padding: number,
+  backgroundColor: string,
+  borderColor: string,
+  translateY: Animated.Value,
+  children: ReactNode,
+  style?: StyleProp<ViewStyle>,
+) {
   return (
-    <Animated.View testID={testID} style={[styles.face, { padding, backgroundColor, borderColor, transform: [{ translateY }] }]}>
+    <Animated.View testID={testID} style={[styles.face, { padding, backgroundColor, borderColor, transform: [{ translateY }] }, style]}>
       {children}
     </Animated.View>
   );
@@ -34,7 +45,7 @@ function renderFace(testID: string | undefined, padding: number, backgroundColor
  * and the face translates down over it on the native driver when pressed.
  */
 export function Card(props: CardProps) {
-  const { children, padding = SPACING.lg, testID } = props;
+  const { children, padding = SPACING.lg, testID, style } = props;
   const { colors } = useTheme();
   const isPressable = props.onPress !== undefined;
   const restingDepth = isPressable ? DEPTH.md : 0;
@@ -42,7 +53,7 @@ export function Card(props: CardProps) {
   const { translateY, onPressIn, onPressOut } = usePressDepth({ restingDepth, pressedDepth });
 
   if (!isPressable) {
-    return renderFace(testID, padding, colors.surface, colors.surfaceBorder, translateY, children);
+    return renderFace(testID, padding, colors.surface, colors.surfaceBorder, translateY, children, style);
   }
 
   return (
@@ -56,7 +67,7 @@ export function Card(props: CardProps) {
       style={{ paddingBottom: restingDepth }}
     >
       <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { top: restingDepth, backgroundColor: colors.surfaceDepth }]} />
-      {renderFace(testID ? `${testID}-face` : undefined, padding, colors.surface, colors.surfaceBorder, translateY, children)}
+      {renderFace(testID ? `${testID}-face` : undefined, padding, colors.surface, colors.surfaceBorder, translateY, children, style)}
     </Pressable>
   );
 }

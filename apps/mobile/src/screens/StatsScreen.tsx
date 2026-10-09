@@ -6,7 +6,7 @@ import { Card } from '../ui/Card';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { AppText } from '../ui/Typography';
-import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
+import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import { getDisplayedStreak } from '../home/today-status';
 import type { DailyStats, UnlimitedStats, WordLength } from '../stats/stats';
 
@@ -31,6 +31,9 @@ const BAR_NUMBER_WIDTH = 16;
 const BAR_RADIUS = 4;
 const TITLE = 'İstatistikler';
 const STAT_CARD_PADDING = SPACING.md;
+const STAT_CARD_WIDTH_PERCENT = '48%';
+const STAT_CARD_MIN_HEIGHT = 72;
+const DISTRIBUTION_TITLE = 'Tahmin dağılımı';
 
 interface ModeOption {
   readonly value: StatsMode;
@@ -102,7 +105,7 @@ interface StatCardProps {
 function StatCard({ testID, value, label }: StatCardProps) {
   const { colors } = useTheme();
   return (
-    <Card padding={STAT_CARD_PADDING} testID={`${testID}-card`}>
+    <Card padding={STAT_CARD_PADDING} testID={`${testID}-card`} style={styles.statCard}>
       <AppText testID={testID} role="title">
         {value}
       </AppText>
@@ -145,13 +148,15 @@ export function StatsScreen({ stats, isUnlimited, wordLength, mode, onModeChange
 
         <StatsGrid stats={stats} isUnlimited={isUnlimited} today={today} />
 
-        <AppText role="caption" weight="700" color={colors.textMuted}>
-          Tahmin dağılımı
-        </AppText>
-        <View style={styles.distribution}>
-          {stats.guessDistribution.map((count, index) => (
-            <DistributionBar key={index} count={count} guessNumber={index + 1} maxDistribution={maxDistribution} />
-          ))}
+        <View style={styles.distributionGroup}>
+          <AppText role="caption" weight="700" color={colors.textMuted}>
+            {DISTRIBUTION_TITLE}
+          </AppText>
+          <View style={styles.distribution}>
+            {stats.guessDistribution.map((count, index) => (
+              <DistributionBar key={index} count={count} guessNumber={index + 1} maxDistribution={maxDistribution} />
+            ))}
+          </View>
         </View>
 
         {stats.gamesPlayed === 0 && (
@@ -196,9 +201,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   body: { flex: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: SPACING.sm, paddingBottom: SCREEN_PADDING, gap: SPACING.xxl },
   segmentedControl: { flexDirection: 'row', gap: SPACING.sm },
-  segment: { flex: 1, borderRadius: RADIUS.md, paddingVertical: SPACING.md, alignItems: 'center' },
+  segment: { flex: 1, minHeight: TOUCH_TARGET, borderRadius: RADIUS.md, paddingVertical: SPACING.md, alignItems: 'center', justifyContent: 'center' },
   segmentLabel: { fontSize: FONT_SIZE.body, fontWeight: '700' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: SPACING.md },
+  statCard: { width: STAT_CARD_WIDTH_PERCENT, minHeight: STAT_CARD_MIN_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  distributionGroup: { gap: SPACING.sm },
   distribution: { gap: SPACING.sm },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   barNumber: { width: BAR_NUMBER_WIDTH, textAlign: 'right', fontSize: FONT_SIZE.caption },
