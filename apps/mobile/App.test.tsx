@@ -88,8 +88,8 @@ describe('App', () => {
   // with the how-to-play-seen flag already set in the shared device store
   // mock — otherwise the first launch of How to play (R7/AE5) would cover
   // the home screen these tests expect to see immediately.
-  // None of these is about the launch intro either (its own describe block,
-  // below): reduce motion stays mocked on here so the intro never mounts a
+  // None of these is about the launch intro either (see the "launch intro (Plan 011 U7d)"
+  // describe block below): reduce motion stays mocked on here so the intro never mounts a
   // multi-second overlay in front of the screens these tests interact with.
   beforeEach(async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
@@ -346,6 +346,75 @@ describe('App', () => {
       expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
       addSpy.mockRestore();
+    });
+  });
+
+  describe('launch intro (Plan 011 U7d)', () => {
+    const hidden = { hidden: true } as const;
+
+    beforeEach(() => {
+      // Overrides the outer describe's reduce-motion-on default: these tests are specifically
+      // about the intro actually playing.
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should mount the launch intro over the home screen on a cold start with reduce motion off', async () => {
+      // Kills the mutant that drops <LaunchIntro /> from FirstLaunchGate: without it, nothing
+      // in this describe block would ever find the overlay.
+      await render(<App />);
+      expect(await screen.findByTestId('launch-intro')).toBeTruthy();
+    });
+
+    it('should swallow Android hardware back while the intro is showing, without popping navigation or marking How to play seen', async () => {
+      await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'not-seen-yet');
+      const addSpy = jest.spyOn(BackHandler, 'addEventListener');
+
+      await render(<App />);
+      expect(await screen.findByTestId('launch-intro')).toBeTruthy();
+      // Stack is [home, howToPlay] (first launch); How to play is already mounted underneath
+      // the intro, just hidden from accessibility, not popped.
+      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy();
+
+      (deviceStore.setItem as jest.Mock).mockClear();
+      let handled = false;
+      await act(async () => {
+        handled = latestBackHandler(addSpy)();
+      });
+
+      expect(handled).toBe(true); // swallowed, not left for the OS to exit the app
+      expect(screen.getByTestId('launch-intro')).toBeTruthy(); // intro still showing
+      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy(); // still on top of How to play, not home
+      expect(deviceStore.setItem).not.toHaveBeenCalledWith(HOW_TO_PLAY_SEEN_KEY, expect.anything());
+
+      addSpy.mockRestore();
+    });
+
+    it('should play the intro over a first-launch How to play, hold the splash hide, then reveal How to play once the intro finishes', async () => {
+      await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'not-seen-yet');
+      (SplashScreen.hideAsync as jest.Mock).mockClear();
+
+      await render(<App />);
+
+      expect(await screen.findByTestId('launch-intro')).toBeTruthy();
+      // R6/AE4: the splash hides once stored state has settled, independent of the intro, which
+      // is drawn in JS after the native splash is already gone.
+      expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+      // Hidden from accessibility while the intro covers it, but already mounted underneath.
+      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy();
+
+      await act(async () => {
+        jest.advanceTimersByTime(10_000);
+      });
+
+      expect(screen.queryByTestId('launch-intro')).toBeNull();
+      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
     });
   });
 
