@@ -1,6 +1,10 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
+import { TopBar } from '../ui/TopBar';
+import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
 import type { ThemeColors } from '../theme';
 
 export interface HowToPlayScreenProps {
@@ -93,17 +97,23 @@ function ExampleBlock({ row }: { readonly row: ExampleRow }) {
   );
 }
 
+const FIRST_LAUNCH_LABEL = 'Oynamaya başla';
+
 export function HowToPlayScreen({ onClose, isFirstLaunch = false }: HowToPlayScreenProps) {
   const { colors } = useTheme();
-  const primaryLabel = isFirstLaunch ? 'Oyna' : 'Kapat';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
+      <TopBar
+        title="Nasıl oynanır"
+        // R9/B6: no screen renders a text "Geri"/"Kapat" button for navigation — a first launch
+        // has no way out except its own "Oynamaya başla" action below, so it gets no back icon.
+        leading={isFirstLaunch ? undefined : <IconButton icon={<ArrowLeft size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="Geri" onPress={onClose} />}
+      />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>Nasıl Oynanır?</Text>
-        <Text style={[styles.paragraph, { color: colors.text }]}>Gizli kelimeyi 6 denemede tahmin edin.</Text>
+        <Text style={[styles.paragraph, { color: colors.text }]}>Gizli kelimeyi 6 denemede tahmin et.</Text>
         <Text style={[styles.paragraph, { color: colors.textMuted }]}>
-          Her tahmin, listeden geçerli bir kelime olmalıdır. Tahmini göndermek için Enter tuşuna basın.
+          Her tahmin, listeden geçerli bir kelime olmalı. Tahmini göndermek için Enter tuşuna bas.
         </Text>
         <Text style={[styles.paragraph, { color: colors.textMuted }]}>
           Her tahminden sonra, kutucukların rengi harflerin doğru kelimeye ne kadar yakın olduğunu gösterecek
@@ -115,14 +125,11 @@ export function HowToPlayScreen({ onClose, isFirstLaunch = false }: HowToPlayScr
         ))}
         <Text style={[styles.paragraph, { color: colors.textMuted }]}>Her gün yeni bir kelime gelir!</Text>
       </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={primaryLabel}
-        onPress={onClose}
-        style={[styles.closeButton, { backgroundColor: colors.correct }]}
-      >
-        <Text style={[styles.closeLabel, { color: colors.correctFg }]}>{primaryLabel}</Text>
-      </Pressable>
+      {isFirstLaunch && (
+        <View style={styles.primaryButtonWrap}>
+          <Button label={FIRST_LAUNCH_LABEL} variant="primary" onPress={onClose} />
+        </View>
+      )}
     </View>
   );
 }
@@ -136,12 +143,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: SPACING.xl,
+    padding: SCREEN_PADDING,
     gap: SPACING.md,
   },
-  title: {
-    fontSize: FONT_SIZE.title,
-    fontWeight: '800',
+  primaryButtonWrap: {
+    padding: SCREEN_PADDING,
   },
   sectionTitle: {
     fontSize: FONT_SIZE.bodyLarge,
@@ -176,15 +182,5 @@ const styles = StyleSheet.create({
   },
   exampleHighlight: {
     fontWeight: '800',
-  },
-  closeButton: {
-    margin: SPACING.xl,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.lg,
-    alignItems: 'center',
-  },
-  closeLabel: {
-    fontSize: FONT_SIZE.bodyLarge,
-    fontWeight: '700',
   },
 });
