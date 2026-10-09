@@ -1,5 +1,6 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { AccessibilityInfo, Animated } from 'react-native';
+import { TOUCH_TARGET } from '../ui/layout';
 import { base, themes } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -285,13 +286,28 @@ describe('GameScreen', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('should show an icon back button and a "Günlük"/"5 harf" header split, not "Günlük · 5 harf" (011-AE7)', async () => {
+  it('should show a borderless 48 dp icon back button with no text label, not a "‹ Geri" text button (011-AE7)', async () => {
     await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
-    expect(screen.getByLabelText('Geri').props.accessibilityRole).toBe('button');
+    const backButton = screen.getByLabelText('Geri');
+    expect(backButton.props.accessibilityRole).toBe('button');
+    expect(within(backButton).queryByText(/./)).toBeNull();
+    const target = flattenStyle(backButton.props.style);
+    expect(target.width).toBeGreaterThanOrEqual(TOUCH_TARGET);
+    expect(target.height).toBeGreaterThanOrEqual(TOUCH_TARGET);
+  });
+
+  it('should split the header into a "Günlük"/"5 harf" chip, not "Günlük · 5 harf" (011-AE7)', async () => {
+    await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
     expect(screen.getByText('Günlük')).toBeTruthy();
     expect(screen.getByText('5 harf')).toBeTruthy();
     expect(screen.queryByText('Günlük · 5 harf')).toBeNull();
     expect(screen.getByLabelText('Günlük, 5 harf')).toBeTruthy();
+  });
+
+  it('should show "Sınırsız" as the title in unlimited mode, not the daily title', async () => {
+    await renderWithTheme(<GameScreen mode="unlimited" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+    expect(screen.getByText('Sınırsız')).toBeTruthy();
+    expect(screen.queryByText('Günlük')).toBeNull();
   });
 
   it('should replace the hint button with the revealed letter once pressed', async () => {
