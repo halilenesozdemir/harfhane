@@ -11,3 +11,9 @@ appId: host.exp.exponent
     commands:
       - tapOn: "Continue"
       - back
+# Plan 011 U7d: a fresh process (e.g. after stopApp) replays the cold-start launch intro, which
+# covers the whole screen and hides AppNavigator from accessibility while it plays; wait it out
+# before anything built on this subflow touches the screen underneath it.
+- extendedWaitUntil:
+    notVisible: { id: "launch-intro" }
+    timeout: 10000

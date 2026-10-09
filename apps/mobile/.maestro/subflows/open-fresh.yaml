@@ -18,6 +18,12 @@ appId: host.exp.exponent
     commands:
       - tapOn: "Continue"
       - back
+# Plan 011 U7d: the cold-start launch intro covers the whole screen (How to play included;
+# AppNavigator is hidden from accessibility while it plays), so every flow built on this subflow
+# must wait it out before touching anything underneath it.
+- extendedWaitUntil:
+    notVisible: { id: "launch-intro" }
+    timeout: 10000
 # 011-AE5: a cleared app state has never seen How to play, so it opens before
 # home on every fresh launch. Dismiss it with its first-launch "Oyna" action
 # so every flow built on this subflow still lands on home as before.
