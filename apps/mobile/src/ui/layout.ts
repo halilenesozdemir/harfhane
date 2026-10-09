@@ -37,11 +37,7 @@ export const TOP_BAR_HEIGHT = 64;
 /** Disabled opacity for any pressable (Button K3, IconButton). */
 export const DISABLED_OPACITY = 0.5;
 
-/**
- * Lucide icon sizes by context (mobile-ui-standard.md, section 6, I2).
- * @deferred No screen passes a sized Lucide icon into these primitives yet
- * (Plan 011 U7b/U7c wire screens). See docs/backlog.md.
- */
+/** Lucide icon sizes by context (mobile-ui-standard.md, section 6, I2). */
 export const ICON_SIZE = {
   sm: 16,
   md: 20,
@@ -56,10 +52,7 @@ export const DEPTH = {
   lg: 6,
 } as const;
 
-/**
- * Horizontal screen padding (mobile-ui-standard.md, L1).
- * @deferred No screen applies it yet (Plan 011 U7b/U7c wire screens). See docs/backlog.md.
- */
+/** Horizontal screen padding (mobile-ui-standard.md, L1). */
 export const SCREEN_PADDING = SPACING.lg;
 
 /** Line height per `FONT_SIZE` role, from the typography table (mobile-ui-standard.md section 2). */

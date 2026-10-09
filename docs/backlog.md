@@ -288,10 +288,16 @@ wire mobile's own hint state through once #87 merges, matching the web wiring ab
 U7a (split across PR #97 `IconButton`/`TopBar`/`layout.ts` and a follow-up PR `Button`/`Card`,
 based on #97) added the mobile UI standard's layout constants and shared primitives, but changed
 no screen (the owner approved starting U7a in parallel with U1-U6's open PRs since it only adds
-files). `ICON_SIZE` and `SCREEN_PADDING` (`apps/mobile/src/ui/layout.ts`) are tagged `@deferred`
-for knip since nothing imports them yet; U7b/U7c wire `IconButton`/`TopBar` into `GameScreen`,
+files). `ICON_SIZE` and `SCREEN_PADDING` (`apps/mobile/src/ui/layout.ts`) were tagged `@deferred`
+for knip since nothing imported them yet; U7b/U7c wire `IconButton`/`TopBar` into `GameScreen`,
 `StatsScreen`, `HowToPlayScreen`, `SettingsScreen`, `GameOverCard` and `HomeScreen`, at which point
-both constants gain real importers and the tags should come off. `TopBar`'s `leading`/`trailing`
+both constants gain real importers and the tags come off. Both tags are off as of Plan 011 U7c:
+`SCREEN_PADDING` from the `HomeScreen.tsx` prep edit (still the old screen; it just adopts the
+constant for its existing padding value), and `ICON_SIZE` once `HomeHero`/`DailyCard`/
+`UnlimitedCard` got their own test files (knip counts a component as really used once anything
+outside it imports it, including its own test, so the `knip.jsonc` ignore entries this plan unit
+briefly carried for those three files came off too — they were only ever needed between adding the
+files and giving them their own tests). `TopBar`'s `leading`/`trailing`
 are plain `ReactNode` slots; `lucide-react-native` landed on `main` via #93, so U7b/U7c can now
 compose the actual `IconButton` + Lucide icon elements directly. `TopBar`'s `variant="home"` (no
 title, an asymmetric leading slot for the streak chip, up to three trailing actions) is in place;

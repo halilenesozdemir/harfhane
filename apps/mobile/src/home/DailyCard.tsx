@@ -1,0 +1,110 @@
+import { CalendarDays, CircleCheck, CircleX, Clock } from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
+import { MAX_GUESSES } from '@harfhane/shared';
+import type { ReactNode } from 'react';
+import { useTheme } from '../ThemeProvider';
+import { Card } from '../ui/Card';
+import { Chip } from '../ui/Chip';
+import { Button } from '../ui/Button';
+import { DepthTile } from '../ui/DepthTile';
+import { AppText } from '../ui/Typography';
+import { DEPTH, ICON_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { useCountdown } from './useCountdown';
+import type { ButtonVariant } from '../ui/Button';
+import type { ThemeColors } from '../theme';
+import type { WordLength } from '../stats/stats';
+import type { TodayState, TodayStatus } from './today-status';
+
+// A stable module-level reference, see useHomeStatus.ts's defaultNow for why
+// a fresh arrow function as a default parameter value would be wrong here.
+function defaultNow(): Date {
+  return new Date();
+}
+
+export interface DailyCardProps {
+  readonly wordLength: WordLength;
+  /** Null while the stored stats and daily game state are still loading. */
+  readonly status: TodayStatus | null;
+  readonly onPress: () => void;
+  /** Injectable clock for the midnight countdown (tests only); defaults to the real time. */
+  readonly now?: () => Date;
+}
+
+function isCountdownVisible(state: TodayState | null): boolean {
+  return state !== null && (state.kind === 'won' || state.kind === 'lost');
+}
+
+const ICON_TILE_SIZE = 48;
+const STATUS_ROW_MIN_HEIGHT = 28;
+
+function dailyCta(state: TodayState | null): { readonly label: string; readonly variant: ButtonVariant } {
+  if (state === null || state.kind === 'not-started') return { label: 'Oyna', variant: 'primary' };
+  if (state.kind === 'in-progress') return { label: 'Devam et', variant: 'primary' };
+  return { label: 'Sonucu gör', variant: 'secondary' };
+}
+
+function dailyAccessibilityLabel(length: WordLength, state: TodayState | null): string {
+  const base = `Günlük oyun, ${length} harf`;
+  if (state === null || state.kind === 'not-started') return `${base}, yeni kelime hazır`;
+  if (state.kind === 'in-progress') return `${base}, ${state.guesses}/${MAX_GUESSES} tahmin`;
+  if (state.kind === 'won') return `${base}, bugün çözüldü, ${state.guesses}/${MAX_GUESSES}`;
+  return `${base}, bugün çözülemedi`;
+}
+
+function StatusRow({ state, countdown, colors }: { state: TodayState | null; countdown: string; colors: ThemeColors }) {
+  if (state === null) return null;
+  if (state.kind === 'not-started') return <Chip variant="status" label="Yeni kelime hazır" />;
+  if (state.kind === 'in-progress') return <Chip variant="status" label={`${state.guesses}/${MAX_GUESSES} tahmin`} />;
+  const isWon = state.kind === 'won';
+  const resultIcon: ReactNode = isWon ? (
+    <CircleCheck size={ICON_SIZE.sm} color={colors.correctText} />
+  ) : (
+    <CircleX size={ICON_SIZE.sm} color={colors.textMuted} />
+  );
+  const resultLabel = isWon ? `Çözüldü · ${state.guesses}/${MAX_GUESSES}` : 'Bu sefer olmadı';
+  return (
+    <>
+      <Chip variant="status" icon={resultIcon} label={resultLabel} color={isWon ? colors.correctText : undefined} />
+      <Chip variant="status" icon={<Clock size={ICON_SIZE.sm} color={colors.textMuted} />} label={countdown} />
+    </>
+  );
+}
+
+/** The daily mode card (mobile-redesign-spec.md section B): one pressable target whose status row and CTA follow `getTodayStatus`. */
+export function DailyCard({ wordLength, status, onPress, now = defaultNow }: DailyCardProps) {
+  const { colors } = useTheme();
+  const cta = dailyCta(status?.state ?? null);
+  // E: ticks once a second only while the countdown chip is actually shown,
+  // so the rest of the home screen is unaffected by this card's own clock.
+  const countdown = useCountdown(now, isCountdownVisible(status?.state ?? null));
+
+  return (
+    <Card onPress={onPress} accessibilityLabel={dailyAccessibilityLabel(wordLength, status?.state ?? null)} padding={SPACING.xl} testID="home-daily-card">
+      <View style={styles.header}>
+        <DepthTile
+          icon={<CalendarDays size={ICON_SIZE.lg} color={colors.correctFg} />}
+          fill={colors.correct}
+          foreground={colors.correctFg}
+          depthColor={colors.correctDepth}
+          size={ICON_TILE_SIZE}
+          depth={DEPTH.sm}
+          radius={RADIUS.md}
+        />
+        <View style={styles.titleColumn}>
+          <AppText role="title">Günlük</AppText>
+          <AppText role="body" color={colors.textMuted}>{`Günün ${wordLength} harfli kelimesi`}</AppText>
+        </View>
+      </View>
+      <View style={styles.statusRow} testID="home-daily-status-row">
+        <StatusRow state={status?.state ?? null} countdown={countdown} colors={colors} />
+      </View>
+      <Button label={cta.label} variant={cta.variant} />
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
+  titleColumn: { flex: 1, gap: SPACING.xs },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, minHeight: STATUS_ROW_MIN_HEIGHT, marginBottom: SPACING.lg },
+});
