@@ -1,4 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { StatsScreen } from './StatsScreen';
 import { renderWithTheme } from '../test-utils/render-with-theme';
 import { createInitialDailyStats, createInitialUnlimitedStats } from '../stats/stats';
@@ -26,6 +27,13 @@ describe('StatsScreen', () => {
     await renderWithTheme(<StatsScreen stats={stats} isUnlimited={true} onClose={() => undefined} />);
     expect(screen.getByText('Sınırsız Mod İstatistikleri')).toBeTruthy();
     expect(screen.getByText('Kazanılan')).toBeTruthy();
+  });
+
+  it('should render the distribution title in Turkish uppercase without a style transform when stats exist', async () => {
+    const stats = { ...createInitialDailyStats(), gamesPlayed: 1, gamesWon: 1, guessDistribution: [1, 0, 0, 0, 0, 0] };
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} />);
+    const title = screen.getByText('TAHMİN DAĞILIMI');
+    expect(StyleSheet.flatten(title.props.style).textTransform).toBeUndefined();
   });
 
   it('should show the empty state message when no game has been played', async () => {

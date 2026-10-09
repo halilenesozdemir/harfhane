@@ -48,7 +48,7 @@ export function StatsScreen({ stats, isUnlimited, onClose }: StatsScreenProps) {
         {isUnlimited && <StatBox value={stats.gamesWon} label="Kazanılan" />}
       </View>
 
-      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Tahmin Dağılımı</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TAHMİN DAĞILIMI</Text>
       <View style={styles.distribution}>
         {stats.guessDistribution.map((count, index) => (
           <DistributionBar key={index} count={count} guessNumber={index + 1} maxDistribution={maxDistribution} />
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONT_SIZE.caption,
     fontWeight: '700',
-    textTransform: 'uppercase',
   },
   distribution: {
     gap: SPACING.sm,

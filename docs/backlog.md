@@ -345,15 +345,6 @@ between them.
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
 
-## Turkish casing bug in StatsScreen (found while fixing PR #87, 2026-10-07)
-`apps/mobile/src/screens/StatsScreen.tsx:144` (`sectionTitle` style) applies
-`textTransform: 'uppercase'` to the Turkish string "Tahmin Dağılımı" (line 51), which is
-locale-unaware and renders "TAHMIN DAĞILIMI" with a dotless I instead of the correct
-"TAHMİN DAĞILIMI". Same bug class fixed in
-`apps/mobile/src/components/GameOverDistribution.tsx` (drop the transform, write the literal
-string). `StatsScreen.tsx` is outside the file ownership of Plan 011 U1; whoever owns it should
-apply the same fix.
-
 ## Mobile share/title number comes from the device date, not the server (2026-10-07)
 `apps/mobile/src/components/GameOverCard.tsx` computes the daily game number from the device's
 local `dailyDate` string via `dailyGameNumber()` (mirroring the backend's formula), instead of the
