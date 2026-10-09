@@ -163,9 +163,9 @@ describe('GameOverDistribution', () => {
 
   it('should reserve the same fixed-width count slot when a row has no count, so bar tracks stay comparable', async () => {
     await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
-    const emptyRowCount = flattenStyle(screen.getByTestId('gameover-distribution-1-count').props.style);
+    const emptyRowCount = flattenStyle(screen.getByTestId('gameover-distribution-1-count', { includeHiddenElements: true }).props.style);
     const filledRowCount = flattenStyle(screen.getByTestId('gameover-distribution-2-count').props.style);
     expect(emptyRowCount.width).toBe(filledRowCount.width);
-    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('');
+    expect(screen.getByTestId('gameover-distribution-1-count', { includeHiddenElements: true })).toHaveTextContent('');
   });
 });

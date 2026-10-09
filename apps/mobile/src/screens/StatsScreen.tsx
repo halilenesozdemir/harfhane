@@ -6,7 +6,7 @@ import { Card } from '../ui/Card';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { AppText } from '../ui/Typography';
-import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
+import { DISTRIBUTION_COUNT_MAX_FONT_SCALE, DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import { getDisplayedStreak } from '../home/today-status';
 import type { DailyStats, UnlimitedStats, WordLength } from '../stats/stats';
 
@@ -187,12 +187,18 @@ function DistributionBar({ count, guessNumber, maxDistribution }: DistributionBa
         <View testID={`stats-distribution-${guessNumber}-fill`} style={[styles.barFill, { backgroundColor: colors.correct, width: `${widthPercent}%` }]} />
       </View>
       {/* mobile-ui-standard.md C2: a 12 dp count inside the `correct` fill is 4.29-4.33:1, below
-          4.5:1 — it sits outside the fill in `text` instead, against `bg`. */}
-      {count > 0 && (
-        <Text testID={`stats-distribution-${guessNumber}-count`} style={[styles.barCount, { color: colors.text }]}>
-          {count}
-        </Text>
-      )}
+          4.5:1 — it sits outside the fill in `text` instead, against `bg`. Always rendered
+          (empty when there is no count) so every row reserves the same fixed-width slot and
+          the tracks next to it stay comparable widths. */}
+      <Text
+        testID={`stats-distribution-${guessNumber}-count`}
+        numberOfLines={1}
+        maxFontSizeMultiplier={DISTRIBUTION_COUNT_MAX_FONT_SCALE}
+        accessibilityElementsHidden={!(count > 0)}
+        importantForAccessibility={count > 0 ? 'auto' : 'no-hide-descendants'}
+        style={[styles.barCount, { color: colors.text }]}>
+        {count > 0 ? count : ''}
+      </Text>
     </View>
   );
 }
@@ -211,6 +217,6 @@ const styles = StyleSheet.create({
   barNumber: { width: BAR_NUMBER_WIDTH, textAlign: 'right', fontSize: FONT_SIZE.caption },
   barTrack: { flex: 1, height: BAR_HEIGHT },
   barFill: { minWidth: BAR_MIN_WIDTH, height: BAR_HEIGHT, borderRadius: BAR_RADIUS },
-  barCount: { fontSize: FONT_SIZE.caption, fontWeight: '700' },
+  barCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: DISTRIBUTION_COUNT_WIDTH, textAlign: 'right' },
   emptyText: { fontSize: FONT_SIZE.caption, textAlign: 'center' },
 });

@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Animated, Text } from 'react-native';
 import { themes } from '@harfhane/ui-tokens';
-import { Card, type CardProps } from './Card';
+import { Card, type CardLayoutStyle, type CardProps } from './Card';
 import { DEPTH } from './layout';
 import { flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 
@@ -17,6 +17,22 @@ function assertCardPropsAreDiscriminated() {
   void strayLabel;
 }
 void assertCardPropsAreDiscriminated;
+
+// Type-level check, never executed: `style` is layout-only, so a color/border key must be a
+// compile error, never a runtime override of the theme-driven face (CA1-CA2).
+function assertCardStyleIsLayoutOnly() {
+  // @ts-expect-error - backgroundColor is not a layout key
+  const withBackground: CardLayoutStyle = { backgroundColor: '#000000' };
+  // @ts-expect-error - borderColor is not a layout key
+  const withBorder: CardLayoutStyle = { borderColor: '#000000' };
+  void withBackground;
+  void withBorder;
+  // @ts-expect-error - a pressable card's style lands on the outer wrapper, where minHeight would
+  // stretch the back layer below the face; only width/flex/alignSelf keys are allowed there.
+  const pressableWithMinHeight: CardProps = { onPress: () => undefined, accessibilityLabel: 'Oyna', children: null, style: { minHeight: 72 } };
+  void pressableWithMinHeight;
+}
+void assertCardStyleIsLayoutOnly;
 
 describe('Card', () => {
   it('should have no back layer when static, a 1 dp surfaceBorder edge (C4), RADIUS.lg (16), and 16 dp default padding (CA1, D3)', async () => {
@@ -116,5 +132,28 @@ describe('Card', () => {
     );
     fireEvent.press(screen.getByLabelText('Sınırsız, oyna'));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('should apply the style prop to the face when static', async () => {
+    await renderWithTheme(
+      <Card testID="daily-stats" style={{ width: '48%', minHeight: 72 }}>
+        <Text>Oyun 12</Text>
+      </Card>,
+    );
+    const style = flattenStyle(screen.getByTestId('daily-stats').props.style);
+    expect(style.width).toBe('48%');
+    expect(style.minHeight).toBe(72);
+  });
+
+  it('should apply the style prop to the outer pressable wrapper, not the face, when pressable', async () => {
+    await renderWithTheme(
+      <Card testID="daily-card" onPress={() => undefined} accessibilityLabel="Günlük oyun, 5 harf, bugün çözüldü" style={{ width: '48%' }}>
+        <Text>Günlük</Text>
+      </Card>,
+    );
+    const wrapperStyle = flattenStyle(screen.getByTestId('daily-card').props.style);
+    expect(wrapperStyle.width).toBe('48%');
+    const faceStyle = flattenStyle(screen.getByTestId('daily-card-face').props.style);
+    expect(faceStyle.width).toBeUndefined();
   });
 });

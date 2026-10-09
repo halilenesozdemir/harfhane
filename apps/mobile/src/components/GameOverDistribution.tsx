@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { DISTRIBUTION_COUNT_MAX_FONT_SCALE, DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
@@ -10,9 +10,6 @@ import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
 const MIN_BAR_PERCENT = 8;
-// A fixed width for the count slot, rendered whether or not a row has a count, so every
-// row's track (flex: 1) gets the same remaining space and the bars stay comparable (C2).
-const COUNT_WIDTH = 20;
 
 export function useDisplayDistribution(
   store: KeyValueStore,
@@ -92,7 +89,13 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
           against the card's `surface`, which always clears 4.5:1. Always rendered (empty when
           there is no count) so every row reserves the same fixed-width slot and the tracks
           next to it stay comparable widths. */}
-      <Text testID={`gameover-distribution-${guessNumber}-count`} style={[styles.distributionCount, { color: colors.text }]}>
+      <Text
+        testID={`gameover-distribution-${guessNumber}-count`}
+        numberOfLines={1}
+        maxFontSizeMultiplier={DISTRIBUTION_COUNT_MAX_FONT_SCALE}
+        accessibilityElementsHidden={!(hasCount)}
+        importantForAccessibility={hasCount ? 'auto' : 'no-hide-descendants'}
+        style={[styles.distributionCount, { color: colors.text }]}>
         {hasCount ? count : ''}
       </Text>
     </View>
@@ -138,5 +141,5 @@ const styles = StyleSheet.create({
   distributionIndex: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: SPACING.md },
   distributionTrack: { flex: 1, height: SPACING.lg, borderRadius: RADIUS.xs, overflow: 'hidden' },
   distributionFill: { height: '100%', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: SPACING.xs },
-  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: COUNT_WIDTH, textAlign: 'right' },
+  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: DISTRIBUTION_COUNT_WIDTH, textAlign: 'right' },
 });

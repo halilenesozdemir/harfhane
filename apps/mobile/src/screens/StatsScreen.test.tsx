@@ -3,7 +3,7 @@ import { StatsScreen } from './StatsScreen';
 import { renderWithTheme, flattenStyle } from '../test-utils/render-with-theme';
 import { createInitialDailyStats, createInitialUnlimitedStats } from '../stats/stats';
 import { getThemeColors } from '../theme';
-import { TOUCH_TARGET } from '../ui/layout';
+import { DISTRIBUTION_COUNT_MAX_FONT_SCALE, DISTRIBUTION_COUNT_WIDTH, TOUCH_TARGET } from '../ui/layout';
 
 const TODAY = '2026-10-08';
 const TWO_DAYS_AGO = '2026-10-06';
@@ -57,6 +57,8 @@ describe('StatsScreen', () => {
     expect(screen.getByTestId('stat-Kazanma %').props.children).toBe(50);
     expect(screen.getByTestId('stat-Seri').props.children).toBe(2);
     expect(screen.getByTestId('stat-En İyi Seri').props.children).toBe(5);
+    expect(screen.getByText('Oyun')).toBeTruthy();
+    expect(screen.getByText('Seri')).toBeTruthy();
   });
 
   it('should show zero streak instead of the raw stored value when the last played date is stale', async () => {
@@ -81,6 +83,7 @@ describe('StatsScreen', () => {
     expect(screen.getByLabelText('İstatistikler, Sınırsız · 5 harf')).toBeTruthy();
     expect(screen.getByTestId('stat-Kazanılan').props.children).toBe(2);
     expect(screen.queryByTestId('stat-Seri')).toBeNull();
+    expect(screen.getByText('Kazanılan')).toBeTruthy();
   });
 
   it('should show the empty state message when no game has been played', async () => {
@@ -116,10 +119,23 @@ describe('StatsScreen', () => {
     expect(flattenStyle(count.props.style)['color']).toBe(COLORS.text);
   });
 
-  it('should not render a count label for a guess row with zero games (011-U7b-C2)', async () => {
+  it('should reserve a fixed, three-digit-wide count slot with a capped font scale when rows have counts', async () => {
+    const stats = { ...createInitialUnlimitedStats(), gamesPlayed: 120, gamesWon: 120, guessDistribution: [0, 0, 0, 120, 0, 0] };
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={true} wordLength={5} mode="unlimited" onModeChange={() => undefined} onClose={() => undefined} />);
+    for (const guessNumber of [1, 4]) {
+      const count = screen.getByTestId(`stats-distribution-${guessNumber}-count`, { includeHiddenElements: true });
+      expect(flattenStyle(count.props.style).width).toBe(DISTRIBUTION_COUNT_WIDTH);
+      expect(count.props.maxFontSizeMultiplier).toBe(DISTRIBUTION_COUNT_MAX_FONT_SCALE);
+      expect(count.props.numberOfLines).toBe(1);
+    }
+    expect(screen.getByTestId('stats-distribution-1-count', { includeHiddenElements: true }).props.accessibilityElementsHidden).toBe(true);
+    expect(screen.getByTestId('stats-distribution-4-count').props.accessibilityElementsHidden).toBe(false);
+  });
+
+  it('should render an empty count slot when a guess row has zero games (011-U7b-C2)', async () => {
     const stats = { ...createInitialDailyStats(), gamesPlayed: 1, gamesWon: 1, guessDistribution: [0, 1, 0, 0, 0, 0] };
     await renderDailyStats({ stats });
-    expect(screen.queryByTestId('stats-distribution-1-count')).toBeNull();
+    expect(screen.getByTestId('stats-distribution-1-count', { includeHiddenElements: true })).toHaveTextContent('');
   });
 
   it('should lay out the stat cards as a 2-column grid and render the exact Turkish labels', async () => {

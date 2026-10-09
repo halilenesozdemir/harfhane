@@ -1,22 +1,35 @@
 import type { ReactNode } from 'react';
-import { Animated, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { DEPTH, RADIUS, SPACING } from './layout';
 import { usePressDepth } from './usePressDepth';
+
+/**
+ * Layout-only overrides for a Card (e.g. a grid cell's width/minHeight): never a color,
+ * border or transform key, so a caller cannot override the theme-driven face or break
+ * press depth (CA1-CA2, D2).
+ */
+export type CardLayoutStyle = Pick<
+  ViewStyle,
+  'width' | 'minHeight' | 'flexBasis' | 'flexGrow' | 'alignItems' | 'justifyContent' | 'alignSelf'
+>;
+
+/**
+ * A pressable card's style goes on the outer wrapper (so percentage widths resolve against the
+ * parent); minHeight or alignment there would stretch or misalign the back layer under the face.
+ */
+export type PressableCardLayoutStyle = Pick<ViewStyle, 'width' | 'flexBasis' | 'flexGrow' | 'alignSelf'>;
 
 interface CardBaseProps {
   readonly children: ReactNode;
   readonly padding?: number;
   readonly testID?: string;
-  // Layout-only overrides for the face (e.g. a grid cell's width/minHeight);
-  // never used to change colors or borders, which stay theme-driven above.
-  readonly style?: StyleProp<ViewStyle>;
 }
 
 export type CardProps = CardBaseProps &
   (
-    | { readonly onPress: () => void; readonly accessibilityLabel: string }
-    | { readonly onPress?: undefined; readonly accessibilityLabel?: undefined }
+    | { readonly onPress: () => void; readonly accessibilityLabel: string; readonly style?: PressableCardLayoutStyle }
+    | { readonly onPress?: undefined; readonly accessibilityLabel?: undefined; readonly style?: CardLayoutStyle }
   );
 
 const PRESSED_DEPTH = 1;
@@ -28,7 +41,7 @@ function renderFace(
   borderColor: string,
   translateY: Animated.Value,
   children: ReactNode,
-  style?: StyleProp<ViewStyle>,
+  style?: CardLayoutStyle,
 ) {
   return (
     <Animated.View testID={testID} style={[styles.face, { padding, backgroundColor, borderColor, transform: [{ translateY }] }, style]}>
@@ -57,6 +70,9 @@ export function Card(props: CardProps) {
   }
 
   return (
+    // `style` lands on this outer wrapper, not the face: a percentage width set on the face
+    // would resolve against the face's own auto-sized parent (this Pressable) instead of the
+    // flex container the Card sits in, so a percentage width would be unresolvable.
     <Pressable
       testID={testID}
       accessibilityRole="button"
@@ -64,10 +80,10 @@ export function Card(props: CardProps) {
       onPress={props.onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
-      style={{ paddingBottom: restingDepth }}
+      style={[{ paddingBottom: restingDepth }, style]}
     >
       <View testID={testID ? `${testID}-back` : undefined} style={[styles.backLayer, { top: restingDepth, backgroundColor: colors.surfaceDepth }]} />
-      {renderFace(testID ? `${testID}-face` : undefined, padding, colors.surface, colors.surfaceBorder, translateY, children, style)}
+      {renderFace(testID ? `${testID}-face` : undefined, padding, colors.surface, colors.surfaceBorder, translateY, children)}
     </Pressable>
   );
 }

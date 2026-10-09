@@ -81,3 +81,13 @@ export const TILE_LETTER_MAX_FONT_SCALE = 1.2;
  * it without this agent editing those files (see PR follow-up).
  */
 export const FONT_FAMILY_DISPLAY = 'Baloo2_800ExtraBold';
+
+/**
+ * Fixed width for the count slot beside a guess-distribution bar fill, always rendered
+ * (empty when the count is 0) so every row's track gets the same remaining space and the
+ * bars stay comparable widths (mobile-ui-standard.md C2). Shared by GameOverDistribution
+ * and StatsScreen.
+ */
+// Three 12 dp bold digits ("120" in unlimited stats) at the capped font scale below.
+export const DISTRIBUTION_COUNT_WIDTH = 32;
+export const DISTRIBUTION_COUNT_MAX_FONT_SCALE = 1.2;
