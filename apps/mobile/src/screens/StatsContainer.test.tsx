@@ -27,19 +27,19 @@ describe('StatsContainer', () => {
 
   it('should switch to unlimited stats when the segment is pressed', async () => {
     await renderWithTheme(<StatsContainer length={5} store={createMemoryStore()} onClose={() => undefined} />);
-    await screen.findByText('İstatistikler');
+    await screen.findByLabelText('İstatistikler, 5 harf');
     await act(async () => {
       fireEvent.press(screen.getByLabelText('Sınırsız'));
     });
-    expect(screen.getByText('Sınırsız Mod İstatistikleri')).toBeTruthy();
+    expect(screen.getByLabelText('İstatistikler, Sınırsız · 5 harf')).toBeTruthy();
   });
 
-  it('should call onClose when the close button is pressed', async () => {
+  it('should call onClose when the back button is pressed', async () => {
     const onClose = jest.fn();
     await renderWithTheme(<StatsContainer length={5} store={createMemoryStore()} onClose={onClose} />);
-    await screen.findByText('İstatistikler');
+    await screen.findByLabelText('İstatistikler, 5 harf');
     await act(async () => {
-      fireEvent.press(screen.getByLabelText('Kapat'));
+      fireEvent.press(screen.getByLabelText('Geri'));
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });

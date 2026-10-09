@@ -104,9 +104,7 @@ describe('App', () => {
     await render(<App />);
     await openAndClose('Nasıl oynanır sayfasını aç', 'Nasıl oynanır', 'Geri');
     await openAndClose('Ayarları aç', 'Ayarlar', 'Geri');
-    // Stats still closes with "Kapat" here — its own TopBar/"Geri" wiring is a separate,
-    // stacked PR (Plan 011 U7b) that has not landed on this branch yet.
-    await openAndClose('İstatistikleri aç', 'İstatistikler', 'Kapat');
+    await openAndClose('İstatistikleri aç', 'İstatistikler', 'Geri');
   });
 
   it('should keep the selected word length after returning from a game', async () => {
@@ -134,9 +132,7 @@ describe('App', () => {
     expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('İstatistikleri aç'));
-    // Stats still closes with "Kapat" here (see the comment above); its own "Geri" wiring
-    // lands in a separate, stacked PR.
-    await screen.findByLabelText('Kapat');
+    await screen.findByLabelText('Geri');
     let handledStats = false;
     await act(async () => {
       handledStats = latestBackHandler(addSpy)();
