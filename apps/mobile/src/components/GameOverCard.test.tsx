@@ -5,6 +5,7 @@ import { GameOverCard } from './GameOverCard';
 import type { GameOverCardProps } from './GameOverCard';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
+import { FONT_FAMILY_DISPLAY, FONT_SIZE } from '../ui/layout';
 
 jest.mock('react-native/Libraries/Share/Share', () => ({
   __esModule: true,
@@ -186,5 +187,27 @@ describe('GameOverCard', () => {
     });
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('X/6') }));
+  });
+
+  it('should show the visible "Paylaş" text and the secondary "Yeni kelime" button, not the primary look', async () => {
+    const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+    await renderCard({
+      mode: 'unlimited',
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      wordId: 42,
+      dailyDate: null,
+    });
+    expect(screen.getByText('Paylaş')).toBeTruthy();
+    const newWordFace = flattenStyle(screen.getByTestId('gameover-new-word-face').props.style);
+    expect(newWordFace.backgroundColor).toBe(colors.surface);
+    expect(newWordFace.backgroundColor).not.toBe(colors.brand);
+  });
+
+  it('should render the result title in the headline display font, not the body font', async () => {
+    await renderCard();
+    const title = flattenStyle(screen.getByRole('header').props.style);
+    expect(title.fontSize).toBe(FONT_SIZE.headline);
+    expect(title.fontFamily).toBe(FONT_FAMILY_DISPLAY);
   });
 });
