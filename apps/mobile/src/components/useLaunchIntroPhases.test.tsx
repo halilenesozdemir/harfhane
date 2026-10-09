@@ -1,5 +1,9 @@
 import { act, cleanup, renderHook } from '@testing-library/react-native';
-import { useLaunchIntroPhases } from './useLaunchIntroPhases';
+import { TOTAL_INTRO_MS, useLaunchIntroPhases } from './useLaunchIntroPhases';
+
+// Owner decision 2026-10-09 (follow-up): the intro must land at ~2.3s total, not drift back
+// toward the pre-follow-up ~3.1s.
+const TOTAL_INTRO_TOLERANCE_MS = 100;
 
 async function advance(ms: number) {
   await act(async () => {
@@ -49,6 +53,21 @@ describe('useLaunchIntroPhases', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
 
     await advance(10_000);
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('should land the total intro duration at about 2.3s, not drift back toward the old ~3.1s', async () => {
+    const onDone = jest.fn();
+    const { result } = await renderHook(() => useLaunchIntroPhases(false, onDone));
+
+    expect(TOTAL_INTRO_MS).toBeGreaterThan(2300 - TOTAL_INTRO_TOLERANCE_MS);
+    expect(TOTAL_INTRO_MS).toBeLessThan(2300 + TOTAL_INTRO_TOLERANCE_MS);
+
+    await advance(TOTAL_INTRO_MS - TOTAL_INTRO_TOLERANCE_MS);
+    expect(result.current.phase).not.toBe('done');
+
+    await advance(TOTAL_INTRO_TOLERANCE_MS);
+    expect(result.current.phase).toBe('done');
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 

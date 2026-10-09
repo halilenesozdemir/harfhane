@@ -128,6 +128,7 @@ function IntroRow({ tiles, startDelayMs, celebrate }: { readonly tiles: readonly
           celebrate={celebrate}
           celebrateDelayMs={index * LAUNCH_INTRO_TIMING.BOUNCE_STAGGER_MS}
           size={INTRO_TILE_SIZE}
+          flipDurationMs={LAUNCH_INTRO_TIMING.INTRO_FLIP_MS}
         />
       ))}
     </View>
