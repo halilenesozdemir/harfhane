@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
+import { AccessibilityInfo, BackHandler } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import App, { AppNavigator, FirstLaunchGate } from './App';
@@ -88,7 +88,11 @@ describe('App', () => {
   // with the how-to-play-seen flag already set in the shared device store
   // mock — otherwise the first launch of How to play (R7/AE5) would cover
   // the home screen these tests expect to see immediately.
+  // None of these is about the launch intro either (its own describe block,
+  // below): reduce motion stays mocked on here so the intro never mounts a
+  // multi-second overlay in front of the screens these tests interact with.
   beforeEach(async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'true');
   });
 

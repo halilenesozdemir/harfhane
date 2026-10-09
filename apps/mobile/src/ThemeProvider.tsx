@@ -27,7 +27,9 @@ export interface ThemeProviderProps {
   readonly waitForStoredTheme?: boolean;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+// Exported so LaunchIntro can force its reused game components (Tile) into the fixed dark
+// palette its own intro always uses, independent of the device's current theme.
+export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 interface StoredSettings {
   readonly preference: ThemePreference;

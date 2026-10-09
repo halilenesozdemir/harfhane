@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
 import { loadHasSeenHowToPlay, markHowToPlaySeen } from './src/first-launch-store';
+import { LaunchIntro } from './src/components/LaunchIntro';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
@@ -116,6 +117,12 @@ function useHowToPlayGate(): [HowToPlayGate, () => void] {
 // needs to correct an optimistic guess after the fact.
 export function FirstLaunchGate() {
   const [howToPlayGate, markHowToPlaySeenOnce] = useHowToPlayGate();
+  // Plan 011 U7d: the cold-start intro overlays AppNavigator (already mounted underneath, so
+  // the home screen is ready the instant the intro cross-fades out) and renders itself once per
+  // app lifetime — returning from the background never remounts FirstLaunchGate, so it never
+  // replays.
+  const [isIntroDone, setIsIntroDone] = useState(false);
+  const handleIntroDone = useCallback(() => setIsIntroDone(true), []);
 
   useEffect(() => {
     if (!howToPlayGate.isLoaded) return;
@@ -123,7 +130,12 @@ export function FirstLaunchGate() {
   }, [howToPlayGate.isLoaded]);
 
   if (!howToPlayGate.isLoaded) return null;
-  return <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />;
+  return (
+    <>
+      <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />
+      {isIntroDone ? null : <LaunchIntro onDone={handleIntroDone} />}
+    </>
+  );
 }
 
 interface AppNavigatorProps {
