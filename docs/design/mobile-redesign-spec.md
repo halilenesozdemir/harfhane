@@ -28,58 +28,46 @@ All dimensions below are for a 360 × 800 dp screen; the content column is 328 d
 
 ## A. Native splash and launch
 
-**Status: decided by the owner 2026-10-09 ("Konsept D", from a visual concept canvas), replacing
-the brand-orange "H" tile, cream splash and ≤800 ms hero-morph intro below.** Implementation:
-Plan 011 U7d.
-
 Android 12+ fixes the splash shape: a solid window background and one centred icon, masked to a
 192 dp circle inside a 288 dp canvas (no icon background) [Sources: Android splash screen]. We
-cannot add text, layouts or a custom image size beyond that.
+cannot add text, layouts or a custom image size beyond that. What we can do:
 
-1. **Launcher / store icon ("A"): two 3D tiles.** Cream background (`bg` light, `#fff4dc`).
-   Behind, a yellow `present` tile (fill `present-rgb`, depth `present-depth`) rotated +12°,
-   offset up-right; in front, a larger green `correct` tile (fill `correct-rgb`, depth
-   `correct-depth`) rotated -6°, with a white "H" (`correct-fg`) in Baloo 2 ExtraBold. Reference
-   geometry on a 240 px icon: yellow tile 110 px square, radius 24, at left 96 top 44, depth
-   12 px; green tile 128 px square, radius 28, at left 40 top 70, depth 14 px, "H" ~92 px. The
-   dark-theme variant (dark `bg`, `present`/`present-depth`, `correct-depth`) is used for the
-   splash icon, not the launcher icon.
-   - All colours come from `packages/ui-tokens/tokens.json` via
-     `apps/mobile/scripts/generate-brand-assets.mjs` (extended, no hand-coloured SVG). The light
-     theme's `present-rgb`/`present-depth`/`correct-rgb`/`correct-depth`/`correct-fg` already
-     equal the owner's hex values exactly, so no new tokens were needed.
-   - The "H" is real Baloo 2 ExtraBold glyph outlines, not a drawn bar shape: extracted once from
-     `@expo-google-fonts/baloo-2`'s `Baloo2_800ExtraBold.ttf` with `opentype.js` and baked into the
-     generator as a path constant (documented at its definition; re-extraction steps are in the
-     same comment). The generator itself has no font-rendering dependency.
-   - Adaptive icon: foreground is the two-tile mark shrunk to fit Android's safe zone, background
-     is cream, monochrome is the same silhouette in one colour (the "H" cut out of the tile shapes
-     so it survives the system's single-colour tint).
-2. **Native splash: dark background in both themes.** `backgroundColor` is the dark `bg` token
-   (`#1c1611`) for both the light and dark `expo-splash-screen` config slots, so the window never
-   flashes before the intro's own cross-fade to the current theme. Icon is the same two-tile mark
-   in its dark-theme colours, shrunk further to sit comfortably inside the 192 dp mask. `app.json`
-   `imageWidth` is 288 dp, matching the Android splash canvas, so the generator's margin
-   calculation (mark bounding circle vs. mask radius) is against the real canvas size.
-3. **Short JS intro after `hideAsync`** (`apps/mobile/src/components/LaunchIntro.tsx`, cold start
-   only), on the same dark background so frame 0 matches the native splash:
-   - The mark fades/shrinks away, then two rows of four tiles play a mini game with the existing
-     tile-flip animation language (Plan 011 U2, `motion-flip`/`motion-stagger`): row 1 "FARK" (F
-     present, A correct, R correct, K absent) flips in with a stagger; row 2 "HARF" (all correct)
-     flips in, then jumps like the win bounce.
-   - Then the wordmark "harfhane" gathers in (Baloo 2 ExtraBold, "harf" in the dark theme's
-     `brand`, "hane" in cream `bg`) with the subtitle "Her gün yeni bir kelime" in dark
-     `text-muted`. No glow or radial light.
-   - Then the background cross-fades to the current theme's `bg` and the home screen fades in.
-   - Total ≈ 2 s; a tap skips to home immediately; reduce motion (`useReduceMotion`) skips the
-     intro entirely [M2, M4]; never shown when returning from background. Input is never blocked
-     beyond the intro.
-   - Accessibility: decorative, one accessible label "Harfhane"; skippable and short so TalkBack
-     users are never trapped.
-   - The splash hold from #89 stays: the intro starts only after fonts, theme and stored state are
-     ready, so there is no blank frame.
-4. Verify on a release build, not Expo Go (Plan 011 KTD4): Expo Go shows its own splash, so the
-   native icon/splash sizing is not visible there.
+1. **Icon as a 3D tile.** Replace `assets/splash-icon.png` (flat "H") with an "H" tile in the
+   playful 3D language:
+   - Tile face 120 × 120 dp, radius 30 dp (the 14/56 tile ratio), fill `brand`, the existing
+     drawn "H" glyph in `brandFg`; bottom depth edge 15 dp (1/8 of the face, the hero's 6/48
+     ratio) in `brandDepth`. Total 120 × 135 dp, centred: its farthest corner is ~90 dp from the
+     centre, inside the 96 dp mask radius (rounded corners add margin).
+   - `app.json` `imageWidth` changes from 220 to 288, so the 1024 px PNG maps to the full
+     288 dp canvas (expo-splash-screen 57 scales the PNG to `imageWidth` dp and centres it). Face
+     ≈ 427 px, depth ≈ 53 px, transparent outside the tile. Verify the on-screen size on a release
+     build before building the intro on it.
+   - Dark variant `splash-icon-dark.png` uses the dark theme's `brand`, `brandFg`, `brandDepth`.
+   - The PNGs come from the existing token-driven generator
+     `apps/mobile/scripts/generate-brand-assets.mjs` (it already reads `brand-rgb` and `bg` from
+     `tokens.json`); U7 adds the tile and depth there instead of a hand-coloured SVG that could
+     drift from the tokens.
+2. **Background** stays `bg` (cream / `#1c1611` dark) so the hand-off to the home screen has no
+   colour jump [S3]. Alternative for the owner: brand-orange background with a cream tile (more
+   striking, but the window flashes from orange to cream on hide unless the intro also animates
+   the background).
+3. **Same object as the launcher icon.** The adaptive icon foreground becomes the same tile, so
+   launcher icon → splash → home hero is one continuous object (owner sign-off: it changes the
+   store icon, Plan 011 R5).
+4. **Short JS intro after `hideAsync`** (`apps/mobile/src/components/LaunchIntro.tsx`, cold start
+   only):
+   - Frame 0 is pixel-identical to the native splash: full-window `bg`, the same tile at the
+     window centre (measure with `useWindowDimensions`, not the safe area).
+   - 0–220 ms (`motionBase`, `easePop`): the H tile shrinks from 120 to 48 dp (depth 15 → 6) and moves to the
+     hero's H slot (position from the hero's `onLayout`).
+   - 160–520 ms: A, R, F tiles pop in with `motion-stagger` (Plan 011 U2), "hane" fades in.
+   - 520–740 ms: the rest of the home screen fades in and rises 8 dp.
+   - Total ≤ 800 ms; a tap skips to the end; reduce motion skips it entirely [M2, M4]; never
+     shown when returning from background. If the hero has not laid out yet, fall back to a
+     220 ms cross-fade.
+   - The splash hold from #89 stays: the intro starts only after fonts, theme and stored state
+     are ready, so there is no blank frame.
+5. Verify on a release build, not Expo Go (Plan 011 KTD4): Expo Go shows its own splash.
 
 ## B. Home
 
