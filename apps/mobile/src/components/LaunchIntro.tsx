@@ -56,7 +56,20 @@ const MARK_PRESENT_SIZE = 56;
 const MARK_PRESENT_DEPTH = 7;
 const MARK_CORRECT_SIZE = 80;
 const MARK_CORRECT_DEPTH = 10;
-const WORDMARK_LETTER_SPACING_WIDE = 10;
+const MARK_PRESENT_ROTATION = '12deg';
+const MARK_CORRECT_ROTATION = '-6deg';
+// Frame-0 mark box, sized to roughly match the native splash mark (apps/mobile/assets/splash-icon-dark.png,
+// generated at ADAPTIVE_SAFE_ZONE_SCALE 0.58 of a 1024 px canvas, so a touch over half the canvas
+// width) so the intro doesn't visibly jump in size the instant it takes over from the splash.
+// Not pixel-measured against a device; documented assumption, not a verified match.
+const MARK_BOX_SIZE = 140;
+const MARK_PRESENT_LEFT = 65;
+const MARK_PRESENT_TOP = 24;
+const MARK_CORRECT_LEFT = 30;
+const MARK_CORRECT_TOP = 40;
+// The wordmark "gathers" by sliding "harf"/"hane" in from opposite sides as it fades in, instead
+// of animating `letterSpacing` (not supported by the native animated module, see Wordmark below).
+const WORDMARK_GATHER_OFFSET = 14;
 const ACCESSIBILITY_LABEL = 'Harfhane';
 const ACCESSIBILITY_HINT = 'Ana ekrana geçmek için dokunun';
 
@@ -77,7 +90,7 @@ function LaunchMark({ opacity }: { readonly opacity: Animated.Value }) {
   const scale = opacity.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] });
   return (
     <Animated.View style={[styles.markBox, { transform: [{ scale }] }]} importantForAccessibility="no-hide-descendants">
-      <View style={[styles.markPresent, { transform: [{ rotate: '12deg' }] }]}>
+      <View style={[styles.markPresent, { transform: [{ rotate: MARK_PRESENT_ROTATION }] }]}>
         <DepthTile
           fill={DARK_COLORS.present}
           foreground={DARK_COLORS.presentFg}
@@ -86,7 +99,7 @@ function LaunchMark({ opacity }: { readonly opacity: Animated.Value }) {
           depth={MARK_PRESENT_DEPTH}
         />
       </View>
-      <View style={[styles.markCorrect, { transform: [{ rotate: '-6deg' }] }]}>
+      <View style={[styles.markCorrect, { transform: [{ rotate: MARK_CORRECT_ROTATION }] }]}>
         <DepthTile
           letter="H"
           fill={DARK_COLORS.correct}
@@ -122,21 +135,32 @@ function IntroRow({ tiles, startDelayMs, celebrate }: { readonly tiles: readonly
 }
 
 function IntroTiles({ row2Celebrate }: { readonly row2Celebrate: boolean }) {
+  const { TILE_REVEAL_START_MS, ROW2_START_MS } = LAUNCH_INTRO_TIMING;
   return (
     <View importantForAccessibility="no-hide-descendants">
-      <IntroRow tiles={ROW1} startDelayMs={0} celebrate={false} />
-      <IntroRow tiles={ROW2} startDelayMs={LAUNCH_INTRO_TIMING.ROW2_START_MS} celebrate={row2Celebrate} />
+      <IntroRow tiles={ROW1} startDelayMs={TILE_REVEAL_START_MS} celebrate={false} />
+      <IntroRow tiles={ROW2} startDelayMs={TILE_REVEAL_START_MS + ROW2_START_MS} celebrate={row2Celebrate} />
     </View>
   );
 }
 
+// Gathers "harf"/"hane" in from opposite sides as the wordmark fades in. Uses `transform:
+// translateX` + the layer's own opacity (both native-driver-safe) instead of animating
+// `letterSpacing` directly: letterSpacing is not an animatable native prop, and the previous
+// version warned "Style property 'letterSpacing' is not supported by native animated module" on
+// every run.
 function Wordmark({ opacity }: { readonly opacity: Animated.Value }) {
-  const letterSpacing = opacity.interpolate({ inputRange: [0, 1], outputRange: [WORDMARK_LETTER_SPACING_WIDE, 0] });
+  const gather = opacity.interpolate({ inputRange: [0, 1], outputRange: [WORDMARK_GATHER_OFFSET, 0] });
+  const gatherFromLeft = Animated.multiply(gather, -1);
   return (
     <View style={styles.wordmark} importantForAccessibility="no-hide-descendants">
       <View style={styles.wordmarkRow}>
-        <Animated.Text style={[styles.wordmarkText, { color: DARK_COLORS.brand, letterSpacing }]}>harf</Animated.Text>
-        <Animated.Text style={[styles.wordmarkText, { color: DARK_COLORS.bg, letterSpacing }]}>hane</Animated.Text>
+        <Animated.Text style={[styles.wordmarkText, { color: DARK_COLORS.brand, transform: [{ translateX: gatherFromLeft }] }]}>
+          harf
+        </Animated.Text>
+        <Animated.Text style={[styles.wordmarkText, { color: DARK_COLORS.text, transform: [{ translateX: gather }] }]}>
+          hane
+        </Animated.Text>
       </View>
       <AppText role="bodyLarge" color={DARK_COLORS.textMuted} style={styles.subtitle}>
         Her gün yeni bir kelime
@@ -195,9 +219,9 @@ const styles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 },
   pressable: { flex: 1 },
   layer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  markBox: { width: 140, height: 140 },
-  markPresent: { position: 'absolute', left: 65, top: 24 },
-  markCorrect: { position: 'absolute', left: 30, top: 40 },
+  markBox: { width: MARK_BOX_SIZE, height: MARK_BOX_SIZE },
+  markPresent: { position: 'absolute', left: MARK_PRESENT_LEFT, top: MARK_PRESENT_TOP },
+  markCorrect: { position: 'absolute', left: MARK_CORRECT_LEFT, top: MARK_CORRECT_TOP },
   row: { flexDirection: 'row', gap: SPACING.sm, marginVertical: SPACING.xs },
   wordmark: { alignItems: 'center' },
   wordmarkRow: { flexDirection: 'row' },

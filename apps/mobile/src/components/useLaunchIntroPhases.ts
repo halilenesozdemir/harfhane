@@ -29,7 +29,17 @@ const TILES_FLIP_DONE_MS = ROW2_START_MS + (TILES_PER_ROW - 1) * ROW_STAGGER_MS 
 const BOUNCE_STAGGER_MS = 30;
 const CELEBRATE_DONE_MS = TILES_FLIP_DONE_MS + (TILES_PER_ROW - 1) * BOUNCE_STAGGER_MS + BOUNCE_MS;
 const WORDMARK_MS = 250;
+// How long the fully-gathered wordmark + subtitle hold on screen, steady, before the overlay
+// starts its cross-fade — long enough to actually read "harfhane" / the subtitle, not just flash
+// past them (owner 2026-10-09: readable, not instant).
+const WORDMARK_HOLD_MS = 600;
 const CROSSFADE_MS = MARK_MS;
+// The tile rows are mounted (and their reveal timers armed) the instant LaunchIntro itself
+// mounts, at t=0 — but the tiles layer they sit in only starts fading in once `phase` reaches
+// 'tiles', at t=MARK_MS. Without this offset the flips visibly start while still fading in, and
+// (since row2Celebrate is scheduled from MARK_MS + TILES_FLIP_DONE_MS, i.e. relative to the real
+// phase change) the bounce would then also wait out an extra, dead MARK_MS doing nothing.
+const TILE_REVEAL_START_MS = MARK_MS;
 
 export const LAUNCH_INTRO_TIMING = {
   MARK_MS,
@@ -37,7 +47,9 @@ export const LAUNCH_INTRO_TIMING = {
   ROW2_START_MS,
   BOUNCE_STAGGER_MS,
   WORDMARK_MS,
+  WORDMARK_HOLD_MS,
   CROSSFADE_MS,
+  TILE_REVEAL_START_MS,
 } as const;
 
 /**
@@ -83,8 +95,8 @@ export function useLaunchIntroPhases(reduceMotion: boolean, onDone: () => void):
     schedule(() => setPhase('tiles'), MARK_MS);
     schedule(() => setRow2Celebrate(true), MARK_MS + TILES_FLIP_DONE_MS);
     schedule(() => setPhase('wordmark'), MARK_MS + CELEBRATE_DONE_MS);
-    schedule(() => setPhase('crossfade'), MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS);
-    schedule(finish, MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + CROSSFADE_MS);
+    schedule(() => setPhase('crossfade'), MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + WORDMARK_HOLD_MS);
+    schedule(finish, MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + WORDMARK_HOLD_MS + CROSSFADE_MS);
 
     return clearTimers;
     // Scheduled once per mount regardless of reduceMotion's initial value: the effect above

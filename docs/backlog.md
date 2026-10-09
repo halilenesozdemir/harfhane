@@ -455,12 +455,16 @@ The owner's 2026-10-09 decision gave exact geometry for the launcher icon (240 p
 not for: the adaptive-icon safe-zone shrink factor, the splash mask shrink factor, or the JS
 intro's exact per-phase millisecond durations (only "~150 ms" tile stagger and "about 2 s" total
 were specified). `apps/mobile/scripts/generate-brand-assets.mjs` uses `ADAPTIVE_SAFE_ZONE_SCALE =
-0.72` and `SPLASH_MASK_SCALE = 0.55`; `apps/mobile/src/components/useLaunchIntroPhases.ts` picks
-phase durations that land the total intro around ~2.4 s (driven mostly by the fixed `motion-flip`
-(500 ms) token applied across 8 tiles). Worth an owner look on a release build/screenshot before
-the closed test, since neither was verified against the real native splash mask or a release
-build's timing feel (Expo Go was used instead; see Plan 011 U7d PR for what that does and does
-not cover).
+0.58` (lowered from an initial 0.72 during review: the original value also had a double-scale bug
+that shrank the adaptive/monochrome mark far more than 0.72 implied, and the mark was off-centre;
+both are fixed, see the #133 PR) and `SPLASH_MASK_SCALE = 0.55`; `apps/mobile/src/components/
+useLaunchIntroPhases.ts` picks phase durations that land the total intro around ~3.1 s (driven
+mostly by the fixed `motion-flip` (500 ms) token applied across 8 tiles, plus a ~600 ms hold added
+during review so the wordmark is actually readable before the cross-fade — over the owner's "about
+2 s" figure as a result; worth an owner look alongside the rest of this entry). Worth an owner
+look on a release build/screenshot before the closed test, since neither was verified against the
+real native splash mask or a release build's timing feel (Expo Go was used instead; see Plan 011
+U7d PR for what that does and does not cover).
 
 ## Plan 011 U7d: hero onLayout hook not added (2026-10-09)
 The plan's U7d file list mentions "the hero onLayout hook in HomeScreen.tsx", carried over from

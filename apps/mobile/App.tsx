@@ -130,10 +130,26 @@ export function FirstLaunchGate() {
   }, [howToPlayGate.isLoaded]);
 
   if (!howToPlayGate.isLoaded) return null;
+  // While the intro overlay is up, AppNavigator is hidden from accessibility: it's already
+  // mounted underneath (so home is ready the instant the intro cross-fades out, R6/AE4-style),
+  // but its buttons are invisible and must not be reachable by TalkBack or Maestro, and the
+  // Android hardware back handler (registered inside AppNavigator) must not pop navigation or
+  // mark How to play seen while the intro is covering it (Plan 011 U7d AE5 regression).
+  const isIntroActive = !isIntroDone;
   return (
     <>
-      <AppNavigator hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay} onHowToPlaySeen={markHowToPlaySeenOnce} />
-      {isIntroDone ? null : <LaunchIntro onDone={handleIntroDone} />}
+      <View
+        style={styles.flexFill}
+        importantForAccessibility={isIntroActive ? 'no-hide-descendants' : 'auto'}
+        accessibilityElementsHidden={isIntroActive}
+      >
+        <AppNavigator
+          hasSeenHowToPlay={howToPlayGate.hasSeenHowToPlay}
+          onHowToPlaySeen={markHowToPlaySeenOnce}
+          isIntroActive={isIntroActive}
+        />
+      </View>
+      {isIntroActive ? <LaunchIntro onDone={handleIntroDone} /> : null}
     </>
   );
 }
@@ -141,9 +157,12 @@ export function FirstLaunchGate() {
 interface AppNavigatorProps {
   readonly hasSeenHowToPlay: boolean;
   readonly onHowToPlaySeen: () => void;
+  /** Plan 011 U7d: while the launch intro covers the screen, the hardware back button must be
+   * swallowed instead of popping navigation or marking How to play seen underneath it. */
+  readonly isIntroActive?: boolean;
 }
 
-export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigatorProps) {
+export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen, isIntroActive = false }: AppNavigatorProps) {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   // hasSeenHowToPlay is only ever read here, as the reducer's one-time
@@ -174,10 +193,13 @@ export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen }: AppNavigator
   }, [route, hasSeenHowToPlayLocally, onHowToPlaySeen]);
 
   const handleHardwareBack = useCallback(() => {
+    // Swallow back while the intro is covering the screen: it must not pop navigation or mark
+    // How to play seen underneath an overlay the user cannot even see past (AE5 regression).
+    if (isIntroActive) return true;
     if (!canGoBack(state)) return false;
     goBack();
     return true;
-  }, [state, goBack]);
+  }, [isIntroActive, state, goBack]);
   useHardwareBackHandler(handleHardwareBack);
 
   const handleStart = useCallback(
@@ -234,4 +256,5 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  flexFill: { flex: 1 },
 });
