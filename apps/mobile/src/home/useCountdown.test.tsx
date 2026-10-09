@@ -60,6 +60,17 @@ describe('useCountdown', () => {
     expect(result.current).not.toBe(staleValue);
   });
 
+  it('should show a fresh value immediately when enabled flips true again after being disabled', async () => {
+    const { result, rerender } = await renderHook(({ enabled }: { enabled: boolean }) => useCountdown(now, enabled), {
+      initialProps: { enabled: true },
+    });
+    await act(async () => rerender({ enabled: false }));
+    const valueWhileDisabled = result.current;
+    jest.setSystemTime(new Date(NOW_PLUS_1S));
+    await act(async () => rerender({ enabled: true }));
+    expect(result.current).not.toBe(valueWhileDisabled);
+  });
+
   it('should clear the interval on unmount when enabled', async () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');

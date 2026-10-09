@@ -28,10 +28,12 @@ describe('HomeHero', () => {
     }
   });
 
-  it('should cap each hero letter font scale when rendered, to avoid tile overflow at large accessibility text sizes', async () => {
+  it('should cap each hero letter font scale at the UI standard\'s 1.2 when rendered, to avoid tile overflow at large accessibility text sizes', async () => {
     await renderWithTheme(<HomeHero />);
+    // Literal on purpose: docs/design/mobile-ui-standard.md fixes the hero tile cap at 1.2.
+    const standardCap = 1.2;
     for (const letter of ['H', 'A', 'R', 'F']) {
-      expect(screen.getByText(letter).props.maxFontSizeMultiplier).toBeLessThanOrEqual(1.3);
+      expect(screen.getByText(letter).props.maxFontSizeMultiplier).toBe(standardCap);
     }
   });
 
