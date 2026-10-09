@@ -3,6 +3,9 @@ import { StatsScreen } from './StatsScreen';
 import { renderWithTheme } from '../test-utils/render-with-theme';
 import { createInitialDailyStats, createInitialUnlimitedStats } from '../stats/stats';
 
+const TODAY = '2026-10-08';
+const TWO_DAYS_AGO = '2026-10-06';
+
 describe('StatsScreen', () => {
   it('should show win percentage, streak and distribution for daily stats', async () => {
     const stats = {
@@ -11,14 +14,32 @@ describe('StatsScreen', () => {
       gamesWon: 4,
       currentStreak: 2,
       maxStreak: 5,
+      lastPlayedDate: TODAY,
       guessDistribution: [0, 1, 1, 0, 0, 0],
     };
-    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} />);
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} today={TODAY} />);
     expect(screen.getByText('İstatistikler')).toBeTruthy();
     expect(screen.getByTestId('stat-Oyun').props.children).toBe(8);
     expect(screen.getByTestId('stat-Kazanma %').props.children).toBe(50);
     expect(screen.getByTestId('stat-Seri').props.children).toBe(2);
     expect(screen.getByTestId('stat-En İyi Seri').props.children).toBe(5);
+  });
+
+  it('should show zero streak instead of the raw stored value when the last played date is stale', async () => {
+    const stats = { ...createInitialDailyStats(), currentStreak: 2, maxStreak: 5, lastPlayedDate: TWO_DAYS_AGO };
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} today={TODAY} />);
+    expect(screen.getByTestId('stat-Seri').props.children).toBe(0);
+    expect(screen.getByTestId('stat-En İyi Seri').props.children).toBe(5);
+  });
+
+  it('should use the Turkey day (not the UTC day) for the default today when not given', async () => {
+    jest.useFakeTimers();
+    // 22:00 UTC on 2026-10-08 is 01:00 on 2026-10-09 in Turkey (UTC+3).
+    jest.setSystemTime(new Date('2026-10-08T22:00:00Z'));
+    const stats = { ...createInitialDailyStats(), currentStreak: 4, maxStreak: 5, lastPlayedDate: '2026-10-09' };
+    await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} />);
+    expect(screen.getByTestId('stat-Seri').props.children).toBe(4);
+    jest.useRealTimers();
   });
 
   it('should show the games won total instead of a streak for unlimited stats', async () => {
