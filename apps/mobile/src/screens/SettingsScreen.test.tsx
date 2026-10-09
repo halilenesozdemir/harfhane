@@ -44,6 +44,12 @@ describe('SettingsScreen', () => {
     expect(screen.getByLabelText('Yüksek kontrast')).toBeTruthy();
   });
 
+  it('should show the high-contrast supporting line as its own text, not appended to the label', async () => {
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    expect(screen.getByText('Yüksek kontrast')).toBeTruthy();
+    expect(screen.getByText('Renk körlüğü dostu renkler')).toBeTruthy();
+  });
+
   it('should switch the active theme colors when the dark segment is pressed', async () => {
     await renderWithTheme(
       <>
@@ -55,10 +61,10 @@ describe('SettingsScreen', () => {
     expect(screen.getByTestId('probe-bg').props.children).toBe(themes.dark.bg);
   });
 
-  it('should call onClose when the close button is pressed', async () => {
+  it('should call onClose when the top bar back button is pressed', async () => {
     const onClose = jest.fn();
     await renderWithTheme(<SettingsScreen onClose={onClose} />);
-    await fireEvent.press(screen.getByLabelText('Kapat'));
+    await fireEvent.press(screen.getByLabelText('Geri'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
