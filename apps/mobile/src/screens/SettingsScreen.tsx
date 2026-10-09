@@ -6,7 +6,7 @@ import { useTheme } from '../ThemeProvider';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
-import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
+import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import type { ThemePreference } from '../theme';
 
 export interface SettingsScreenProps {
@@ -41,7 +41,7 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
       />
       <View style={styles.body}>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
-          <SettingsRow label="Tema" isFirst>
+          <SettingsRow label="Tema" isFirst stacked>
             <View style={styles.segmentedControl}>
               {THEME_OPTIONS.map((option) => (
                 <ThemeSegment
@@ -88,13 +88,23 @@ interface SettingsRowProps {
   readonly caption?: string;
   readonly isFirst?: boolean;
   readonly borderColor?: string;
+  // Stacks the label above the children instead of side by side, so a wide
+  // control (e.g. the three-way theme segmented control) keeps each option
+  // at a readable width at narrow screen widths / large font scales.
+  readonly stacked?: boolean;
   readonly children: ReactNode;
 }
 
-function SettingsRow({ label, caption, isFirst = false, borderColor, children }: SettingsRowProps) {
+function SettingsRow({ label, caption, isFirst = false, borderColor, stacked = false, children }: SettingsRowProps) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.row, !isFirst && borderColor ? { borderTopWidth: 1, borderTopColor: borderColor } : null]}>
+    <View
+      style={[
+        styles.row,
+        stacked && styles.rowStacked,
+        !isFirst && borderColor ? { borderTopWidth: 1, borderTopColor: borderColor } : null,
+      ]}
+    >
       <View style={styles.rowText}>
         <Text style={[styles.rowLabel, { color: colors.text }]}>{label}</Text>
         {caption ? <Text style={[styles.rowCaption, { color: colors.textMuted }]}>{caption}</Text> : null}
@@ -121,9 +131,20 @@ function ThemeSegment({ value, label, isActive, onSelect }: ThemeSegmentProps) {
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
       onPress={handlePress}
-      style={[styles.segment, { backgroundColor: isActive ? colors.brand : colors.surface }]}
+      style={[
+        styles.segment,
+        isActive
+          ? { backgroundColor: colors.brand, borderColor: colors.brand }
+          : { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+      ]}
     >
-      <Text style={[styles.segmentLabel, { color: isActive ? colors.brandFg : colors.text }]}>{label}</Text>
+      <Text
+        style={[styles.segmentLabel, { color: isActive ? colors.brandFg : colors.text }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -140,9 +161,13 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
+    minHeight: TOUCH_TARGET,
     borderRadius: RADIUS.md,
+    borderWidth: 1,
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xs,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   segmentLabel: {
     fontSize: FONT_SIZE.body,
@@ -156,6 +181,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
+  },
+  rowStacked: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
   rowText: { flex: 1, gap: SPACING.xs },
   rowLabel: {
