@@ -144,7 +144,7 @@ describe('GameOverDistribution', () => {
     expect(flattenStyle(sixthRowFill.props.style)['backgroundColor']).not.toBe(COLORS.correct);
   });
 
-  it('should render the count outside the coloured fill, in `text`, regardless of highlight (mobile-ui-standard.md C2)', async () => {
+  it('should render the count outside the coloured fill, in `text`, when the bar has a count (mobile-ui-standard.md C2)', async () => {
     // A 12 dp count inside the bar fails contrast on both fills (correctFg on correct is
     // 4.33:1, brandFg on brand is worse): the fix moves it off the fill entirely.
     await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
@@ -159,5 +159,13 @@ describe('GameOverDistribution', () => {
     await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="lost" guessCount={2} />);
     const countText = screen.getByTestId('gameover-distribution-2-count');
     expect(flattenStyle(countText.props.style)['color']).toBe(COLORS.text);
+  });
+
+  it('should reserve the same fixed-width count slot when a row has no count, so bar tracks stay comparable', async () => {
+    await renderWithTheme(<Distribution distribution={[0, 1, 0, 0, 0, 0]} gameStatus="won" guessCount={2} />);
+    const emptyRowCount = flattenStyle(screen.getByTestId('gameover-distribution-1-count').props.style);
+    const filledRowCount = flattenStyle(screen.getByTestId('gameover-distribution-2-count').props.style);
+    expect(emptyRowCount.width).toBe(filledRowCount.width);
+    expect(screen.getByTestId('gameover-distribution-1-count')).toHaveTextContent('');
   });
 });
