@@ -70,10 +70,6 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
   const { colors } = useTheme();
   const hasCount = count > 0;
   const fill = isHighlighted ? colors.correct : colors.brand;
-  // The count text's foreground must match its own fill's *Fg token (mobile-ui-standard.md
-  // C1/C2): brandFg on brand, correctFg on correct — using brandFg on a correct fill is both
-  // a token mismatch and fails contrast (4.13:1 in dark).
-  const countTextColor = isHighlighted ? colors.correctFg : colors.brandFg;
   return (
     <View testID={`gameover-distribution-${guessNumber}`} style={styles.distributionRow}>
       <Text style={[styles.distributionIndex, { color: colors.textMuted }]}>{guessNumber}</Text>
@@ -85,11 +81,17 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
               styles.distributionFill,
               { width: `${Math.max((count / maxCount) * 100, MIN_BAR_PERCENT)}%`, backgroundColor: fill },
             ]}
-          >
-            <Text style={[styles.distributionCount, { color: countTextColor }]}>{count}</Text>
-          </View>
+          />
         )}
       </View>
+      {/* mobile-ui-standard.md C2: a 12 dp caption on `correct`/`brand` fails text contrast
+          (correctFg on correct is 4.33:1); the count sits outside the fill in `text` instead,
+          against `bg`, which always clears 4.5:1. */}
+      {hasCount && (
+        <Text testID={`gameover-distribution-${guessNumber}-count`} style={[styles.distributionCount, { color: colors.text }]}>
+          {count}
+        </Text>
+      )}
     </View>
   );
 }
