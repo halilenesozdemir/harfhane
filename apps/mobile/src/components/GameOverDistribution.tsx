@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
@@ -10,9 +10,6 @@ import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
 const MIN_BAR_PERCENT = 8;
-// A fixed width for the count slot, rendered whether or not a row has a count, so every
-// row's track (flex: 1) gets the same remaining space and the bars stay comparable (C2).
-const COUNT_WIDTH = 20;
 
 export function useDisplayDistribution(
   store: KeyValueStore,
@@ -138,5 +135,5 @@ const styles = StyleSheet.create({
   distributionIndex: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: SPACING.md },
   distributionTrack: { flex: 1, height: SPACING.lg, borderRadius: RADIUS.xs, overflow: 'hidden' },
   distributionFill: { height: '100%', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: SPACING.xs },
-  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: COUNT_WIDTH, textAlign: 'right' },
+  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: DISTRIBUTION_COUNT_WIDTH, textAlign: 'right' },
 });
