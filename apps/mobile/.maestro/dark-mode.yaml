@@ -16,5 +16,5 @@ appId: host.exp.exponent
 - assertVisible:
     text: "Koyu Tema"
     selected: true
-- tapOn: "Kapat"
+- tapOn: "Geri"
 - assertVisible: { id: "home-unlimited-card" }

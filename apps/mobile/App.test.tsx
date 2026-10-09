@@ -70,10 +70,10 @@ afterEach(() => {
   (jest.requireMock('./src/game/device-store') as DeviceStoreMockModule).__entries.clear();
 });
 
-async function openAndClose(openLabel: string, title: string) {
+async function openAndClose(openLabel: string, title: string, closeLabel: string) {
   await fireEvent.press(screen.getByLabelText(openLabel));
   expect(await screen.findByText(title)).toBeTruthy();
-  await fireEvent.press(screen.getByLabelText('Kapat'));
+  await fireEvent.press(screen.getByLabelText(closeLabel));
   expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 }
 
@@ -102,9 +102,11 @@ describe('App', () => {
 
   it('should open and close HowToPlay, Settings and Stats from home', async () => {
     await render(<App />);
-    await openAndClose('Nasıl oynanır sayfasını aç', 'Nasıl Oynanır?');
-    await openAndClose('Ayarları aç', 'Ayarlar');
-    await openAndClose('İstatistikleri aç', 'İstatistikler');
+    await openAndClose('Nasıl oynanır sayfasını aç', 'Nasıl oynanır', 'Geri');
+    await openAndClose('Ayarları aç', 'Ayarlar', 'Geri');
+    // Stats still closes with "Kapat" here — its own TopBar/"Geri" wiring is a separate,
+    // stacked PR (Plan 011 U7b) that has not landed on this branch yet.
+    await openAndClose('İstatistikleri aç', 'İstatistikler', 'Kapat');
   });
 
   it('should keep the selected word length after returning from a game', async () => {
@@ -132,6 +134,8 @@ describe('App', () => {
     expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
 
     await fireEvent.press(screen.getByLabelText('İstatistikleri aç'));
+    // Stats still closes with "Kapat" here (see the comment above); its own "Geri" wiring
+    // lands in a separate, stacked PR.
     await screen.findByLabelText('Kapat');
     let handledStats = false;
     await act(async () => {
@@ -277,7 +281,7 @@ describe('App', () => {
       );
 
       await render(<App />);
-      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.queryByText('Nasıl oynanır')).toBeNull();
       expect(screen.queryByLabelText('Harfhane')).toBeNull();
 
       (deviceStore.getItem as jest.Mock).mockImplementation(defaultGetItem);
@@ -308,11 +312,11 @@ describe('App', () => {
       await deviceStore.setItem(HOW_TO_PLAY_SEEN_KEY, 'not-seen-yet');
 
       const firstLaunch = await render(<App />);
-      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
+      expect(await screen.findByText('Nasıl oynanır')).toBeTruthy();
       expect(screen.queryByLabelText('Harfhane')).toBeNull();
 
       await act(async () => {
-        fireEvent.press(screen.getByLabelText('Oyna'));
+        fireEvent.press(screen.getByLabelText('Oynamaya başla'));
       });
       expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
       await act(async () => {
@@ -324,7 +328,7 @@ describe('App', () => {
       // is this test's stand-in for "the next launch".
       await render(<App />);
       expect(await screen.findByLabelText('Harfhane')).toBeTruthy();
-      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
+      expect(screen.queryByText('Nasıl oynanır')).toBeNull();
     });
 
     it('(011-AE5) should go home directly on hardware back from How to play on first launch', async () => {
@@ -332,7 +336,7 @@ describe('App', () => {
       const addSpy = jest.spyOn(BackHandler, 'addEventListener');
 
       await render(<App />);
-      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
+      expect(await screen.findByText('Nasıl oynanır')).toBeTruthy();
 
       let handled = false;
       await act(async () => {
@@ -367,7 +371,7 @@ describe('App', () => {
       expect(screen.getByLabelText('Titreşim').props.disabled).toBe(false);
 
       await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
-      await fireEvent.press(screen.getByLabelText('Kapat'));
+      await fireEvent.press(screen.getByLabelText('Geri'));
 
       await fireEvent.press(screen.getByTestId('home-daily-card'));
       await screen.findByTestId('key-A');
