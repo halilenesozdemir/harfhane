@@ -19,7 +19,7 @@ describe('useCountdown', () => {
     jest.useRealTimers();
   });
 
-  it('should tick every second while enabled', async () => {
+  it('should tick every second when enabled', async () => {
     const { result } = await renderHook(() => useCountdown(now, true));
     const first = result.current;
     jest.setSystemTime(new Date(NOW_PLUS_1S));
@@ -46,5 +46,28 @@ describe('useCountdown', () => {
       jest.advanceTimersByTime(1000);
     });
     expect(result.current).not.toBe(first);
+  });
+
+  it('should show a fresh value immediately when enabled flips true, before any tick elapses', async () => {
+    const { result, rerender } = await renderHook(({ enabled }: { enabled: boolean }) => useCountdown(now, enabled), {
+      initialProps: { enabled: false },
+    });
+    const staleValue = result.current;
+    // Time passes while disabled (no interval, no re-render); the value
+    // read at mount is now stale by more than a second.
+    jest.setSystemTime(new Date(NOW_PLUS_1S));
+    await act(async () => rerender({ enabled: true }));
+    expect(result.current).not.toBe(staleValue);
+  });
+
+  it('should clear the interval on unmount when enabled', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    const { unmount } = await renderHook(() => useCountdown(now, true));
+    const timerId = setIntervalSpy.mock.results[0]?.value as ReturnType<typeof setInterval>;
+
+    await act(async () => unmount());
+
+    expect(clearIntervalSpy).toHaveBeenCalledWith(timerId);
   });
 });

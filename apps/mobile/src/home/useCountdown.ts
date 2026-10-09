@@ -18,6 +18,17 @@ function readCountdown(now: () => Date): string {
  */
 export function useCountdown(now: () => Date, enabled: boolean): string {
   const [countdown, setCountdown] = useState(() => readCountdown(now));
+  const [wasEnabled, setWasEnabled] = useState(enabled);
+
+  // Recompute during render (not in the effect below) the instant `enabled`
+  // flips true: it can flip long after the initial (lazy) state was read,
+  // and without this the chip would show that stale value until the first
+  // tick, up to COUNTDOWN_TICK_MS later. Same "adjust state while
+  // rendering" pattern as useHomeStatus.ts's useLoadedStatus.
+  if (enabled !== wasEnabled) {
+    setWasEnabled(enabled);
+    if (enabled) setCountdown(readCountdown(now));
+  }
 
   useEffect(() => {
     if (!enabled) return undefined;
