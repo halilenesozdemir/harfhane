@@ -25,6 +25,10 @@ export interface TileProps {
   // Passed down from GameScreen's single useReduceMotion() subscription (M2) rather than every
   // Tile subscribing to AccessibilityInfo on its own.
   readonly reduceMotion?: boolean;
+  // Overrides the shared motion-flip token's duration for this tile's flip only (e.g. the launch
+  // intro's faster flip, Plan 011 U7d owner decision 2026-10-09). The game's own reveal never
+  // passes this, so it keeps the standard 500ms flip.
+  readonly flipDurationMs?: number;
 }
 
 const TILE_BORDER_WIDTH = 2;
@@ -40,7 +44,6 @@ const HINT_LETTER_OPACITY = 0.75;
 const POP_MS = parseMs(base.motionPop);
 const FLIP_MS = parseMs(base.motionFlip);
 const BOUNCE_MS = parseMs(base.motionBounce);
-const FLIP_HALF_MS = FLIP_MS / 2;
 // M1: pops (and the win-bounce, which is a pop-shaped wave) use the standard's easePop.
 const EASE_POP = Easing.bezier(...parseCubicBezier(base.easePop));
 
@@ -91,7 +94,13 @@ function usePopAnimation(isFilled: boolean, status: TileStatus, reduceMotion: bo
 
 // Flips the tile through the evaluated colour at the midpoint, with a per-tile stagger delay.
 // Reduce motion (AE2) skips the flip entirely and shows the evaluated colour immediately.
-function useFlipAnimation(isRevealing: boolean, revealDelayMs: number, reduceMotion: boolean, rotation: Animated.Value) {
+function useFlipAnimation(
+  isRevealing: boolean,
+  revealDelayMs: number,
+  reduceMotion: boolean,
+  rotation: Animated.Value,
+  flipDurationMs: number,
+) {
   const [colorRevealed, setColorRevealed] = useState(true);
   const [wasRevealing, setWasRevealing] = useState(false);
   const [wasReduceMotion, setWasReduceMotion] = useState(reduceMotion);
@@ -120,10 +129,10 @@ function useFlipAnimation(isRevealing: boolean, revealDelayMs: number, reduceMot
   useEffect(() => {
     if (!isRevealing || reduceMotion) return undefined;
     rotation.setValue(0);
-    Animated.timing(rotation, { toValue: 1, duration: FLIP_MS, delay: revealDelayMs, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
-    const midTimer = setTimeout(() => setColorRevealed(true), revealDelayMs + FLIP_HALF_MS);
+    Animated.timing(rotation, { toValue: 1, duration: flipDurationMs, delay: revealDelayMs, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
+    const midTimer = setTimeout(() => setColorRevealed(true), revealDelayMs + flipDurationMs / 2);
     return () => clearTimeout(midTimer);
-  }, [isRevealing, revealDelayMs, reduceMotion, rotation]);
+  }, [isRevealing, revealDelayMs, reduceMotion, rotation, flipDurationMs]);
 
   return colorRevealed;
 }
@@ -151,13 +160,14 @@ export function Tile({
   celebrate = false,
   celebrateDelayMs = 0,
   reduceMotion = false,
+  flipDurationMs = FLIP_MS,
 }: TileProps) {
   const { colors } = useTheme();
   const [scale] = useState(() => new Animated.Value(1));
   const [rotation] = useState(() => new Animated.Value(0));
 
   usePopAnimation(isFilled, status, reduceMotion, scale);
-  const colorRevealed = useFlipAnimation(isRevealing, revealDelayMs, reduceMotion, rotation);
+  const colorRevealed = useFlipAnimation(isRevealing, revealDelayMs, reduceMotion, rotation, flipDurationMs);
   useCelebrateAnimation(celebrate, celebrateDelayMs, reduceMotion, scale);
 
   const effectiveStatus = colorRevealed ? status : null;
