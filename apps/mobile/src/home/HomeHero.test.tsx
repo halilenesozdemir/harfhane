@@ -28,6 +28,13 @@ describe('HomeHero', () => {
     }
   });
 
+  it('should cap each hero letter font scale when rendered, to avoid tile overflow at large accessibility text sizes', async () => {
+    await renderWithTheme(<HomeHero />);
+    for (const letter of ['H', 'A', 'R', 'F']) {
+      expect(screen.getByText(letter).props.maxFontSizeMultiplier).toBeLessThanOrEqual(1.3);
+    }
+  });
+
   it('should expose the row as a single header labelled "Harfhane", not spelled letter by letter', async () => {
     await renderWithTheme(<HomeHero />);
     const hero = screen.getByTestId('home-hero');
