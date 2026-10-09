@@ -7,6 +7,10 @@ const TODAY = '2026-10-08';
 const TWO_DAYS_AGO = '2026-10-06';
 
 describe('StatsScreen', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should show win percentage, streak and distribution for daily stats', async () => {
     const stats = {
       ...createInitialDailyStats(),
@@ -39,7 +43,6 @@ describe('StatsScreen', () => {
     const stats = { ...createInitialDailyStats(), currentStreak: 4, maxStreak: 5, lastPlayedDate: '2026-10-09' };
     await renderWithTheme(<StatsScreen stats={stats} isUnlimited={false} onClose={() => undefined} />);
     expect(screen.getByTestId('stat-Seri').props.children).toBe(4);
-    jest.useRealTimers();
   });
 
   it('should show the games won total instead of a streak for unlimited stats', async () => {
