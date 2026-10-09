@@ -45,6 +45,11 @@ const CROSSFADE_MS = MARK_MS;
 // (since row2Celebrate is scheduled from MARK_MS + TILES_FLIP_DONE_MS, i.e. relative to the real
 // phase change) the bounce would then also wait out an extra, dead MARK_MS doing nothing.
 const TILE_REVEAL_START_MS = MARK_MS;
+const WORDMARK_START_MS = MARK_MS + CELEBRATE_DONE_MS;
+const CROSSFADE_START_MS = WORDMARK_START_MS + WORDMARK_MS + WORDMARK_HOLD_MS;
+// Total elapsed time from mount to `finish()`. Exported for tests that must catch a regression
+// back toward the pre-2026-10-09-follow-up ~3.1s total.
+export const TOTAL_INTRO_MS = CROSSFADE_START_MS + CROSSFADE_MS;
 
 export const LAUNCH_INTRO_TIMING = {
   MARK_MS,
@@ -57,11 +62,6 @@ export const LAUNCH_INTRO_TIMING = {
   CROSSFADE_MS,
   TILE_REVEAL_START_MS,
 } as const;
-
-// Total elapsed time from mount to `finish()`, for tests that must catch a regression back
-// toward the pre-2026-10-09-follow-up ~3.1s total.
-export const TOTAL_INTRO_MS =
-  MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + WORDMARK_HOLD_MS + CROSSFADE_MS;
 
 /**
  * Orchestrates the cold-start launch intro's phases on plain timers (like Tile's own flip
@@ -105,9 +105,9 @@ export function useLaunchIntroPhases(reduceMotion: boolean, onDone: () => void):
 
     schedule(() => setPhase('tiles'), MARK_MS);
     schedule(() => setRow2Celebrate(true), MARK_MS + TILES_FLIP_DONE_MS);
-    schedule(() => setPhase('wordmark'), MARK_MS + CELEBRATE_DONE_MS);
-    schedule(() => setPhase('crossfade'), MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + WORDMARK_HOLD_MS);
-    schedule(finish, MARK_MS + CELEBRATE_DONE_MS + WORDMARK_MS + WORDMARK_HOLD_MS + CROSSFADE_MS);
+    schedule(() => setPhase('wordmark'), WORDMARK_START_MS);
+    schedule(() => setPhase('crossfade'), CROSSFADE_START_MS);
+    schedule(finish, TOTAL_INTRO_MS);
 
     return clearTimers;
     // Scheduled once per mount regardless of reduceMotion's initial value: the effect above
