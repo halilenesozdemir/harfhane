@@ -28,4 +28,10 @@ describe('HowToPlayScreen', () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('should hide the "Oynamaya başla" button when opened from the home icon (011-AE5)', async () => {
+    await renderWithTheme(<HowToPlayScreen onClose={() => undefined} />);
+    expect(screen.queryByText('Oynamaya başla')).toBeNull();
+    expect(screen.getByLabelText('Geri')).toBeTruthy();
+  });
 });
