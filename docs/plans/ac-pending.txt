@@ -19,4 +19,3 @@
 
 010-AE1  Plan 010 U1 (packages/shared strict flags + ts-reset), not started
 010-AE2  Plan 010 U4 (branded WordLength/TurkeyDate types), not started
-011-AE7  Plan 011 U7b (game screen's icon back button and "Günlük"/"5 harf" header split), not started; U7c's home half (the three top-bar icon buttons) is tested but does not close out the whole AE on its own

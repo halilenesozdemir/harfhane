@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { generateShareText, getTimeUntilMidnight, getTodayString, type TileStatus } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { Button } from '../ui/Button';
+import { FONT_FAMILY_DISPLAY, FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
@@ -76,21 +77,10 @@ async function shareResult(shareText: string): Promise<void> {
 
 interface ShareButtonProps {
   readonly shareText: string;
-  readonly colors: ThemeColors;
 }
 
-function ShareButton({ shareText, colors }: ShareButtonProps) {
-  return (
-    <Pressable
-      testID="gameover-share"
-      accessibilityRole="button"
-      accessibilityLabel={SHARE_LABEL}
-      onPress={() => void shareResult(shareText)}
-      style={[styles.shareButton, { backgroundColor: colors.brand }]}
-    >
-      <Text style={[styles.shareLabel, { color: colors.brandFg }]}>{SHARE_LABEL}</Text>
-    </Pressable>
-  );
+function ShareButton({ shareText }: ShareButtonProps) {
+  return <Button testID="gameover-share" label={SHARE_LABEL} variant="primary" onPress={() => void shareResult(shareText)} />;
 }
 
 interface ResultHeaderProps {
@@ -126,17 +116,7 @@ function CountdownOrNewWord({ mode, countdown, onNewGame, colors }: CountdownOrN
       </View>
     );
   }
-  return (
-    <Pressable
-      testID="gameover-new-word"
-      accessibilityRole="button"
-      accessibilityLabel={NEW_WORD_LABEL}
-      onPress={onNewGame}
-      style={[styles.newWordButton, { backgroundColor: colors.present }]}
-    >
-      <Text style={[styles.newWordLabel, { color: colors.presentFg }]}>{NEW_WORD_LABEL}</Text>
-    </Pressable>
-  );
+  return <Button testID="gameover-new-word" label={NEW_WORD_LABEL} variant="secondary" onPress={onNewGame} />;
 }
 
 export function GameOverCard({
@@ -178,7 +158,7 @@ export function GameOverCard({
     >
       <ResultHeader title={title} solution={solution} colors={colors} />
       {distribution !== null && <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />}
-      <ShareButton shareText={shareText} colors={colors} />
+      <ShareButton shareText={shareText} />
       <CountdownOrNewWord mode={mode} countdown={countdown} onNewGame={onNewGame} colors={colors} />
     </ScrollView>
   );
@@ -188,16 +168,15 @@ const styles = StyleSheet.create({
   // A ScrollView (not a plain View): on a small screen (e.g. 360x640 dp) the card's own content
   // can be taller than the space left under the grid, so it must scroll internally — bounded by
   // flex: 1 from the parent box GameScreen.tsx gives this element — rather than push the share
-  // and "Yeni kelime" buttons off-screen.
+  // and "Yeni kelime" buttons off-screen. It stays a styled ScrollView rather than the shared
+  // `Card` primitive (mobile-redesign-spec.md section C), because `Card` has no scrolling
+  // content slot; its fill/border/radius still match `Card`'s own look (CA1).
   cardScroll: { flex: 1, borderWidth: 1, borderRadius: RADIUS.lg },
   card: { padding: SPACING.lg, gap: SPACING.md, alignItems: 'stretch' },
-  title: { fontSize: FONT_SIZE.title, fontWeight: '800', textAlign: 'center' },
+  // T1: a single-weight custom family (Baloo 2 ExtraBold) carries no fontWeight of its own.
+  title: { fontSize: FONT_SIZE.headline, lineHeight: LINE_HEIGHT.headline, fontFamily: FONT_FAMILY_DISPLAY, textAlign: 'center' },
   answer: { fontSize: FONT_SIZE.bodyLarge, fontWeight: '700', textAlign: 'center' },
-  shareButton: { paddingVertical: SPACING.md, borderRadius: RADIUS.md, alignItems: 'center' },
-  shareLabel: { fontSize: FONT_SIZE.bodyLarge, fontWeight: '800' },
   countdown: { alignItems: 'center', gap: SPACING.xs },
   countdownCaption: { fontSize: FONT_SIZE.body },
   countdownValue: { fontSize: FONT_SIZE.title, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  newWordButton: { paddingVertical: SPACING.md, borderRadius: RADIUS.md, alignItems: 'center' },
-  newWordLabel: { fontSize: FONT_SIZE.bodyLarge, fontWeight: '800' },
 });

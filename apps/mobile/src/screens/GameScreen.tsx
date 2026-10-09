@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GameGrid } from '../components/GameGrid';
 import { GameOverCard } from '../components/GameOverCard';
@@ -8,7 +9,9 @@ import { useGame } from '../game/useGame';
 import { useHint } from '../game/useHint';
 import { useRevealState } from '../game/useRevealState';
 import { useReduceMotion } from '../ui/motion/useReduceMotion';
-import { FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { IconButton } from '../ui/IconButton';
+import { TopBar } from '../ui/TopBar';
+import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
 import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
 import type { UseHintResult } from '../game/useHint';
@@ -23,10 +26,10 @@ export interface GameScreenProps extends GameDependencies {
 }
 
 const MODE_TITLES: Record<GameMode, string> = { daily: 'Günlük', unlimited: 'Sınırsız' };
-const TITLE_SIZE = FONT_SIZE.title;
 const MESSAGE_SIZE = FONT_SIZE.bodyLarge;
 const MESSAGE_HEIGHT = 28;
-const SCREEN_PADDING = SPACING.md;
+// Board starts 8 dp below the top bar (mobile-redesign-spec.md section C).
+const BODY_TOP_GAP = SPACING.sm;
 const SECTION_GAP = SPACING.md;
 const BUTTON_PADDING = SPACING.md;
 const BUTTON_RADIUS = RADIUS.md;
@@ -171,31 +174,30 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
   });
   return (
     <View style={[styles.screen, { backgroundColor: colors.bg }]}>
-      <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Geri" onPress={onBack} hitSlop={SECTION_GAP}>
-          <Text style={[styles.back, { color: colors.text }]}>‹ Geri</Text>
-        </Pressable>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{`${MODE_TITLES[mode]} · ${wordLength} harf`}</Text>
-      </View>
-      <GameBody
-        mode={mode}
-        wordLength={wordLength}
-        game={game}
-        hint={hint}
-        colors={colors}
-        store={store}
-        today={today}
-        recordedDistribution={justRecordedDistribution}
+      <TopBar
+        title={MODE_TITLES[mode]}
+        chip={`${wordLength} harf`}
+        leading={<IconButton icon={<ArrowLeft size={ICON_SIZE.lg} color={colors.text} />} accessibilityLabel="Geri" onPress={onBack} />}
       />
+      <View style={styles.body}>
+        <GameBody
+          mode={mode}
+          wordLength={wordLength}
+          game={game}
+          hint={hint}
+          colors={colors}
+          store={store}
+          today={today}
+          recordedDistribution={justRecordedDistribution}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: SCREEN_PADDING, gap: SECTION_GAP, justifyContent: 'space-between' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: SECTION_GAP },
-  back: { fontSize: MESSAGE_SIZE, fontWeight: '700' },
-  title: { fontSize: TITLE_SIZE, fontWeight: '800' },
+  screen: { flex: 1 },
+  body: { flex: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: BODY_TOP_GAP, paddingBottom: SCREEN_PADDING, gap: SECTION_GAP, justifyContent: 'space-between' },
   message: { fontSize: MESSAGE_SIZE, fontWeight: '700', textAlign: 'center', minHeight: MESSAGE_HEIGHT },
   center: { alignItems: 'center', gap: SECTION_GAP },
   button: { alignSelf: 'center', paddingHorizontal: BUTTON_PADDING * 2, paddingVertical: BUTTON_PADDING, borderRadius: BUTTON_RADIUS },

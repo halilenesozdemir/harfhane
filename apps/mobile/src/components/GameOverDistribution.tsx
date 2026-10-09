@@ -10,6 +10,9 @@ import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
 const MIN_BAR_PERCENT = 8;
+// A fixed width for the count slot, rendered whether or not a row has a count, so every
+// row's track (flex: 1) gets the same remaining space and the bars stay comparable (C2).
+const COUNT_WIDTH = 20;
 
 export function useDisplayDistribution(
   store: KeyValueStore,
@@ -70,10 +73,6 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
   const { colors } = useTheme();
   const hasCount = count > 0;
   const fill = isHighlighted ? colors.correct : colors.brand;
-  // The count text's foreground must match its own fill's *Fg token (mobile-ui-standard.md
-  // C1/C2): brandFg on brand, correctFg on correct — using brandFg on a correct fill is both
-  // a token mismatch and fails contrast (4.13:1 in dark).
-  const countTextColor = isHighlighted ? colors.correctFg : colors.brandFg;
   return (
     <View testID={`gameover-distribution-${guessNumber}`} style={styles.distributionRow}>
       <Text style={[styles.distributionIndex, { color: colors.textMuted }]}>{guessNumber}</Text>
@@ -85,11 +84,17 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
               styles.distributionFill,
               { width: `${Math.max((count / maxCount) * 100, MIN_BAR_PERCENT)}%`, backgroundColor: fill },
             ]}
-          >
-            <Text style={[styles.distributionCount, { color: countTextColor }]}>{count}</Text>
-          </View>
+          />
         )}
       </View>
+      {/* mobile-ui-standard.md C2: a 12 dp caption on `correct`/`brand` fails text contrast
+          (correctFg on correct is 4.33:1); the count sits outside the fill in `text` instead,
+          against the card's `surface`, which always clears 4.5:1. Always rendered (empty when
+          there is no count) so every row reserves the same fixed-width slot and the tracks
+          next to it stay comparable widths. */}
+      <Text testID={`gameover-distribution-${guessNumber}-count`} style={[styles.distributionCount, { color: colors.text }]}>
+        {hasCount ? count : ''}
+      </Text>
     </View>
   );
 }
@@ -133,5 +138,5 @@ const styles = StyleSheet.create({
   distributionIndex: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: SPACING.md },
   distributionTrack: { flex: 1, height: SPACING.lg, borderRadius: RADIUS.xs, overflow: 'hidden' },
   distributionFill: { height: '100%', alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: SPACING.xs },
-  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700' },
+  distributionCount: { fontSize: FONT_SIZE.caption, fontWeight: '700', width: COUNT_WIDTH, textAlign: 'right' },
 });
