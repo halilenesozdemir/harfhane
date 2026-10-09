@@ -14,17 +14,22 @@ export type CardLayoutStyle = Pick<
   'width' | 'minHeight' | 'flexBasis' | 'flexGrow' | 'alignItems' | 'justifyContent' | 'alignSelf'
 >;
 
+/**
+ * A pressable card's style goes on the outer wrapper (so percentage widths resolve against the
+ * parent); minHeight or alignment there would stretch or misalign the back layer under the face.
+ */
+export type PressableCardLayoutStyle = Pick<ViewStyle, 'width' | 'flexBasis' | 'flexGrow' | 'alignSelf'>;
+
 interface CardBaseProps {
   readonly children: ReactNode;
   readonly padding?: number;
   readonly testID?: string;
-  readonly style?: CardLayoutStyle;
 }
 
 export type CardProps = CardBaseProps &
   (
-    | { readonly onPress: () => void; readonly accessibilityLabel: string }
-    | { readonly onPress?: undefined; readonly accessibilityLabel?: undefined }
+    | { readonly onPress: () => void; readonly accessibilityLabel: string; readonly style?: PressableCardLayoutStyle }
+    | { readonly onPress?: undefined; readonly accessibilityLabel?: undefined; readonly style?: CardLayoutStyle }
   );
 
 const PRESSED_DEPTH = 1;

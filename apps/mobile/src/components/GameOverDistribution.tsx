@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
-import { DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
+import { DISTRIBUTION_COUNT_MAX_FONT_SCALE, DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
@@ -89,7 +89,13 @@ export function DistributionRow({ guessNumber, count, maxCount, isHighlighted }:
           against the card's `surface`, which always clears 4.5:1. Always rendered (empty when
           there is no count) so every row reserves the same fixed-width slot and the tracks
           next to it stay comparable widths. */}
-      <Text testID={`gameover-distribution-${guessNumber}-count`} style={[styles.distributionCount, { color: colors.text }]}>
+      <Text
+        testID={`gameover-distribution-${guessNumber}-count`}
+        numberOfLines={1}
+        maxFontSizeMultiplier={DISTRIBUTION_COUNT_MAX_FONT_SCALE}
+        accessibilityElementsHidden={!(hasCount)}
+        importantForAccessibility={hasCount ? 'auto' : 'no-hide-descendants'}
+        style={[styles.distributionCount, { color: colors.text }]}>
         {hasCount ? count : ''}
       </Text>
     </View>

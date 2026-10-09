@@ -88,4 +88,6 @@ export const FONT_FAMILY_DISPLAY = 'Baloo2_800ExtraBold';
  * bars stay comparable widths (mobile-ui-standard.md C2). Shared by GameOverDistribution
  * and StatsScreen.
  */
-export const DISTRIBUTION_COUNT_WIDTH = 20;
+// Three 12 dp bold digits ("120" in unlimited stats) at the capped font scale below.
+export const DISTRIBUTION_COUNT_WIDTH = 32;
+export const DISTRIBUTION_COUNT_MAX_FONT_SCALE = 1.2;

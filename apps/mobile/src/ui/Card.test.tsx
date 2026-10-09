@@ -27,6 +27,10 @@ function assertCardStyleIsLayoutOnly() {
   const withBorder: CardLayoutStyle = { borderColor: '#000000' };
   void withBackground;
   void withBorder;
+  // @ts-expect-error - a pressable card's style lands on the outer wrapper, where minHeight would
+  // stretch the back layer below the face; only width/flex/alignSelf keys are allowed there.
+  const pressableWithMinHeight: CardProps = { onPress: () => undefined, accessibilityLabel: 'Oyna', children: null, style: { minHeight: 72 } };
+  void pressableWithMinHeight;
 }
 void assertCardStyleIsLayoutOnly;
 
