@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "pnpm run typecheck:e2e && vite build && playwright test"
+    "test:e2e": "pnpm run typecheck:e2e && vite build && playwright test --project=stubbed"
   },
   "dependencies": {
     "@fontsource/baloo-2": "^5.3.0",

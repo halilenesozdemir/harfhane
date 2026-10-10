@@ -56,6 +56,24 @@ describe('useGame', () => {
     expect(result.current.session.game.evaluations).toHaveLength(2);
   });
 
+  it('should use the server gameNumber and date over a previously stored one', async () => {
+    const saved = {
+      guesses: [],
+      evaluations: [],
+      currentGuess: '',
+      gameStatus: 'playing',
+      keyboardStatus: {},
+      gameNumber: 1,
+      date: '2026-10-01',
+    };
+    const store = createMemoryStore({ [DAILY_KEY]: JSON.stringify(saved) });
+    const api = createApi({ fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 7, date: TODAY }) });
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    expect(result.current.session.game.gameNumber).toBe(7);
+    expect(result.current.session.game.date).toBe(TODAY);
+  });
+
   it('should apply a valid guess and save the daily game', async () => {
     const store = createMemoryStore();
     const api = createApi();

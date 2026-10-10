@@ -5,9 +5,7 @@ import type { GameMode } from './game-session';
 import { hintStorageKey } from './game-state';
 import { loadRevealedHints, saveRevealedHints } from './game-storage';
 import type { KeyValueStore } from './game-storage';
-
-// Supporter status is not purchasable yet (Plan 008 R7); the perk ships in Plan 005 Phase 4.
-const IS_SUPPORTER = false;
+import { useEntitlements } from './useEntitlements';
 
 export interface UseHintOptions {
   readonly store: KeyValueStore;
@@ -76,7 +74,8 @@ function nextHint(solution: string, guesses: readonly string[], revealed: readon
 
 export function useHint({ store, mode, wordLength, dailyDate, solution, guesses }: UseHintOptions): UseHintResult {
   const { revealed, isLoaded, setRevealed } = useRevealedPositions(store, mode, dailyDate, wordLength);
-  const allowance = hintAllowance(mode, IS_SUPPORTER);
+  const { isSupporter } = useEntitlements();
+  const allowance = hintAllowance(mode, isSupporter);
   const hasAllowanceLeft = mode === 'daily' && dailyDate !== null && revealed.length < allowance;
   const canReveal = hasAllowanceLeft && isLoaded && nextHint(solution, guesses, revealed) !== null;
 

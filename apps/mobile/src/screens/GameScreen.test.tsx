@@ -1,10 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { AccessibilityInfo, Animated, Share } from 'react-native';
-
-jest.mock('react-native/Libraries/Share/Share', () => ({
-  __esModule: true,
-  default: { share: jest.fn().mockResolvedValue({ action: 'sharedAction' }) },
-}));
 import { TOUCH_TARGET } from '../ui/layout';
 import { base, themes } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
@@ -22,6 +17,11 @@ const mockPerformAndroidHapticsAsync = jest.fn().mockResolvedValue(undefined);
 jest.mock('expo-haptics', () => ({
   AndroidHaptics: { Keyboard_Tap: 'keyboard-tap', Confirm: 'confirm', Reject: 'reject' },
   performAndroidHapticsAsync: (...args: unknown[]) => mockPerformAndroidHapticsAsync(...args),
+}));
+
+jest.mock('react-native/Libraries/Share/Share', () => ({
+  __esModule: true,
+  default: { share: jest.fn().mockResolvedValue({ action: 'sharedAction' }) },
 }));
 
 const today = () => '2026-10-05';
@@ -458,6 +458,26 @@ describe('GameScreen', () => {
 
       await advancePastGameOverGate(true);
       expect(screen.getByTestId('gameover-card')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should mark the share text with the hint used in a won daily game (011-AE6)', async () => {
+    jest.useFakeTimers();
+    try {
+      await renderWithTheme(<GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={createApi()} store={createMemoryStore()} today={today} />);
+      const hintButton = await screen.findByLabelText('İpucu göster');
+      await act(async () => fireEvent.press(hintButton));
+      await screen.findByTestId('hint-text');
+
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-card')).toBeTruthy();
+
+      await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+      const sharedMessage = (Share.share as jest.Mock).mock.calls.at(-1)?.[0]?.message as string;
+      expect(sharedMessage.split('\n')[0]).toContain('· ipucu');
     } finally {
       jest.useRealTimers();
     }

@@ -260,7 +260,7 @@ describe('GameOverCard', () => {
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
 
-  it('should use the server gameNumber in the title and share text when it disagrees with the device-computed number', async () => {
+  it('should use the server gameNumber in the share text when it disagrees with the device-computed number', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
     // dailyGameNumber(DAILY_DATE) === 3, but the server says this is game #99 (e.g. the device

@@ -1,4 +1,5 @@
 import { useLocalStorage } from './useLocalStorage';
+import { useEntitlements } from './useEntitlements';
 import type { WordLength } from '../types';
 import { getTodayString, hintAllowance, pickHint, type HintMode, type LetterHint } from '@harfhane/shared';
 
@@ -59,7 +60,7 @@ export function useHint(
   isUnlimited: boolean
 ): UseHintReturn {
   const mode: HintMode = isUnlimited ? 'unlimited' : 'daily';
-  const isSupporter = false; // TODO(Plan 005 Phase 4): read the real supporter flag once purchases ship.
+  const { isSupporter } = useEntitlements();
   const allowance = hintAllowance(mode, isSupporter);
 
   const today = getTodayString();

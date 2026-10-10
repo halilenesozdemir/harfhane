@@ -1,8 +1,11 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useHint } from './useHint';
+import { useEntitlements } from './useEntitlements';
 import { getTodayString } from '@harfhane/shared';
 import type { WordLength } from '../types';
+
+vi.mock('./useEntitlements', () => ({ useEntitlements: vi.fn(() => ({ isSupporter: false })) }));
 
 const SOLUTION = 'KALEM';
 const WORD_LENGTH: WordLength = 5;
@@ -20,6 +23,19 @@ function legacyKeyFor(wordLength: WordLength): string {
 describe('useHint', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.mocked(useEntitlements).mockReturnValue({ isSupporter: false });
+  });
+
+  it('should read the supporter allowance from useEntitlements instead of a hardcoded literal', () => {
+    vi.mocked(useEntitlements).mockReturnValue({ isSupporter: true });
+
+    const { result } = renderHook(() => useHint(SOLUTION, WORD_LENGTH, [], false));
+
+    // The free allowance is 1 (FREE_DAILY_HINTS); a hardcoded literal would mark this used
+    // after one reveal. A supporter (SUPPORTER_DAILY_HINTS = 3) must still have room left.
+    act(() => result.current.revealHint());
+
+    expect(result.current.hintUsed).toBe(false);
   });
 
   it('should reveal L, E or M when K and A are already correctly guessed (008-AE7)', () => {
