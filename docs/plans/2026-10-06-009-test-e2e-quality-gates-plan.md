@@ -44,7 +44,8 @@ gets them only as a manually triggered (`workflow_dispatch`) job, never on every
 - R9. A flaky-test policy exists: a test that fails intermittently is quarantined with a backlog
   entry and fixed or deleted within a week; tests are never silently retried to green.
 - R10. A short test report per gate run (journeys passed, AE coverage, axe, mutation score) is kept
-  as a CI artifact, and the Phase 1 exit result is written to `docs/research/`.
+  as a CI artifact for CI gates and in the PR body for the local ones (real-backend, mutation), and
+  the Phase 1 exit result is written to `docs/research/`.
 
 ## Acceptance examples
 - AE1 (R1). Given Plan 008 lists AE1–AE7 and no test name contains "AE7", the traceability check
@@ -69,12 +70,12 @@ gets them only as a manually triggered (`workflow_dispatch`) job, never on every
   `workflow_dispatch`-only CI job, with `wrangler dev --local`, seed in
   `apps/backend/tests/fixtures/e2e-seed.sql`).
 - KTD3. Tools: `@axe-core/playwright`, `fast-check`, Stryker (`@stryker-mutator/core` with the
-  Vitest runner) scoped to `packages/shared`, `knip`, `dependency-cruiser`, Maestro CLI (not an npm
+  Vitest runner) scoped to the paths in KTD4, `knip`, `dependency-cruiser`, Maestro CLI (not an npm
   dependency; documented in `docs/guides/mobile-run.md`). Check each package's current version and
   Vitest compatibility before adding.
 - KTD4. Mutation testing runs only on changed files under `packages/shared/src` and
-  `apps/backend/src/{services,repositories}` (Stryker `--mutate` from the PR diff, incremental
-  cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
+  `apps/backend/src/{services,repositories}` (Stryker `--mutate` from `git diff origin/main...HEAD`,
+  incremental cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
   mutants run in the Workers Vitest pool; check Stryker's runner support for it and fall back to a
   plain Vitest config for repositories if needed.
 - KTD5. Mobile `testID`s are added where Maestro needs stable selectors; no visible UI change.
@@ -82,7 +83,10 @@ gets them only as a manually triggered (`workflow_dispatch`) job, never on every
 ## Units
 File ownership: A owns `scripts/check-ac-coverage.mjs`, `.github/workflows/ci.yml` and
 `AGENTS.md`/`CLAUDE.md` edits; B owns `apps/frontend/e2e/**` and `apps/frontend/playwright.config.ts`;
-C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/**`.
+C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/**`. U6 also edits
+`.claude/commands/unit.md` and `docs/guides/review-checklist.md`, and adds its own
+`workflow_dispatch` workflow file instead of editing `ci.yml`; it starts after other edits to
+those files have merged.
 
 - U1 (A). Traceability script, tests for it, CI step; flaky-test policy line in `AGENTS.md`; test
   naming rule `(<plan>-AE<n>)` in `CLAUDE.md` and `.claude/commands/unit.md`. Existing tests that
@@ -93,8 +97,9 @@ C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/*
 - U4 (C). Maestro flows for R5, `testID`s, run guide. (R5, AE4)
 - U5 (D). fast-check property tests for shared logic. (R6, AE5)
 - U6 (D, after U5). Stryker for shared and backend services/repositories, a changed-files local
-  gate (`pnpm` script, `/unit` step) plus a `workflow_dispatch`-only CI job,
-  first full-run report in the PR body. (R7, AE6)
+  gate (`pnpm` script, `/unit` step) plus a `workflow_dispatch`-only CI job, a
+  `docs/guides/review-checklist.md` item that a PR changing the KTD4 paths without a mutation
+  score in its body is a finding, first full-run report in the PR body. (R7, R10, AE6)
 - U7 (A, after U1). knip and dependency-cruiser in CI, fix or record what they find. (R8)
 - U8 (A, last). Phase 1 exit run: all gates, report in `docs/research/`, failures fixed or put in
   `docs/backlog.md`. (R10)
