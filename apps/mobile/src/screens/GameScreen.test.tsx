@@ -1,5 +1,10 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
-import { AccessibilityInfo, Animated } from 'react-native';
+import { AccessibilityInfo, Animated, Share } from 'react-native';
+
+jest.mock('react-native/Libraries/Share/Share', () => ({
+  __esModule: true,
+  default: { share: jest.fn().mockResolvedValue({ action: 'sharedAction' }) },
+}));
 import { TOUCH_TARGET } from '../ui/layout';
 import { base, themes } from '@harfhane/ui-tokens';
 import type { ApiClient } from '../lib/api';
@@ -77,6 +82,33 @@ describe('GameScreen', () => {
       expect(screen.getByTestId('gameover-share')).toBeTruthy();
       expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
       expect(screen.queryByTestId('key-ENTER')).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should share the server gameNumber, not the device-clock-computed one, when the device clock is wrong', async () => {
+    jest.useFakeTimers();
+    try {
+      // The device thinks it's a day earlier than the server, but the server's own response
+      // (gameNumber: 7, date: '2026-10-06') must still win in the title/share text.
+      const wrongToday = () => '2026-10-05';
+      const api = {
+        fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 7, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={wrongToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+      const [[{ message }]] = (Share.share as jest.Mock).mock.calls;
+      expect(message).toContain('#7');
+      expect(message).not.toContain(`#${dailyGameNumber(wrongToday())}`);
     } finally {
       jest.useRealTimers();
     }

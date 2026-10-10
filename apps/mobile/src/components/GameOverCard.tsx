@@ -20,6 +20,10 @@ export interface GameOverCardProps {
   readonly evaluations: readonly (readonly TileStatus[])[];
   readonly wordId: number | null;
   readonly dailyDate: string | null;
+  // The server's own daily game number (from GameSession's stored game, /words/daily).
+  // Null for unlimited and for a game loaded before this field existed; the title/share text
+  // then fall back to computing the number from `dailyDate`, exactly as before.
+  readonly gameNumber?: number | null;
   readonly store: KeyValueStore;
   readonly today?: () => string;
   readonly now?: () => Date;
@@ -131,6 +135,7 @@ export function GameOverCard({
   evaluations,
   wordId,
   dailyDate,
+  gameNumber = null,
   store,
   today = getTodayString,
   now = defaultNow,
@@ -146,7 +151,7 @@ export function GameOverCard({
   const countdown = useCountdown(mode === 'daily', now);
   useResultAnnouncement(title);
 
-  const modeText = mode === 'unlimited' ? UNLIMITED_MODE_TEXT : `#${dailyGameNumber(dailyDate ?? today())}`;
+  const modeText = mode === 'unlimited' ? UNLIMITED_MODE_TEXT : `#${gameNumber ?? dailyGameNumber(dailyDate ?? today())}`;
   const shareText = generateShareText(
     [...guesses],
     evaluations.map((row) => [...row]),

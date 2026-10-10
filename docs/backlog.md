@@ -344,16 +344,6 @@ between them.
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
 
-## Mobile share/title number comes from the device date, not the server (2026-10-07)
-`apps/mobile/src/components/GameOverCard.tsx` computes the daily game number from the device's
-local `dailyDate` string via `dailyGameNumber()` (mirroring the backend's formula), instead of the
-server's own `gameNumber` from `/words/daily` — `GameSession` does not carry it today, and
-PR #88 owns `game/useGame.ts`/`game-session.ts`. Once #88 merges, thread `gameNumber` (and `date`)
-from the `/words/daily` response into `GameSession` and have `GameOverCard` read it from there
-instead of recomputing it locally, matching how the web app already uses the server's
-`gameNumber` (`apps/frontend/src/components/GameOverModal.tsx`). A device with a wrong clock is
-the only way the two values could currently disagree.
-
 ## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
 `getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
 *next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight

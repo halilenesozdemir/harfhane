@@ -25,6 +25,16 @@ function isKeyboardStatus(value: unknown): boolean {
   return typeof value === 'object' && value !== null && Object.values(value).every(isTileStatus);
 }
 
+// Both fields are optional on GameState (older stored games never set them), so an absent
+// value passes; only a present value of the wrong type fails the guard.
+function isOptionalNumber(value: unknown): boolean {
+  return value === undefined || typeof value === 'number';
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string';
+}
+
 function isGameState(value: unknown): value is GameState {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Record<string, unknown>;
@@ -33,7 +43,9 @@ function isGameState(value: unknown): value is GameState {
     isEvaluationList(candidate['evaluations']) &&
     typeof candidate['currentGuess'] === 'string' &&
     GAME_STATUSES.has(String(candidate['gameStatus'])) &&
-    isKeyboardStatus(candidate['keyboardStatus'])
+    isKeyboardStatus(candidate['keyboardStatus']) &&
+    isOptionalNumber(candidate['gameNumber']) &&
+    isOptionalString(candidate['date'])
   );
 }
 

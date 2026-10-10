@@ -47,7 +47,10 @@ async function loadSession({ mode, wordLength, api, store, today = getTodayStrin
   const date = today();
   const storageKey = dailyGameKey(date, wordLength);
   const daily = await api.fetchDailyWord(wordLength);
-  const game = await loadGameState(store, storageKey);
+  const stored = await loadGameState(store, storageKey);
+  // The server's own gameNumber/date always wins over whatever a previous load stored, so a
+  // wrong device clock (today()) never makes the card show a locally-recomputed number.
+  const game = { ...stored, gameNumber: daily.gameNumber, date: daily.date };
   return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey, dailyDate: date };
 }
 
