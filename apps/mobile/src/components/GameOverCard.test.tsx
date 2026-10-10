@@ -1,11 +1,22 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { AccessibilityInfo, Share } from 'react-native';
+import { AccessibilityInfo, AppState, Share } from 'react-native';
 import { generateShareText } from '@harfhane/shared';
 import { GameOverCard } from './GameOverCard';
 import type { GameOverCardProps } from './GameOverCard';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE } from '../ui/layout';
+
+type AppStateHandler = (status: string) => void;
+
+function mockAppStateListener(): { fire: (status: string) => void } {
+  let handler: AppStateHandler | undefined;
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, nextHandler) => {
+    handler = nextHandler as AppStateHandler;
+    return { remove: () => undefined } as ReturnType<typeof AppState.addEventListener>;
+  });
+  return { fire: (status: string) => handler?.(status) };
+}
 
 jest.mock('react-native/Libraries/Share/Share', () => ({
   __esModule: true,
@@ -276,5 +287,105 @@ describe('GameOverCard', () => {
     const title = flattenStyle(screen.getByRole('header').props.style);
     expect(title.fontSize).toBe(FONT_SIZE.headline);
     expect(title.fontFamily).toBe(FONT_FAMILY_DISPLAY);
+  });
+
+  describe('midnight rollover', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    it('should show a primary "Oyna" CTA instead of the countdown when the Turkey day rolls over while mounted', async () => {
+      jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
+      let currentToday = DAILY_DATE;
+      const onNewGame = jest.fn();
+      await renderCard({
+        date: DAILY_DATE,
+        today: () => currentToday,
+        now: () => new Date('2026-01-01T20:59:59Z'),
+        onNewGame,
+      });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      expect(screen.getByText('Yeni günün kelimesi hazır')).toBeTruthy();
+      const playButton = screen.getByTestId('gameover-play-new-day');
+      fireEvent.press(playButton);
+      expect(onNewGame).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show the CTA when the app returns to the foreground after midnight has already passed', async () => {
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: DAILY_DATE, today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      expect(screen.getByTestId('gameover-play-new-day')).toBeTruthy();
+    });
+
+    it('should not show the CTA when the device clock is merely behind the server-reported date', async () => {
+      // The device thinks it is still DAILY_DATE, but the server says the game is a day ahead
+      // (a wrong device clock, not a midnight rollover) - must not be treated as stale.
+      await renderCard({ date: '2026-01-04', today: () => DAILY_DATE });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+    });
+
+    it('should fall back to the session daily date when the server-stored date is absent', async () => {
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: null, dailyDate: DAILY_DATE, today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.getByTestId('gameover-play-new-day')).toBeTruthy();
+    });
+
+    it('should demote the share button to secondary so the CTA is the only primary action', async () => {
+      const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: DAILY_DATE, today: () => currentToday });
+      await screen.findByTestId('gameover-countdown');
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      const shareFace = flattenStyle(screen.getByTestId('gameover-share-face').props.style);
+      expect(shareFace.backgroundColor).toBe(colors.surface);
+      const playFace = flattenStyle(screen.getByTestId('gameover-play-new-day-face').props.style);
+      expect(playFace.backgroundColor).toBe(colors.brand);
+    });
+
+    it('should not show the CTA for a finished unlimited game', async () => {
+      await renderCard({
+        mode: 'unlimited',
+        guesses: ['KALEM'],
+        evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+        wordId: 42,
+        dailyDate: null,
+        date: null,
+      });
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+      expect(await screen.findByTestId('gameover-new-word')).toBeTruthy();
+    });
   });
 });

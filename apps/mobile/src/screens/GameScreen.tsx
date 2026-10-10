@@ -103,6 +103,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           wordId={session.wordId}
           dailyDate={session.dailyDate}
           gameNumber={session.game.gameNumber ?? null}
+          date={session.game.date ?? null}
           store={store}
           today={today}
           onNewGame={game.startNewGame}

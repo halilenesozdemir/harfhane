@@ -114,6 +114,45 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should replace the daily countdown with an "Oyna" CTA and reload the session for the new day when pressed', async () => {
+    jest.useFakeTimers();
+    try {
+      let currentDay = '2026-10-05';
+      const rollingToday = () => currentDay;
+      const api = {
+        fetchDailyWord: jest
+          .fn()
+          .mockResolvedValueOnce({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' })
+          .mockResolvedValueOnce({ word: { word: 'KAPAK' }, gameNumber: 2, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={rollingToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+
+      // The Turkey day rolls over while the card is still mounted; the countdown must not wrap
+      // back to 23:59:59 — it is replaced by the "play the new day" CTA instead.
+      currentDay = '2026-10-06';
+      await act(async () => jest.advanceTimersByTime(1000));
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      const playButton = screen.getByTestId('gameover-play-new-day');
+
+      await act(async () => fireEvent.press(playButton));
+      await waitFor(() => expect(api.fetchDailyWord).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+      expect(screen.getByTestId('tile-0-0')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show neither the keyboard nor the game-over card while the winning row is still revealing or bouncing', async () => {
     jest.useFakeTimers();
     try {

@@ -344,14 +344,6 @@ between them.
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
 
-## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
-`getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
-*next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight
-has actually passed (the parent has not yet swapped in the new day's word), the countdown wraps
-around to `23:59:59` and starts counting down a full day again, while the card still shows
-yesterday's finished game. Not fixed here: needs the parent to react to the day boundary (e.g.
-re-fetch/reset session) rather than the countdown display alone.
-
 ## Mobile U7b: game-over card touch targets and button hierarchy (2026-10-07)
 Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
 - `GameOverCard`'s "Paylaş" and "Yeni kelime" buttons are ~45 dp tall (`SPACING.md` vertical
