@@ -32,7 +32,7 @@ const evaluateGuessReferenceModel = (guess: string, solution: string): TileStatu
     if (result[i] === 'correct') return;
     if ((leftover[char] ?? 0) > 0) {
       result[i] = 'present';
-      leftover[char] -= 1;
+      leftover[char] = (leftover[char] ?? 0) - 1;
     }
   });
 
