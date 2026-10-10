@@ -359,14 +359,6 @@ between them.
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
 
-## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
-`getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
-*next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight
-has actually passed (the parent has not yet swapped in the new day's word), the countdown wraps
-around to `23:59:59` and starts counting down a full day again, while the card still shows
-yesterday's finished game. Not fixed here: needs the parent to react to the day boundary (e.g.
-re-fetch/reset session) rather than the countdown display alone.
-
 ## Mobile U7b: game-over card touch targets and button hierarchy (2026-10-07)
 Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
 - `GameOverCard`'s "Paylaş" and "Yeni kelime" buttons are ~45 dp tall (`SPACING.md` vertical
@@ -482,17 +474,41 @@ In the light theme `App.tsx` renders `StatusBar` style `dark`, so for the ~2.3 s
 bar icons sit dark-on-dark over the fixed `#1c1611` overlay. Switch the status bar to `light`
 while `LaunchIntro` is showing. Not checked on a device.
 
-## Daily storage/hint/stats keys still use the device date, not the server's (review of #141, 2026-10-10)
-`useGame.ts`'s `loadSession` now takes the daily game's `gameNumber`/`date` from the server's
-`/words/daily` response, so the shared title/share text is correct even with a wrong device
-clock. But the storage key the game is saved under (`dailyGameKey(today())` in `useGame.ts`),
-the hint storage key (also keyed on `today()`), and `recordDailyResult`'s `dailyDate` (in
-`stats.ts`) are all still computed from the device's local date, not the server's `date`. A
-device clock that is one day off (or near midnight in a different timezone than Turkey) stores
-the game, its revealed hint and its stats entry under the wrong day even though the shared
-number/title read from the server are correct. Pre-existing behaviour, not introduced by #141;
-worth revisiting once the storage/hint/stats keys can take the server's `date` instead of
-`today()`.
+## Mobile: device clock off by a day (2026-10-10, review of #147)
+`useGame.ts`'s `loadSession` now keys the daily game, its storage entry, the hint storage key,
+and the stats entry all by the server's own `/words/daily` `date`, never the device's `today()`
+(fixing the game-over-countdown/double-count bug). But several other mobile surfaces still read
+the *device's* local date directly, so a device whose clock is a day off from the real Turkey day
+can disagree with itself across screens:
+
+- **(a) Device ahead by a day.** `GameOverCard`'s midnight-rollover check (`useIsDailyGameStale`)
+  compares the live Turkey-day tracker (driven by the device clock) against the server's `date`.
+  If the device is a day ahead, the tracker reads "tomorrow" all day while the server's `date`
+  never catches up, so the new-day CTA ("Oyna") shows for the entire day instead of only after
+  real midnight. Pressing it is harmless (loadSession restores the same already-finished,
+  server-keyed entry, confirmed by `GameScreen.test.tsx`/`useGame.test.tsx`), but the CTA is shown
+  far earlier than it should be.
+- **(b) Device behind by a day.** The home screen's status (`useHomeStatus.ts`'s `useTurkeyDay`,
+  driven by `now: () => Date` / `getTodayString(now())`) and the Stats screen's streak
+  (`StatsScreen.tsx`'s `today = getTodayString()` default, feeding `getDisplayedStreak`) both still
+  read the device's local date, while the actual game/hint/stats records are now keyed by the
+  server's date. A device a day behind the real Turkey day sees yesterday's daily card status
+  (e.g. "Yeni kelime hazır" for an already-played day) and a streak of 0 even though the server
+  and the stored stats agree the player is on a current streak.
+- **(c) Upgrade-time clock skew.** A player who upgrades (or first opens the app after this fix)
+  while their device clock happens to be a day off loses that day's in-progress game: it was
+  stored under the old device-dated key (from before this fix, or from another screen still using
+  `today()`), which the server-keyed `loadSession` will never look up again. The same skew can
+  also grant a second hint reveal once, if the hint storage key the device wrote under one date
+  doesn't match the key a later, correctly server-dated read looks for.
+
+Only affects devices whose clock disagrees with the real Turkey day by roughly a day; a correctly
+set clock is unaffected (confirmed by the #147/#154 review — no blocking bug for correct clocks).
+Decided not to chase further for now; suggested fix direction for a future pass: derive a single
+server-day offset (or the server's own `date` string) from the `/words/daily` response once, and
+thread that same value into `useHomeStatus.ts`, `StatsScreen.tsx`'s streak, and anywhere else that
+currently calls `getTodayString()`/`today()` directly, instead of each screen computing its own
+notion of "today" from the device clock independently.
 
 ## Deploy workflows pay for waiting on CI (2026-10-10)
 

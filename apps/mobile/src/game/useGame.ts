@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { getTodayString, normalizeWord } from '@harfhane/shared';
+import { normalizeWord } from '@harfhane/shared';
 import type { ApiClient } from '../lib/api';
 import { reject as rejectHaptic, win as winHaptic } from '../lib/haptics';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
@@ -13,7 +13,6 @@ import type { GameMode, GameSession, SessionAction } from './game-session';
 export interface GameDependencies {
   readonly api: ApiClient;
   readonly store: KeyValueStore;
-  readonly today?: () => string;
 }
 
 export interface UseGameOptions extends GameDependencies {
@@ -32,7 +31,7 @@ export interface UseGameResult {
 
 const MESSAGE_DURATION_MS = 2000;
 
-async function loadSession({ mode, wordLength, api, store, today = getTodayString }: UseGameOptions): Promise<SessionAction> {
+async function loadSession({ mode, wordLength, api, store }: UseGameOptions): Promise<SessionAction> {
   if (mode === 'unlimited') {
     const random = await api.fetchRandomWord(wordLength);
     return {
@@ -44,28 +43,36 @@ async function loadSession({ mode, wordLength, api, store, today = getTodayStrin
       dailyDate: null,
     };
   }
-  const date = today();
-  const storageKey = dailyGameKey(date, wordLength);
+  // The daily word is fetched before any storage read, and the server's own `date` — never the
+  // device's today() — keys that read/write (storageKey), `session.dailyDate`, and (through it)
+  // the hint storage key and the stats entry a finished game is recorded under. A device clock
+  // that runs ahead of the real Turkey day would otherwise key the same still-unchanged server
+  // word under a fresh "tomorrow" entry: an empty board the player would then legitimately
+  // replay and have counted as a second game, double-counting stats until the real day turns
+  // over (docs/backlog.md's now-resolved "Daily storage/hint/stats keys still use the device
+  // date" note from #141's review). Keying by the server's date means a reload during that skew
+  // window (e.g. pressing the midnight CTA) just restores the same already-finished entry.
   const daily = await api.fetchDailyWord(wordLength);
+  const storageKey = dailyGameKey(daily.date, wordLength);
   const stored = await loadGameState(store, storageKey);
   // The server's own gameNumber/date always wins over whatever a previous load stored, so a
-  // wrong device clock (today()) never makes the card show a locally-recomputed number.
+  // wrong device clock never makes the card show a locally-recomputed number.
   const game = { ...stored, gameNumber: daily.gameNumber, date: daily.date };
-  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey, dailyDate: date };
+  return { type: 'loaded', solution: normalizeWord(daily.word.word), wordId: null, game, storageKey, dailyDate: daily.date };
 }
 
 function useSessionLoader(options: UseGameOptions, dispatch: (action: SessionAction) => void, round: number) {
-  const { mode, wordLength, api, store, today } = options;
+  const { mode, wordLength, api, store } = options;
   useEffect(() => {
     let isCurrent = true;
     dispatch({ type: 'loading' });
-    loadSession({ mode, wordLength, api, store, today })
+    loadSession({ mode, wordLength, api, store })
       .then((action) => isCurrent && dispatch(action))
       .catch(() => isCurrent && dispatch({ type: 'failed' }));
     return () => {
       isCurrent = false;
     };
-  }, [mode, wordLength, api, store, today, dispatch, round]);
+  }, [mode, wordLength, api, store, dispatch, round]);
 }
 
 function useDailyPersistence(store: KeyValueStore, session: GameSession) {

@@ -114,6 +114,131 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should replace the daily countdown with an "Oyna" CTA and reload the session for the new day when pressed', async () => {
+    jest.useFakeTimers();
+    try {
+      let currentDay = '2026-10-05';
+      const rollingToday = () => currentDay;
+      const api = {
+        fetchDailyWord: jest
+          .fn()
+          .mockResolvedValueOnce({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' })
+          .mockResolvedValueOnce({ word: { word: 'KAPAK' }, gameNumber: 2, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={rollingToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+
+      // The Turkey day rolls over while the card is still mounted; the countdown must not wrap
+      // back to 23:59:59 — it is replaced by the "play the new day" CTA instead.
+      currentDay = '2026-10-06';
+      await act(async () => jest.advanceTimersByTime(1000));
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      const playButton = screen.getByTestId('gameover-play-new-day');
+
+      await act(async () => fireEvent.press(playButton));
+      await waitFor(() => expect(api.fetchDailyWord).toHaveBeenCalledTimes(2));
+      expect(screen.queryByTestId('gameover-card')).toBeNull();
+      expect(screen.getByTestId('tile-0-0')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should restore the same finished game, not replay it, when "Oyna" is pressed while the device clock is ahead of the unchanged server date', async () => {
+    // Repro (round-2 review): the device clock reaches midnight (today() moves to '2026-10-06')
+    // while the real Turkey day — and so the server's own /words/daily response — is still
+    // '2026-10-05'. The CTA appears (the device's own day has moved past the displayed game's
+    // day), but pressing "Oyna" must not replay the identical, still-unchanged server word as a
+    // brand-new game: the daily storage key is now the server's `date`, so the reload restores
+    // the same already-finished entry instead of creating a fresh "2026-10-06" one, and stats
+    // must not double-count it.
+    jest.useFakeTimers();
+    try {
+      let currentDay = '2026-10-05';
+      const deviceAheadToday = () => currentDay;
+      const api = {
+        fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      const store = createMemoryStore();
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={store} today={deviceAheadToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      await waitFor(async () => expect((await loadDailyStats(store, 5)).gamesPlayed).toBe(1));
+
+      currentDay = '2026-10-06';
+      await act(async () => jest.advanceTimersByTime(1000));
+      const playButton = screen.getByTestId('gameover-play-new-day');
+
+      await act(async () => fireEvent.press(playButton));
+      await waitFor(() => expect(api.fetchDailyWord).toHaveBeenCalledTimes(2));
+      // The restored entry is already finished: the game-over card reappears immediately with
+      // the very same solved board, never the empty keyboard/grid of a fresh game.
+      expect(await screen.findByTestId('gameover-card')).toBeTruthy();
+      expect(screen.queryByTestId('key-K')).toBeNull();
+      const stats = await loadDailyStats(store, 5);
+      expect(stats.gamesPlayed).toBe(1);
+      expect(stats.gamesWon).toBe(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('should load and record the new day\'s word once the mock server itself rolls over to a new date', async () => {
+    // Continuation of the repro above, but now the real Turkey day (and so the server) has
+    // actually turned over: fetchDailyWord starts returning a new word under '2026-10-06'.
+    // Pressing "Oyna" must load and let the player record that new game, not keep restoring
+    // the old one.
+    jest.useFakeTimers();
+    try {
+      let currentDay = '2026-10-05';
+      const deviceAheadToday = () => currentDay;
+      const api = {
+        fetchDailyWord: jest
+          .fn()
+          .mockResolvedValueOnce({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-05' })
+          .mockResolvedValue({ word: { word: 'KAPAK' }, gameNumber: 2, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      const store = createMemoryStore();
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={store} today={deviceAheadToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+
+      currentDay = '2026-10-06';
+      await act(async () => jest.advanceTimersByTime(1000));
+      await act(async () => fireEvent.press(screen.getByTestId('gameover-play-new-day')));
+      await waitFor(() => expect(api.fetchDailyWord).toHaveBeenCalledTimes(2));
+      await screen.findByLabelText('Gönder');
+
+      await pressKeys(['K', 'A', 'P', 'A', 'K', 'ENTER']);
+      await advancePastGameOverGate(true);
+      await waitFor(async () => expect((await loadDailyStats(store, 5)).gamesPlayed).toBe(2));
+      expect(await store.getItem('harfhane:game:anon:2026-10-06:5')).not.toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show neither the keyboard nor the game-over card while the winning row is still revealing or bouncing', async () => {
     jest.useFakeTimers();
     try {

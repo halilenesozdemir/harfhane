@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
+import { useTurkeyDay } from '../game/useTurkeyDay';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 import { dailyGameNumber, selectResultMessage, type FinishedGameStatus } from './gameOverMessages';
@@ -24,6 +25,12 @@ export interface GameOverCardProps {
   // Null for unlimited and for a game loaded before this field existed; the title/share text
   // then fall back to computing the number from `dailyDate`, exactly as before.
   readonly gameNumber?: number | null;
+  // The server's own Turkey-day date for this game (GameState.date, from /words/daily; always
+  // set once a daily game has loaded — see useGame.ts's loadSession). Null for unlimited and for
+  // a game stored before this field existed, in which case `dailyDate` (which useGame.ts now
+  // also derives from the same server date) is used instead to decide whether the game has gone
+  // stale (see `useIsDailyGameStale` below).
+  readonly date?: string | null;
   readonly store: KeyValueStore;
   readonly today?: () => string;
   readonly now?: () => Date;
@@ -41,6 +48,8 @@ const COUNTDOWN_LABEL = 'Sonraki kelime';
 const NEW_WORD_LABEL = 'Yeni kelime';
 const SHARE_LABEL = 'Paylaş';
 const ANSWER_LABEL = 'Kelime';
+const NEW_DAY_CAPTION = 'Yeni günün kelimesi hazır';
+const PLAY_LABEL = 'Oyna';
 const COUNTDOWN_UPDATE_INTERVAL_MS = 1000;
 
 function useResultSeed(mode: GameMode, wordId: number | null, dailyDate: string | null, guessCount: number): number {
@@ -58,6 +67,23 @@ function useCountdown(isEnabled: boolean, now: () => Date): string {
     return () => clearInterval(timer);
   }, [isEnabled, now]);
   return `${countdown.hours}:${countdown.minutes}:${countdown.seconds}`;
+}
+
+// A finished daily game has "gone stale" once the Turkey day has moved past the day the server
+// reported for it (`displayedDate`): the countdown it was showing would otherwise wrap back to
+// 23:59:59 instead of reflecting that a new word is already available (the backlog bug this hook
+// fixes). Compares with `>`, not `!==`, so a live tracker that has only just caught up to
+// `displayedDate` (not yet past it) is not mistaken for staleness. This no longer has to guard
+// against a device clock skewing `displayedDate` itself ahead of the real day: useGame.ts's
+// loadSession now keys the daily game, its storage, and `dailyDate` by the server's own `date`
+// (never the device's today()), so `dailyDate` and `date` always agree once a game has loaded —
+// a device clock running fast only ever races this hook's own live tracker, which a reload
+// (pressing the CTA) cannot outrun, since it would just restore the same still-current server
+// entry rather than create a new one.
+function useIsDailyGameStale(mode: GameMode, displayedDate: string | null, today: () => string): boolean {
+  const isTracking = mode === 'daily' && displayedDate !== null;
+  const currentDay = useTurkeyDay(today, isTracking);
+  return isTracking && currentDay > (displayedDate as string);
 }
 
 function useResultAnnouncement(title: string): void {
@@ -84,10 +110,12 @@ async function shareResult(shareText: string): Promise<void> {
 
 interface ShareButtonProps {
   readonly shareText: string;
+  // Secondary once the new-day CTA is showing (K1: at most one primary button visible).
+  readonly variant: 'primary' | 'secondary';
 }
 
-function ShareButton({ shareText }: ShareButtonProps) {
-  return <Button testID="gameover-share" label={SHARE_LABEL} variant="primary" onPress={() => void shareResult(shareText)} />;
+function ShareButton({ shareText, variant }: ShareButtonProps) {
+  return <Button testID="gameover-share" label={SHARE_LABEL} variant={variant} onPress={() => void shareResult(shareText)} />;
 }
 
 interface ResultHeaderProps {
@@ -109,12 +137,21 @@ function ResultHeader({ title, solution, colors }: ResultHeaderProps) {
 
 interface CountdownOrNewWordProps {
   readonly mode: GameMode;
+  readonly isStale: boolean;
   readonly countdown: string;
   readonly onNewGame: () => void;
   readonly colors: ThemeColors;
 }
 
-function CountdownOrNewWord({ mode, countdown, onNewGame, colors }: CountdownOrNewWordProps) {
+function CountdownOrNewWord({ mode, isStale, countdown, onNewGame, colors }: CountdownOrNewWordProps) {
+  if (mode === 'daily' && isStale) {
+    return (
+      <View style={styles.countdown}>
+        <Text style={[styles.countdownCaption, { color: colors.textMuted }]}>{NEW_DAY_CAPTION}</Text>
+        <Button testID="gameover-play-new-day" label={PLAY_LABEL} variant="primary" onPress={onNewGame} />
+      </View>
+    );
+  }
   if (mode === 'daily') {
     return (
       <View style={styles.countdown}>
@@ -136,6 +173,7 @@ export function GameOverCard({
   wordId,
   dailyDate,
   gameNumber = null,
+  date = null,
   store,
   today = getTodayString,
   now = defaultNow,
@@ -148,7 +186,9 @@ export function GameOverCard({
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
-  const countdown = useCountdown(mode === 'daily', now);
+  const displayedDate = date ?? dailyDate;
+  const isStale = useIsDailyGameStale(mode, displayedDate, today);
+  const countdown = useCountdown(mode === 'daily' && !isStale, now);
   useResultAnnouncement(title);
 
   const modeText = mode === 'unlimited' ? UNLIMITED_MODE_TEXT : `#${gameNumber ?? dailyGameNumber(dailyDate ?? today())}`;
@@ -168,8 +208,8 @@ export function GameOverCard({
     >
       <ResultHeader title={title} solution={solution} colors={colors} />
       {distribution !== null && <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />}
-      <ShareButton shareText={shareText} />
-      <CountdownOrNewWord mode={mode} countdown={countdown} onNewGame={onNewGame} colors={colors} />
+      <ShareButton shareText={shareText} variant={isStale ? 'secondary' : 'primary'} />
+      <CountdownOrNewWord mode={mode} isStale={isStale} countdown={countdown} onNewGame={onNewGame} colors={colors} />
     </ScrollView>
   );
 }
