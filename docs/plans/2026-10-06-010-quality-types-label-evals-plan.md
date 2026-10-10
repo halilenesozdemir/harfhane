@@ -60,7 +60,7 @@ File ownership: A owns tsconfig files and type-only fixes per workspace; B owns
 - U1 (A). `exactOptionalPropertyTypes` + `noUncheckedIndexedAccess` + ts-reset in
   `packages/shared`. (R1, R2, AE1)
 - U2 (A, after U1). Same for backend and frontend (the missing flag + ts-reset). (R1, R2)
-- U3 (A, after U2). Same for mobile. (R1, R2)
+- U3 (A, after U2). Same for mobile. (R1, R2) Deferred until after the first release (owner decision 2026-10-11, `docs/backlog.md`).
 - U4 (B, after U1). Branded `WordLength` / `TurkeyDate` with parsers; backend and shared boundaries
   first. (R3, AE2)
 - U5 (C). `scripts/words/eval_labels.py` + tests: golden split, metrics, thresholds, report with

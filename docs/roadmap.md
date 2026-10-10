@@ -35,6 +35,9 @@ Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 - Privacy page draft for the no-accounts product (007 U5), left unlinked until the owner approves the text (007 U6).
 - Rewrite Plan 005 for the account-free model (KTD2/KTD3, open questions) — kept as a Phase 5 option, not executed now.
 
+Phase 1 exit (2026-10-11): `docs/research/2026-10-11-phase-1-exit.md` — all gates pass locally;
+Plan 010 U3 and the `evaluate.ts`/`keyboard.ts` mutation scores are deferred past launch (owner).
+
 ### Phase 2 — fill the new DB with clean words (import, 90 days, cutover)
 - 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` (Invariant 4), before the import below.
 - 006 U4: word-review files landed (#55).

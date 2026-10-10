@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { applySchema } from '../helpers/db';
 import { adminAutoFillSchedule } from '../../src/repositories/admin-repository';
-import { SCHEDULED_WORD_LENGTHS, ANSWER_REPEAT_COOLDOWN_DAYS } from '../../src/constants/schedule';
+import { SCHEDULED_WORD_LENGTHS, ANSWER_REPEAT_COOLDOWN_DAYS, SCHEDULE_TOPUP_DAYS } from '../../src/constants/schedule';
 
 const FROM = '2026-02-01';
 const TO = '2026-02-05';
@@ -255,5 +255,62 @@ describe('adminAutoFillSchedule per-length isolation', () => {
       .bind(FROM, TO)
       .first<{ count: number }>();
     expect(sixRow?.count).toBe(EXPECTED_DAYS);
+  });
+});
+
+describe('adminAutoFillSchedule top-up cron (006-AE4)', () => {
+  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const LENGTH = 5;
+  const SCHEDULED_DAYS = 60;
+  const ELIGIBLE_WORD_COUNT = 92;
+
+  function wordAt(index: number): string {
+    const first = ALPHA.charAt(Math.floor(index / ALPHA.length));
+    const second = ALPHA.charAt(index % ALPHA.length);
+    return `${first}${second}${'A'.repeat(LENGTH)}`.slice(0, LENGTH);
+  }
+
+  function offsetDate(from: string, days: number): string {
+    const cursor = new Date(`${from}T00:00:00Z`);
+    cursor.setUTCDate(cursor.getUTCDate() + days);
+    return cursor.toISOString().slice(0, 10);
+  }
+
+  beforeEach(async () => {
+    await applySchema(env.DB);
+  });
+
+  it('should schedule 30 more days when 60 days are already scheduled and 90+ words are eligible (006-AE4)', async () => {
+    for (let i = 0; i < ELIGIBLE_WORD_COUNT; i++) {
+      await env.DB
+        .prepare(
+          `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
+           VALUES (?, ?, 'test', 'test', 'approved', 1, 1)`
+        )
+        .bind(wordAt(i), LENGTH)
+        .run();
+    }
+
+    for (let day = 0; day < SCHEDULED_DAYS; day++) {
+      const wordId = await wordIdFor(wordAt(day));
+      await scheduleDay(wordId, offsetDate(FROM, day), LENGTH);
+    }
+
+    const windowTo = offsetDate(FROM, SCHEDULE_TOPUP_DAYS - 1);
+
+    const before = await env.DB
+      .prepare('SELECT COUNT(*) as count FROM daily_words WHERE length = ? AND date >= ? AND date <= ?')
+      .bind(LENGTH, FROM, windowTo)
+      .first<{ count: number }>();
+    expect(before?.count).toBe(SCHEDULED_DAYS);
+
+    await adminAutoFillSchedule(env.DB, FROM, windowTo);
+
+    const after = await env.DB
+      .prepare('SELECT COUNT(*) as count FROM daily_words WHERE length = ? AND date >= ? AND date <= ?')
+      .bind(LENGTH, FROM, windowTo)
+      .first<{ count: number }>();
+    expect(after?.count).toBe(SCHEDULE_TOPUP_DAYS);
+    expect((after?.count ?? 0) - (before?.count ?? 0)).toBe(30);
   });
 });

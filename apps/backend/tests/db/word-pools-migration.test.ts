@@ -79,4 +79,34 @@ describe('daily_words_require_active_word trigger', () => {
         .run()
     ).rejects.toThrow();
   });
+
+  it('should reject scheduling a non-existent word id with the approved/active message (001-AE2)', async () => {
+    await expect(
+      env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 5)')
+        .bind(999, '2026-03-06')
+        .run()
+    ).rejects.toThrow('daily word must be an approved, family-safe, active');
+  });
+});
+
+describe('words.is_active requires approval (001-AE1)', () => {
+  it('should reject an insert that sets is_active to 1 on a draft word (001-AE1)', async () => {
+    await expect(
+      env.DB.prepare(
+        `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
+         VALUES ('TASLA', 5, 'test', 'test', 'draft', 0, 1)`
+      ).run()
+    ).rejects.toThrow();
+  });
+
+  it('should reject an update that sets is_active to 1 on a draft word (001-AE1)', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, length, source, license, status, family_safe, is_active)
+       VALUES ('TASLA', 5, 'test', 'test', 'draft', 0, 0)`
+    ).run();
+
+    await expect(
+      env.DB.prepare(`UPDATE words SET is_active = 1 WHERE word = 'TASLA'`).run()
+    ).rejects.toThrow();
+  });
 });
