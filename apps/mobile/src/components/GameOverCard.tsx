@@ -27,6 +27,9 @@ export interface GameOverCardProps {
   // useResultRecorder's own computed distribution for a game that just finished this session —
   // see useDisplayDistribution's doc comment for why this must win over a storage read.
   readonly recordedDistribution?: readonly number[] | null;
+  // Whether a hint was revealed this game (mobile's own useHint state); threaded into
+  // generateShareText so the share header carries the same "· ipucu" marker as web (R8/AE6).
+  readonly hintUsed?: boolean;
 }
 
 const UNLIMITED_MODE_TEXT = 'Sınırsız';
@@ -133,6 +136,7 @@ export function GameOverCard({
   now = defaultNow,
   onNewGame,
   recordedDistribution = null,
+  hintUsed = false,
 }: GameOverCardProps) {
   const { colors } = useTheme();
   const guessCount = guesses.length;
@@ -148,6 +152,7 @@ export function GameOverCard({
     evaluations.map((row) => [...row]),
     modeText,
     gameStatus === 'won',
+    { hintUsed },
   );
 
   return (

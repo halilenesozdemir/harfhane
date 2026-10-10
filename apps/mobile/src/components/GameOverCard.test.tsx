@@ -33,6 +33,7 @@ function renderCard(overrides: Partial<GameOverCardProps> = {}) {
     store: createMemoryStore(),
     today: () => DAILY_DATE,
     onNewGame: jest.fn(),
+    hintUsed: false,
     ...overrides,
   };
   return renderWithTheme(<GameOverCard {...props} />);
@@ -202,6 +203,50 @@ describe('GameOverCard', () => {
     const newWordFace = flattenStyle(screen.getByTestId('gameover-new-word-face').props.style);
     expect(newWordFace.backgroundColor).toBe(colors.surface);
     expect(newWordFace.backgroundColor).not.toBe(colors.brand);
+  });
+
+  it('should append the hint marker to the shared text header when a hint was used in a daily game (011-AE6)', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, hintUsed: true });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: true });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    expect(expectedShareText.split('\n')[0]).toContain('· ipucu');
+  });
+
+  it('should not append the hint marker to the shared text header when no hint was used (011-AE6)', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, hintUsed: false });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    expect(expectedShareText.split('\n')[0]).not.toContain('ipucu');
+  });
+
+  it('should append the hint marker to the unlimited shared text header when a hint was used', async () => {
+    const onNewGame = jest.fn();
+    await renderCard({
+      mode: 'unlimited',
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      wordId: 42,
+      dailyDate: null,
+      onNewGame,
+      hintUsed: true,
+    });
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(
+      ['KALEM'],
+      [['correct', 'correct', 'correct', 'correct', 'correct']],
+      'Sınırsız',
+      true,
+      { hintUsed: true },
+    );
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
 
   it('should render the result title in the headline display font, not the body font', async () => {
