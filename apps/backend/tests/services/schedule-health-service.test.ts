@@ -55,7 +55,7 @@ describe('getScheduleHealth', () => {
 describe('checkScheduleHealthAndAlert', () => {
   it('skips silently without throwing when ADMIN_ALERT_EMAIL is not configured', async () => {
     await expect(
-      checkScheduleHealthAndAlert(env.DB, 'fake-resend-key', undefined)
+      checkScheduleHealthAndAlert(env.DB, 'fake-resend-key', undefined, '5')
     ).resolves.toBeUndefined();
   });
 });

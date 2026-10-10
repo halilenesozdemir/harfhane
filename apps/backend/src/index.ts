@@ -60,7 +60,7 @@ export default {
     // reflect what auto-fill could actually place, not stale gaps (Plan 006 U3a).
     await Promise.allSettled([autoFillDailySchedule(env.DB, SCHEDULE_TOPUP_DAYS)]);
     await Promise.allSettled([
-      checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL),
+      checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL, env.PLAYABLE_WORD_LENGTHS),
     ]);
   },
 };
