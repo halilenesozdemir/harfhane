@@ -13,7 +13,6 @@
 006-AE4  no test exercises the top-up cron's specific 60-scheduled/90-eligible-word scenario; PR #59 merged without adding it and PR #63 closed without merging
 006-AE5  no test asserts the alert fires on low unscheduled stock independent of runway; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
 
-009-AE3  Plan 009 U3 (real-backend Playwright project), not started
 009-AE4  covered only by a local Maestro flow (apps/mobile/.maestro/daily.yaml); no gate runs it (R5: not in CI)
 009-AE6  Plan 009 U6 (Stryker mutation baseline), not started
 
