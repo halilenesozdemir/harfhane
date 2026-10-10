@@ -23,6 +23,10 @@ export interface GameScreenProps extends GameDependencies {
   readonly mode: GameMode;
   readonly wordLength: WordLength;
   readonly onBack: () => void;
+  // Not part of GameDependencies/useGame (which now always keys the daily game by the server's
+  // own date, never a device clock — see useGame.ts's loadSession): this is only the live clock
+  // GameOverCard's midnight-rollover check and useResultRecorder's stats fallback still need.
+  readonly today?: () => string;
 }
 
 const MODE_TITLES: Record<GameMode, string> = { daily: 'Günlük', unlimited: 'Sınırsız' };
@@ -57,7 +61,7 @@ interface GameBoardProps {
   readonly hint: UseHintResult;
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
-  readonly today: GameDependencies['today'];
+  readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
 }
 
@@ -133,7 +137,7 @@ interface GameBodyProps {
   readonly hint: UseHintResult;
   readonly colors: ThemeColors;
   readonly store: GameDependencies['store'];
-  readonly today: GameDependencies['today'];
+  readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
 }
 
@@ -165,7 +169,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
 
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
-  const game = useGame({ mode, wordLength, api, store, today });
+  const game = useGame({ mode, wordLength, api, store });
   const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,

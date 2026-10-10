@@ -13,7 +13,6 @@ import type { GameMode, GameSession, SessionAction } from './game-session';
 export interface GameDependencies {
   readonly api: ApiClient;
   readonly store: KeyValueStore;
-  readonly today?: () => string;
 }
 
 export interface UseGameOptions extends GameDependencies {
