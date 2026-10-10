@@ -478,3 +478,10 @@ the game, its revealed hint and its stats entry under the wrong day even though 
 number/title read from the server are correct. Pre-existing behaviour, not introduced by #141;
 worth revisiting once the storage/hint/stats keys can take the server's `date` instead of
 `today()`.
+
+## Deploy workflows pay for waiting on CI (2026-10-10)
+
+`deploy-backend.yml` and `deploy-frontend.yml` poll the CI run of their commit (`gh run watch`), so
+every deploy bills the CI duration a second time. A `workflow_run` trigger (start only after CI
+succeeds on `main`) removes the wait, but `workflow_run` has no `paths` filter, which conflicts
+with Invariant 9 as written; changing it needs an owner-approved ADR and an in-job path check.

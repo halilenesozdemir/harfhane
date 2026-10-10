@@ -1,7 +1,13 @@
 name: CI
 
+# Actions minutes are a budget. One job (`check`, the required status check on
+# main) instead of three: GitHub bills each job rounded up to the minute and
+# each job repeated checkout and install. Draft PRs skip CI (the local commit
+# gate runs the same checks); CI runs when a PR is marked ready. Steps run only
+# for the areas the change touches; anything unclassified runs everything.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -17,65 +23,73 @@ concurrency:
 
 jobs:
   check:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Under deploy-*.yml's 15-minute wait for this run.
+    timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed areas
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: bash .github/scripts/ci-changes.sh >> "$GITHUB_OUTPUT"
 
       - uses: pnpm/action-setup@v4
+        if: steps.changes.outputs.code == 'true'
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: ${{ steps.changes.outputs.code == 'true' && 'pnpm' || '' }}
+
+      # Node built-ins only, so docs-only changes run it without an install.
+      - name: Check acceptance-example coverage
+        run: node scripts/check-ac-coverage.mjs
 
       - name: Install dependencies
+        if: steps.changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build shared
+        if: steps.changes.outputs.code == 'true'
         run: pnpm --filter @harfhane/shared run build
 
       - name: Check for unused files, exports and dependencies
+        if: steps.changes.outputs.code == 'true'
         run: pnpm run knip
 
       - name: Check dependency layering and circular imports
+        if: steps.changes.outputs.code == 'true'
         run: pnpm run depcruise
 
       - name: Typecheck
+        if: steps.changes.outputs.code == 'true'
         run: pnpm typecheck
 
       - name: Typecheck tests
+        if: steps.changes.outputs.code == 'true'
         run: pnpm typecheck:test
 
       - name: Lint
+        if: steps.changes.outputs.code == 'true'
         run: pnpm lint
 
       - name: Test
+        if: steps.changes.outputs.code == 'true'
         run: pnpm test
 
-      - name: Check acceptance-example coverage
-        run: pnpm run check:ac
-
       - name: Build frontend
+        if: steps.changes.outputs.web == 'true'
         run: pnpm --filter @harfhane/frontend run build
 
-  e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Cache Playwright browsers
+        if: steps.changes.outputs.web == 'true'
         uses: actions/cache@v4
         id: playwright-cache
         with:
@@ -83,17 +97,19 @@ jobs:
           key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('apps/frontend/package.json') }}
 
       - name: Install Playwright Chromium browser
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.changes.outputs.web == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @harfhane/frontend exec playwright install chromium
 
       - name: Install Playwright OS dependencies
+        if: steps.changes.outputs.web == 'true'
         run: pnpm --filter @harfhane/frontend exec playwright install-deps chromium
 
       - name: Run e2e tests
+        if: steps.changes.outputs.web == 'true'
         run: pnpm test:e2e
 
       - name: Upload Playwright report
-        if: ${{ failure() }}
+        if: failure() && steps.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -102,20 +118,17 @@ jobs:
             apps/frontend/test-results/
           retention-days: 7
 
-  words:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
+        if: steps.changes.outputs.words == 'true'
         with:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: scripts/words/requirements.txt
 
-      - name: Install dependencies
+      - name: Install word pipeline dependencies
+        if: steps.changes.outputs.words == 'true'
         run: pip install -r scripts/words/requirements.txt
 
       - name: Test word pipeline
+        if: steps.changes.outputs.words == 'true'
         run: python -m unittest discover -s scripts/words -p 'test_*.py'
