@@ -66,6 +66,18 @@ describe('game storage', () => {
     expect(restored.date).toBe('2026-10-05');
   });
 
+  it('should return a fresh game when gameNumber is a string rather than a number', async () => {
+    const stored = { ...playGuess('KALAY'), gameNumber: '7', date: '2026-10-05' };
+    const store = createMemoryStore({ [KEY]: JSON.stringify(stored) });
+    expect(await loadGameState(store, KEY)).toEqual(createInitialState());
+  });
+
+  it('should return a fresh game when date is a number rather than a string', async () => {
+    const stored = { ...playGuess('KALAY'), gameNumber: 7, date: 20_261_005 };
+    const store = createMemoryStore({ [KEY]: JSON.stringify(stored) });
+    expect(await loadGameState(store, KEY)).toEqual(createInitialState());
+  });
+
   it('should restore a game stored before gameNumber/date existed, leaving both undefined', async () => {
     const legacyStored = { guesses: ['KALAY'], evaluations: [['correct', 'correct', 'correct', 'absent', 'absent']], currentGuess: '', gameStatus: 'playing', keyboardStatus: { K: 'correct' } };
     const store = createMemoryStore({ [KEY]: JSON.stringify(legacyStored) });
