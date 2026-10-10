@@ -22,12 +22,15 @@
     "check:ac": "node scripts/check-ac-coverage.mjs",
     "test:e2e": "pnpm --filter @harfhane/frontend run test:e2e",
     "test:e2e:real": "node scripts/test-e2e-real-backend.mjs",
+    "test:mutation": "node scripts/mutation-changed.mjs",
     "test:maestro": "maestro test apps/mobile/.maestro",
     "knip": "knip",
     "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
     "dependency-cruiser": "18.5.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",

@@ -490,3 +490,26 @@ while `LaunchIntro` is showing. Not checked on a device.
 every deploy bills the CI duration a second time. A `workflow_run` trigger (start only after CI
 succeeds on `main`) removes the wait, but `workflow_run` has no `paths` filter, which conflicts
 with Invariant 9 as written; changing it needs an owner-approved ADR and an in-job path check.
+
+## Plan 009 U6: backend Stryker mutation testing not wired (2026-10-10)
+
+R7/KTD4 ask for Stryker on `apps/backend/src/{services,repositories}` too, with a fallback to a
+plain Vitest config if the Workers pool doesn't work. It doesn't, in a way a plain config can't
+paper over: `@stryker-mutator/vitest-runner@10.0.0` runs vitest through its own Node-API
+invocation (`startVitest`), which does not go through `@cloudflare/vitest-pool-workers`'s custom
+pool (`apps/backend/vitest.config.ts`'s `defineWorkersConfig`). Confirmed by running
+`npx stryker run --mutate src/repositories/word-repository.ts` (and
+`schedule-health-repository.ts`) from `apps/backend`: the dry run fails before a single mutant
+runs, with `crypto.subtle.timingSafeEqual is not a function` — a Workers-only API that exists
+under the real pool (`wrangler`/`miniflare`) but not under plain Node, which is what Stryker's
+runner actually executes tests under regardless of the `vitest.config.ts` passed to it. Any
+backend test touching a D1 binding would fail the same way, since D1 bindings don't exist outside
+`workerd` either.
+
+A "plain Vitest config" fallback would mean giving `services`/`repositories` their own non-D1,
+non-Workers-binding test doubles so they can run under Stryker's plain-Node vitest at all — a
+rewrite of how those layers are tested, not a config change, and out of scope for this unit per
+the owner's "deliver shared now" instruction. `packages/shared` Stryker (`packages/shared/stryker.conf.json`)
+ships in this unit's PR; `scripts/mutation-changed.mjs`'s `PROJECTS` list has only `shared` for now.
+Revisit if Stryker ships a Workers-aware test runner, or if backend services/repositories get a
+binding-free unit-test layer for another reason.

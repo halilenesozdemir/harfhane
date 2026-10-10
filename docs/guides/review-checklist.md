@@ -31,3 +31,7 @@ items apply.
 ## Secrets and config
 - No secret in code, logs or test fixtures; new vars are documented and set in `wrangler.toml` or as
   secrets.
+
+## Local gates
+- A PR that changes `packages/shared/src` or `apps/backend/src/{services,repositories}` without a
+  mutation score in its body (Plan 009 KTD4, R10) is a finding.
