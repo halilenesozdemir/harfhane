@@ -17,6 +17,21 @@ unit fixed the web logo button (`Header.tsx`) and left the OG image alone, since
 asset is out of scope here (R5 said "don't redraw icons"). Whoever owns social-preview assets next
 should regenerate `og-image.svg`/`.png` with the brand token's colour.
 
+## ALLOWED_WORD_LENGTHS duplicates backend's SCHEDULED_WORD_LENGTHS (Plan 010 U4)
+`packages/shared/src/types/word-length.ts`'s `ALLOWED_WORD_LENGTHS = [4, 5, 6]` (used by the
+`WordLength` brand/`parseWordLength`) duplicates `apps/backend/src/constants/schedule.ts`'s
+`SCHEDULED_WORD_LENGTHS`/`ScheduledWordLength` — same allowed set, kept separate to keep this
+unit's diff small (KTD3: packages never import apps). Whoever next touches either constant should
+decide on a single source (most likely: backend re-exports/derives from shared's `WordLength`).
+
+## INVALID_DATE no longer thrown (Plan 010 U4)
+`apps/backend/src/errors/api-error.ts`'s `INVALID_DATE` was thrown by `word-service.ts`'s
+`getDailyWord` for a malformed date string. That check moved to the `dailyWordQuerySchema` zod
+schema (`parseTurkeyDate`, Plan 010 R3/AE2): `getDailyWord`'s `date` parameter is now `TurkeyDate`,
+so a malformed string can no longer reach the service at all, and the route layer returns
+`BAD_REQUEST` for a bad format instead. `INVALID_DATE` is tagged `@deferred` in `knip.jsonc`'s sense
+until a caller needs it again; delete it if nothing picks it back up.
+
 ## knip findings recorded instead of fixed (2026-10-06)
 From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
 reason; details here.

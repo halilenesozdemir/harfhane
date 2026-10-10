@@ -1,12 +1,21 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { env } from 'cloudflare:test';
-import { getGameNumber } from '@harfhane/shared';
+import { getGameNumber, parseTurkeyDate, type TurkeyDate } from '@harfhane/shared';
 import {
   findDailyWord,
   findRandomWord,
   wordExists,
 } from '../../src/repositories/word-repository';
 import { applySchema, seedTestData } from '../helpers/db';
+
+// Test-only helper: these fixture dates are always valid, so throwing on an
+// unexpected null keeps the call sites below as plain `td('2026-01-01')`
+// instead of repeating a null check at every call.
+function td(value: string): TurkeyDate {
+  const parsed = parseTurkeyDate(value);
+  if (parsed === null) throw new Error(`invalid fixture date: ${value}`);
+  return parsed;
+}
 
 beforeAll(async () => {
   await applySchema(env.DB);
@@ -26,7 +35,7 @@ beforeAll(async () => {
 
 describe('findDailyWord', () => {
   it('returns word and gameNumber for a valid date', async () => {
-    const result = await findDailyWord(env.DB, '2026-01-01');
+    const result = await findDailyWord(env.DB, td('2026-01-01'));
     expect(result).not.toBeNull();
     expect(result!.word).toBe('KİTAP');
     expect(result!.meaning).toBe('Yazılı eser');
@@ -34,14 +43,14 @@ describe('findDailyWord', () => {
   });
 
   it('returns second word with correct gameNumber', async () => {
-    const result = await findDailyWord(env.DB, '2026-01-02');
+    const result = await findDailyWord(env.DB, td('2026-01-02'));
     expect(result).not.toBeNull();
     expect(result!.word).toBe('KALEM');
     expect(result!.gameNumber).toBe(2);
   });
 
   it('returns null for a date with no daily word', async () => {
-    const result = await findDailyWord(env.DB, '2025-01-01');
+    const result = await findDailyWord(env.DB, td('2025-01-01'));
     expect(result).toBeNull();
   });
 
@@ -50,7 +59,7 @@ describe('findDailyWord', () => {
     // ~100 days after the game epoch must still report a gameNumber in the hundreds —
     // proof that gameNumber comes from the shared date-based clock (Plan 001 cutover:
     // a fresh database must not reset gameNumber to a small row count).
-    const futureDate = '2026-04-10';
+    const futureDate = td('2026-04-10');
     await env.DB.prepare(
       `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
        VALUES ('TAVUK', 'Kümes hayvanı', 'Tavuk yumurtladı.', 'isim', 5, 'test', 'test', 'approved', 1, 1)`

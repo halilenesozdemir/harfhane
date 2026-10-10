@@ -1,4 +1,5 @@
 import type { TimeCountdown } from './types';
+import { parseTurkeyDate, type TurkeyDate } from '../types/turkey-date';
 
 const MS_PER_SECOND = 1000;
 const MS_PER_MINUTE = MS_PER_SECOND * 60;
@@ -24,9 +25,15 @@ export const getTimeUntilMidnight = (now: Date = new Date()): TimeCountdown => {
   };
 };
 
-export const getTodayString = (now: Date = new Date()): string => {
+export const getTodayString = (now: Date = new Date()): TurkeyDate => {
   const turkeyNow = new Date(now.getTime() + TURKEY_UTC_OFFSET_MS);
-  return turkeyNow.toISOString().split('T')[0]!;
+  const dateString = turkeyNow.toISOString().split('T')[0]!;
+  const turkeyDate = parseTurkeyDate(dateString);
+  if (turkeyDate === null) {
+    // Unreachable: toISOString() always produces a real calendar date.
+    throw new Error(`getTodayString computed an invalid Turkey date: ${dateString}`);
+  }
+  return turkeyDate;
 };
 
 export const getGameNumber = (now: Date = new Date()): number => {

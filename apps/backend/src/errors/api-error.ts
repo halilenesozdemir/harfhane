@@ -12,6 +12,9 @@ export class ApiError extends Error {
 export const NOT_FOUND = (resource: string) =>
   new ApiError(404, 'NOT_FOUND', `${resource} not found`);
 
+/** @deferred Date-format validation moved to the `dailyWordQuerySchema` zod schema
+ * (`parseTurkeyDate` boundary, Plan 010 U4); no service code throws this anymore. See
+ * docs/backlog.md. */
 export const INVALID_DATE = () =>
   new ApiError(400, 'INVALID_DATE', 'Invalid date format. Use YYYY-MM-DD');
 

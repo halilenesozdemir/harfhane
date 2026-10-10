@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
+import { parseTurkeyDate, type TurkeyDate } from '@harfhane/shared';
 import { getDailyWord, getPlayableLengths, getRandomWord, validateWord } from '../../src/services/word-service';
 import { ApiError } from '../../src/errors/api-error';
 import { applySchema, seedTestData } from '../helpers/db';
@@ -9,28 +10,37 @@ beforeAll(async () => {
   await seedTestData(env.DB);
 });
 
+// Test-only helper: these fixture dates are always valid, so throwing on an
+// unexpected null keeps the call sites below as plain `td('2026-01-01')`
+// instead of repeating a null check at every call.
+function td(value: string): TurkeyDate {
+  const parsed = parseTurkeyDate(value);
+  if (parsed === null) throw new Error(`invalid fixture date: ${value}`);
+  return parsed;
+}
+
 describe('getDailyWord', () => {
   it('returns the daily word for a valid date', async () => {
-    const result = await getDailyWord(env.DB, '2026-01-01');
+    const result = await getDailyWord(env.DB, td('2026-01-01'));
     expect(result.word.word).toBe('KİTAP');
     expect(result.date).toBe('2026-01-01');
     expect(result.gameNumber).toBe(1);
   });
 
   it('throws NOT_FOUND for a date with no word', async () => {
-    await expect(getDailyWord(env.DB, '2025-06-01')).rejects.toBeInstanceOf(ApiError);
-    await expect(getDailyWord(env.DB, '2025-06-01')).rejects.toMatchObject({
+    await expect(getDailyWord(env.DB, td('2025-06-01'))).rejects.toBeInstanceOf(ApiError);
+    await expect(getDailyWord(env.DB, td('2025-06-01'))).rejects.toMatchObject({
       code: 'NOT_FOUND',
       statusCode: 404,
     });
   });
 
-  it('throws INVALID_DATE for a malformed date', async () => {
-    await expect(getDailyWord(env.DB, 'not-a-date')).rejects.toMatchObject({
-      code: 'INVALID_DATE',
-      statusCode: 400,
-    });
-  });
+  // A malformed or calendar-impossible date can no longer reach this service:
+  // `date` is `TurkeyDate`, constructed only by `parseTurkeyDate`. The
+  // rejection itself is covered by packages/shared/src/types/branded-types.test.ts
+  // and the route-level 400 by apps/backend/tests/routes/words.test.ts
+  // ('returns 400 with BAD_REQUEST for an impossible calendar date'); the
+  // compile-time guarantee is proved by strict-flags.types.test.ts (010-AE2).
 
   describe('explicit future dates', () => {
     afterEach(() => {
@@ -41,14 +51,14 @@ describe('getDailyWord', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-12-31T12:00:00Z'));
 
-      await expect(getDailyWord(env.DB, '2026-01-01')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(getDailyWord(env.DB, td('2026-01-01'))).rejects.toMatchObject({ code: 'NOT_FOUND' });
     });
 
     it('should return the word when the requested date is the Turkey day', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-12-31T21:00:00Z'));
 
-      const result = await getDailyWord(env.DB, '2026-01-01');
+      const result = await getDailyWord(env.DB, td('2026-01-01'));
 
       expect(result.word.word).toBe('KİTAP');
     });

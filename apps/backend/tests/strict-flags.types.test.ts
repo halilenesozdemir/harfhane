@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { parseTurkeyDate, parseWordLength } from '@harfhane/shared';
+import { getDailyWord } from '../src/services/word-service';
+import { env } from 'cloudflare:test';
 
 // Type-level proofs for Plan 010 R1/R2 in the backend. Removing
 // `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` or `reset.d.ts`
@@ -35,5 +38,35 @@ describe('backend strict type flags', () => {
     const parsed: number = JSON.parse('1');
 
     expect(parsed).toBe(1);
+  });
+
+  it('should fail typecheck when getDailyWord is called with a raw date string (010-AE2)', () => {
+    // Type-level only: these tuples are never passed to getDailyWord, so this
+    // proof makes no D1 call (which would otherwise race the isolated-storage
+    // teardown between tests). Each @ts-expect-error below changes exactly
+    // one parameter, so loosening either `TurkeyDate` or `WordLength` alone
+    // makes its own directive unused and fails `pnpm typecheck:test`.
+    type GetDailyWordArgs = Parameters<typeof getDailyWord>;
+
+    const parsedDate = parseTurkeyDate('2026-10-06');
+    const parsedLength = parseWordLength(5);
+    if (parsedDate === null || parsedLength === null) {
+      throw new Error('unreachable: 2026-10-06 and 5 are both valid');
+    }
+
+    // @ts-expect-error - a raw date string does not satisfy `TurkeyDate`,
+    // even with an already-parsed, valid `WordLength`.
+    const rawDateArgs: GetDailyWordArgs = [env.DB, '2026-10-06', parsedLength];
+
+    // @ts-expect-error - a raw length number does not satisfy `WordLength`,
+    // even with an already-parsed, valid `TurkeyDate`.
+    const rawLengthArgs: GetDailyWordArgs = [env.DB, parsedDate, 5];
+
+    // Compiles: a parsed TurkeyDate and WordLength satisfy both parameter types.
+    const validArgs: GetDailyWordArgs = [env.DB, parsedDate, parsedLength];
+
+    expect(rawDateArgs[1]).toBe('2026-10-06');
+    expect(rawLengthArgs[2]).toBe(5);
+    expect(validArgs[1]).toBe('2026-10-06');
   });
 });
