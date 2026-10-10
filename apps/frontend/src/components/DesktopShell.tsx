@@ -12,7 +12,7 @@ interface DesktopShellProps {
   mode: GameMode;
   wordLength: WordLength;
   /** R1: lengths the length picker offers; defaults to every scheduled length. */
-  playableLengths?: readonly WordLength[];
+  playableLengths?: readonly WordLength[] | undefined;
   stats: DailyStats | UnlimitedStats;
   onGoHome: () => void;
   children: React.ReactNode;
