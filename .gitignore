@@ -49,6 +49,7 @@ apps/frontend/dev-dist/
 
 # Build output
 apps/frontend/dist/
+apps/frontend/dist-e2e-real-backend/
 scripts/curated-words.json
 
 /dev-dist/
