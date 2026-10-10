@@ -47,7 +47,12 @@ export async function createWord(
 export async function updateWord(
   db: Env['DB'],
   id: number,
-  data: { word?: string; meaning?: string; context?: string; category?: string }
+  data: {
+    word?: string | undefined;
+    meaning?: string | undefined;
+    context?: string | undefined;
+    category?: string | undefined;
+  }
 ) {
   const exists = await adminFindWordById(db, id);
   if (!exists) throw NOT_FOUND('Word');

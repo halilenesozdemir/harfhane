@@ -27,11 +27,11 @@ export interface DailyWordRow {
 export interface ListWordsOptions {
   page: number;
   limit: number;
-  search?: string;
-  category?: string;
-  active?: '0' | '1';
-  length?: number;
-  sort?: 'az' | 'id_desc';
+  search?: string | undefined;
+  category?: string | undefined;
+  active?: '0' | '1' | undefined;
+  length?: number | undefined;
+  sort?: 'az' | 'id_desc' | undefined;
 }
 
 export async function adminFindWords(
@@ -129,7 +129,12 @@ export async function adminCreateWord(
 export async function adminUpdateWord(
   db: Env['DB'],
   id: number,
-  data: { word?: string; meaning?: string; context?: string; category?: string }
+  data: {
+    word?: string | undefined;
+    meaning?: string | undefined;
+    context?: string | undefined;
+    category?: string | undefined;
+  }
 ): Promise<boolean> {
   const fields: string[] = [];
   const params: (string | number)[] = [];
@@ -256,9 +261,9 @@ export interface BulkImportWord {
   meaning: string;
   context: string;
   category: string;
-  source?: string;
-  license?: string;
-  pool?: 'daily' | 'unlimited';
+  source?: string | undefined;
+  license?: string | undefined;
+  pool?: 'daily' | 'unlimited' | undefined;
 }
 
 export async function adminBulkInsertWords(
