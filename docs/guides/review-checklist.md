@@ -33,5 +33,7 @@ items apply.
   secrets.
 
 ## Local gates
-- A PR that changes `packages/shared/src` or `apps/backend/src/{services,repositories}` without a
-  mutation score in its body (Plan 009 KTD4, R10) is a finding.
+- A PR that changes `packages/shared/src` without a mutation score in its body (Plan 009 KTD4, R10)
+  is a finding. `apps/backend/src/{services,repositories}` is not wired yet — see `docs/backlog.md`
+  ("Plan 009 U6: backend Stryker mutation testing not wired") — so a backend-only PR has nothing to
+  paste here.

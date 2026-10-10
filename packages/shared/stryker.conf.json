@@ -3,6 +3,7 @@
   "packageManager": "pnpm",
   "testRunner": "vitest",
   "plugins": ["@stryker-mutator/vitest-runner"],
+  "vitest": { "related": false },
   "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.test-utils.ts"],
   "reporters": ["clear-text", "json"],
   "thresholds": { "high": 90, "low": 70, "break": 70 },

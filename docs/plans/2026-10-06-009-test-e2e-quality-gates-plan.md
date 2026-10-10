@@ -78,6 +78,14 @@ gets them only as a manually triggered (`workflow_dispatch`) job, never on every
   incremental cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
   mutants run in the Workers Vitest pool; check Stryker's runner support for it and fall back to a
   plain Vitest config for repositories if needed.
+
+  2026-10-10 (U6 implementation): backend is deferred, not implemented. Stryker's vitest-runner
+  runs vitest through its own Node-API call, bypassing `@cloudflare/vitest-pool-workers`'s custom
+  pool entirely, so a plain-config fallback can't close the gap without also rewriting
+  `services`/`repositories` tests with binding-free doubles — out of scope for this unit. Only
+  `packages/shared/src` is wired (`scripts/mutation-changed.mjs`'s `PROJECTS`). See
+  `docs/backlog.md` ("Plan 009 U6: backend Stryker mutation testing not wired") for the
+  reproduction and what a real fix needs.
 - KTD5. Mobile `testID`s are added where Maestro needs stable selectors; no visible UI change.
 
 ## Units
