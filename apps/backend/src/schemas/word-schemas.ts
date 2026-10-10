@@ -16,7 +16,9 @@ const turkeyDateQueryParam = z
 
 const wordLengthQueryParam = z
   .string()
-  .regex(/^\d+$/, 'Length must be 4, 5, or 6')
+  // Exactly one of the allowed digits: no leading zero ("05"), decimal
+  // ("5.0"), sign or surrounding whitespace survives this regex.
+  .regex(/^[4-6]$/, 'Length must be 4, 5, or 6')
   .transform((value, ctx) => {
     const parsed = parseWordLength(Number(value));
     if (parsed === null) {

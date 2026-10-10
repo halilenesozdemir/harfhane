@@ -37,8 +37,9 @@ describe('getDailyWord', () => {
 
   // A malformed or calendar-impossible date can no longer reach this service:
   // `date` is `TurkeyDate`, constructed only by `parseTurkeyDate`. The
-  // rejection itself is covered by packages/shared/src/types/turkey-date.test.ts
-  // and the route-level 400 by apps/backend/tests/routes/words.test.ts; the
+  // rejection itself is covered by packages/shared/src/types/branded-types.test.ts
+  // and the route-level 400 by apps/backend/tests/routes/words.test.ts
+  // ('returns 400 with BAD_REQUEST for an impossible calendar date'); the
   // compile-time guarantee is proved by strict-flags.types.test.ts (010-AE2).
 
   describe('explicit future dates', () => {

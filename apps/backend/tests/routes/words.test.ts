@@ -30,6 +30,23 @@ describe('GET /api/words/daily', () => {
     const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('BAD_REQUEST');
   });
+
+  it('returns 400 with BAD_REQUEST for an impossible calendar date', async () => {
+    const res = await SELF.fetch('http://example.com/api/words/daily?date=2026-02-30');
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: { code: string } };
+    expect(body.error.code).toBe('BAD_REQUEST');
+  });
+
+  it.each(['05', '5.0', ' 5', '5 ', '+5'])(
+    'returns 400 with BAD_REQUEST for a malformed length %j',
+    async (length) => {
+      const res = await SELF.fetch(`http://example.com/api/words/daily?length=${encodeURIComponent(length)}`);
+      expect(res.status).toBe(400);
+      const body = await res.json() as { error: { code: string } };
+      expect(body.error.code).toBe('BAD_REQUEST');
+    }
+  );
 });
 
 describe('GET /api/words/random', () => {

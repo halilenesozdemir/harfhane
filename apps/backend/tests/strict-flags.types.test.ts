@@ -43,12 +43,10 @@ describe('backend strict type flags', () => {
   it('should fail typecheck when getDailyWord is called with a raw date string (010-AE2)', () => {
     // Type-level only: these tuples are never passed to getDailyWord, so this
     // proof makes no D1 call (which would otherwise race the isolated-storage
-    // teardown between tests).
+    // teardown between tests). Each @ts-expect-error below changes exactly
+    // one parameter, so loosening either `TurkeyDate` or `WordLength` alone
+    // makes its own directive unused and fails `pnpm typecheck:test`.
     type GetDailyWordArgs = Parameters<typeof getDailyWord>;
-
-    // @ts-expect-error - `getDailyWord`'s date parameter is `TurkeyDate` and its
-    // length parameter is `WordLength`; raw literals do not compile.
-    const invalidArgs: GetDailyWordArgs = [env.DB, '2026-10-06', 5];
 
     const parsedDate = parseTurkeyDate('2026-10-06');
     const parsedLength = parseWordLength(5);
@@ -56,10 +54,19 @@ describe('backend strict type flags', () => {
       throw new Error('unreachable: 2026-10-06 and 5 are both valid');
     }
 
-    // Compiles: a parsed TurkeyDate and WordLength satisfy the parameter types.
+    // @ts-expect-error - a raw date string does not satisfy `TurkeyDate`,
+    // even with an already-parsed, valid `WordLength`.
+    const rawDateArgs: GetDailyWordArgs = [env.DB, '2026-10-06', parsedLength];
+
+    // @ts-expect-error - a raw length number does not satisfy `WordLength`,
+    // even with an already-parsed, valid `TurkeyDate`.
+    const rawLengthArgs: GetDailyWordArgs = [env.DB, parsedDate, 5];
+
+    // Compiles: a parsed TurkeyDate and WordLength satisfy both parameter types.
     const validArgs: GetDailyWordArgs = [env.DB, parsedDate, parsedLength];
 
-    expect(invalidArgs[1]).toBe('2026-10-06');
+    expect(rawDateArgs[1]).toBe('2026-10-06');
+    expect(rawLengthArgs[2]).toBe(5);
     expect(validArgs[1]).toBe('2026-10-06');
   });
 });

@@ -70,4 +70,16 @@ describe('parseTurkeyDate', () => {
   it('should return null for a day of 00', () => {
     expect(parseTurkeyDate('2026-10-00')).toBeNull();
   });
+
+  it('should return null for a valid date with a prefix (anchors must reject a partial match)', () => {
+    expect(parseTurkeyDate('x2026-10-06')).toBeNull();
+  });
+
+  it('should return null for a valid date with a suffix (anchors must reject a partial match)', () => {
+    expect(parseTurkeyDate('2026-10-06x')).toBeNull();
+  });
+
+  it('should return null for a valid date embedded on its own line of a longer string', () => {
+    expect(parseTurkeyDate('garbage\n2026-10-06\nmore garbage')).toBeNull();
+  });
 });
