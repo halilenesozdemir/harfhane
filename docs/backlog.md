@@ -118,11 +118,8 @@ The web app carries code from many experiments; removed features such as challen
   `scrape-words.ts`, and narrowed its `wrangler`-binary comment to the two scripts still affected.
 - Plan web ↔ mobile routing (store links, deep links, "get the app" banner): still open, post-launch —
   not part of this cleanup pass.
-- `apps/frontend/public/_headers`'s CSP `connect-src` still allow-lists `https://accounts.google.com`
-  and `https://oauth2.googleapis.com`, leftovers from the removed Google sign-in feature (no code in
-  `apps/frontend/src` or `apps/mobile/src` references Google OAuth any more). Editing that file was
-  blocked by the local agent permission system ("Modify Shared Resources"); needs the owner to either
-  grant the edit permission or remove the two origins directly.
+- The CSP leftovers from Google sign-in (`accounts.google.com`, `oauth2.googleapis.com`) were removed
+  in #110 (web) and #113 (backend).
 
 ## Test typecheck config
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
@@ -590,3 +587,9 @@ invocation per changed file rather than batching them (needed so "Instrumented N
 with M mutant(s)" unambiguously describes one file — see `decideFileResult`'s module comment).
 Both are performance choices only (correctness is unaffected); worth revisiting once the gate is
 running routinely and per-run time matters.
+
+## Plan 010 U3 deferred until after the first release (owner, 2026-10-11)
+Strict flags (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) and ts-reset for
+`apps/mobile`. Mobile already compiles with `strict`; the bugs found in Phase 1 were date logic,
+which these flags would not have caught. Pick up after launch with the U1/U2 pattern (type tests
+that fail when a flag is removed).
