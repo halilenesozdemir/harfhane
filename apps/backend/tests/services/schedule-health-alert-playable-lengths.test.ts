@@ -129,7 +129,7 @@ describe('checkScheduleHealthAndAlert playable-length filtering', () => {
     expect(entries[0]).toMatchObject({ length: 6 });
   });
 
-  it('should send an email when a playable length is healthy on schedule runway but needs restock', async () => {
+  it('should send an email when a playable length is healthy on schedule runway but needs restock (006-AE5)', async () => {
     findScheduleRunwayMock.mockResolvedValue([{ length: 5, ...RESTOCK_ONLY_AT_RISK_ROW }]);
 
     await checkScheduleHealthAndAlert({} as never, 'fake-resend-key', 'owner@example.com', '5');
@@ -140,7 +140,7 @@ describe('checkScheduleHealthAndAlert playable-length filtering', () => {
     expect(entries[0]).toMatchObject({ length: 5 });
   });
 
-  it('should send an email when a playable length is only at warning severity, not critical', async () => {
+  it('should send an email when a playable length is only at warning severity, not critical (006-AE3)', async () => {
     findScheduleRunwayMock.mockResolvedValue([{ length: 5, ...WARNING_ONLY_ROW }]);
 
     await checkScheduleHealthAndAlert({} as never, 'fake-resend-key', 'owner@example.com', '5');
