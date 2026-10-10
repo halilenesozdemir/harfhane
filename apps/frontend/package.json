@@ -8,7 +8,7 @@
     "build": "tsc && node scripts/generate-sitemap.mjs && vite build",
     "generate:brand-icons": "node scripts/generate-brand-icons.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "typecheck:e2e": "tsc --noEmit -p e2e/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
