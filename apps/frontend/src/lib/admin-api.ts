@@ -55,10 +55,10 @@ export interface ImportResult {
 export interface ListWordsParams {
   page?: number;
   limit?: number;
-  search?: string;
-  category?: string;
-  active?: '0' | '1';
-  length?: number;
+  search?: string | undefined;
+  category?: string | undefined;
+  active?: '0' | '1' | undefined;
+  length?: number | undefined;
   sort?: 'az' | 'id_desc';
 }
 

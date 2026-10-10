@@ -47,7 +47,7 @@ function GameOverModal({
     evaluations,
     modeText,
     gameStatus === "won",
-    { shareUrl: challengeUrl, hintUsed }
+    challengeUrl === undefined ? { hintUsed } : { shareUrl: challengeUrl, hintUsed }
   );
   const { share, copied, failed } = useShare(shareText);
 

@@ -6,7 +6,7 @@ export interface PreviewRow {
   context: string;
   category: string | null;
   pool: string;
-  error?: string;
+  error?: string | undefined;
 }
 
 export const VALID_CATEGORIES = ['isim', 'sıfat', 'fiil'];

@@ -103,5 +103,37 @@ describe('GameOverModal', () => {
       const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
       expect(sharedText.split('\n')[0]).not.toContain('ipucu');
     });
+
+    it('should end the shared text with the challengeUrl and mark the header with "· ipucu" when hintUsed is true', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: true });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Paylaş'));
+      });
+      expect(shareMock).toHaveBeenCalledTimes(1);
+
+      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
+      const lines = sharedText.split('\n');
+      expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
+      expect(lines[0]).toContain('· ipucu');
+    });
+
+    it('should end the shared text with the challengeUrl and not mark the header when hintUsed is false', async () => {
+      const shareMock = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: false });
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Paylaş'));
+      });
+      expect(shareMock).toHaveBeenCalledTimes(1);
+
+      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
+      const lines = sharedText.split('\n');
+      expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
+      expect(lines[0]).not.toContain('ipucu');
+    });
   });
 });
