@@ -15,6 +15,7 @@ import {
   parseInstrumentedMutantCount,
   decideFileResult,
   runStrykerForFile,
+  exitCodeFor,
 } from "./mutation-changed.mjs";
 
 // --- groupChangedFilesByProject -------------------------------------------
@@ -607,4 +608,13 @@ test("should throw when repoRoot is not a git repository at all", () => {
   } finally {
     rmSync(nonRepoDir, { recursive: true, force: true });
   }
+});
+
+test("should exit non-zero when any changed file fails the gate (009-AE6)", () => {
+  assert.equal(exitCodeFor([{ failed: false }, { failed: true }]), 1);
+});
+
+test("should exit zero when every changed file passes the gate", () => {
+  assert.equal(exitCodeFor([{ failed: false }, { failed: false }]), 0);
+  assert.equal(exitCodeFor([]), 0);
 });

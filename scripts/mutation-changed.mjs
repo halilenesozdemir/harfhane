@@ -288,7 +288,7 @@ function main() {
     process.exit(0);
   }
 
-  let exitCode = 0;
+  const results = [];
   for (const { project, files } of groups) {
     console.log(`Mutating ${files.length} file(s) in ${project.name} (one Stryker run per file): ${files.join(", ")}`);
     const projectCwd = join(repoRoot, project.cwd);
@@ -296,9 +296,11 @@ function main() {
       const record = toRecord(repoRoot, projectCwd, file);
       const result = runStrykerForFile(repoRoot, project, record);
       console.log(result.line);
-      if (result.failed) exitCode = 1;
+      results.push(result);
     }
   }
+
+  const exitCode = exitCodeFor(results);
 
   if (exitCode !== 0) {
     console.error(`Mutation gate failed: a file scored below MUTATION_BREAK_THRESHOLD (${MUTATION_BREAK_THRESHOLD}), Stryker failed, or a requested file was not found.`);
@@ -306,6 +308,11 @@ function main() {
     console.log("All changed, mutation-tested files meet the break threshold.");
   }
   process.exit(exitCode);
+}
+
+/** Exit code for the gate: 1 when any per-file result failed, else 0. */
+export function exitCodeFor(results) {
+  return results.some((result) => result.failed) ? 1 : 0;
 }
 
 function isMainModule() {
