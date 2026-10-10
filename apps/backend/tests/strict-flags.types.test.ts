@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { parseTurkeyDate, parseWordLength } from '@harfhane/shared';
+import { getDailyWord } from '../src/services/word-service';
+import { env } from 'cloudflare:test';
 
 // Type-level proofs for Plan 010 R1/R2 in the backend. Removing
 // `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` or `reset.d.ts`
@@ -35,5 +38,28 @@ describe('backend strict type flags', () => {
     const parsed: number = JSON.parse('1');
 
     expect(parsed).toBe(1);
+  });
+
+  it('should fail typecheck when getDailyWord is called with a raw date string (010-AE2)', () => {
+    // Type-level only: these tuples are never passed to getDailyWord, so this
+    // proof makes no D1 call (which would otherwise race the isolated-storage
+    // teardown between tests).
+    type GetDailyWordArgs = Parameters<typeof getDailyWord>;
+
+    // @ts-expect-error - `getDailyWord`'s date parameter is `TurkeyDate` and its
+    // length parameter is `WordLength`; raw literals do not compile.
+    const invalidArgs: GetDailyWordArgs = [env.DB, '2026-10-06', 5];
+
+    const parsedDate = parseTurkeyDate('2026-10-06');
+    const parsedLength = parseWordLength(5);
+    if (parsedDate === null || parsedLength === null) {
+      throw new Error('unreachable: 2026-10-06 and 5 are both valid');
+    }
+
+    // Compiles: a parsed TurkeyDate and WordLength satisfy the parameter types.
+    const validArgs: GetDailyWordArgs = [env.DB, parsedDate, parsedLength];
+
+    expect(invalidArgs[1]).toBe('2026-10-06');
+    expect(validArgs[1]).toBe('2026-10-06');
   });
 });

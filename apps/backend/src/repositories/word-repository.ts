@@ -1,5 +1,5 @@
-import type { WordEntry } from '@harfhane/shared';
-import { getGameNumber } from '@harfhane/shared';
+import type { TurkeyDate, WordEntry, WordLength } from '@harfhane/shared';
+import { DEFAULT_WORD_LENGTH, getGameNumber } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
 
@@ -38,8 +38,8 @@ function toWordEntry(row: WordRow): WordEntry {
 
 export async function findDailyWord(
   db: Env['DB'],
-  date: string,
-  length = 5
+  date: TurkeyDate,
+  length: WordLength = DEFAULT_WORD_LENGTH
 ): Promise<(WordEntry & { gameNumber: number }) | null> {
   const row = await db
     .prepare(
@@ -63,6 +63,10 @@ export async function findDailyWord(
   };
 }
 
+// `length` stays a plain `number` here (not `WordLength`): the unlimited-pool
+// fallback this query serves is not restricted to scheduled lengths (Plan 010
+// U4 ambiguity; see the PR body). `getRandomWord` narrows to `WordLength` at
+// the service boundary, where the real caller is the route's validated input.
 export async function findRandomWord(
   db: Env['DB'],
   length = 5

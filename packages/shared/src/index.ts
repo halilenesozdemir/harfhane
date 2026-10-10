@@ -1,4 +1,8 @@
 export * from './game';
+export type { WordLength } from './types/word-length';
+export { DEFAULT_WORD_LENGTH, parseWordLength } from './types/word-length';
+export type { TurkeyDate } from './types/turkey-date';
+export { parseTurkeyDate } from './types/turkey-date';
 
 export type WordCategory = 'isim' | 'sıfat' | 'fiil';
 

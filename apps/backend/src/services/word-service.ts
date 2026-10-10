@@ -1,12 +1,14 @@
-import { getTodayString } from '@harfhane/shared';
+import { DEFAULT_WORD_LENGTH, getTodayString } from '@harfhane/shared';
 import type {
   DailyWordResponse,
   PlayableLengthsResponse,
   RandomWordResponse,
+  TurkeyDate,
   ValidateWordResponse,
+  WordLength,
 } from '@harfhane/shared';
 import type { Env } from '../types/env';
-import { NOT_FOUND, INVALID_DATE } from '../errors/api-error';
+import { NOT_FOUND } from '../errors/api-error';
 import { parsePlayableLengths } from '../utils/playable-lengths';
 import {
   findDailyWord,
@@ -14,19 +16,14 @@ import {
   wordExists,
 } from '../repositories/word-repository';
 
-function isValidDate(date: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(Date.parse(date));
-}
-
 export async function getDailyWord(
   db: Env['DB'],
-  date?: string,
-  length = 5
+  date?: TurkeyDate,
+  length: WordLength = DEFAULT_WORD_LENGTH
 ): Promise<DailyWordResponse> {
   const today = getTodayString();
   const targetDate = date ?? today;
 
-  if (!isValidDate(targetDate)) throw INVALID_DATE();
   // Future answers stay hidden; the same error as a missing day reveals nothing about the schedule.
   if (targetDate > today) throw NOT_FOUND('Daily word');
 
@@ -37,7 +34,10 @@ export async function getDailyWord(
   return { word, gameNumber, date: targetDate };
 }
 
-export async function getRandomWord(db: Env['DB'], length = 5): Promise<RandomWordResponse> {
+export async function getRandomWord(
+  db: Env['DB'],
+  length: WordLength = DEFAULT_WORD_LENGTH
+): Promise<RandomWordResponse> {
   const result = await findRandomWord(db, length);
   if (!result) throw NOT_FOUND('Word');
   return { word: result.entry, wordId: result.id };
