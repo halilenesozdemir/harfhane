@@ -153,6 +153,42 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should keep the countdown, not show the CTA, once the device day only just catches up to the server-reported date', async () => {
+    // The device clock is a day behind the server at load (today() -> '2026-10-05', so the
+    // session's own dailyDate is '2026-10-05'), but the server's real Turkey day for this game
+    // is already '2026-10-06' (`date`). If the server's `date` were not threaded through to
+    // GameOverCard (e.g. GameScreen stopped passing it), staleness would be judged only against
+    // the device's own (stale) dailyDate: once the device's clock merely catches up to
+    // '2026-10-06' — not past it — it would wrongly look like the Turkey day had moved past the
+    // displayed game, showing the CTA a full day too early.
+    jest.useFakeTimers();
+    try {
+      let currentDay = '2026-10-05';
+      const laggingToday = () => currentDay;
+      const api = {
+        fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 1, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={laggingToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+
+      currentDay = '2026-10-06';
+      await act(async () => jest.advanceTimersByTime(1000));
+
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show neither the keyboard nor the game-over card while the winning row is still revealing or bouncing', async () => {
     jest.useFakeTimers();
     try {

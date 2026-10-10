@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { getTodayString } from '@harfhane/shared';
 import { dailyGameKey } from '../game/game-state';
 import { loadGameState } from '../game/game-storage';
+import { useTurkeyDay } from '../game/useTurkeyDay';
 import { loadDailyStats } from '../stats/stats';
 import { getTodayStatus } from './today-status';
 import type { KeyValueStore } from '../game/game-storage';
@@ -13,8 +13,6 @@ export interface UseHomeStatusResult {
   /** Null until the stored stats and daily game state have both loaded (mobile-redesign-spec.md section B, "Loading"). */
   readonly status: TodayStatus | null;
 }
-
-const DAY_CHECK_TICK_MS = 1000;
 
 // A stable module-level reference: a fresh arrow function as the default
 // parameter value would be re-created on every render, forever changing
@@ -27,34 +25,6 @@ function defaultNow(): Date {
 
 function fallbackStatus(): TodayStatus {
   return { displayedStreak: 0, state: { kind: 'not-started' } };
-}
-
-/**
- * Tracks the Turkey day string, re-rendering only once the day actually
- * rolls over (mobile-redesign-spec.md section B, "Midnight"): the interval
- * checks every second but only calls setState when the computed day
- * differs from the previous one, so a home screen driven by this hook does
- * not re-render every second the way a raw per-second clock would. The
- * live countdown display is a separate concern (`useCountdown`), ticked
- * only by the component that actually shows it.
- */
-function useTurkeyDay(now: () => Date): string {
-  const [today, setToday] = useState(() => getTodayString(now()));
-  useEffect(() => {
-    const checkDay = () => {
-      const current = getTodayString(now());
-      setToday((previous) => (previous === current ? previous : current));
-    };
-    const timer = setInterval(checkDay, DAY_CHECK_TICK_MS);
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') checkDay();
-    });
-    return () => {
-      clearInterval(timer);
-      subscription.remove();
-    };
-  }, [now]);
-  return today;
 }
 
 function useLoadedStatus(store: KeyValueStore, length: WordLength, today: string): TodayStatus | null {
@@ -94,7 +64,14 @@ function useLoadedStatus(store: KeyValueStore, length: WordLength, today: string
 
 /** Drives the daily mode card (mobile-redesign-spec.md section B): today's state and the displayed streak. */
 export function useHomeStatus(store: KeyValueStore, length: WordLength, now: () => Date = defaultNow): UseHomeStatusResult {
-  const today = useTurkeyDay(now);
+  // Memoized so this stays the same function across renders as long as `now` does (it mirrors
+  // the "stable module-level reference" note on `defaultNow` above): a fresh arrow function
+  // passed to useTurkeyDay as `today` on every render would forever change its effect
+  // dependency, re-creating the interval/AppState subscription (a frozen day-rollover check in
+  // the worst case) instead of once on mount — same hook, now also shared with GameOverCard's
+  // own midnight-rollover check (mobile-redesign-spec.md section B, "Midnight").
+  const toToday = useCallback(() => getTodayString(now()), [now]);
+  const today = useTurkeyDay(toToday);
   const status = useLoadedStatus(store, length, today);
   return { status };
 }

@@ -387,5 +387,57 @@ describe('GameOverCard', () => {
       expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
       expect(await screen.findByTestId('gameover-new-word')).toBeTruthy();
     });
+
+    it('should use the server date, not the session dailyDate, to decide staleness when they disagree', async () => {
+      // dailyDate (device-computed) says the game is from 2026-01-03; the server's own `date`
+      // says 2026-01-04. Once the Turkey day reaches 2026-01-04, the server's (later) date must
+      // win: that day has only just arrived, not passed, so there is still no CTA. A mutant that
+      // reads `dailyDate` instead of `date` here would compute 2026-01-04 > 2026-01-03 = stale,
+      // showing the CTA wrongly.
+      const appState = mockAppStateListener();
+      let currentToday = '2026-01-03';
+      await renderCard({ dailyDate: '2026-01-03', date: '2026-01-04', today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+    });
+
+    it('should not show the CTA immediately when the device clock is already a day ahead of the server-reported date at load (device-clock-ahead bug)', async () => {
+      // The device's own clock already reports 2026-01-04 (so `today()` and the session's
+      // `dailyDate` both read that), but the server, using the real Turkey clock, still reports
+      // this game under 2026-01-03 (`date`). Taking the server's `date` outright (instead of the
+      // later of the two) would compute 2026-01-04 > 2026-01-03 = stale and show the CTA the
+      // instant the card mounts; pressing it would just reload the exact same still-unchanged
+      // server word in a loop until the real day turns over.
+      const today = () => '2026-01-04';
+      await renderCard({ dailyDate: '2026-01-04', date: '2026-01-03', today });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+    });
+
+    it('should clear the day-tracking interval and remove the AppState subscription on unmount', async () => {
+      const setIntervalSpy = jest.spyOn(global, 'setInterval');
+      const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+      const removeSpy = jest.fn();
+      jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: removeSpy } as ReturnType<typeof AppState.addEventListener>);
+      const view = await renderCard({ date: DAILY_DATE });
+      await screen.findByTestId('gameover-countdown');
+      // AppState.addEventListener is only called by the day tracker (the countdown has no
+      // AppState subscription of its own), so the interval created right alongside it in the
+      // same effect — the first `setInterval` call — is unambiguously the day tracker's, not
+      // the countdown's separate one.
+      const dayTrackerTimerId = setIntervalSpy.mock.results[0]?.value as ReturnType<typeof setInterval>;
+
+      await act(async () => view.unmount());
+
+      expect(clearIntervalSpy).toHaveBeenCalledWith(dayTrackerTimerId);
+      expect(removeSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });

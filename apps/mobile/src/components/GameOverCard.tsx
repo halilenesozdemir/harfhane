@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, AppState, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { generateShareText, getTimeUntilMidnight, getTodayString, type TileStatus } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
 import { Button } from '../ui/Button';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
+import { useTurkeyDay } from '../game/useTurkeyDay';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 import { dailyGameNumber, selectResultMessage, type FinishedGameStatus } from './gameOverMessages';
@@ -25,9 +26,9 @@ export interface GameOverCardProps {
   // then fall back to computing the number from `dailyDate`, exactly as before.
   readonly gameNumber?: number | null;
   // The server's own Turkey-day date for this game (GameState.date, from /words/daily). Null for
-  // unlimited and for a game stored before this field existed, in which case `dailyDate` (the
-  // session's own daily date) is used instead to decide whether the game has gone stale
-  // (see `useIsDailyGameStale` below).
+  // unlimited and for a game stored before this field existed. Combined with `dailyDate` via
+  // `pickLaterDate` (not a simple override) to decide whether the game has gone stale — see its
+  // doc comment for why the later of the two, not always the server's, is the safer choice.
   readonly date?: string | null;
   readonly store: KeyValueStore;
   readonly today?: () => string;
@@ -67,37 +68,27 @@ function useCountdown(isEnabled: boolean, now: () => Date): string {
   return `${countdown.hours}:${countdown.minutes}:${countdown.seconds}`;
 }
 
-// Tracks the Turkey day string from `today()`, re-rendering only once it actually changes.
-// Mirrors the home screen's own day tracker (useHomeStatus.ts's useTurkeyDay): a 1s interval
-// plus an AppState 'active' listener, so a day that rolled over while the app was backgrounded
-// is caught as soon as it returns to the foreground, not up to a second later. Skips the
-// interval/listener entirely when `enabled` is false (unlimited mode has no Turkey day to
-// track, and a finished game with no date yet has nothing to compare against).
-function useTurkeyDay(today: () => string, enabled: boolean): string {
-  const [current, setCurrent] = useState(() => today());
-  useEffect(() => {
-    if (!enabled) return undefined;
-    const checkDay = () => setCurrent((previous) => {
-      const next = today();
-      return previous === next ? previous : next;
-    });
-    const timer = setInterval(checkDay, COUNTDOWN_UPDATE_INTERVAL_MS);
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') checkDay();
-    });
-    return () => {
-      clearInterval(timer);
-      subscription.remove();
-    };
-  }, [today, enabled]);
-  return current;
+// The later (chronologically) of the server's own `date` and the session's device-computed
+// `dailyDate`, or whichever one is not null when only one is given. Using the later of the two —
+// not simply preferring the server's `date` outright — guards against a device clock that is
+// ahead of the real Turkey day at load time: `dailyDate` is computed from that same (fast) clock
+// via `today()` in useGame.ts's loadSession, so it already embeds the clock's own skew, and
+// comparing against it (instead of only the server's slower-to-arrive `date`) stops the
+// mid-card's own Turkey-day tracker — also driven by that same fast clock — from racing past the
+// server's date and flashing the new-day CTA (and letting the player re-trigger a reload loop of
+// the still-unchanged server word) before the real day has actually turned over. A clock that is
+// behind instead leaves `date` as the later value, so that scenario is unaffected.
+function pickLaterDate(a: string | null, b: string | null): string | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a > b ? a : b;
 }
 
 // A finished daily game has "gone stale" once the Turkey day has moved past the day it was
 // played on: the countdown it was showing would otherwise wrap back to 23:59:59 instead of
 // reflecting that a new word is already available (the backlog bug this hook fixes). Compares
-// with `>`, not `!==`, so a device clock that is merely behind the server's own date (the game
-// is not yet stale, just reported with a date ahead of the device) is not mistaken for staleness.
+// with `>`, not `!==`, so a live tracker that has only just caught up to `displayedDate` (not yet
+// past it) is not mistaken for staleness.
 function useIsDailyGameStale(mode: GameMode, displayedDate: string | null, today: () => string): boolean {
   const isTracking = mode === 'daily' && displayedDate !== null;
   const currentDay = useTurkeyDay(today, isTracking);
@@ -204,7 +195,7 @@ export function GameOverCard({
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
-  const displayedDate = date ?? dailyDate;
+  const displayedDate = pickLaterDate(date, dailyDate);
   const isStale = useIsDailyGameStale(mode, displayedDate, today);
   const countdown = useCountdown(mode === 'daily' && !isStale, now);
   useResultAnnouncement(title);
