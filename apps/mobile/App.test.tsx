@@ -380,8 +380,8 @@ describe('App', () => {
       expect(await screen.findByTestId('launch-intro')).toBeTruthy();
       // Stack is [home, howToPlay] (first launch); How to play is already mounted underneath
       // the intro, just hidden from accessibility, not popped.
-      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
-      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy();
+      expect(screen.queryByText('Nasıl oynanır')).toBeNull();
+      expect(screen.getByText('Nasıl oynanır', hidden)).toBeTruthy();
 
       (deviceStore.setItem as jest.Mock).mockClear();
       let handled = false;
@@ -391,7 +391,7 @@ describe('App', () => {
 
       expect(handled).toBe(true); // swallowed, not left for the OS to exit the app
       expect(screen.getByTestId('launch-intro')).toBeTruthy(); // intro still showing
-      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy(); // still on top of How to play, not home
+      expect(screen.getByText('Nasıl oynanır', hidden)).toBeTruthy(); // still on top of How to play, not home
       expect(deviceStore.setItem).not.toHaveBeenCalledWith(HOW_TO_PLAY_SEEN_KEY, expect.anything());
 
       addSpy.mockRestore();
@@ -408,15 +408,15 @@ describe('App', () => {
       // is drawn in JS after the native splash is already gone.
       expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
       // Hidden from accessibility while the intro covers it, but already mounted underneath.
-      expect(screen.queryByText('Nasıl Oynanır?')).toBeNull();
-      expect(screen.getByText('Nasıl Oynanır?', hidden)).toBeTruthy();
+      expect(screen.queryByText('Nasıl oynanır')).toBeNull();
+      expect(screen.getByText('Nasıl oynanır', hidden)).toBeTruthy();
 
       await act(async () => {
         jest.advanceTimersByTime(10_000);
       });
 
       expect(screen.queryByTestId('launch-intro')).toBeNull();
-      expect(await screen.findByText('Nasıl Oynanır?')).toBeTruthy();
+      expect(await screen.findByText('Nasıl oynanır')).toBeTruthy();
     });
   });
 
