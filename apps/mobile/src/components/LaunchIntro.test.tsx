@@ -1,10 +1,41 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Animated } from 'react-native';
+import type { ComponentProps } from 'react';
 import { LaunchIntro } from './LaunchIntro';
+import type { Tile } from './Tile';
+import { LAUNCH_INTRO_TIMING, TOTAL_INTRO_MS } from './useLaunchIntroPhases';
 import { flattenStyle } from '../test-utils/render-with-theme';
+
+type TileProps = ComponentProps<typeof Tile>;
+
+// Records every Tile render's props (rendering the real Tile) so the intro's wiring of timing and
+// celebration into each row is checked, not just the phase hook's own clock.
+const mockTileRenders: TileProps[] = [];
+jest.mock('./Tile', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const actual = jest.requireActual<typeof import('./Tile')>('./Tile');
+  return {
+    ...actual,
+    Tile: (props: TileProps) => {
+      mockTileRenders.push(props);
+      return React.createElement(actual.Tile, props);
+    },
+  };
+});
+
+const TILES_PER_ROW = 4;
+const OWNER_INTRO_FLIP_MS = 350;
+const SAMPLE_STEP_MS = 20;
+
+function latestRows(): { readonly row1: readonly TileProps[]; readonly row2: readonly TileProps[] } {
+  const last = mockTileRenders.slice(-2 * TILES_PER_ROW);
+  return { row1: last.slice(0, TILES_PER_ROW), row2: last.slice(TILES_PER_ROW) };
+}
+
 
 describe('LaunchIntro', () => {
   beforeEach(() => {
+    mockTileRenders.length = 0;
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
     jest.useFakeTimers();
   });
@@ -115,6 +146,61 @@ describe('LaunchIntro', () => {
     expect(screen.getAllByLabelText('A, doğru yerde', hidden)).toHaveLength(2);
     expect(screen.getAllByLabelText('R, doğru yerde', hidden)).toHaveLength(2);
     expect(screen.getByLabelText('F, doğru yerde', hidden)).toBeTruthy();
+  });
+
+  it('should flip every intro tile at the owner-approved 350 ms when the intro plays', async () => {
+    await render(<LaunchIntro onDone={jest.fn()} />);
+    expect(mockTileRenders.length).toBeGreaterThanOrEqual(2 * TILES_PER_ROW);
+    for (const props of mockTileRenders) expect(props.flipDurationMs).toBe(OWNER_INTRO_FLIP_MS);
+  });
+
+  it('should start the HARF row as the last FARK tile flips, one continuous sweep, when the intro plays', async () => {
+    await render(<LaunchIntro onDone={jest.fn()} />);
+    const { row1, row2 } = latestRows();
+    const { TILE_REVEAL_START_MS, ROW_STAGGER_MS } = LAUNCH_INTRO_TIMING;
+    row1.forEach((props, index) => expect(props.revealDelayMs).toBe(TILE_REVEAL_START_MS + index * ROW_STAGGER_MS));
+    expect(row2[0]?.revealDelayMs).toBe(row1[TILES_PER_ROW - 1]?.revealDelayMs);
+    row2.forEach((props, index) => expect(props.revealDelayMs).toBe((row2[0]?.revealDelayMs ?? Number.NaN) + index * ROW_STAGGER_MS));
+  });
+
+  it('should bounce only the HARF row, never the FARK row, when the sequence plays out', async () => {
+    await render(<LaunchIntro onDone={jest.fn()} />);
+    let row2Celebrated = false;
+    for (let elapsed = 0; elapsed < TOTAL_INTRO_MS - LAUNCH_INTRO_TIMING.CROSSFADE_MS; elapsed += SAMPLE_STEP_MS) {
+      await act(async () => {
+        jest.advanceTimersByTime(SAMPLE_STEP_MS);
+      });
+      const { row1, row2 } = latestRows();
+      expect(row1.some((props) => props.celebrate)).toBe(false);
+      if (row2.length === TILES_PER_ROW && row2.every((props) => props.celebrate)) row2Celebrated = true;
+    }
+    expect(row2Celebrated).toBe(true);
+  });
+
+  it('should fade the tiles in then out under the wordmark, and fade the overlay out at the end, when the sequence plays out', async () => {
+    // Animated values don't advance under jest, so this checks the fade targets each layer is sent.
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    await render(<LaunchIntro onDone={jest.fn()} />);
+    // Child (Tile) effects run first, so LaunchIntro's own four useFade calls are the mount
+    // commit's last four, in hook order: mark, tiles, wordmark, overlay.
+    const [, tilesValue, , overlayValue] = timingSpy.mock.calls.slice(-4).map(([value]) => value);
+    // Small steps: one big jump would batch the phase changes into one render and skip 'tiles'.
+    for (let elapsed = 0; elapsed < TOTAL_INTRO_MS - SAMPLE_STEP_MS; elapsed += SAMPLE_STEP_MS) {
+      await act(async () => {
+        jest.advanceTimersByTime(SAMPLE_STEP_MS);
+      });
+    }
+    const targetsOf = (value: unknown) =>
+      timingSpy.mock.calls.filter(([candidate]) => candidate === value).map(([, config]) => (config as { toValue: number }).toValue);
+    expect(targetsOf(tilesValue)).toEqual([0, 1, 0]);
+    expect(targetsOf(overlayValue)).toEqual([1, 0]);
+  });
+
+  it('should tilt the yellow mark tile +12 degrees and the green H tile -6 degrees when the intro starts', async () => {
+    await render(<LaunchIntro onDone={jest.fn()} />);
+    const rotationOf = (testID: string) => flattenStyle(screen.getByTestId(testID, { includeHiddenElements: true }).props.style).transform;
+    expect(rotationOf('launch-intro-mark-present')).toEqual([{ rotate: '12deg' }]);
+    expect(rotationOf('launch-intro-mark-correct')).toEqual([{ rotate: '-6deg' }]);
   });
 
   it('should not log a console error (e.g. the unsupported native-animated "letterSpacing" warning) while the full sequence plays', async () => {
