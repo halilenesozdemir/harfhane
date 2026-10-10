@@ -3,14 +3,15 @@
 # files, as GITHUB_OUTPUT lines. Env: EVENT, PR_BASE, PUSH_BEFORE.
 #   code  — anything but Markdown and docs/ (install, typecheck, lint, tests)
 #   web   — code outside the areas the web e2e suite cannot see
-#   words — the Python word pipeline and its data
+#   words — the Python word pipeline, its data and the migrations its seed test applies
+# Renames list both paths, so moving a file into docs/ still counts as code.
 # A missing or unknown base (manual run, new branch) marks everything true.
 set -euo pipefail
 
 ZERO_SHA=0000000000000000000000000000000000000000
 DOCS_PATTERN='(^docs/|\.md$)'
 NOT_WEB_PATTERN='^(apps/mobile/|apps/backend/|data/|scripts/words/|\.claude/)'
-WORDS_PATTERN='^(scripts/words/|data/words/|\.github/)'
+WORDS_PATTERN='^(scripts/words/|data/words/|apps/backend/db/migrations/|\.github/)'
 
 print_all() {
   printf 'code=true\nweb=true\nwords=true\n'
@@ -27,7 +28,7 @@ if [ -z "$base" ] || [ "$base" = "$ZERO_SHA" ] || ! git cat-file -e "${base}^{co
   exit 0
 fi
 
-changed=$(git diff --name-only "${base}...HEAD")
+changed=$(git diff --name-only --no-renames "${base}...HEAD")
 code=$(grep -Ev "$DOCS_PATTERN" <<<"$changed" | grep -v '^$' || true)
 
 has() { [ -n "$1" ] && echo true || echo false; }
