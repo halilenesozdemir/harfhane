@@ -249,6 +249,46 @@ describe('useGame', () => {
     expect(result.current.session.dailyDate).toBe('2026-10-05');
   });
 
+  it('should key daily storage by the server date, not the device date, when they disagree at load', async () => {
+    // The device clock already reports '2026-10-06' (a day ahead of the real Turkey day), but
+    // the server's own /words/daily response — authoritative — is still for '2026-10-05'. The
+    // saved game must land under the server's date, not a fresh device-dated entry: otherwise
+    // the same still-unchanged server word would be replayed as if it were a new game and
+    // double-counted in stats (the bug this storage key fixes).
+    const deviceAheadToday = () => '2026-10-06';
+    const api = createApi();
+    const store = createMemoryStore();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today: deviceAheadToday }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    expect(result.current.session.dailyDate).toBe(TODAY);
+    await typeAndSubmit(result, 'KALAY');
+    await waitFor(async () => expect(JSON.parse((await store.getItem(DAILY_KEY)) ?? '{}').guesses).toEqual(['KALAY']));
+    expect(await store.getItem('harfhane:game:anon:2026-10-06:5')).toBeNull();
+  });
+
+  it('should restore the same finished game, not a fresh board, when reloaded while the device date differs from the server date', async () => {
+    // A finished daily game was already saved under the server's date (TODAY). Loading again
+    // with a device clock reporting a later day (simulating a press of the game-over midnight
+    // CTA while the device is ahead of the real Turkey day, and the server hasn't rolled over
+    // yet) must restore that same finished entry, not an empty board under a new device-dated
+    // key — otherwise the player would replay the identical word and double-count the result.
+    const finished = {
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      currentGuess: '',
+      gameStatus: 'won',
+      keyboardStatus: {},
+    };
+    const store = createMemoryStore({ [DAILY_KEY]: JSON.stringify(finished) });
+    const api = createApi();
+    const deviceAheadToday = () => '2026-10-06';
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store, today: deviceAheadToday }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+    expect(result.current.session.game.gameStatus).toBe('won');
+    expect(result.current.session.game.guesses).toEqual(['KALEM']);
+    expect(result.current.session.dailyDate).toBe(TODAY);
+  });
+
   it('should report an error when the word cannot be loaded', async () => {
     const api = createApi({ fetchDailyWord: jest.fn().mockRejectedValue(new Error('down')) });
     const store = createMemoryStore();

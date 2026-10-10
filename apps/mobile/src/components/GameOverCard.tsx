@@ -25,10 +25,11 @@ export interface GameOverCardProps {
   // Null for unlimited and for a game loaded before this field existed; the title/share text
   // then fall back to computing the number from `dailyDate`, exactly as before.
   readonly gameNumber?: number | null;
-  // The server's own Turkey-day date for this game (GameState.date, from /words/daily). Null for
-  // unlimited and for a game stored before this field existed. Combined with `dailyDate` via
-  // `pickLaterDate` (not a simple override) to decide whether the game has gone stale — see its
-  // doc comment for why the later of the two, not always the server's, is the safer choice.
+  // The server's own Turkey-day date for this game (GameState.date, from /words/daily; always
+  // set once a daily game has loaded — see useGame.ts's loadSession). Null for unlimited and for
+  // a game stored before this field existed, in which case `dailyDate` (which useGame.ts now
+  // also derives from the same server date) is used instead to decide whether the game has gone
+  // stale (see `useIsDailyGameStale` below).
   readonly date?: string | null;
   readonly store: KeyValueStore;
   readonly today?: () => string;
@@ -68,27 +69,17 @@ function useCountdown(isEnabled: boolean, now: () => Date): string {
   return `${countdown.hours}:${countdown.minutes}:${countdown.seconds}`;
 }
 
-// The later (chronologically) of the server's own `date` and the session's device-computed
-// `dailyDate`, or whichever one is not null when only one is given. Using the later of the two —
-// not simply preferring the server's `date` outright — guards against a device clock that is
-// ahead of the real Turkey day at load time: `dailyDate` is computed from that same (fast) clock
-// via `today()` in useGame.ts's loadSession, so it already embeds the clock's own skew, and
-// comparing against it (instead of only the server's slower-to-arrive `date`) stops the
-// mid-card's own Turkey-day tracker — also driven by that same fast clock — from racing past the
-// server's date and flashing the new-day CTA (and letting the player re-trigger a reload loop of
-// the still-unchanged server word) before the real day has actually turned over. A clock that is
-// behind instead leaves `date` as the later value, so that scenario is unaffected.
-function pickLaterDate(a: string | null, b: string | null): string | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return a > b ? a : b;
-}
-
-// A finished daily game has "gone stale" once the Turkey day has moved past the day it was
-// played on: the countdown it was showing would otherwise wrap back to 23:59:59 instead of
-// reflecting that a new word is already available (the backlog bug this hook fixes). Compares
-// with `>`, not `!==`, so a live tracker that has only just caught up to `displayedDate` (not yet
-// past it) is not mistaken for staleness.
+// A finished daily game has "gone stale" once the Turkey day has moved past the day the server
+// reported for it (`displayedDate`): the countdown it was showing would otherwise wrap back to
+// 23:59:59 instead of reflecting that a new word is already available (the backlog bug this hook
+// fixes). Compares with `>`, not `!==`, so a live tracker that has only just caught up to
+// `displayedDate` (not yet past it) is not mistaken for staleness. This no longer has to guard
+// against a device clock skewing `displayedDate` itself ahead of the real day: useGame.ts's
+// loadSession now keys the daily game, its storage, and `dailyDate` by the server's own `date`
+// (never the device's today()), so `dailyDate` and `date` always agree once a game has loaded —
+// a device clock running fast only ever races this hook's own live tracker, which a reload
+// (pressing the CTA) cannot outrun, since it would just restore the same still-current server
+// entry rather than create a new one.
 function useIsDailyGameStale(mode: GameMode, displayedDate: string | null, today: () => string): boolean {
   const isTracking = mode === 'daily' && displayedDate !== null;
   const currentDay = useTurkeyDay(today, isTracking);
@@ -195,7 +186,7 @@ export function GameOverCard({
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
-  const displayedDate = pickLaterDate(date, dailyDate);
+  const displayedDate = date ?? dailyDate;
   const isStale = useIsDailyGameStale(mode, displayedDate, today);
   const countdown = useCountdown(mode === 'daily' && !isStale, now);
   useResultAnnouncement(title);

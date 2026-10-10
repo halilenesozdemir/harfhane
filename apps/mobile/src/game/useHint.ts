@@ -80,7 +80,7 @@ export function useHint({ store, mode, wordLength, dailyDate, solution, guesses 
   const canReveal = hasAllowanceLeft && isLoaded && nextHint(solution, guesses, revealed) !== null;
 
   const revealHint = useCallback(() => {
-    if (!hasAllowanceLeft || !isLoaded || dailyDate === null) return;
+    if (!hasAllowanceLeft || !isLoaded) return;
     const hint = nextHint(solution, guesses, revealed);
     if (hint === null || revealed.includes(hint.position)) return;
     const next = [...revealed, hint.position];
