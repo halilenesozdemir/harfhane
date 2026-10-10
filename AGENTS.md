@@ -31,6 +31,8 @@ Three agents in `.claude/agents/`; the main loop owns planning, integration and 
 
 Two open PRs never touch the same file; each plan names the files its parallel units own. At most three implementation PRs are open per area (backend, web, mobile, scripts); docs-only PRs and PRs labelled `parked` (waiting on the owner or a cutover) do not count. A PR whose review is clean merges the same day; otherwise it is brought up to date with `main` before more work lands on it. Removals run one after another. Adding a dependency, changing settings files, remote D1 writes and store or account steps need the owner.
 
+GitHub Actions minutes are a monthly budget (October 2026 used it up in ten days). CI skips draft PRs, so review fixes go into a draft; `gh pr ready` runs once the reviewer's findings are fixed, right before merging. Batch fixes into one push instead of pushing each commit.
+
 ## Testing
 
 Flaky-test policy: a test that fails intermittently is quarantined with a `docs/backlog.md` entry
