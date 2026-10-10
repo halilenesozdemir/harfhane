@@ -49,7 +49,7 @@ module.exports = {
       conditionNames: ['import', 'require', 'node', 'default'],
     },
     exclude: {
-      path: '(^|/)(node_modules|dist|dist-e2e-real-backend|generated|\\.wrangler|coverage|build)(/|$)',
+      path: '(^|/)(node_modules|dist|dist-e2e-real-backend|generated|\\.wrangler|coverage|build|\\.stryker-tmp|reports)(/|$)',
     },
   },
 };
