@@ -106,6 +106,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           today={today}
           onNewGame={game.startNewGame}
           recordedDistribution={recordedDistribution}
+          hintUsed={hint.isUsed}
         />
       ) : null}
       {!isFinished && (

@@ -277,13 +277,6 @@ ADR, map every file as factory or product, extract the factory layer into a GitH
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
 
-## Mobile share hint marker (Plan 011 U6, after PR #87 merges)
-`generateShareText` (`packages/shared/src/game/share.ts`) now takes an options object with
-`hintUsed` (R8/AE6: the share header gets a "· ipucu" suffix). Web passes it from `useHint`'s
-`hintUsed` in `apps/frontend/src/components/GamePage.tsx` / `GameOverModal.tsx`. The mobile
-game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
-wire mobile's own hint state through once #87 merges, matching the web wiring above.
-
 ## Mobile UI primitives wiring (Plan 011 U7a, follow-up in U7b/U7c)
 U7a (split across PR #97 `IconButton`/`TopBar`/`layout.ts` and a follow-up PR `Button`/`Card`,
 based on #97) added the mobile UI standard's layout constants and shared primitives, but changed
