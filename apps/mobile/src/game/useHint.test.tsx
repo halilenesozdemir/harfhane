@@ -2,7 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createMemoryStore } from '../test-utils/render-with-theme';
 import { loadRevealedHints, saveRevealedHints } from './game-storage';
 import { useHint } from './useHint';
+import { useEntitlements } from './useEntitlements';
 import type { KeyValueStore } from './game-storage';
+
+jest.mock('./useEntitlements', () => ({ useEntitlements: jest.fn(() => ({ isSupporter: false })) }));
 
 const TODAY = '2026-10-05';
 const HINT_KEY = `harfhane:hint:anon:daily:${TODAY}:5`;
@@ -18,6 +21,20 @@ function createDelayedStore(): { store: KeyValueStore; resolveLoad: (value: stri
 }
 
 describe('useHint', () => {
+  beforeEach(() => {
+    (useEntitlements as jest.Mock).mockReturnValue({ isSupporter: false });
+  });
+
+  it('should read the supporter allowance from useEntitlements instead of a hardcoded literal', async () => {
+    (useEntitlements as jest.Mock).mockReturnValue({ isSupporter: true });
+    const store = createMemoryStore();
+    const { result } = await renderHook(() =>
+      useHint({ store, mode: 'daily', wordLength: 5, dailyDate: TODAY, solution: 'KALEM', guesses: ['KAPAK'] }),
+    );
+    // Free allowance is 1; a hardcoded literal would report allowance 1 here too.
+    expect(result.current.allowance).toBe(3);
+  });
+
   it('should reveal a letter at an unsolved position when the answer is KALEM and K and A are green (008-AE7)', async () => {
     const store = createMemoryStore();
     const { result } = await renderHook(() =>
