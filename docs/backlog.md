@@ -490,3 +490,53 @@ while `LaunchIntro` is showing. Not checked on a device.
 every deploy bills the CI duration a second time. A `workflow_run` trigger (start only after CI
 succeeds on `main`) removes the wait, but `workflow_run` has no `paths` filter, which conflicts
 with Invariant 9 as written; changing it needs an owner-approved ADR and an in-job path check.
+
+## Plan 009 U6: backend Stryker mutation testing not wired (2026-10-10)
+
+R7/KTD4 ask for Stryker on `apps/backend/src/{services,repositories}` too, with a fallback to a
+plain Vitest config if the Workers pool doesn't work. It doesn't, in a way a plain config can't
+paper over: `@stryker-mutator/vitest-runner@10.0.0` runs vitest through its own Node-API
+invocation (`startVitest`), which does not go through `@cloudflare/vitest-pool-workers`'s custom
+pool (`apps/backend/vitest.config.ts`'s `defineWorkersConfig`). Confirmed by running
+`npx stryker run --mutate src/repositories/word-repository.ts` (and
+`schedule-health-repository.ts`) from `apps/backend`: the dry run fails before a single mutant
+runs, with `crypto.subtle.timingSafeEqual is not a function` — a Workers-only API that exists
+under the real pool (`wrangler`/`miniflare`) but not under plain Node, which is what Stryker's
+runner actually executes tests under regardless of the `vitest.config.ts` passed to it. Any
+backend test touching a D1 binding would fail the same way, since D1 bindings don't exist outside
+`workerd` either.
+
+A "plain Vitest config" fallback would mean giving `services`/`repositories` their own non-D1,
+non-Workers-binding test doubles so they can run under Stryker's plain-Node vitest at all — a
+rewrite of how those layers are tested, not a config change, and out of scope for this unit per
+the owner's "deliver shared now" instruction. `packages/shared` Stryker
+(`packages/shared/stryker.conf.json`) ships in Plan 009 U6; `scripts/mutation-changed.mjs`'s
+`PROJECTS` list has only `shared` for now. Revisit if Stryker ships a Workers-aware test runner,
+or if backend services/repositories get a binding-free unit-test layer for another reason.
+
+## Plan 009 U6: a throwaway git fixture's commands leaked onto the real repo via ambient GIT_* env vars (2026-10-10)
+
+While building `scripts/mutation-changed.mjs`'s `getChangedFiles`, its first test suite spun up
+throwaway git repos under `os.tmpdir()` to prove committed/uncommitted/untracked/deleted-file
+handling. Those fixture repos' `git init`/`add`/`commit` calls ran inside the repo's own
+pre-commit hook (`pnpm test` → `node --test scripts/*.test.mjs`), and git hooks run with
+`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE`/`GIT_COMMON_DIR` already set to the *real* repository.
+Those env vars are inherited by every child process unless explicitly cleared, so the fixtures'
+git commands — despite being given a throwaway `cwd` — resolved against the real `.git`, and
+their `git commit`s landed for real on the branch being worked on. Separately, one draft of the
+fixture helper called `git config user.email`/`user.name` directly against what it believed was
+an isolated repo; combined with the same env leak, this once wrote a stray `[user]` section and
+flipped `core.bare` in the *shared* repo's `.git/config` (the repo all worktrees share), and moved
+`refs/remotes/origin/main` to a fixture commit. The owner repaired it by hand.
+
+Fixed in `scripts/mutation-changed.mjs` (`stripGitEnv`, used by every git call the script itself
+makes) and in the test file's fixture helper (`fixtureGitEnv`, layering
+`GIT_CONFIG_NOSYSTEM=1`, `GIT_CONFIG_GLOBAL=/dev/null` and `GIT_CEILING_DIRECTORIES=<tmp parent>`
+on top, and supplying commit identity only via `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env vars — never
+`git config user.*`, so no config file is ever written, not even the fixture's own). Both strip
+*every* `GIT_`-prefixed env var (not an allowlist), so a future git env var doesn't reopen the
+same hole. Proven against a disposable "victim" git repo (not a worktree of this repo) with
+`GIT_DIR`/`GIT_WORK_TREE`/`GIT_INDEX_FILE`/`GIT_COMMON_DIR`/`GIT_CONFIG` all pointed at it before
+running the full test file: the victim's `.git/config`, refs and object count were identical
+before and after (see the PR body for the exact before/after output). Any future contributor
+adding a git-touching test fixture to this repo should run the same proof before trusting it.

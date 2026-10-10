@@ -59,3 +59,7 @@ apps/frontend/test-results/
 apps/frontend/e2e/.tmp-screenshots/
 scripts/words/.cache/
 __pycache__/
+
+# Stryker mutation testing (Plan 009 U6)
+.stryker-tmp/
+packages/shared/reports/
