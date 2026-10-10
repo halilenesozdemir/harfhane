@@ -64,14 +64,16 @@ cannot add text, layouts or a custom image size beyond that.
 3. **Short JS intro after `hideAsync`** (`apps/mobile/src/components/LaunchIntro.tsx`, cold start
    only), on the same dark background so frame 0 matches the native splash:
    - The mark fades/shrinks away, then two rows of four tiles play a mini game with the existing
-     tile-flip animation language (Plan 011 U2, `motion-flip`/`motion-stagger`): row 1 "FARK" (F
-     present, A correct, R correct, K absent) flips in with a stagger; row 2 "HARF" (all correct)
-     flips in, then jumps like the win bounce.
+     tile-flip language (Plan 011 U2's `Tile`), but with intro-only timing instead of the game's
+     `motion-flip`/`motion-stagger`: a 350 ms flip and a 50 ms stagger. Row 1 "FARK" (F present,
+     A correct, R correct, K absent) flips in; row 2 "HARF" (all correct) continues the same sweep,
+     then jumps like the win bounce (30 ms stagger).
    - Then the wordmark "harfhane" gathers in (Baloo 2 ExtraBold, "harf" in the dark theme's
-     `brand`, "hane" in cream `bg`) with the subtitle "Her gün yeni bir kelime" in dark
+     `brand`, "hane" in the dark theme's cream `text`) with the subtitle "Her gün yeni bir kelime" in dark
      `text-muted`. No glow or radial light.
-   - Then the background cross-fades to the current theme's `bg` and the home screen fades in.
-   - Total ≈ 2 s; a tap skips to home immediately; reduce motion (`useReduceMotion`) skips the
+   - The wordmark holds fully visible for 600 ms, then the background cross-fades to the current
+     theme's `bg` and the home screen fades in.
+   - Total ≈ 2.3 s (owner, 2026-10-09: shortened from ≈ 3.1 s; pinned by a test); a tap skips to home immediately; reduce motion (`useReduceMotion`) skips the
      intro entirely [M2, M4]; never shown when returning from background. Input is never blocked
      beyond the intro.
    - Accessibility: decorative, one accessible label "Harfhane"; skippable and short so TalkBack
