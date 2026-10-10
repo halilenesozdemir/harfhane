@@ -566,3 +566,27 @@ same hole. Proven against a disposable "victim" git repo (not a worktree of this
 running the full test file: the victim's `.git/config`, refs and object count were identical
 before and after (see the PR body for the exact before/after output). Any future contributor
 adding a git-touching test fixture to this repo should run the same proof before trusting it.
+
+## Plan 009 U6: packages/shared's first mutation scores need raising, and Stryker runs full (not incremental) (2026-10-10)
+
+The first full `packages/shared` Stryker run (R10) scored 73.55% overall, above the 70 break
+threshold, but two files are weak and will fail `scripts/mutation-changed.mjs`'s per-file gate
+the moment a PR touches them again (the gate scores each changed file on its own, not blended
+into the full-package average):
+
+- `evaluate.ts`: 68.25% (6 survived + 14 no-coverage out of 63 countable mutants) — already below
+  the 70 break threshold on its own.
+- `keyboard.ts`: 0% (0 of 18 mutants killed; no test imports it directly, or exercises it only
+  incidentally without asserting on its behavior).
+
+Neither was fixed in U6 (out of scope: the unit adds the gate, not new tests for pre-existing
+code, per R7's "old code is not retrofitted" decision). The first PR that changes either file will
+have to bring that whole file's score over 70 as part of its own diff, not just avoid lowering it
+further — flagged in that PR's "Not covered" or fixed before merging.
+
+Also: `packages/shared/stryker.conf.json` does not enable Stryker's incremental mode
+(`incrementalFile`/`--incremental`), and `scripts/mutation-changed.mjs` runs one Stryker
+invocation per changed file rather than batching them (needed so "Instrumented N source file(s)
+with M mutant(s)" unambiguously describes one file — see `decideFileResult`'s module comment).
+Both are performance choices only (correctness is unaffected); worth revisiting once the gate is
+running routinely and per-run time matters.
