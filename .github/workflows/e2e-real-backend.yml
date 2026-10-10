@@ -9,6 +9,9 @@ name: E2E (real backend)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   e2e-real-backend:
     runs-on: ubuntu-latest
