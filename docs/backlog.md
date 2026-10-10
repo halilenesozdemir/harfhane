@@ -359,16 +359,6 @@ between them.
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
 
-## Mobile share/title number comes from the device date, not the server (2026-10-07)
-`apps/mobile/src/components/GameOverCard.tsx` computes the daily game number from the device's
-local `dailyDate` string via `dailyGameNumber()` (mirroring the backend's formula), instead of the
-server's own `gameNumber` from `/words/daily` — `GameSession` does not carry it today, and
-PR #88 owns `game/useGame.ts`/`game-session.ts`. Once #88 merges, thread `gameNumber` (and `date`)
-from the `/words/daily` response into `GameSession` and have `GameOverCard` read it from there
-instead of recomputing it locally, matching how the web app already uses the server's
-`gameNumber` (`apps/frontend/src/components/GameOverModal.tsx`). A device with a wrong clock is
-the only way the two values could currently disagree.
-
 ## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
 `getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
 *next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight
@@ -491,6 +481,18 @@ never needs to know the hero's position. No onLayout hook was added to `HomeHero
 In the light theme `App.tsx` renders `StatusBar` style `dark`, so for the ~2.3 s intro the status
 bar icons sit dark-on-dark over the fixed `#1c1611` overlay. Switch the status bar to `light`
 while `LaunchIntro` is showing. Not checked on a device.
+
+## Daily storage/hint/stats keys still use the device date, not the server's (review of #141, 2026-10-10)
+`useGame.ts`'s `loadSession` now takes the daily game's `gameNumber`/`date` from the server's
+`/words/daily` response, so the shared title/share text is correct even with a wrong device
+clock. But the storage key the game is saved under (`dailyGameKey(today())` in `useGame.ts`),
+the hint storage key (also keyed on `today()`), and `recordDailyResult`'s `dailyDate` (in
+`stats.ts`) are all still computed from the device's local date, not the server's `date`. A
+device clock that is one day off (or near midnight in a different timezone than Turkey) stores
+the game, its revealed hint and its stats entry under the wrong day even though the shared
+number/title read from the server are correct. Pre-existing behaviour, not introduced by #141;
+worth revisiting once the storage/hint/stats keys can take the server's `date` instead of
+`today()`.
 
 ## Deploy workflows pay for waiting on CI (2026-10-10)
 

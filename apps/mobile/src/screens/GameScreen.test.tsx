@@ -87,6 +87,33 @@ describe('GameScreen', () => {
     }
   });
 
+  it('should share the server gameNumber, not the device-clock-computed one, when the device clock is wrong', async () => {
+    jest.useFakeTimers();
+    try {
+      // The device thinks it's a day earlier than the server, but the server's own response
+      // (gameNumber: 7, date: '2026-10-06') must still win in the title/share text.
+      const wrongToday = () => '2026-10-05';
+      const api = {
+        fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 7, date: '2026-10-06' }),
+        fetchRandomWord: jest.fn(),
+        validateWord: jest.fn().mockResolvedValue({ isValid: true }),
+        fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+      };
+      await renderWithTheme(
+        <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={wrongToday} />,
+      );
+      await screen.findByLabelText('Gönder');
+      await pressKeys(['K', 'A', 'L', 'E', 'M', 'ENTER']);
+      await advancePastGameOverGate(true);
+      await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+      const [[{ message }]] = (Share.share as jest.Mock).mock.calls;
+      expect(message).toContain('#7');
+      expect(message).not.toContain(`#${dailyGameNumber(wrongToday())}`);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('should show neither the keyboard nor the game-over card while the winning row is still revealing or bouncing', async () => {
     jest.useFakeTimers();
     try {

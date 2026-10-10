@@ -9,6 +9,12 @@ export interface GameState {
   readonly currentGuess: string;
   readonly gameStatus: GameStatus;
   readonly keyboardStatus: Readonly<Record<string, TileStatus>>;
+  // The server's own daily game number and Turkey-day date (from /words/daily), carried through
+  // storage so a restored daily game keeps showing the server's number even if the device clock
+  // disagrees. Absent for games stored before this field existed, and always absent for
+  // unlimited (it has no daily game number).
+  readonly gameNumber?: number;
+  readonly date?: string;
 }
 
 const ANONYMOUS_USER_KEY = 'anon';
@@ -33,6 +39,7 @@ export function applyGuess(state: GameState, solution: string): GameState {
   const evaluation = evaluateGuess(guess, solution);
   const guesses = [...state.guesses, guess];
   return {
+    ...state,
     guesses,
     evaluations: [...state.evaluations, evaluation],
     currentGuess: '',

@@ -249,6 +249,28 @@ describe('GameOverCard', () => {
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
 
+  it('should use the server gameNumber in the share text when it disagrees with the device-computed number', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    // dailyGameNumber(DAILY_DATE) === 3, but the server says this is game #99 (e.g. the device
+    // clock is wrong); the server's number must win.
+    await renderCard({ guesses, evaluations, gameNumber: 99 });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#99', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+  });
+
+  it('should fall back to the device-computed game number when gameNumber is not provided', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, gameNumber: null });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+  });
+
   it('should render the result title in the headline display font, not the body font', async () => {
     await renderCard();
     const title = flattenStyle(screen.getByRole('header').props.style);
