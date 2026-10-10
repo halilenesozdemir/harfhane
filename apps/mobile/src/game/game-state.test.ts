@@ -58,6 +58,13 @@ describe('applyGuess', () => {
     const state = guesses.reduce((current, guess) => applyGuess({ ...current, currentGuess: guess }, SOLUTION), createInitialState());
     expect(state.gameStatus).toBe('lost');
   });
+
+  it('should keep the server gameNumber and date across a guess, not just the fields it recomputes', () => {
+    const loaded = { ...typeWord('KALAY'), gameNumber: 42, date: '2026-10-05' };
+    const state = applyGuess(loaded, SOLUTION);
+    expect(state.gameNumber).toBe(42);
+    expect(state.date).toBe('2026-10-05');
+  });
 });
 
 describe('dailyGameKey', () => {

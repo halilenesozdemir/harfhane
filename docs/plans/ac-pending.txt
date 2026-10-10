@@ -14,5 +14,3 @@
 006-AE5  no test asserts the alert fires on low unscheduled stock independent of runway; PR #63, which would have added this to schedule-health-service.test.ts, closed without merging
 
 009-AE4  covered only by a local Maestro flow (apps/mobile/.maestro/daily.yaml); no gate runs it (R5: not in CI)
-
-010-AE2  Plan 010 U4 (branded WordLength/TurkeyDate types), not started

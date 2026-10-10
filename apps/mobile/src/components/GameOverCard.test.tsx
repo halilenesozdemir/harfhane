@@ -1,11 +1,22 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { AccessibilityInfo, Share } from 'react-native';
+import { AccessibilityInfo, AppState, Share } from 'react-native';
 import { generateShareText } from '@harfhane/shared';
 import { GameOverCard } from './GameOverCard';
 import type { GameOverCardProps } from './GameOverCard';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE } from '../ui/layout';
+
+type AppStateHandler = (status: string) => void;
+
+function mockAppStateListener(): { fire: (status: string) => void } {
+  let handler: AppStateHandler | undefined;
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, nextHandler) => {
+    handler = nextHandler as AppStateHandler;
+    return { remove: () => undefined } as ReturnType<typeof AppState.addEventListener>;
+  });
+  return { fire: (status: string) => handler?.(status) };
+}
 
 jest.mock('react-native/Libraries/Share/Share', () => ({
   __esModule: true,
@@ -33,6 +44,7 @@ function renderCard(overrides: Partial<GameOverCardProps> = {}) {
     store: createMemoryStore(),
     today: () => DAILY_DATE,
     onNewGame: jest.fn(),
+    hintUsed: false,
     ...overrides,
   };
   return renderWithTheme(<GameOverCard {...props} />);
@@ -204,10 +216,224 @@ describe('GameOverCard', () => {
     expect(newWordFace.backgroundColor).not.toBe(colors.brand);
   });
 
+  it('should append the hint marker to the shared text header when a hint was used in a daily game (011-AE6)', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, hintUsed: true });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: true });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    expect(expectedShareText.split('\n')[0]).toContain('· ipucu');
+  });
+
+  it('should not append the hint marker to the shared text header when no hint was used (011-AE6)', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, hintUsed: false });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    expect(expectedShareText.split('\n')[0]).not.toContain('ipucu');
+  });
+
+  it('should append the hint marker to the unlimited shared text header when a hint was used', async () => {
+    const onNewGame = jest.fn();
+    await renderCard({
+      mode: 'unlimited',
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      wordId: 42,
+      dailyDate: null,
+      onNewGame,
+      hintUsed: true,
+    });
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(
+      ['KALEM'],
+      [['correct', 'correct', 'correct', 'correct', 'correct']],
+      'Sınırsız',
+      true,
+      { hintUsed: true },
+    );
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+  });
+
+  it('should use the server gameNumber in the share text when it disagrees with the device-computed number', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    // dailyGameNumber(DAILY_DATE) === 3, but the server says this is game #99 (e.g. the device
+    // clock is wrong); the server's number must win.
+    await renderCard({ guesses, evaluations, gameNumber: 99 });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#99', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+  });
+
+  it('should fall back to the device-computed game number when gameNumber is not provided', async () => {
+    const guesses = [...WON_GUESSES];
+    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
+    await renderCard({ guesses, evaluations, gameNumber: null });
+
+    await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
+    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
+    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+  });
+
   it('should render the result title in the headline display font, not the body font', async () => {
     await renderCard();
     const title = flattenStyle(screen.getByRole('header').props.style);
     expect(title.fontSize).toBe(FONT_SIZE.headline);
     expect(title.fontFamily).toBe(FONT_FAMILY_DISPLAY);
+  });
+
+  describe('midnight rollover', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    it('should show a primary "Oyna" CTA instead of the countdown when the Turkey day rolls over while mounted', async () => {
+      jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
+      let currentToday = DAILY_DATE;
+      const onNewGame = jest.fn();
+      await renderCard({
+        date: DAILY_DATE,
+        today: () => currentToday,
+        now: () => new Date('2026-01-01T20:59:59Z'),
+        onNewGame,
+      });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      expect(screen.getByText('Yeni günün kelimesi hazır')).toBeTruthy();
+      const playButton = screen.getByTestId('gameover-play-new-day');
+      fireEvent.press(playButton);
+      expect(onNewGame).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show the CTA when the app returns to the foreground after midnight has already passed', async () => {
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: DAILY_DATE, today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.queryByTestId('gameover-countdown')).toBeNull();
+      expect(screen.getByTestId('gameover-play-new-day')).toBeTruthy();
+    });
+
+    it('should not show the CTA when the device clock is merely behind the server-reported date', async () => {
+      // The device thinks it is still DAILY_DATE, but the server says the game is a day ahead
+      // (a wrong device clock, not a midnight rollover) - must not be treated as stale.
+      await renderCard({ date: '2026-01-04', today: () => DAILY_DATE });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+    });
+
+    it('should fall back to the session daily date when the server-stored date is absent', async () => {
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: null, dailyDate: DAILY_DATE, today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.getByTestId('gameover-play-new-day')).toBeTruthy();
+    });
+
+    it('should demote the share button to secondary so the CTA is the only primary action', async () => {
+      const colors = getThemeColors({ scheme: 'light', isHighContrast: false });
+      const appState = mockAppStateListener();
+      let currentToday = DAILY_DATE;
+      await renderCard({ date: DAILY_DATE, today: () => currentToday });
+      await screen.findByTestId('gameover-countdown');
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      const shareFace = flattenStyle(screen.getByTestId('gameover-share-face').props.style);
+      expect(shareFace.backgroundColor).toBe(colors.surface);
+      const playFace = flattenStyle(screen.getByTestId('gameover-play-new-day-face').props.style);
+      expect(playFace.backgroundColor).toBe(colors.brand);
+    });
+
+    it('should not show the CTA for a finished unlimited game', async () => {
+      await renderCard({
+        mode: 'unlimited',
+        guesses: ['KALEM'],
+        evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+        wordId: 42,
+        dailyDate: null,
+        date: null,
+      });
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+      expect(await screen.findByTestId('gameover-new-word')).toBeTruthy();
+    });
+
+    it('should use the server date, not the session dailyDate, to decide staleness when they disagree', async () => {
+      // dailyDate (device-computed) says the game is from 2026-01-03; the server's own `date`
+      // says 2026-01-04. Once the Turkey day reaches 2026-01-04, the server's (later) date must
+      // win: that day has only just arrived, not passed, so there is still no CTA. A mutant that
+      // reads `dailyDate` instead of `date` here would compute 2026-01-04 > 2026-01-03 = stale,
+      // showing the CTA wrongly.
+      const appState = mockAppStateListener();
+      let currentToday = '2026-01-03';
+      await renderCard({ dailyDate: '2026-01-03', date: '2026-01-04', today: () => currentToday });
+      expect(await screen.findByTestId('gameover-countdown')).toBeTruthy();
+
+      currentToday = '2026-01-04';
+      await act(async () => {
+        appState.fire('active');
+      });
+
+      expect(screen.queryByTestId('gameover-play-new-day')).toBeNull();
+      expect(screen.getByTestId('gameover-countdown')).toBeTruthy();
+    });
+
+    it('should clear every interval it started (the day tracker and the countdown) and remove the AppState subscription on unmount', async () => {
+      const setIntervalSpy = jest.spyOn(global, 'setInterval');
+      const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+      const removeSpy = jest.fn();
+      jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: removeSpy } as ReturnType<typeof AppState.addEventListener>);
+      const view = await renderCard({ date: DAILY_DATE });
+      await screen.findByTestId('gameover-countdown');
+      // A daily, non-stale card starts exactly two 1 s intervals while mounted: the day
+      // tracker's own (useTurkeyDay) and the countdown's (useCountdown) — both tick at
+      // COUNTDOWN_UPDATE_INTERVAL_MS (1000 ms). Filtering on that delay (rather than taking
+      // every recorded `setInterval` call) excludes an unrelated one RNTL's own `findByTestId`
+      // polling can add to this same global spy, so asserting against every entry here still
+      // catches either of this component's own intervals missing its clearInterval, not only
+      // the day tracker's, without being thrown off by that polling interval's different delay.
+      const oneSecondIntervalIds = setIntervalSpy.mock.calls
+        .map((call, index) => ({ delayMs: call[1], timerId: setIntervalSpy.mock.results[index]?.value as ReturnType<typeof setInterval> }))
+        .filter((entry) => entry.delayMs === 1000)
+        .map((entry) => entry.timerId);
+      expect(oneSecondIntervalIds.length).toBe(2);
+
+      await act(async () => view.unmount());
+
+      for (const timerId of oneSecondIntervalIds) {
+        expect(clearIntervalSpy).toHaveBeenCalledWith(timerId);
+      }
+      expect(removeSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -17,6 +17,21 @@ unit fixed the web logo button (`Header.tsx`) and left the OG image alone, since
 asset is out of scope here (R5 said "don't redraw icons"). Whoever owns social-preview assets next
 should regenerate `og-image.svg`/`.png` with the brand token's colour.
 
+## ALLOWED_WORD_LENGTHS duplicates backend's SCHEDULED_WORD_LENGTHS (Plan 010 U4)
+`packages/shared/src/types/word-length.ts`'s `ALLOWED_WORD_LENGTHS = [4, 5, 6]` (used by the
+`WordLength` brand/`parseWordLength`) duplicates `apps/backend/src/constants/schedule.ts`'s
+`SCHEDULED_WORD_LENGTHS`/`ScheduledWordLength` — same allowed set, kept separate to keep this
+unit's diff small (KTD3: packages never import apps). Whoever next touches either constant should
+decide on a single source (most likely: backend re-exports/derives from shared's `WordLength`).
+
+## INVALID_DATE no longer thrown (Plan 010 U4)
+`apps/backend/src/errors/api-error.ts`'s `INVALID_DATE` was thrown by `word-service.ts`'s
+`getDailyWord` for a malformed date string. That check moved to the `dailyWordQuerySchema` zod
+schema (`parseTurkeyDate`, Plan 010 R3/AE2): `getDailyWord`'s `date` parameter is now `TurkeyDate`,
+so a malformed string can no longer reach the service at all, and the route layer returns
+`BAD_REQUEST` for a bad format instead. `INVALID_DATE` is tagged `@deferred` in `knip.jsonc`'s sense
+until a caller needs it again; delete it if nothing picks it back up.
+
 ## knip findings recorded instead of fixed (2026-10-06)
 From Plan 009 U7 (knip + dependency-cruiser in CI). Each is ignored in `knip.jsonc` with a one-line
 reason; details here.
@@ -277,13 +292,6 @@ ADR, map every file as factory or product, extract the factory layer into a GitH
 `~/second-brain/templates/`, then prove it by bootstrapping a small project through one unit. Until
 then, write new rules so the factory part stays separable from product rules.
 
-## Mobile share hint marker (Plan 011 U6, after PR #87 merges)
-`generateShareText` (`packages/shared/src/game/share.ts`) now takes an options object with
-`hintUsed` (R8/AE6: the share header gets a "· ipucu" suffix). Web passes it from `useHint`'s
-`hintUsed` in `apps/frontend/src/components/GamePage.tsx` / `GameOverModal.tsx`. The mobile
-game-over card built in PR #87 (Plan 011 U1) still calls `generateShareText` without this flag;
-wire mobile's own hint state through once #87 merges, matching the web wiring above.
-
 ## Mobile UI primitives wiring (Plan 011 U7a, follow-up in U7b/U7c)
 U7a (split across PR #97 `IconButton`/`TopBar`/`layout.ts` and a follow-up PR `Button`/`Card`,
 based on #97) added the mobile UI standard's layout constants and shared primitives, but changed
@@ -350,24 +358,6 @@ between them.
 ## Web desktop layout looks like a stretched mobile layout (owner: mobile first, 2026-10-07)
 On desktop, the web app just stretches the mobile layout instead of using the extra width. A real
 desktop layout is post-launch work; mobile ships first.
-
-## Mobile share/title number comes from the device date, not the server (2026-10-07)
-`apps/mobile/src/components/GameOverCard.tsx` computes the daily game number from the device's
-local `dailyDate` string via `dailyGameNumber()` (mirroring the backend's formula), instead of the
-server's own `gameNumber` from `/words/daily` — `GameSession` does not carry it today, and
-PR #88 owns `game/useGame.ts`/`game-session.ts`. Once #88 merges, thread `gameNumber` (and `date`)
-from the `/words/daily` response into `GameSession` and have `GameOverCard` read it from there
-instead of recomputing it locally, matching how the web app already uses the server's
-`gameNumber` (`apps/frontend/src/components/GameOverModal.tsx`). A device with a wrong clock is
-the only way the two values could currently disagree.
-
-## Game-over countdown wraps to 23:59:59 past midnight while showing yesterday's game (2026-10-07)
-`getTimeUntilMidnight` (used by `GameOverCard`'s countdown) computes the time left until the
-*next* midnight relative to `now()`. If the card is still mounted a moment after Turkey midnight
-has actually passed (the parent has not yet swapped in the new day's word), the countdown wraps
-around to `23:59:59` and starts counting down a full day again, while the card still shows
-yesterday's finished game. Not fixed here: needs the parent to react to the day boundary (e.g.
-re-fetch/reset session) rather than the countdown display alone.
 
 ## Mobile U7b: game-over card touch targets and button hierarchy (2026-10-07)
 Found during Plan 011 U1 review, deferred to the U7 mobile UI standard redesign:
@@ -483,6 +473,42 @@ never needs to know the hero's position. No onLayout hook was added to `HomeHero
 In the light theme `App.tsx` renders `StatusBar` style `dark`, so for the ~2.3 s intro the status
 bar icons sit dark-on-dark over the fixed `#1c1611` overlay. Switch the status bar to `light`
 while `LaunchIntro` is showing. Not checked on a device.
+
+## Mobile: device clock off by a day (2026-10-10, review of #147)
+`useGame.ts`'s `loadSession` now keys the daily game, its storage entry, the hint storage key,
+and the stats entry all by the server's own `/words/daily` `date`, never the device's `today()`
+(fixing the game-over-countdown/double-count bug). But several other mobile surfaces still read
+the *device's* local date directly, so a device whose clock is a day off from the real Turkey day
+can disagree with itself across screens:
+
+- **(a) Device ahead by a day.** `GameOverCard`'s midnight-rollover check (`useIsDailyGameStale`)
+  compares the live Turkey-day tracker (driven by the device clock) against the server's `date`.
+  If the device is a day ahead, the tracker reads "tomorrow" all day while the server's `date`
+  never catches up, so the new-day CTA ("Oyna") shows for the entire day instead of only after
+  real midnight. Pressing it is harmless (loadSession restores the same already-finished,
+  server-keyed entry, confirmed by `GameScreen.test.tsx`/`useGame.test.tsx`), but the CTA is shown
+  far earlier than it should be.
+- **(b) Device behind by a day.** The home screen's status (`useHomeStatus.ts`'s `useTurkeyDay`,
+  driven by `now: () => Date` / `getTodayString(now())`) and the Stats screen's streak
+  (`StatsScreen.tsx`'s `today = getTodayString()` default, feeding `getDisplayedStreak`) both still
+  read the device's local date, while the actual game/hint/stats records are now keyed by the
+  server's date. A device a day behind the real Turkey day sees yesterday's daily card status
+  (e.g. "Yeni kelime hazır" for an already-played day) and a streak of 0 even though the server
+  and the stored stats agree the player is on a current streak.
+- **(c) Upgrade-time clock skew.** A player who upgrades (or first opens the app after this fix)
+  while their device clock happens to be a day off loses that day's in-progress game: it was
+  stored under the old device-dated key (from before this fix, or from another screen still using
+  `today()`), which the server-keyed `loadSession` will never look up again. The same skew can
+  also grant a second hint reveal once, if the hint storage key the device wrote under one date
+  doesn't match the key a later, correctly server-dated read looks for.
+
+Only affects devices whose clock disagrees with the real Turkey day by roughly a day; a correctly
+set clock is unaffected (confirmed by the #147/#154 review — no blocking bug for correct clocks).
+Decided not to chase further for now; suggested fix direction for a future pass: derive a single
+server-day offset (or the server's own `date` string) from the `/words/daily` response once, and
+thread that same value into `useHomeStatus.ts`, `StatsScreen.tsx`'s streak, and anywhere else that
+currently calls `getTodayString()`/`today()` directly, instead of each screen computing its own
+notion of "today" from the device clock independently.
 
 ## Deploy workflows pay for waiting on CI (2026-10-10)
 

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { env } from 'cloudflare:test';
+import { parseTurkeyDate } from '@harfhane/shared';
 import { applySchema, seedTestData } from '../helpers/db';
 import { findDailyWord, findRandomWord, wordExists } from '../../src/repositories/word-repository';
 
@@ -55,7 +56,9 @@ describe('0003_drop_removed_features migration', () => {
   it('should keep game data readable after the migration', async () => {
     await seedTestData(env.DB);
 
-    const daily = await findDailyWord(env.DB, '2026-01-01');
+    const date = parseTurkeyDate('2026-01-01');
+    if (date === null) throw new Error('invalid fixture date: 2026-01-01');
+    const daily = await findDailyWord(env.DB, date);
     expect(daily?.word).toBe('KİTAP');
 
     const random = await findRandomWord(env.DB, 5);

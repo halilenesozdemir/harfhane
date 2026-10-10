@@ -21,6 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
 
     /* Path mapping */
     "baseUrl": ".",

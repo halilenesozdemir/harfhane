@@ -27,13 +27,19 @@ beforeEach(async () => {
 });
 
 describe('scheduled()', () => {
-  it('calls the schedule-health alert once per cron run', async () => {
+  it('calls the schedule-health alert once per cron run with the playable-lengths env var', async () => {
     checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
     const worker = (await import('../src/index')).default;
 
     await worker.scheduled({} as ScheduledEvent, env as never);
 
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
+    expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledWith(
+      env.DB,
+      env.RESEND_API_KEY,
+      env.ADMIN_ALERT_EMAIL,
+      env.PLAYABLE_WORD_LENGTHS
+    );
   });
 
   it('does not let a failing alert check break the cron run', async () => {
@@ -50,6 +56,12 @@ describe('scheduled()', () => {
 
     await expect(worker.scheduled({} as ScheduledEvent, envWithoutAlertEmail as never)).resolves.toBeUndefined();
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
+    expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledWith(
+      envWithoutAlertEmail.DB,
+      envWithoutAlertEmail.RESEND_API_KEY,
+      undefined,
+      envWithoutAlertEmail.PLAYABLE_WORD_LENGTHS
+    );
   });
 
   it('should top up the schedule before checking its health (Plan 006 U3a)', async () => {
@@ -69,5 +81,11 @@ describe('scheduled()', () => {
 
     await expect(worker.scheduled({} as ScheduledEvent, env as never)).resolves.toBeUndefined();
     expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledTimes(1);
+    expect(checkScheduleHealthAndAlertMock).toHaveBeenCalledWith(
+      env.DB,
+      env.RESEND_API_KEY,
+      env.ADMIN_ALERT_EMAIL,
+      env.PLAYABLE_WORD_LENGTHS
+    );
   });
 });

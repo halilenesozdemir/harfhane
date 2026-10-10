@@ -6,6 +6,7 @@ import { createMemoryStore } from '../test-utils/render-with-theme';
 import { useHomeStatus } from './useHomeStatus';
 import type { KeyValueStore } from '../game/game-storage';
 import type { DailyStats, WordLength } from '../stats/stats';
+import type { UseHomeStatusResult } from './useHomeStatus';
 
 const LENGTH = 5;
 const TODAY = '2026-10-08T10:00:00.000Z';
@@ -158,6 +159,35 @@ describe('useHomeStatus', () => {
 
     expect(setIntervalSpy.mock.calls.length).toBe(intervalCallsAfterMount);
     expect(addEventListenerSpy.mock.calls.length).toBe(listenerCallsAfterMount);
+  });
+
+  it('should re-create the day-check interval and AppState subscription when the `now` function reference changes', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
+    const removeSpy = jest.fn();
+    addEventListenerSpy.mockReturnValue({ remove: removeSpy } as ReturnType<typeof AppState.addEventListener>);
+    const store = createMemoryStore(storedStats({}));
+
+    const firstNow = () => new Date(TODAY);
+    const secondNow = () => new Date('2026-10-09T10:00:00.000Z');
+    const { result, rerender } = await renderHook<UseHomeStatusResult, { now: () => Date }>(({ now }) => useHomeStatus(store, LENGTH, now), {
+      initialProps: { now: firstNow },
+    });
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    const firstTimerId = setIntervalSpy.mock.results[0]?.value as ReturnType<typeof setInterval>;
+    const intervalCallsAfterMount = setIntervalSpy.mock.calls.length;
+    const listenerCallsAfterMount = addEventListenerSpy.mock.calls.length;
+
+    await act(async () => rerender({ now: secondNow }));
+
+    // A changed `now` (e.g. the app swapping in a real clock after a test harness) must tear
+    // down the interval/listener built around the old one and build a fresh pair around the new
+    // `now`, not keep polling with a stale closure.
+    expect(clearIntervalSpy).toHaveBeenCalledWith(firstTimerId);
+    expect(removeSpy).toHaveBeenCalledTimes(1);
+    expect(setIntervalSpy.mock.calls.length).toBe(intervalCallsAfterMount + 1);
+    expect(addEventListenerSpy.mock.calls.length).toBe(listenerCallsAfterMount + 1);
   });
 
   it('should not trigger a fresh load on a tick that does not cross the Turkey day boundary', async () => {

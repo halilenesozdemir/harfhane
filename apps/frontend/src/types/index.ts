@@ -84,7 +84,7 @@ export interface TileProps {
 export interface KeyProps {
   keyValue: string;
   onClick: (key: string) => void;
-  status?: TileStatus;
+  status?: TileStatus | undefined;
   isWide?: boolean;
 }
 
@@ -126,8 +126,8 @@ export interface GameOverModalProps {
   isUnlimited: boolean;
   onPlayAgain: () => void;
   onGoHome: () => void;
-  sessionChallenge?: SessionChallenge;
-  challengeUrl?: string;
+  sessionChallenge?: SessionChallenge | undefined;
+  challengeUrl?: string | undefined;
   hintUsed?: boolean;
 }
 

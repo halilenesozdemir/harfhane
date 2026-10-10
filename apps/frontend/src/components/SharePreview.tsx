@@ -5,7 +5,7 @@ interface SharePreviewProps {
   gameNumber?: number | string;
   guessCount?: number;
   isWon?: boolean;
-  challengeUrl?: string;
+  challengeUrl?: string | undefined;
 }
 
 const STATUS_BG: Record<NonNullable<TileStatus>, string> = {
