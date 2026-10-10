@@ -478,3 +478,8 @@ slot. The owner's 2026-10-09 decision replaces that with a self-contained intro 
 tiles reveal, wordmark gathers, then a plain cross-fade to the already-mounted home screen), which
 never needs to know the hero's position. No onLayout hook was added to `HomeHero.tsx`/
 `HomeScreen.tsx`; flag this if a future redesign wants the morph-into-hero effect back.
+
+## Status bar icons during the launch intro (review of #136, 2026-10-10)
+In the light theme `App.tsx` renders `StatusBar` style `dark`, so for the ~2.3 s intro the status
+bar icons sit dark-on-dark over the fixed `#1c1611` overlay. Switch the status bar to `light`
+while `LaunchIntro` is showing. Not checked on a device.

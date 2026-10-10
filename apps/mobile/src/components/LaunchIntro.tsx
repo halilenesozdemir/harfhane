@@ -59,7 +59,7 @@ const MARK_CORRECT_DEPTH = 10;
 const MARK_PRESENT_ROTATION = '12deg';
 const MARK_CORRECT_ROTATION = '-6deg';
 // Frame-0 mark box, sized to roughly match the native splash mark (apps/mobile/assets/splash-icon-dark.png,
-// generated at ADAPTIVE_SAFE_ZONE_SCALE 0.58 of a 1024 px canvas, so a touch over half the canvas
+// generated at SPLASH_MASK_SCALE 0.55 of a 1024 px canvas, so a touch over half the canvas
 // width) so the intro doesn't visibly jump in size the instant it takes over from the splash.
 // Not pixel-measured against a device; documented assumption, not a verified match.
 const MARK_BOX_SIZE = 140;
@@ -90,7 +90,7 @@ function LaunchMark({ opacity }: { readonly opacity: Animated.Value }) {
   const scale = opacity.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] });
   return (
     <Animated.View style={[styles.markBox, { transform: [{ scale }] }]} importantForAccessibility="no-hide-descendants">
-      <View style={[styles.markPresent, { transform: [{ rotate: MARK_PRESENT_ROTATION }] }]}>
+      <View testID="launch-intro-mark-present" style={[styles.markPresent, { transform: [{ rotate: MARK_PRESENT_ROTATION }] }]}>
         <DepthTile
           fill={DARK_COLORS.present}
           foreground={DARK_COLORS.presentFg}
@@ -99,7 +99,7 @@ function LaunchMark({ opacity }: { readonly opacity: Animated.Value }) {
           depth={MARK_PRESENT_DEPTH}
         />
       </View>
-      <View style={[styles.markCorrect, { transform: [{ rotate: MARK_CORRECT_ROTATION }] }]}>
+      <View testID="launch-intro-mark-correct" style={[styles.markCorrect, { transform: [{ rotate: MARK_CORRECT_ROTATION }] }]}>
         <DepthTile
           letter="H"
           fill={DARK_COLORS.correct}
