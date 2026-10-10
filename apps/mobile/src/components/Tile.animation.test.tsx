@@ -83,6 +83,27 @@ describe('Tile animations', () => {
     expect(flattenStyle(tile.props.style).backgroundColor).toBe(themes.light.correct);
   });
 
+  it('should use a caller-supplied flipDurationMs for the flip animation instead of the shared motion-flip token', async () => {
+    const timingSpy = jest.spyOn(Animated, 'timing');
+    await renderTile(<Tile letter="K" status="correct" isFilled isRevealing revealDelayMs={0} flipDurationMs={350} />);
+    const flipCall = timingSpy.mock.calls.find((call) => (call[1] as { duration?: number })?.duration === 350);
+    expect(flipCall).toBeTruthy();
+    expect(timingSpy.mock.calls.some(isFlipTimingCall)).toBe(false);
+  });
+
+  it('should switch to the evaluated colour at the midpoint of a caller-supplied flipDurationMs, not the shared motion-flip midpoint', async () => {
+    await renderTile(<Tile letter="K" status="correct" isFilled isRevealing revealDelayMs={0} flipDurationMs={350} />);
+    const tile = screen.getByLabelText('K, doğru yerde');
+    await act(async () => {
+      jest.advanceTimersByTime(174);
+    });
+    expect(flattenStyle(tile.props.style).backgroundColor).not.toBe(themes.light.correct);
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(flattenStyle(tile.props.style).backgroundColor).toBe(themes.light.correct);
+  });
+
   it('should pass the per-tile stagger delay to the flip animation, not a fixed 0', async () => {
     const timingSpy = jest.spyOn(Animated, 'timing');
     await renderTile(<Tile letter="K" status="correct" isFilled isRevealing revealDelayMs={300} />);

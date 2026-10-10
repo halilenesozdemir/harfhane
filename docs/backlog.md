@@ -449,3 +449,32 @@ treats a streak as broken (or wrongly keeps one alive) right after the transitio
 `apps/mobile/src/home/today-status.ts`'s own `yesterdayOf` (Plan 011 U7c) already parses/formats
 in UTC and does not have this bug; fix `stats.ts` to share that one implementation instead of
 duplicating a second, broken one.
+
+## Plan 011 U7d: LaunchIntro design choices not specified by the owner (2026-10-09)
+The owner's 2026-10-09 decision gave exact geometry for the launcher icon (240 px reference) but
+not for: the adaptive-icon safe-zone shrink factor, the splash mask shrink factor, or the JS
+intro's exact per-phase millisecond durations (only "~150 ms" tile stagger and "about 2 s" total
+were specified). `apps/mobile/scripts/generate-brand-assets.mjs` uses `ADAPTIVE_SAFE_ZONE_SCALE =
+0.58` (lowered from an initial 0.72 during review: the original value also had a double-scale bug
+that shrank the adaptive/monochrome mark far more than 0.72 implied, and the mark was off-centre;
+both are fixed, see the #133 PR) and `SPLASH_MASK_SCALE = 0.55`.
+
+`apps/mobile/src/components/useLaunchIntroPhases.ts` initially picked phase durations that landed
+the total intro around ~3.1 s (driven mostly by the fixed `motion-flip` (500 ms) token applied
+across 8 tiles, plus a ~600 ms hold added during review so the wordmark is actually readable
+before the cross-fade). The owner's 2026-10-09 follow-up decision asked for ~2.3 s instead: `Tile`
+now takes an optional `flipDurationMs` prop (defaults to the shared 500 ms token, unchanged for
+the real game reveal), and the intro passes a new `INTRO_FLIP_MS` (350 ms); `ROW_STAGGER_MS` drops
+from 150 ms to 50 ms. `WORDMARK_HOLD_MS` (600 ms) is unchanged. `useLaunchIntroPhases.test.tsx`
+pins the new ~2.3 s total under fake timers. Worth an owner look on a release build/screenshot
+before the closed test, since neither the native splash mask nor the timing feel was verified
+against a release build (Expo Go was used instead; see Plan 011 U7d PR for what that does and does
+not cover).
+
+## Plan 011 U7d: hero onLayout hook not added (2026-10-09)
+The plan's U7d file list mentions "the hero onLayout hook in HomeScreen.tsx", carried over from
+the pre-2026-10-09 spec where the intro morphed the splash tile into the hero's exact on-screen
+slot. The owner's 2026-10-09 decision replaces that with a self-contained intro (mark fades away,
+tiles reveal, wordmark gathers, then a plain cross-fade to the already-mounted home screen), which
+never needs to know the hero's position. No onLayout hook was added to `HomeHero.tsx`/
+`HomeScreen.tsx`; flag this if a future redesign wants the morph-into-hero effect back.
