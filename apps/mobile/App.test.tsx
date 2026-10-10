@@ -356,7 +356,9 @@ describe('App', () => {
       // Overrides the outer describe's reduce-motion-on default: these tests are specifically
       // about the intro actually playing.
       jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
-      jest.useFakeTimers();
+      // Real setImmediate: on Node 22 (CI, .nvmrc) a faked one stalls RNTL's cleanup of the
+      // still-mounted App after useRealTimers, hanging this and every later file in the worker.
+      jest.useFakeTimers({ doNotFake: ['setImmediate', 'clearImmediate'] });
     });
 
     afterEach(() => {
