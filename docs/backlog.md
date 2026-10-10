@@ -476,3 +476,10 @@ never needs to know the hero's position. No onLayout hook was added to `HomeHero
 In the light theme `App.tsx` renders `StatusBar` style `dark`, so for the ~2.3 s intro the status
 bar icons sit dark-on-dark over the fixed `#1c1611` overlay. Switch the status bar to `light`
 while `LaunchIntro` is showing. Not checked on a device.
+
+## Deploy workflows pay for waiting on CI (2026-10-10)
+
+`deploy-backend.yml` and `deploy-frontend.yml` poll the CI run of their commit (`gh run watch`), so
+every deploy bills the CI duration a second time. A `workflow_run` trigger (start only after CI
+succeeds on `main`) removes the wait, but `workflow_run` has no `paths` filter, which conflicts
+with Invariant 9 as written; changing it needs an owner-approved ADR and an in-job path check.

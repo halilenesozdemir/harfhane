@@ -21,6 +21,7 @@
     "check": "pnpm --filter @harfhane/shared run build && pnpm typecheck && pnpm typecheck:test && pnpm lint && pnpm test && pnpm run check:ac",
     "check:ac": "node scripts/check-ac-coverage.mjs",
     "test:e2e": "pnpm --filter @harfhane/frontend run test:e2e",
+    "test:e2e:real": "node scripts/test-e2e-real-backend.mjs",
     "test:maestro": "maestro test apps/mobile/.maestro",
     "knip": "knip",
     "depcruise": "depcruise --config .dependency-cruiser.cjs apps packages"

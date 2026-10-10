@@ -1,0 +1,60 @@
+name: E2E (real backend)
+
+# Plan 009 U3 (docs/plans/2026-10-06-009-test-e2e-quality-gates-plan.md), owner
+# decision 2026-10-10: the real-backend Playwright gate (R4, AE3) normally runs
+# locally (`pnpm test:e2e:real`) before a PR is marked ready, with the result
+# in the PR body. This job exists only for a manual, on-demand run — it never
+# runs on pull_request or push, so it does not add to the per-PR Actions
+# minutes budget.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-real-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared
+        run: pnpm --filter @harfhane/shared run build
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('apps/frontend/package.json') }}
+
+      - name: Install Playwright Chromium browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @harfhane/frontend exec playwright install chromium
+
+      - name: Install Playwright OS dependencies
+        run: pnpm --filter @harfhane/frontend exec playwright install-deps chromium
+
+      - name: Run real-backend e2e tests
+        run: pnpm run test:e2e:real
+
+      - name: Upload Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-real-backend
+          path: |
+            apps/frontend/playwright-report/
+            apps/frontend/test-results/
+          retention-days: 7

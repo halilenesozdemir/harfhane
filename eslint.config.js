@@ -15,7 +15,7 @@ const HOOK_RULES = {
 }
 
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', '**/.expo/', 'packages/ui-tokens/generated/', 'scripts/']),
+  globalIgnores(['**/dist/', '**/dist-e2e-real-backend/', '**/dev-dist/', '**/.wrangler/', '**/coverage/', '**/.expo/', 'packages/ui-tokens/generated/', 'scripts/']),
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/**/*.ts'],
     extends: [js.configs.recommended, tseslint.configs.recommended],

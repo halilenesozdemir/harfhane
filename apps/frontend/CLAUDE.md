@@ -22,3 +22,24 @@ Run it before shipping any change that touches routing, the game loop (`useGameS
 `Keyboard`), daily/unlimited mode, or localStorage persistence — unit tests don't exercise the real
 browser flow end to end. It is intentionally excluded from the commit-gate pre-commit hook (too slow);
 CI runs it as its own `e2e` job on every PR.
+
+## E2E against the real backend (`real-backend` project)
+
+`e2e/real-backend/*.spec.ts` (Plan 009 U3, R4/AE3) exercises the daily journey against a real
+`wrangler dev --local` backend and a local-only D1 built from `apps/backend/db/migrations` plus
+`apps/backend/tests/fixtures/e2e-seed.sql` — no stubbing, no `--remote`, ever. Run the whole thing
+end to end from a clean checkout with:
+
+```
+pnpm run test:e2e:real
+```
+
+This builds the local D1 (migrate + seed into a gitignored `.wrangler/` persist directory under
+`apps/backend`), builds the frontend against that backend (a separate `dist-e2e-real-backend`
+output, `VITE_API_URL` pointing at `wrangler dev`'s port), and runs Playwright's `real-backend`
+project, which starts and tears down both servers itself. `pnpm test:e2e` (the stubbed suite above)
+never runs this project.
+
+Owner decision 2026-10-10 (GitHub Actions minutes are a monthly budget): this gate runs locally
+before a PR is marked ready, with its output pasted into the PR body — CI only has a
+`workflow_dispatch`-only job for it (`.github/workflows/e2e-real-backend.yml`), never on every PR.

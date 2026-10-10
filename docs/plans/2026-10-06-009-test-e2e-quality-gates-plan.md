@@ -15,6 +15,11 @@ factory gets deterministic checks that make LLM-written code harder to get wrong
 Research: `docs/research/2026-10-06-engineering-standards.md`. Owner approval 2026-10-06: Maestro
 and the test tooling below may be added as dev dependencies.
 
+Owner decision 2026-10-10: GitHub Actions minutes are a monthly budget (October's ran out in ten
+days), so the two slow gates — real-backend Playwright (R4) and mutation testing (R7) — run
+locally through a `pnpm` script before a PR is marked ready, with the result in the PR body. CI
+gets them only as a manually triggered (`workflow_dispatch`) job, never on every PR.
+
 ## Requirements
 - R1. Every acceptance example in an approved plan (`AE<n>` in Plans 004 and 008, and this plan)
   is referenced by at least one test name, and CI fails when an approved plan's AE has none.
@@ -30,15 +35,17 @@ and the test tooling below may be added as dev dependencies.
 - R6. Core game logic in `packages/shared` (`normalizeWord`, `normalizeChar`, guess evaluation,
   share text, Turkey-day helpers) has property tests.
 - R7. Mutation testing gates `packages/shared` and the backend `services/` and `repositories/`
-  layers from the start: on every PR, Stryker mutates only the files that PR changes in those
-  paths and CI fails when their score is below the threshold (owner decision 2026-10-06:
-  constraints first, scoped so old code is not retrofitted).
+  layers from the start: for every PR that changes files in those paths, Stryker mutates only
+  those files and the script exits non-zero when their score is below the threshold (owner
+  decision 2026-10-06: constraints first, scoped so old code is not retrofitted). It runs locally
+  before the PR is marked ready, not in per-PR CI (owner decision 2026-10-10).
 - R8. Dead code and layer violations are caught in CI: unused files/exports/dependencies, and
   backend imports that skip `routes → services → repositories` or apps imported from `packages/*`.
 - R9. A flaky-test policy exists: a test that fails intermittently is quarantined with a backlog
   entry and fixed or deleted within a week; tests are never silently retried to green.
 - R10. A short test report per gate run (journeys passed, AE coverage, axe, mutation score) is kept
-  as a CI artifact, and the Phase 1 exit result is written to `docs/research/`.
+  as a CI artifact for CI gates and in the PR body for the local ones (real-backend, mutation), and
+  the Phase 1 exit result is written to `docs/research/`.
 
 ## Acceptance examples
 - AE1 (R1). Given Plan 008 lists AE1–AE7 and no test name contains "AE7", the traceability check
@@ -52,22 +59,23 @@ and the test tooling below may be added as dev dependencies.
 - AE5 (R6). For any string, `normalizeWord(normalizeWord(s)) === normalizeWord(s)`, and every
   dotted/dotless i maps per Turkish rules.
 - AE6 (R7). Given a PR that changes `packages/shared/src/game/evaluate.ts` and a test suite that
-  lets a duplicate-letter mutant survive, CI prints the mutation score of the changed file and
-  fails because it is below the threshold.
+  lets a duplicate-letter mutant survive, the changed-files mutation script prints the mutation
+  score of the changed file and exits non-zero because it is below the threshold.
 
 ## Key technical decisions
 - KTD1. Traceability check is a small Node script (`scripts/check-ac-coverage.mjs`) that reads
   `status: approved` plans, collects `AE<n>` ids per plan, and greps test files for
   `<plan number>-AE<n>` in test names (e.g. `should … (008-AE4)`). Plans with no AEs are skipped.
-- KTD2. Playwright projects: `stubbed` (default, CI) and `real-backend` (CI job with
-  `wrangler dev --local`, seed in `apps/backend/tests/fixtures/e2e-seed.sql`).
+- KTD2. Playwright projects: `stubbed` (default, CI) and `real-backend` (local script and a
+  `workflow_dispatch`-only CI job, with `wrangler dev --local`, seed in
+  `apps/backend/tests/fixtures/e2e-seed.sql`).
 - KTD3. Tools: `@axe-core/playwright`, `fast-check`, Stryker (`@stryker-mutator/core` with the
-  Vitest runner) scoped to `packages/shared`, `knip`, `dependency-cruiser`, Maestro CLI (not an npm
+  Vitest runner) scoped to the paths in KTD4, `knip`, `dependency-cruiser`, Maestro CLI (not an npm
   dependency; documented in `docs/guides/mobile-run.md`). Check each package's current version and
   Vitest compatibility before adding.
 - KTD4. Mutation testing runs only on changed files under `packages/shared/src` and
-  `apps/backend/src/{services,repositories}` (Stryker `--mutate` from the PR diff, incremental
-  cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
+  `apps/backend/src/{services,repositories}` (Stryker `--mutate` from `git diff origin/main...HEAD`,
+  incremental cache), with a `break` threshold `MUTATION_BREAK_THRESHOLD = 70` raised as scores settle. Backend
   mutants run in the Workers Vitest pool; check Stryker's runner support for it and fall back to a
   plain Vitest config for repositories if needed.
 - KTD5. Mobile `testID`s are added where Maestro needs stable selectors; no visible UI change.
@@ -75,17 +83,23 @@ and the test tooling below may be added as dev dependencies.
 ## Units
 File ownership: A owns `scripts/check-ac-coverage.mjs`, `.github/workflows/ci.yml` and
 `AGENTS.md`/`CLAUDE.md` edits; B owns `apps/frontend/e2e/**` and `apps/frontend/playwright.config.ts`;
-C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/**`.
+C owns `apps/mobile/.maestro/**` and mobile `testID`s; D owns `packages/shared/**`. U6 also edits
+`.claude/commands/unit.md` and `docs/guides/review-checklist.md`, and adds its own
+`workflow_dispatch` workflow file instead of editing `ci.yml`; it starts after other edits to
+those files have merged.
 
 - U1 (A). Traceability script, tests for it, CI step; flaky-test policy line in `AGENTS.md`; test
   naming rule `(<plan>-AE<n>)` in `CLAUDE.md` and `.claude/commands/unit.md`. Existing tests that
   prove an AE get the id added. (R1, R9, AE1)
 - U2 (B). Playwright journeys for R2 with axe scans; split specs per journey. (R2, R3, AE2)
-- U3 (B, after U2). `real-backend` Playwright project and CI job with a local seed. (R4, AE3)
+- U3 (B, after U2). `real-backend` Playwright project with a local seed, a `pnpm` script, and a
+  `workflow_dispatch`-only CI job. (R4, AE3)
 - U4 (C). Maestro flows for R5, `testID`s, run guide. (R5, AE4)
 - U5 (D). fast-check property tests for shared logic. (R6, AE5)
-- U6 (D, after U5). Stryker for shared and backend services/repositories, changed-files CI gate,
-  first full-run report in the PR body. (R7, AE6)
+- U6 (D, after U5). Stryker for shared and backend services/repositories, a changed-files local
+  gate (`pnpm` script, `/unit` step) plus a `workflow_dispatch`-only CI job, a
+  `docs/guides/review-checklist.md` item that a PR changing the KTD4 paths without a mutation
+  score in its body is a finding, first full-run report in the PR body. (R7, R10, AE6)
 - U7 (A, after U1). knip and dependency-cruiser in CI, fix or record what they find. (R8)
 - U8 (A, last). Phase 1 exit run: all gates, report in `docs/research/`, failures fixed or put in
   `docs/backlog.md`. (R10)
