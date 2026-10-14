@@ -161,7 +161,7 @@ test('share text header ends with "· ipucu" when a hint was revealed (011-AE6)'
   await playGuess(page, solution.split(''));
   await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole('button', { name: /Paylaş/ }).click();
+  await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
   const headerLine = copiedText.split('\n')[0]!;
   expect(headerLine.endsWith('· ipucu')).toBe(true);
@@ -181,7 +181,7 @@ test('share text header does not mention "ipucu" when the hint was available but
   await playGuess(page, solution.split(''));
   await expect(page.getByRole('heading', { name: 'Tebrikler!' })).toBeVisible({ timeout: 10_000 });
 
-  await page.getByRole('button', { name: /Paylaş/ }).click();
+  await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
   const headerLine = copiedText.split('\n')[0]!;
   expect(headerLine).not.toContain('ipucu');

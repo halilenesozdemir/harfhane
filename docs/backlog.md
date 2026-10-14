@@ -593,3 +593,12 @@ Strict flags (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) and ts-r
 `apps/mobile`. Mobile already compiles with `strict`; the bugs found in Phase 1 were date logic,
 which these flags would not have caught. Pick up after launch with the U1/U2 pattern (type tests
 that fail when a flag is removed).
+
+## Plan 012 U5: StatsModal still renders distribution counts inside the filled bar (2026-10-14)
+
+`apps/frontend/src/components/StatsModal.tsx`'s `DistributionBar` still draws the guess count
+inside the coloured fill (`text-white text-xs font-bold` layered on `bg-correct`/`bg-absent`),
+the same mobile-ui-standard C2 contrast issue Plan 012 U5 fixed in `GameOverModal.tsx` (R6,
+AE7). Not in U5's scope (StatsModal's distribution bar is not part of R6), but worth the same
+fix — move the count to a sibling span in `text-text-primary`, outside the fill — the next time
+StatsModal.tsx is touched.
