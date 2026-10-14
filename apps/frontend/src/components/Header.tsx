@@ -13,7 +13,7 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
             className="w-8 h-8 hover:opacity-90 transition-opacity cursor-pointer"
             aria-label="Ana Sayfa"
           >
-            <BrandMark className="w-full h-full" />
+            <BrandMark className="w-full h-full" decorative />
           </button>
         </div>
 

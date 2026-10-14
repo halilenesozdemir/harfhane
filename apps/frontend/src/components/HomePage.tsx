@@ -41,7 +41,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       </div>
 
       <div className="text-center mb-8">
-        <BrandMark className="w-20 h-20 mx-auto mb-4" />
+        <BrandMark className="w-20 h-20 mx-auto mb-4" decorative />
         <h1 className="text-4xl md:text-5xl font-bold text-text-primary tracking-wider mb-2">HARFHANE</h1>
         <p className="text-text-secondary text-base">Türkçe kelime oyunu</p>
       </div>

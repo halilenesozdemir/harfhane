@@ -103,7 +103,7 @@ function ModeNav({
         className="flex items-center gap-2 px-1 py-1 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-correct rounded-key"
         aria-label="Ana Sayfa"
       >
-        <BrandMark className="w-8 h-8" />
+        <BrandMark className="w-8 h-8" decorative />
         <span className="font-display font-bold text-text-primary tracking-wide">HARFHANE</span>
       </button>
 
