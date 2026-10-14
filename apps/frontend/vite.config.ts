@@ -35,6 +35,7 @@ export default defineConfig({
         'harfhane-icon-192.png',
         'harfhane-icon-512.png',
         'harfhane-icon-512-maskable.png',
+        'harfhane-mask-icon.svg',
         'apple-touch-icon.png'
       ],
       manifest: {
