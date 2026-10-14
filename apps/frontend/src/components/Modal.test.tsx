@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import Modal from './Modal';
@@ -8,6 +9,22 @@ function renderModal(onClose: () => void, variant?: 'dialog' | 'sheet') {
       <button>First</button>
       <button>Second</button>
     </Modal>
+  );
+}
+
+// A trigger-button-then-modal harness: the only way to prove focus returns to
+// whatever had it before the modal opened, rather than just landing somewhere.
+function TriggerAndModal(): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div>
+      <button onClick={() => setIsOpen(true)}>Trigger</button>
+      {isOpen && (
+        <Modal isOpen onClose={() => setIsOpen(false)} title="Test modal" variant="sheet">
+          <button>First</button>
+        </Modal>
+      )}
+    </div>
   );
 }
 
@@ -32,6 +49,29 @@ describe('Modal', () => {
     expect(second).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(first).toHaveFocus();
+  });
+
+  it('should trap Shift+Tab focus inside the panel, wrapping from the first control to the last', () => {
+    renderModal(vi.fn(), 'sheet');
+    const first = screen.getByText('First');
+    const second = screen.getByText('Second');
+    first.focus();
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(second).toHaveFocus();
+  });
+
+  it('should return focus to the trigger button once the modal closes', () => {
+    render(<TriggerAndModal />);
+    const trigger = screen.getByText('Trigger');
+    trigger.focus();
+    expect(trigger).toHaveFocus();
+
+    fireEvent.click(trigger);
+    expect(screen.getByText('First')).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(trigger).toHaveFocus();
   });
 
   it('should render a grab handle and no header for the sheet variant', () => {

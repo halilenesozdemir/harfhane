@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import GameOverModal from './GameOverModal';
 import type { DailyStats, GameOverModalProps, WordEntry } from '../types';
@@ -184,6 +184,39 @@ describe('GameOverModal', () => {
     it('should show "Yeni kelime" as the secondary action for an unlimited game', () => {
       renderModal({ isUnlimited: true, gameStatus: 'won' });
       expect(screen.getByText('Yeni kelime')).toBeInTheDocument();
+    });
+
+    function LocationDisplay(): React.JSX.Element {
+      const location = useLocation();
+      return <div data-testid="location-display">{location.pathname}</div>;
+    }
+
+    it('should navigate from /daily/6 to /unlimited/6 when "Sınırsız modda devam et" is clicked, not a hardcoded length', () => {
+      const props: GameOverModalProps = {
+        isOpen: true,
+        onClose: vi.fn(),
+        gameStatus: 'won',
+        solution: 'KAPLAN',
+        solutionEntry: null,
+        guesses: ['KAPLAN'],
+        evaluations: [['correct', 'correct', 'correct', 'correct', 'correct', 'correct']],
+        gameNumber: 1,
+        stats: STATS,
+        isUnlimited: false,
+        onPlayAgain: vi.fn(),
+        onGoHome: vi.fn(),
+      };
+
+      render(
+        <MemoryRouter initialEntries={['/daily/6']}>
+          <GameOverModal {...props} />
+          <LocationDisplay />
+        </MemoryRouter>
+      );
+
+      fireEvent.click(screen.getByText('Sınırsız modda devam et'));
+
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/unlimited/6');
     });
   });
 });
