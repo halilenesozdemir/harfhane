@@ -1,137 +1,90 @@
 <h1 align="center">Harfhane</h1>
 
 <p align="center">
-  Türkçe kelimelerle oynanan günlük kelime tahmin oyunu.
+  A Turkish word-guessing game for web and Android.<br>
+  One shared daily word and unlimited practice. No accounts, no ads at launch.
 </p>
 
-<p align="center">
-  <a href="https://harfhane.app">harfhane.app</a>
-</p>
+<p align="center"><i>In development — not launched yet.</i></p>
 
 ---
 
-## Teknoloji
+## The game
 
-| Katman     | Teknoloji                                                       |
-| ---------- | --------------------------------------------------------------- |
-| Frontend   | React 19, TypeScript 5, Vite 7, Tailwind CSS 3, TanStack Query |
-| Backend    | Hono, TypeScript, Cloudflare Workers                            |
-| Veritabanı | Cloudflare D1 (SQLite)                                          |
-| Depolama   | Cloudflare R2                                                   |
-| Auth       | JWT + Google OAuth                                              |
+- **Daily** — everyone gets the same word each Turkey day (midnight in Turkey time, UTC+3)
+- **Unlimited** — play random words from a separate pool as long as you like
+- **Word lengths** — 5 letters at launch; 4 and 6 open once each has 90 days of reviewed daily words
+- **Letter hint**, shareable results, statistics, haptics on Android
+- **No accounts** — progress stays on the device
 
-## Monorepo Yapısı
+Turkish is handled correctly end to end: `i` becomes `İ` and `ı` becomes `I`, never the other way
+around. All casing goes through `normalizeChar` / `normalizeWord` in `@harfhane/shared`.
+
+## Architecture
 
 ```
-harfhane/
-├── apps/
-│   ├── frontend/          # React 19 + Vite (@harfhane/frontend)
-│   │   └── src/
-│   │       ├── components/
-│   │       ├── hooks/
-│   │       ├── context/
-│   │       ├── types/
-│   │       └── utils/
-│   └── backend/           # Hono API (@harfhane/backend)
-│       ├── db/migrations/
-│       └── src/
-│           ├── routes/
-│           ├── services/
-│           ├── repositories/
-│           ├── schemas/
-│           ├── middleware/
-│           └── utils/
-└── packages/
-    └── shared/            # Ortak TypeScript tipleri (@harfhane/shared)
+apps/
+├── backend/    Hono on Cloudflare Workers, D1 (SQLite) — routes → services → repositories
+├── frontend/   React 19 + Vite PWA, Tailwind, TanStack Query — Cloudflare Pages
+└── mobile/     Expo (React Native) Android app
+packages/
+├── shared/     Types and game logic shared by all three apps
+└── ui-tokens/  Design tokens generated for web and mobile
 ```
 
-## Özellikler
+The word lists come from an open-license source (MPL-2.0); see [`data/words/README.md`](data/words/README.md).
 
-- **Günlük Mod** — Her gün yeni kelime; tüm oyuncular aynı kelimeyi çözer
-- **Sınırsız Mod** — Rastgele kelime, dilediğin kadar oyna
-- **Meydan Okuma** — Çözdüğün kelimeyi arkadaşına gönder
-- **Turnuva** — Katılımcılar arasında rekabetçi mod
-- **Düello** — Bire bir anlık rekabet
-- **XP & Rozet** — Oyun içi ilerleme sistemi
-- **Liderboard** — Günlük ve genel sıralamalar
-- **Push Bildirimleri** — Günlük kelime hatırlatması
-- **PWA** — Ana ekrana eklenebilir, offline çalışır
-- **Admin Paneli** — Kelime listesi yönetimi
+## Engineering practices
 
-## Gereksinimler
+- **Tests first.** Vitest and Jest unit tests, Playwright for web end-to-end, Maestro flows on Android.
+- **Mutation testing.** Stryker runs on changed code in CI and fails the build when tests miss mutants.
+- **Acceptance examples.** Every plan's acceptance examples must have a test tagged with their id;
+  `pnpm check:ac` enforces it.
+- **Architecture checks.** `dependency-cruiser` enforces the backend layering and keeps
+  `packages/*` from importing `apps/*`; `knip` catches unused files, exports and dependencies.
+- **Strict TypeScript.** `exactOptionalPropertyTypes`, ts-reset and branded types.
+- **Written decisions.** Plans in [`docs/plans`](docs/plans), ADRs in [`docs/decisions`](docs/decisions),
+  domain terms in [`GLOSSARY.md`](GLOSSARY.md).
+- **AI-assisted, human-owned.** Coding agents work under the rules in [`AGENTS.md`](AGENTS.md) and
+  [`CLAUDE.md`](CLAUDE.md): isolated worktrees, a pre-commit gate, and a fresh-context review per PR.
 
-- Node.js >= 20
-- pnpm >= 9
+## Getting started
 
-## Kurulum
+Requires Node.js 22 (see `.nvmrc`) and pnpm 9.
 
 ```bash
-pnpm install
-```
-
-## Geliştirme
-
-```bash
-# Frontend + Backend birlikte
-pnpm dev
-
-# Ayrı ayrı
-pnpm --filter @harfhane/frontend run dev    # localhost:5173
-pnpm --filter @harfhane/backend run dev     # localhost:8787
-```
-
-Frontend `/api/` isteklerini otomatik olarak backend'e (8787) proxy'ler.
-
-## Build & Typecheck
-
-```bash
-pnpm build
-pnpm typecheck
-```
-
-## Test
-
-```bash
-# Backend testleri
-pnpm --filter @harfhane/backend run test
-
-# Watch modu
-pnpm --filter @harfhane/backend run test:watch
-```
-
-## Veritabanı
-
-```bash
-# Local migration
+pnpm install          # also enables the pre-commit gate
 pnpm --filter @harfhane/backend run db:migrate:local
-
-# Production migration
-pnpm --filter @harfhane/backend run db:migrate:remote
-
-# Local seed
-wrangler d1 execute harfhane-db --local --file=scripts/seed.sql
+pnpm dev              # frontend on :5173, backend on :8787
 ```
 
-## Deploy
+The frontend proxies `/api/` to the backend.
 
-`main` branch'e push ile GitHub Actions üzerinden otomatik deploy.
+Android:
 
-| Değişen dizin        | Backend | Frontend |
-| -------------------- | ------- | -------- |
-| `apps/backend/**`    | Evet    |          |
-| `apps/frontend/**`   |         | Evet     |
-| `packages/shared/**` | Evet    | Evet     |
+```bash
+pnpm --filter @harfhane/mobile run start
+```
 
-- **Frontend**: Cloudflare Pages → `harfhane.app`
-- **Backend**: Cloudflare Workers → `api.harfhane.app`
+## Checks
 
-### Gerekli GitHub Secrets
+```bash
+pnpm check            # build shared, typecheck, lint, tests, acceptance-example coverage
+pnpm test:e2e         # Playwright (web)
+pnpm test:mutation    # Stryker on changed files
+pnpm test:maestro     # Maestro flows (Android emulator)
+pnpm knip
+pnpm depcruise
+```
 
-| Secret | Açıklama |
-|--------|----------|
-| `CLOUDFLARE_API_TOKEN` | Workers + Pages Edit yetkili token |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare hesap ID'si |
+## Deployment
 
-## Geliştirme Rehberi
+Merging to `main` deploys through GitHub Actions: the backend to Cloudflare Workers
+(`apps/backend/**`, `packages/shared/**`) and the frontend to Cloudflare Pages
+(`apps/frontend/**`, `packages/shared/**`). Both need the `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` repository secrets.
 
-Agent kuralları ve Invariant'lar için: [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md)
+## License
+
+All rights reserved. The source is public for reading; no license is granted to reuse it.
+The word lists keep their own MPL-2.0 license.
