@@ -1,1 +1,12 @@
+# Removed features (007 scope cut): proper 301s instead of the SPA's
+# client-side <Navigate>, so crawlers and old links don't see a 200 duplicate
+# of the home page. Rules are matched top to bottom; these must stay above
+# the catch-all.
+/tournament / 301
+/discuss / 301
+/lists / 301
+/play/* / 301
+/c/* / 301
+/sifre-sifirla / 301
+
 /* /index.html 200
