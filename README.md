@@ -5,7 +5,7 @@
   One shared daily word and unlimited practice. No accounts, no ads at launch.
 </p>
 
-<p align="center"><i>In development — not launched yet.</i></p>
+<p align="center"><b>Play on the web: <a href="https://harfhane.app">harfhane.app</a></b> · Android app in closed testing soon.</p>
 
 ---
 
