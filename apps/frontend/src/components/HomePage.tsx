@@ -8,6 +8,7 @@ import ModeCard from "./home/ModeCard";
 import TodayStatus from "./home/TodayStatus";
 import HowToPanel from "./home/HowToPanel";
 import { getTodayStatus } from "./home/today-status";
+import { useTurkeyDay } from "./home/useTurkeyDay";
 import { getDefaultPlayableLength, usePlayableLengths } from "../hooks/usePlayableLengths";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { GameState, HomePageProps, WordLength } from "../types";
@@ -37,7 +38,10 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
   });
   const [showSettings, setShowSettings] = useState(false);
 
-  const todayString = getTodayString();
+  // Reactive to the Turkey day itself, not just read once on mount: without
+  // this, a player who solves today's word and leaves the tab open never
+  // sees the daily card flip back to "Henüz oynamadın" at Turkey midnight.
+  const todayString = useTurkeyDay(getTodayString);
   const [dailyGameState] = useLocalStorage<GameState>(`harfhane:game:anon:${todayString}:${dailyLength}`, EMPTY_GAME_STATE);
   const dailyStatus = getTodayStatus(dailyGameState);
 
@@ -91,6 +95,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
                       <button
                         key={len}
                         onClick={() => setPickedLength(len)}
+                        aria-pressed={selectedLength === len}
                         className={`flex-1 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer ${
                           selectedLength === len
                             ? "bg-present text-present-fg shadow-sm"

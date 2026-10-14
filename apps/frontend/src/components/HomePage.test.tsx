@@ -1,13 +1,14 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getTodayString } from '@harfhane/shared';
 import HomePage from './HomePage';
 import { ThemeProvider } from '../context/ThemeContext';
+import { usePlayableLengths } from '../hooks/usePlayableLengths';
 import type { HomePageProps, WordLength } from '../types';
 
 vi.mock('../hooks/usePlayableLengths', async () => {
   const actual = await vi.importActual<typeof import('../hooks/usePlayableLengths')>('../hooks/usePlayableLengths');
-  return { ...actual, usePlayableLengths: (): readonly WordLength[] => [5] };
+  return { ...actual, usePlayableLengths: vi.fn((): readonly WordLength[] => [5]) };
 });
 
 const DAILY_LENGTH: WordLength = 5;
@@ -83,5 +84,50 @@ describe('HomePage', () => {
 
     expect(screen.getByText('Hesap yok. Reklam yok. İlerlemen bu cihazda kalır.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Gizlilik/ })).not.toBeInTheDocument();
+  });
+
+  it('should mark the selected unlimited length button as aria-pressed and the others as not', () => {
+    vi.mocked(usePlayableLengths).mockReturnValueOnce([4, 5, 6]);
+
+    renderHomePage({ onSelectMode: vi.fn() });
+
+    expect(screen.getByRole('button', { name: '5 harf' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '4 harf' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('HomePage daily card at Turkey midnight', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should flip from Çözdün back to Henüz oynamadın after Turkey midnight, without a reload (012-AE4)', () => {
+    // 20:59:59 UTC is 23:59:59 Turkey time (UTC+3) on the same calendar day.
+    vi.setSystemTime(new Date('2026-10-14T20:59:59.000Z'));
+    const todayBeforeMidnight = getTodayString();
+    window.localStorage.setItem(
+      `harfhane:game:anon:${todayBeforeMidnight}:${DAILY_LENGTH}`,
+      JSON.stringify({ guesses: ['KALEM'], evaluations: [[]], currentGuess: '', gameStatus: 'won', keyboardStatus: {} })
+    );
+
+    renderHomePage({ onSelectMode: vi.fn() });
+    expect(screen.getByText(/Çözdün/)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(screen.getByText('Henüz oynamadın')).toBeInTheDocument();
+    expect(screen.queryByText(/Çözdün/)).not.toBeInTheDocument();
   });
 });
