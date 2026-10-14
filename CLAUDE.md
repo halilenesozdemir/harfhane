@@ -1,6 +1,6 @@
 # Harfhane
 
-Turkish word game (a shared daily word and unlimited play, 4-6 letters, no accounts) on web and Android.
+Turkish word game (a shared daily word and unlimited play, no accounts) on web and Android.
 `AGENTS.md` holds the Invariants and agent setup; it is binding. App-specific notes: `apps/backend/CLAUDE.md`,
 `apps/frontend/CLAUDE.md`, `apps/mobile/CLAUDE.md`.
 

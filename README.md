@@ -2,7 +2,7 @@
 
 <p align="center">
   A Turkish word-guessing game for web and Android.<br>
-  One shared daily word, unlimited practice, 4 to 6 letter words. No accounts, no ads.
+  One shared daily word and unlimited practice. No accounts, no ads at launch.
 </p>
 
 <p align="center"><i>In development — not launched yet.</i></p>
@@ -13,7 +13,7 @@
 
 - **Daily** — everyone gets the same word each Turkey day (midnight in Turkey time, UTC+3)
 - **Unlimited** — play random words from a separate pool as long as you like
-- **Word lengths** — 4, 5 or 6 letters
+- **Word lengths** — 5 letters at launch; 4 and 6 open once each has 90 days of reviewed daily words
 - **Letter hint**, shareable results, statistics, haptics on Android
 - **No accounts** — progress stays on the device
 
