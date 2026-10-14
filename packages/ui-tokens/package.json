@@ -8,7 +8,11 @@
   },
   "exports": {
     ".": "./generated/tokens.ts",
-    "./tokens.css": "./generated/tokens.css"
+    "./tokens.css": "./generated/tokens.css",
+    "./brand-mark": {
+      "types": "./src/brand-mark.d.ts",
+      "default": "./src/brand-mark.mjs"
+    }
   },
   "scripts": {
     "build": "node src/build.ts",

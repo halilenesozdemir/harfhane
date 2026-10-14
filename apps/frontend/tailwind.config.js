@@ -16,6 +16,7 @@ export default {
         'correct-fg': 'var(--hh-correct-fg)',
         'correct-depth': 'var(--hh-correct-depth)',
         'present-fg': 'var(--hh-present-fg)',
+        'present-depth': 'var(--hh-present-depth)',
         'absent-fg': 'var(--hh-absent-fg)',
         'key-fg': 'var(--hh-key-fg)',
         'tile-empty-bg': 'var(--hh-tile-empty-bg)',
