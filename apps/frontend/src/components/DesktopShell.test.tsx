@@ -73,6 +73,43 @@ describe('DesktopShell', () => {
     expect(screen.queryByRole('button', { name: '5' })).not.toBeInTheDocument();
   });
 
+  it('should keep the shell inside a 1200px centred container (012-AE3)', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <DesktopShell mode="daily" wordLength={5} stats={dailyStats} onGoHome={vi.fn()}>
+          <div>Oyun alanı</div>
+        </DesktopShell>
+      </MemoryRouter>
+    );
+    const outer = container.firstElementChild;
+    expect(outer?.className).toContain('max-w-[1200px]');
+    expect(outer?.className).toContain('mx-auto');
+  });
+
+  it('should render a custom left slot instead of the default mode nav when provided', () => {
+    render(
+      <MemoryRouter>
+        <DesktopShell mode="daily" wordLength={5} stats={dailyStats} onGoHome={vi.fn()} left={<span>özel sol panel</span>}>
+          <div>Oyun alanı</div>
+        </DesktopShell>
+      </MemoryRouter>
+    );
+    expect(screen.getByText('özel sol panel')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Oyun modları' })).not.toBeInTheDocument();
+  });
+
+  it('should render a custom right slot instead of the default status panel when provided', () => {
+    render(
+      <MemoryRouter>
+        <DesktopShell mode="daily" wordLength={5} stats={dailyStats} onGoHome={vi.fn()} right={<span>özel sağ panel</span>}>
+          <div>Oyun alanı</div>
+        </DesktopShell>
+      </MemoryRouter>
+    );
+    expect(screen.getByText('özel sağ panel')).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Günün durumu' })).not.toBeInTheDocument();
+  });
+
   it('(008-AE1) offers only the playable lengths, hiding the rest', () => {
     render(
       <MemoryRouter>
