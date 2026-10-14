@@ -22,7 +22,7 @@ Owner phase order, 2026-10-06 (replaces the previous single ordered list):
 ## Order
 
 ### Phase 1 — finish development code
-- **Deadline:** production's legacy schedule ends around 2026-11-09 for 5 letters (4: ~2026-12-11, 6: ~2026-12-01; probed through the public API on 2026-10-06), and the legacy DB's schedule-health alert has been failing silently (it queries columns the legacy schema lacks). Phase 2's cutover must land before 2026-11-09, or the owner tops up the legacy schedule.
+- **Deadline:** production's legacy schedule ends around 2026-11-09 for 5 letters (4: ~2026-12-11, 6: ~2026-12-01; probed through the public API on 2026-10-06), and the legacy DB's schedule-health alert has been failing silently (it queries columns the legacy schema lacks). Phase 2's cutover must land before 2026-11-09, or the owner tops up the legacy schedule. Resolved: the cutover ran on 2026-10-06 (`docs/guides/db-cutover-runbook.md`).
 - Fix: `/api/words/daily?date=` returns future answers to anyone; restrict public lookups to today and past days (backend, after Plan 008 U1 merges).
 - Close the remaining open docs PR (#51; #45 and #47 are merged).
 - Plan 008 U1–U7, U9–U10: playable lengths, word pools, the 3-year repeat cooldown, the 180-day restock runway, and the letter hint (`docs/plans/2026-10-06-008-feat-playable-lengths-word-pools-plan.md`).
@@ -39,7 +39,7 @@ Phase 1 exit (2026-10-11): `docs/research/2026-10-11-phase-1-exit.md` — all ga
 Plan 010 U3 and the `evaluate.ts`/`keyboard.ts` mutation scores are deferred past launch (owner).
 
 ### Phase 2 — fill the new DB with clean words (import, 90 days, cutover)
-- 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` (Invariant 4), before the import below.
+- 008 U8: *owner* applies `0002_word_pools.sql` to `harfhane` (Invariant 4), before the import below. Done 2026-10-06.
 - 006 U4: word-review files landed (#55).
 - 006 U5: label-generation script.
 - 001 U3 + 006 U6: import the 346 reviewed 5-letter words and auto-fill 90+ days (owner, remote D1, Invariant 4).
@@ -58,6 +58,10 @@ Plan 010 U3 and the `evaluate.ts`/`keyboard.ts` mutation scores are deferred pas
 - If picked, Plan 005 runs largely as drafted: U4–U5 (mobile purchase/restore, Supporter v1 unlock — themes + hint allowance) need a 004 U9 dev build and a Play Console product; U1–U3 (entitlements table, webhook, `/me`) stay post-launch backend work, not gating; U6–U7 (payments profile, first license-tester purchase) follow.
 - Accounts return only if the chosen model needs one (e.g. a subscription or cross-device sync) — not for a one-time Play-restored purchase.
 
+### Web track — public web link (Plan 012)
+- Runs alongside Phases 3-4 (owner, 2026-10-14): web matches the mobile visual language, the guess list keeps suffix-like headwords (KOYUN, BOYUN), then the web link goes into the owner's profile (`docs/plans/2026-10-14-012-feat-web-polish-plan.md`).
+- Production deploys run again from 2026-10-14; they had stopped on 2026-10-10 because of GitHub Actions billing on the then-private repository, which is now public.
+
 Plan 002 U6 (shadcn on web) and U9 (Tailwind 4) run after release, not in this order.
 
 Plan 007's U1–U4, U7–U8 (sign-in, push, play counter) and Plan 005 U8 (the RevenueCat `logIn`
@@ -74,7 +78,6 @@ Agents cannot do these; each one unblocks the units listed.
 | Play developer account, identity check, 12 testers × 14 days | 004 U10, free release — Phase 4 |
 | Remote D1 imports and scheduling (Invariant 4) | 006 U6–U8, 001 U3 — Phase 2 |
 | 001 U4 binding switch (once, for 5 letters at 90 days) | Phase 2 |
-| Apply `0002_word_pools.sql` to remote `harfhane` (Invariant 4, Plan 008 U8) | Phase 2, before the import |
 | Open 4 and 6 letters via a reviewed `PLAYABLE_WORD_LENGTHS` deploy once each reaches 90 days (Plan 008 KTD1) | Phase 2 |
 | Android emulator set up and owner test session | Phase 3, `docs/guides/mobile-run.md` |
 | Drop migration applied to the remote database (Invariant 4) | Phase 1 writes the file; applying it remotely is owner-paced and blocks nothing in Phase 1 (`docs/backlog.md`) |
