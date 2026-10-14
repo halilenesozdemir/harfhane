@@ -17,6 +17,12 @@ interface DesktopShellProps {
   stats: DailyStats | UnlimitedStats;
   onGoHome: () => void;
   children: React.ReactNode;
+  /** R2 layout slot: overrides the default mode-nav aside when the game page
+   * supplies its own left panel. Omit to keep today's ModeNav. */
+  left?: React.ReactNode;
+  /** R2 layout slot: overrides the default status aside when the game page
+   * supplies its own right panel. Omit to keep today's StatusPanel. */
+  right?: React.ReactNode;
 }
 
 function isDailyStats(stats: DailyStats | UnlimitedStats): stats is DailyStats {
@@ -168,15 +174,25 @@ export default function DesktopShell({
   stats,
   onGoHome,
   children,
+  left,
+  right,
 }: DesktopShellProps): React.JSX.Element {
+  const leftContent = left ?? (
+    <ModeNav mode={mode} wordLength={wordLength} playableLengths={playableLengths} onGoHome={onGoHome} />
+  );
+  const rightContent = right ?? <StatusPanel mode={mode} stats={stats} />;
+
+  // R2/012-AE3: max-w-[1200px] mx-auto bounds the whole row so the asides sit
+  // inside a centred container instead of the previous lg:flex-1 middle
+  // column stretching to fill the full viewport and pinning them to its edges.
   return (
-    <div className="lg:flex lg:justify-center lg:gap-6 lg:px-6 lg:py-6">
+    <div className="max-w-[1200px] mx-auto lg:flex lg:justify-center lg:gap-6 lg:px-6 lg:py-6">
       <aside
         aria-label="Mod menüsü"
         className="hidden lg:block lg:sticky lg:top-6 lg:self-start lg:shrink-0 bg-bg-secondary rounded-tile p-4 shadow-depth-surface"
         style={{ width: NAV_WIDTH_PX }}
       >
-        <ModeNav mode={mode} wordLength={wordLength} playableLengths={playableLengths} onGoHome={onGoHome} />
+        {leftContent}
       </aside>
 
       <div className="lg:flex-1 lg:flex lg:justify-center lg:min-w-0">
@@ -187,7 +203,7 @@ export default function DesktopShell({
         className="hidden lg:block lg:sticky lg:top-6 lg:self-start lg:shrink-0"
         style={{ width: STATS_WIDTH_PX }}
       >
-        <StatusPanel mode={mode} stats={stats} />
+        {rightContent}
       </div>
     </div>
   );

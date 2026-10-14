@@ -29,4 +29,20 @@ describe('Header', () => {
     screen.getByLabelText('Ana Sayfa').click();
     expect(onTitleClick).toHaveBeenCalledTimes(1);
   });
+
+  it('should show a back button and the mode title on game screens (R2)', () => {
+    render(
+      <Header onTitleClick={noop} onHelpClick={noop} onStatsClick={noop} onSettingsClick={noop} modeLabel="Günlük" />
+    );
+    const backButton = screen.getByLabelText('Ana Sayfa');
+    expect(backButton.querySelector('svg')).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'Günlük' })).toBeInTheDocument();
+  });
+
+  it('should expose all icon buttons with at least a 44px hit area (R2)', () => {
+    render(<Header onTitleClick={noop} onHelpClick={noop} onStatsClick={noop} onSettingsClick={noop} modeLabel="Günlük" />);
+    for (const label of ['Ana Sayfa', 'İstatistikler', 'Nasıl Oynanır', 'Ayarlar']) {
+      expect(screen.getByLabelText(label).className).toMatch(/\bw-11\b/);
+    }
+  });
 });
