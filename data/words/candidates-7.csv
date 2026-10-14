@@ -33,6 +33,7 @@ AKIŞKAN,7,0,
 ALABORA,7,0,
 ALACAĞI,7,1,low_inflection_support
 ALAKALI,7,1,low_inflection_support
+ALAKASI,7,0,
 ALAMADI,7,0,
 ALBÜMLE,7,0,
 ALDATMA,7,0,
@@ -54,6 +55,7 @@ ALTTAKİ,7,0,
 ALTYAPI,7,0,
 ALTIGEN,7,0,
 ALTINCI,7,0,
+ALTINDA,7,0,
 ALTINLA,7,0,
 ALINGAN,7,0,
 ALINMAZ,7,1,low_inflection_support
@@ -80,6 +82,7 @@ ANLAMAZ,7,0,
 ANLAMLI,7,0,
 ANLAMIŞ,7,0,
 ANLARIM,7,1,low_inflection_support
+ANLATAN,7,1,low_inflection_support
 ANLATMA,7,0,
 ANLATTI,7,0,
 ANLATIM,7,0,
@@ -92,6 +95,7 @@ ANLIYOR,7,1,low_inflection_support
 ANNECİM,7,1,low_inflection_support
 ANNEMİZ,7,1,low_inflection_support
 ANNEMLE,7,1,low_inflection_support
+ANNENİN,7,1,low_inflection_support
 ANNENİZ,7,0,
 ANNESİZ,7,1,low_inflection_support
 ANOMALİ,7,0,
@@ -102,6 +106,7 @@ ANITSAL,7,0,
 APAYDIN,7,0,
 ARABACI,7,1,low_inflection_support
 ARABESK,7,0,
+ARACINI,7,1,low_inflection_support
 ARADAKİ,7,1,low_inflection_support
 ARADIĞI,7,1,low_inflection_support
 ARALIĞI,7,1,low_inflection_support
@@ -174,6 +179,7 @@ AÇILIŞI,7,0,
 AĞABEYİ,7,0,
 AĞLAMAZ,7,1,low_inflection_support
 AĞUSTOS,7,0,
+AĞZINDA,7,1,low_inflection_support
 AĞIRLIK,7,0,
 AŞAMAYA,7,1,low_inflection_support
 AŞİRETİ,7,1,low_inflection_support
@@ -181,6 +187,7 @@ AŞILAMA,7,0,
 AŞINMIŞ,7,1,low_inflection_support
 BABACAN,7,0,
 BABAMIZ,7,1,low_inflection_support
+BABANIN,7,1,low_inflection_support
 BABANIZ,7,0,
 BABASIZ,7,1,low_inflection_support
 BACAKLI,7,1,low_inflection_support
@@ -190,6 +197,7 @@ BAHARAT,7,0,
 BAHRİYE,7,0,
 BAHTSIZ,7,0,
 BAHÇELİ,7,0,
+BAHÇESİ,7,1,low_inflection_support
 BAKACAK,7,1,low_inflection_support
 BAKLAVA,7,0,
 BAKMADI,7,1,low_inflection_support
@@ -203,6 +211,7 @@ BALABAN,7,0,
 BALKONU,7,0,
 BALIKÇI,7,0,
 BANKACI,7,0,
+BANKASI,7,0,
 BANKNOT,7,0,
 BANLİYÖ,7,0,
 BARBEKÜ,7,0,
@@ -380,7 +389,9 @@ BULUŞMA,7,0,
 BULUŞTU,7,0,
 BULVARI,7,1,low_inflection_support
 BUNALIM,7,0,
+BURALAR,7,0,
 BURJUVA,7,0,
+BURNUNU,7,1,low_inflection_support
 BURUNLU,7,1,low_inflection_support
 BUYRUĞU,7,1,low_inflection_support
 BUYURDU,7,0,
@@ -403,6 +414,8 @@ BIRAKMA,7,0,
 BIRAKTI,7,0,
 BIÇAKLA,7,0,
 BIÇAKÇI,7,0,
+CADDESİ,7,0,
+CAMİASI,7,1,low_inflection_support
 CANAVAR,7,0,
 CANIMIZ,7,1,low_inflection_support
 CANINIZ,7,1,low_inflection_support
@@ -597,11 +610,13 @@ DÜŞÜNDÜ,7,0,
 DÜŞÜNEN,7,0,
 DÜŞÜNME,7,0,
 DÜŞÜNSE,7,0,
+DÜŞÜNÜN,7,1,low_inflection_support
 DÜŞÜNÜR,7,0,
 DÜŞÜRDÜ,7,0,
 DÜŞÜRME,7,0,
 DÜŞÜRÜR,7,1,low_inflection_support
 DIŞIMDA,7,1,low_inflection_support
+DIŞINDA,7,0,
 EBEVEYN,7,0,
 EDECEĞİ,7,0,
 EDEMEDİ,7,0,
@@ -671,6 +686,7 @@ ETMEDİK,7,1,low_inflection_support
 ETMEMİŞ,7,0,
 ETMEYEN,7,0,
 ETMİYOR,7,1,low_inflection_support
+ETRAFTA,7,1,low_inflection_support
 ETRAFIM,7,0,
 ETTİRDİ,7,0,
 ETTİRİR,7,1,low_inflection_support
@@ -707,6 +723,7 @@ FARKSIZ,7,0,
 FASULYE,7,0,
 FAVORİM,7,1,low_inflection_support
 FAYDALI,7,0,
+FAYDASI,7,0,
 FAZİLET,7,0,
 FEDAKAR,7,0,
 FEDERAL,7,0,
@@ -724,9 +741,11 @@ FİKİRLE,7,0,
 FİKİRLİ,7,0,
 FİKRİNİ,7,1,low_inflection_support
 FİKSTÜR,7,0,
+FİLİNTA,7,0,
 FİLOZOF,7,0,
 FİNCANI,7,1,low_inflection_support
 FİRAVUN,7,0,
+FİRMASI,7,1,low_inflection_support
 FİYASKO,7,0,
 FİYATLA,7,0,
 FİZİKÇİ,7,1,low_inflection_support
@@ -737,6 +756,7 @@ FREKANS,7,0,
 FUTBOLU,7,1,low_inflection_support
 FINDIĞI,7,1,low_inflection_support
 FIRSATI,7,1,low_inflection_support
+FIRTINA,7,0,
 FIRINCI,7,0,
 FISTIĞI,7,1,low_inflection_support
 FISILTI,7,0,
@@ -917,6 +937,7 @@ HAKARET,7,0,
 HAKİKAT,7,0,
 HALBUKİ,7,0,
 HALİMİZ,7,0,
+HALİNDE,7,0,
 HALİNİZ,7,1,low_inflection_support
 HAMBURG,7,0,
 HAMİYET,7,0,
@@ -956,6 +977,7 @@ HEPATİT,7,0,
 HEPİMİZ,7,0,
 HEPİNİZ,7,1,low_inflection_support
 HESABIM,7,1,low_inflection_support
+HESABIN,7,0,
 HESAPLA,7,0,
 HESAPLI,7,1,low_inflection_support
 HEVESLE,7,0,
@@ -1123,6 +1145,7 @@ KADİRLİ,7,1,low_inflection_support
 KADROLU,7,0,
 KADINLA,7,0,
 KADINIM,7,0,
+KADININ,7,1,low_inflection_support
 KADIRGA,7,0,
 KAFAMIZ,7,1,low_inflection_support
 KAFANIZ,7,1,low_inflection_support
@@ -1285,6 +1308,7 @@ KİNETİK,7,1,low_inflection_support
 KİRALIK,7,1,low_inflection_support
 KİREMİT,7,0,
 KİTABIM,7,0,
+KİTABIN,7,0,
 KİTAPLA,7,0,
 KİTAPÇI,7,0,
 KİTLEYE,7,1,low_inflection_support
@@ -1441,6 +1465,8 @@ LİBERAL,7,0,
 LİMİTED,7,0,
 LİMONLU,7,1,low_inflection_support
 LİMUZİN,7,0,
+LİSANSI,7,1,low_inflection_support
+LİSTESİ,7,0,
 LİYAKAT,7,0,
 LOKANTA,7,0,
 MADALYA,7,0,
@@ -1691,6 +1717,7 @@ PARMAĞI,7,0,
 PARTİLİ,7,0,
 PARTNER,7,0,
 PARÇALA,7,0,
+PARÇASI,7,0,
 PARILTI,7,0,
 PASİFİK,7,1,low_inflection_support
 PATATES,7,0,
@@ -1713,6 +1740,7 @@ PERİŞAN,7,0,
 PERVANE,7,0,
 PETROLÜ,7,1,low_inflection_support
 PEYNİRİ,7,1,low_inflection_support
+PEŞİNDE,7,1,low_inflection_support
 PİGMENT,7,0,
 PİRAMİT,7,0,
 PİRZOLA,7,0,
@@ -1735,6 +1763,7 @@ PRESTİJ,7,0,
 PROBLEM,7,0,
 PROFİLİ,7,0,
 PROGRAM,7,0,
+PROJESİ,7,1,low_inflection_support
 PROSTAT,7,0,
 PROTEİN,7,0,
 PÜRÜZLÜ,7,0,
@@ -1785,6 +1814,7 @@ SALINIM,7,0,
 SAMURAY,7,0,
 SANATLA,7,0,
 SANATÇI,7,0,
+SANCISI,7,1,low_inflection_support
 SANDVİÇ,7,0,
 SANDIĞI,7,1,low_inflection_support
 SANTRAL,7,0,
@@ -1848,6 +1878,7 @@ SERBEST,7,0,
 SERMAYE,7,0,
 SERSERİ,7,0,
 SERTLİK,7,0,
+SERVİSİ,7,0,
 SERÜVEN,7,0,
 SEVDALI,7,0,
 SEVDİĞİ,7,0,
@@ -1866,6 +1897,7 @@ SEVİŞME,7,0,
 SEVMEDİ,7,0,
 SEVMEME,7,0,
 SEVMEYE,7,0,
+SEVMEYİ,7,1,low_inflection_support
 SEYAHAT,7,0,
 SEYİRCİ,7,0,
 SEÇECEK,7,1,low_inflection_support
@@ -1901,6 +1933,7 @@ SİYASET,7,0,
 SİZİNLE,7,1,low_inflection_support
 SKANDAL,7,0,
 SKLEROZ,7,0,
+SOFRASI,7,1,low_inflection_support
 SOHBETİ,7,1,low_inflection_support
 SOKMAYA,7,1,low_inflection_support
 SOKTUĞU,7,1,low_inflection_support
@@ -1921,6 +1954,7 @@ SORULDU,7,1,low_inflection_support
 SORUMLU,7,0,
 SORUNLA,7,0,
 SORUNLU,7,0,
+SORUNUN,7,0,
 SOSYETE,7,0,
 SOYTARI,7,0,
 SOYUNDU,7,0,
@@ -1949,6 +1983,7 @@ SÖYLEME,7,0,
 SÖYLEMİ,7,0,
 SÖYLESE,7,1,low_inflection_support
 SÖYLEŞİ,7,0,
+SÖZCÜSÜ,7,0,
 SÖZCÜĞÜ,7,1,low_inflection_support
 SÖZLÜĞÜ,7,1,low_inflection_support
 SÖĞÜTLÜ,7,1,low_inflection_support
@@ -2245,11 +2280,13 @@ VURULDU,7,0,
 VURULMA,7,0,
 VURUYOR,7,1,low_inflection_support
 VÜCUDUM,7,0,
+VÜCUDUN,7,0,
 YABANCI,7,0,
 YADİGAR,7,0,
 YAKAMOZ,7,0,
 YAKILAN,7,1,low_inflection_support
 YAKILDI,7,1,low_inflection_support
+YAKINDA,7,1,low_inflection_support
 YAKINDI,7,1,low_inflection_support
 YAKINIM,7,0,
 YAKINIZ,7,1,low_inflection_support
@@ -2260,11 +2297,14 @@ YALANLA,7,0,
 YALITIM,7,0,
 YAMALAK,7,1,low_inflection_support
 YANDIĞI,7,1,low_inflection_support
+YANLISI,7,1,low_inflection_support
 YANMALI,7,1,low_inflection_support
 YANSIMA,7,0,
 YANILGI,7,0,
 YANILMA,7,0,
+YANIMDA,7,1,low_inflection_support
 YANIMIZ,7,0,
+YANINDA,7,0,
 YAPACAK,7,0,
 YAPAMAM,7,0,
 YAPAMAZ,7,0,
@@ -2569,12 +2609,15 @@ ZIPLAMA,7,1,low_inflection_support
 ÜCRETLE,7,0,
 ÜCRETLİ,7,0,
 ÜLKEMİZ,7,0,
+ÜLKENİN,7,1,low_inflection_support
 ÜMİTSİZ,7,0,
 ÜRETİCİ,7,0,
 ÜRETKEN,7,0,
 ÜRETTİK,7,1,low_inflection_support
 ÜSLUPLA,7,0,
 ÜSTTEKİ,7,1,low_inflection_support
+ÜSTÜMDE,7,1,low_inflection_support
+ÜZERİNİ,7,1,low_inflection_support
 ÜZÜLMEZ,7,1,low_inflection_support
 ÜZÜLMÜŞ,7,0,
 IHLAMUR,7,0,

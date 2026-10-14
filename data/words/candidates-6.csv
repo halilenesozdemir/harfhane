@@ -16,6 +16,7 @@ ADAYIM,6,1,low_inflection_support
 ADLİYE,6,0,
 ADRESİ,6,0,
 ADIMLA,6,0,
+ADINDA,6,1,low_inflection_support
 ADINIZ,6,1,low_inflection_support
 AFACAN,6,0,
 AFERİN,6,0,
@@ -27,10 +28,12 @@ AHLAKI,6,1,low_inflection_support
 AİLECE,6,1,low_inflection_support
 AİLENİ,6,1,low_inflection_support
 AİLEVİ,6,1,low_inflection_support
+AJANSI,6,0,
 AKASYA,6,0,
 AKBABA,6,0,
 AKLAMA,6,0,
 AKLIMI,6,1,low_inflection_support
+AKLINI,6,1,low_inflection_support
 AKRABA,6,0,
 AKSAMA,6,1,low_inflection_support
 AKTRİS,6,0,
@@ -75,6 +78,7 @@ ALIYOR,6,1,low_inflection_support
 ALIŞMA,6,0,
 ALIŞTI,6,0,
 ALIŞIK,6,1,low_inflection_support
+AMACIN,6,0,
 AMATÖR,6,0,
 AMAZON,6,0,
 AMAÇLA,6,0,
@@ -103,6 +107,7 @@ APAÇIK,6,1,low_inflection_support
 ARABAM,6,1,low_inflection_support
 ARABAN,6,0,
 ARACIM,6,0,
+ARACIN,6,0,
 ARADIK,6,0,
 ARAKLI,6,1,low_inflection_support
 ARALIK,6,0,
@@ -197,6 +202,7 @@ AÇILAN,6,0,
 AÇILDI,6,0,
 AÇILMA,6,0,
 AÇILIM,6,0,
+AÇILIN,6,0,
 AÇILIŞ,6,0,
 AĞABEY,6,0,
 AĞAÇLI,6,1,low_inflection_support
@@ -232,6 +238,7 @@ BAKICI,6,0,
 BAKIMI,6,1,low_inflection_support
 BAKIŞI,6,0,
 BALANS,6,0,
+BALAYI,6,0,
 BALDIZ,6,0,
 BALGAM,6,0,
 BALİNA,6,0,
@@ -253,6 +260,7 @@ BARTIN,6,0,
 BARIŞA,6,0,
 BARIŞI,6,0,
 BASKET,6,0,
+BASKIN,6,0,
 BASMIŞ,6,1,low_inflection_support
 BASTON,6,0,
 BASTIK,6,1,low_inflection_support
@@ -295,6 +303,7 @@ BEDDUA,6,0,
 BEDENİ,6,0,
 BEDEVİ,6,0,
 BEHLÜL,6,1,low_inflection_support
+BEKLER,6,0,
 BELALI,6,0,
 BELGİN,6,0,
 BELLEK,6,0,
@@ -302,6 +311,7 @@ BENCİL,6,0,
 BENLİK,6,0,
 BENSİZ,6,0,
 BENZER,6,0,
+BENZİN,6,0,
 BERAAT,6,0,
 BERBAT,6,0,
 BERBER,6,0,
@@ -394,10 +404,14 @@ BULUCU,6,0,
 BULUTU,6,1,low_inflection_support
 BULUŞU,6,0,
 BULVAR,6,0,
+BUNLAR,6,0,
+BURADA,6,0,
+BURASI,6,1,low_inflection_support
 BURCUN,6,0,
 BURDUR,6,0,
 BURHAN,6,0,
 BURNUM,6,1,low_inflection_support
+BURNUN,6,1,low_inflection_support
 BURSLU,6,0,
 BURÇAK,6,1,low_inflection_support
 BUYRUK,6,0,
@@ -413,6 +427,7 @@ BÜKLÜM,6,0,
 BÜKÜCÜ,6,0,
 BÜLBÜL,6,0,
 BÜLTEN,6,0,
+BÜROSU,6,1,low_inflection_support
 BÜTÜNÜ,6,0,
 BÜYÜCÜ,6,0,
 BÜYÜDÜ,6,0,
@@ -456,6 +471,7 @@ COŞKUN,6,0,
 CUMHUR,6,0,
 CÖMERT,6,0,
 CÜMBÜŞ,6,0,
+CÜZDAN,6,0,
 DAHİLİ,6,0,
 DAKİKA,6,0,
 DALGIN,6,0,
@@ -504,6 +520,7 @@ DERTLİ,6,1,low_inflection_support
 DERVİŞ,6,0,
 DESENİ,6,1,low_inflection_support
 DESPOT,6,0,
+DESTAN,6,0,
 DESTEK,6,0,
 DETAYI,6,1,low_inflection_support
 DEVAMI,6,1,low_inflection_support
@@ -557,6 +574,7 @@ DOKUMA,6,0,
 DOKUYA,6,1,low_inflection_support
 DOKUZU,6,0,
 DOLABI,6,0,
+DOLAYI,6,0,
 DOLDUR,6,0,
 DOLGUN,6,0,
 DOLMUŞ,6,0,
@@ -617,11 +635,13 @@ DÜRÜST,6,0,
 DÜZELT,6,0,
 DÜZENE,6,0,
 DÜZENİ,6,0,
+DÜZEYİ,6,1,low_inflection_support
 DÜZGÜN,6,0,
 DÜZLEM,6,0,
 DÜZLÜK,6,0,
 DÜĞÜMÜ,6,1,low_inflection_support
 DÜĞÜNÜ,6,0,
+DÜŞESİ,6,1,low_inflection_support
 DÜŞKÜN,6,0,
 DÜŞMAN,6,0,
 DÜŞMEZ,6,1,low_inflection_support
@@ -661,6 +681,7 @@ ELAZIĞ,6,0,
 ELBİSE,6,0,
 ELEMAN,6,0,
 ELENDİ,6,0,
+ELİMDE,6,1,low_inflection_support
 ELİMİZ,6,0,
 ELİNİZ,6,0,
 ELMALI,6,1,low_inflection_support
@@ -672,6 +693,7 @@ EMEKÇİ,6,0,
 EMİRLE,6,1,low_inflection_support
 EMPATİ,6,0,
 EMPOZE,6,0,
+EMRİNİ,6,1,low_inflection_support
 ENBİYA,6,0,
 ENDEKS,6,0,
 ENDİŞE,6,0,
@@ -697,6 +719,7 @@ ESNEME,6,0,
 ETEĞİN,6,1,low_inflection_support
 ETİKET,6,0,
 ETKİLİ,6,0,
+ETKİSİ,6,0,
 ETMEDİ,6,0,
 ETMELİ,6,0,
 ETMEME,6,0,
@@ -706,6 +729,7 @@ ETMEYE,6,0,
 ETRAFI,6,0,
 ETTİĞİ,6,1,low_inflection_support
 EVDEKİ,6,0,
+EVİMDE,6,1,low_inflection_support
 EVİMİZ,6,0,
 EVİNİZ,6,0,
 EVLADI,6,0,
@@ -773,9 +797,11 @@ FISTIK,6,0,
 FITRAT,6,0,
 GADDAR,6,0,
 GAFLET,6,0,
+GALERİ,6,0,
 GALİBA,6,1,low_inflection_support
 GALİBİ,6,0,
 GANYAN,6,0,
+GARDEN,6,0,
 GARSON,6,0,
 GAYRET,6,0,
 GAZETE,6,0,
@@ -905,6 +931,7 @@ HAKEMİ,6,1,low_inflection_support
 HAKİKİ,6,0,
 HAKİMİ,6,0,
 HAKKIM,6,0,
+HAKKIN,6,0,
 HAKSIZ,6,0,
 HALİFE,6,0,
 HALİMİ,6,1,low_inflection_support
@@ -926,6 +953,7 @@ HARFLE,6,0,
 HARFLİ,6,1,low_inflection_support
 HARİCİ,6,0,
 HARİKA,6,0,
+HARİTA,6,0,
 HARLAN,6,0,
 HARMAN,6,0,
 HARMON,6,0,
@@ -953,6 +981,7 @@ HAYRAN,6,0,
 HAYRAT,6,1,low_inflection_support
 HAYRET,6,0,
 HAYVAN,6,0,
+HAZİNE,6,0,
 HAZRET,6,0,
 HAŞERE,6,1,low_inflection_support
 HAŞHAŞ,6,0,
@@ -1077,7 +1106,9 @@ HIRÇIN,6,0,
 İÇERİK,6,0,
 İÇERİM,6,1,low_inflection_support
 İÇGÜDÜ,6,0,
+İÇİMDE,6,0,
 İÇİMİZ,6,0,
+İÇİNDE,6,0,
 İÇİNİZ,6,0,
 İÇİYOR,6,1,low_inflection_support
 İÇMEYE,6,0,
@@ -1097,6 +1128,8 @@ JİGOLO,6,0,
 JÜBİLE,6,0,
 KABARE,6,1,low_inflection_support
 KABİLE,6,0,
+KABİNE,6,0,
+KABİNİ,6,1,low_inflection_support
 KABULÜ,6,0,
 KABUSU,6,1,low_inflection_support
 KABUĞU,6,0,
@@ -1104,6 +1137,7 @@ KADARI,6,1,low_inflection_support
 KADEME,6,0,
 KADERİ,6,0,
 KADİFE,6,0,
+KADINI,6,0,
 KAFALI,6,0,
 KAFANI,6,0,
 KAFİLE,6,0,
@@ -1112,10 +1146,12 @@ KAİNAT,6,0,
 KAKTÜS,6,0,
 KALANI,6,1,low_inflection_support
 KALBİM,6,0,
+KALBİN,6,0,
 KALDIK,6,1,low_inflection_support
 KALDIR,6,0,
 KALECİ,6,0,
 KALEMİ,6,0,
+KALİTE,6,0,
 KALKAN,6,0,
 KALKMA,6,0,
 KALKTI,6,0,
@@ -1161,6 +1197,7 @@ KAPAĞI,6,1,low_inflection_support
 KAPLAN,6,0,
 KAPSAM,6,0,
 KAPSÜL,6,0,
+KAPTAN,6,0,
 KAPICI,6,0,
 KAPILI,6,0,
 KARACA,6,0,
@@ -1179,6 +1216,7 @@ KARTEL,6,0,
 KARTLA,6,0,
 KARTON,6,0,
 KARTUŞ,6,0,
+KARISI,6,0,
 KARŞIN,6,0,
 KARŞIT,6,0,
 KASABA,6,0,
@@ -1206,6 +1244,7 @@ KAYNAR,6,0,
 KAYPAK,6,0,
 KAYYUM,6,0,
 KAYYIM,6,0,
+KAYISI,6,0,
 KAYIŞI,6,1,low_inflection_support
 KAZANA,6,0,
 KAZANÇ,6,0,
@@ -1232,6 +1271,7 @@ KERPİÇ,6,0,
 KERVAN,6,0,
 KESİCİ,6,0,
 KESİMİ,6,1,low_inflection_support
+KESKİN,6,0,
 KESMİŞ,6,1,low_inflection_support
 KETÇAP,6,0,
 KEYFİM,6,0,
@@ -1263,6 +1303,7 @@ KOCAMI,6,0,
 KOCAYA,6,1,low_inflection_support
 KOKPİT,6,0,
 KOKULU,6,0,
+KOKUSU,6,0,
 KOLERA,6,0,
 KOLLUK,6,0,
 KOLONİ,6,0,
@@ -1291,6 +1332,7 @@ KONTRA,6,0,
 KONTÖR,6,0,
 KONULU,6,0,
 KONUMU,6,0,
+KONUSU,6,0,
 KONUĞU,6,0,
 KONVOY,6,0,
 KOPMUŞ,6,0,
@@ -1300,6 +1342,7 @@ KORKAN,6,1,low_inflection_support
 KORKMA,6,0,
 KORKTU,6,0,
 KORKUM,6,1,low_inflection_support
+KORKUN,6,0,
 KORKUT,6,0,
 KORSAN,6,0,
 KORUCU,6,0,
@@ -1451,11 +1494,13 @@ MAKARA,6,0,
 MAKBUL,6,0,
 MAKBUZ,6,0,
 MAKİNA,6,0,
+MAKİNE,6,0,
 MAKSAT,6,0,
 MAKSİM,6,0,
 MAKYAJ,6,0,
 MALAGA,6,0,
 MALİYE,6,0,
+MANASI,6,0,
 MANDAL,6,0,
 MANEVİ,6,0,
 MANGAL,6,0,
@@ -1536,6 +1581,7 @@ METRUK,6,0,
 MEVCUT,6,0,
 MEVLİT,6,0,
 MEVSİM,6,0,
+MEYDAN,6,0,
 MEZHEP,6,0,
 MEZUNU,6,0,
 MEÇHUL,6,0,
@@ -1557,6 +1603,7 @@ MİNARE,6,0,
 MİNDER,6,0,
 MİNNET,6,0,
 MİNYON,6,0,
+MİRASI,6,1,low_inflection_support
 MİSKET,6,0,
 MİSTİK,6,0,
 MİSYON,6,0,
@@ -1601,6 +1648,7 @@ MÜSADE,6,0,
 MÜSAİT,6,0,
 MÜSPET,6,0,
 MÜTHİŞ,6,0,
+MÜZESİ,6,1,low_inflection_support
 MÜZMİN,6,0,
 MÜŞFİK,6,0,
 MÜŞRİK,6,0,
@@ -1625,6 +1673,7 @@ NEKTAR,6,0,
 NEMRUT,6,0,
 NEPTÜN,6,0,
 NERELİ,6,1,low_inflection_support
+NERESİ,6,0,
 NERGİS,6,0,
 NESLİN,6,1,low_inflection_support
 NESNEL,6,0,
@@ -1671,6 +1720,7 @@ OLAMAZ,6,0,
 OLANAK,6,0,
 OLANLA,6,0,
 OLAYLA,6,1,low_inflection_support
+OLAYIN,6,1,low_inflection_support
 OLAĞAN,6,0,
 OLDUĞU,6,0,
 OLMADI,6,0,
@@ -1678,6 +1728,7 @@ OLMALI,6,0,
 OLMAMA,6,0,
 OLMAMI,6,0,
 OLMASA,6,1,low_inflection_support
+OLMASI,6,1,low_inflection_support
 OLMAYA,6,0,
 OLUMLU,6,0,
 OLUNAN,6,1,low_inflection_support
@@ -1787,6 +1838,7 @@ PLAZMA,6,0,
 PLÜTON,6,0,
 PODYUM,6,0,
 POLİSE,6,1,low_inflection_support
+POLİSİ,6,0,
 POLİÇE,6,0,
 PONPON,6,0,
 PORSUK,6,0,
@@ -1827,6 +1879,7 @@ RENGİN,6,1,low_inflection_support
 RENKLE,6,0,
 RENKLİ,6,0,
 REPLİK,6,0,
+RESMİN,6,0,
 RESSAM,6,0,
 RESULÜ,6,1,low_inflection_support
 RETİNA,6,0,
@@ -1873,6 +1926,7 @@ SAHİCİ,6,0,
 SAHİLİ,6,1,low_inflection_support
 SAKALI,6,1,low_inflection_support
 SAKIZI,6,1,low_inflection_support
+SALATA,6,0,
 SALDIR,6,0,
 SALGIN,6,0,
 SALKIM,6,0,
@@ -1891,6 +1945,7 @@ SANMIŞ,6,1,low_inflection_support
 SANSAR,6,0,
 SANSÜR,6,0,
 SANTİM,6,0,
+SARAYI,6,1,low_inflection_support
 SARKIK,6,0,
 SARKIT,6,0,
 SARMAL,6,0,
@@ -1915,6 +1970,7 @@ SAYGIM,6,1,low_inflection_support
 SAYGIN,6,0,
 SAYMAN,6,0,
 SAYILI,6,0,
+SAYISI,6,0,
 SAĞLAM,6,0,
 SAĞLIK,6,0,
 SEANSI,6,1,low_inflection_support
@@ -1973,6 +2029,7 @@ SİNYAL,6,0,
 SİPAHİ,6,0,
 SİSTEM,6,0,
 SİTEMİ,6,0,
+SİTESİ,6,1,low_inflection_support
 SİYAHİ,6,1,low_inflection_support
 SİYAHI,6,1,low_inflection_support
 SİYASİ,6,0,
@@ -1997,6 +2054,7 @@ SORMAM,6,0,
 SORMAZ,6,1,low_inflection_support
 SORMUŞ,6,0,
 SORUMU,6,1,low_inflection_support
+SORUNU,6,0,
 SOSYAL,6,0,
 SOYADI,6,1,low_inflection_support
 SOYGUN,6,0,
@@ -2023,6 +2081,7 @@ SUNDUK,6,1,low_inflection_support
 SUNGUR,6,0,
 SUNUCU,6,0,
 SURATI,6,1,low_inflection_support
+SURESİ,6,1,low_inflection_support
 SURETİ,6,1,low_inflection_support
 SUSKUN,6,0,
 SUTYEN,6,0,
@@ -2162,6 +2221,7 @@ TELAFİ,6,0,
 TELAŞI,6,0,
 TELKİN,6,0,
 TELSİZ,6,0,
+TEMASI,6,1,low_inflection_support
 TEMBEL,6,0,
 TEMMUZ,6,0,
 TEMSİL,6,0,
@@ -2210,6 +2270,7 @@ TOPLAN,6,0,
 TOPLUM,6,0,
 TOPRAK,6,0,
 TORPİL,6,0,
+TORUNU,6,0,
 TOYGAR,6,1,low_inflection_support
 TRAFİK,6,0,
 TRAJİK,6,0,
@@ -2245,6 +2306,7 @@ TIKNAZ,6,0,
 TILSIM,6,0,
 TIRNAK,6,0,
 TIRTIL,6,0,
+UCUNDA,6,1,low_inflection_support
 UFACIK,6,1,low_inflection_support
 UFAKLI,6,0,
 ULAŞMA,6,0,
@@ -2299,6 +2361,7 @@ UĞRAMA,6,0,
 UĞRAŞI,6,0,
 UĞULTU,6,0,
 UĞURLU,6,0,
+VADEDE,6,1,low_inflection_support
 VAFTİZ,6,0,
 VAGONU,6,1,low_inflection_support
 VAHDET,6,1,low_inflection_support
@@ -2326,6 +2389,7 @@ VERMEN,6,1,low_inflection_support
 VERMEZ,6,0,
 VERMİŞ,6,0,
 VESİLE,6,0,
+VİCDAN,6,0,
 VİRGÜL,6,0,
 VİRÜSÜ,6,1,low_inflection_support
 VİTRİN,6,0,
@@ -2341,6 +2405,7 @@ VÜCUDU,6,0,
 YABANİ,6,0,
 YAKALA,6,0,
 YAKALI,6,0,
+YAKASI,6,0,
 YAKLAŞ,6,0,
 YAKICI,6,0,
 YALAKA,6,0,
@@ -2499,6 +2564,7 @@ ZİMMET,6,0,
 ZİNCİR,6,0,
 ZİNDAN,6,0,
 ZİRAAT,6,0,
+ZİYADE,6,0,
 ZİYNET,6,0,
 ZORAKİ,6,0,
 ZORLUK,6,0,
@@ -2615,6 +2681,7 @@ ZIRHLI,6,1,low_inflection_support
 ÖRNEĞİ,6,0,
 ÖRTBAS,6,0,
 ÖRTÜLÜ,6,0,
+ÖRTÜSÜ,6,0,
 ÖZETLE,6,0,
 ÖZLEDİ,6,0,
 ÖZLEMİ,6,0,
@@ -2626,6 +2693,7 @@ ZIRHLI,6,1,low_inflection_support
 ÜLKENİ,6,0,
 ÜLKÜCÜ,6,0,
 ÜMMETİ,6,0,
+ÜRETEN,6,0,
 ÜRETİM,6,0,
 ÜRETME,6,0,
 ÜRETTİ,6,0,
@@ -2680,6 +2748,7 @@ IŞIKLA,6,0,
 ŞEFKAT,6,0,
 ŞEHİDİ,6,1,low_inflection_support
 ŞEHRİM,6,0,
+ŞEHRİN,6,0,
 ŞEHVET,6,0,
 ŞEKERİ,6,0,
 ŞEKLİN,6,1,low_inflection_support

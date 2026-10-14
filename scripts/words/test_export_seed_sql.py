@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import export_seed_sql as seed
+import export_valid_words_additions as additions
 
 MIGRATIONS_DIR = os.path.join(seed.REPO_ROOT, "apps", "backend", "db", "migrations")
 EXPECTED_DAILY_WORDS = 346
@@ -175,7 +176,20 @@ class CommittedSeedFilesDriftTests(unittest.TestCase):
     source word lists changed without regenerating."""
 
     def test_should_match_regeneration_when_comparing_the_committed_valid_words_sql(self):
-        expected = seed.render_valid_words_sql()
+        # Plan 012 U1 fixed inflection.py (real headwords like KOYUN/BOYUN were
+        # wrongly dropped as inflected forms) without folding the newly valid
+        # words into this committed file: Invariant 4 means agents never write
+        # to the remote database, so those rows ship as a separate, reviewable
+        # `valid_words_012_additions.sql` for the owner to apply (see
+        # ValidWordsAdditionsTests below). Subtract that tracked, known delta
+        # before comparing, so this test still catches any *other*, unintended
+        # drift between the source word lists and this file.
+        pending = additions.compute_additions()
+        rows = [row for length in seed.VALID_LENGTHS for row in seed.load_valid_words(length)]
+        rows = [row for row in rows if row not in pending]
+        expected = seed.render_seed_content(
+            seed._valid_words_header(), seed.chunk_valid_words_statements(rows)
+        )
         with open(seed.VALID_WORDS_SQL_PATH, encoding="utf-8") as handle:
             actual = handle.read()
         self.assertEqual(actual, expected)
@@ -202,6 +216,40 @@ class CommittedSeedFilesDriftTests(unittest.TestCase):
 
     def test_should_keep_the_applied_start_date_when_reading_the_schedule_constant(self):
         self.assertEqual(seed.SCHEDULE_START_DATE, "2026-10-06")
+
+
+class ValidWordsAdditionsTests(unittest.TestCase):
+    """valid_words_012_additions.sql (Plan 012 U1): the owner-applied, insert-only
+    delta between the committed valid_words.sql and the current valid-{4,5,6}.txt."""
+
+    def test_should_match_regeneration_when_comparing_the_committed_additions_sql_012_AE1(self):
+        expected = additions.render_additions_sql()
+        with open(additions.ADDITIONS_SQL_PATH, encoding="utf-8") as handle:
+            actual = handle.read()
+        self.assertEqual(actual, expected)
+
+    def test_should_reproduce_current_valid_words_when_combined_with_the_seed_012_AE1(self):
+        committed = additions.read_committed_words(seed.VALID_WORDS_SQL_PATH)
+        new_rows = additions.read_committed_words(additions.ADDITIONS_SQL_PATH)
+        current = set()
+        for length in seed.VALID_LENGTHS:
+            current.update(seed.load_valid_words(length))
+        self.assertEqual(committed | new_rows, current)
+
+    def test_should_not_repeat_a_row_already_committed_012_AE1(self):
+        committed = additions.read_committed_words(seed.VALID_WORDS_SQL_PATH)
+        new_rows = additions.read_committed_words(additions.ADDITIONS_SQL_PATH)
+        self.assertEqual(committed & new_rows, set())
+
+    def test_should_only_cover_seeded_lengths_012_AE1(self):
+        new_rows = additions.read_committed_words(additions.ADDITIONS_SQL_PATH)
+        lengths = {length for _, length in new_rows}
+        self.assertTrue(lengths.issubset(set(seed.VALID_LENGTHS)))
+
+    def test_should_contain_koyun_and_boyun_012_AE1(self):
+        new_rows = additions.read_committed_words(additions.ADDITIONS_SQL_PATH)
+        self.assertIn(("KOYUN", 5), new_rows)
+        self.assertIn(("BOYUN", 5), new_rows)
 
 
 class SeedAgainstSchemaTests(unittest.TestCase):

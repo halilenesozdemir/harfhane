@@ -43,8 +43,21 @@ def find_inflection_root(word_lower: str, known_words: set, zipf_lookup=_default
             continue
         if root not in known_words:
             continue
-        if zipf_lookup(root) < MIN_ROOT_ZIPF:
+        root_zipf = zipf_lookup(root)
+        if root_zipf < MIN_ROOT_ZIPF:
             continue
+        # The longest suffix with a known, frequent-enough root is the most
+        # specific morphological split (suffixes are tried longest first);
+        # decide here instead of trying shorter splits that could also
+        # coincidentally match a known word (e.g. "boyun" also ends in "un"
+        # with root "boy", after "yun" with root "bo" already settled it).
+        #
+        # A genuine inflected form is rarer than the root it is built from
+        # (e.g. "evler" vs "ev"). When the candidate word is itself at least
+        # as frequent as this root, the split is spurious and the word is a
+        # headword in its own right (KOYUN, BOYUN), not a derived form.
+        if root_zipf < zipf_lookup(word_lower):
+            return None
         return root
     return None
 
