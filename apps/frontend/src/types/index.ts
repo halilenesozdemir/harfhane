@@ -79,6 +79,8 @@ export interface TileProps {
   revealDelay: number;
   isFilled: boolean;
   isHint?: boolean;
+  /** R5: skips the pop/flip/shake CSS classes when the OS asks for reduced motion. */
+  reduceMotion?: boolean;
 }
 
 export interface KeyProps {
