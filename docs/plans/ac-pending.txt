@@ -10,6 +10,5 @@
 
 009-AE4  covered only by a local Maestro flow (apps/mobile/.maestro/daily.yaml); no gate runs it (R5: not in CI)
 012-AE4  Plan 012 approved 2026-10-14; its unit is not implemented yet
-012-AE5  Plan 012 approved 2026-10-14; its unit is not implemented yet
-012-AE6  Plan 012 approved 2026-10-14; its unit is not implemented yet
+012-AE6  Plan 012 approved 2026-10-14; its unit (R5) ships in a follow-up PR
 012-AE7  Plan 012 approved 2026-10-14; its unit is not implemented yet

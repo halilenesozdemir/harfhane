@@ -21,10 +21,10 @@ const Tile = ({ letter, status, isRevealing, revealDelay, isFilled, isHint }: Ti
     data-status={status ?? (isFilled ? 'filled' : 'empty')}
     data-hint={isHint ? 'true' : undefined}
     className={`
-      w-14 h-14 md:w-16 md:h-16
+      w-[var(--board-tile-size)] h-[var(--board-tile-size)]
       flex items-center justify-center
       rounded-tile border-2
-      font-display text-3xl md:text-4xl font-extrabold uppercase leading-none
+      font-display text-[length:calc(var(--board-tile-size)*0.5)] font-extrabold uppercase leading-none
       ${getStateClasses(status, Boolean(isFilled), Boolean(isHint))}
       ${isRevealing ? `tile-flip tile-flip-delay-${revealDelay}` : ''}
       ${isFilled && !status ? 'animate-pop' : ''}

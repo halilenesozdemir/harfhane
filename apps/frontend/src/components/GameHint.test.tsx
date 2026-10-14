@@ -32,6 +32,15 @@ describe('GameHint', () => {
     expect(screen.getByRole('button', { name: 'İpucu kullanıldı' })).toBeDisabled();
   });
 
+  it('should render the reveal button as a dashed pill', () => {
+    render(
+      <GameHint hint={null} hintUsed={false} hintAvailable={true} gameStatus="playing" onRevealHint={vi.fn()} />
+    );
+    const button = screen.getByRole('button', { name: 'İpucu göster' });
+    expect(button.className).toContain('border-dashed');
+    expect(button.className).toContain('rounded-full');
+  });
+
   it('should show the hint pill text when a hint is present', () => {
     render(
       <GameHint
