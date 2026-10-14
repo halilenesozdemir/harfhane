@@ -68,16 +68,18 @@ function TodayStatsCard({ stats }: { stats: DailyStats | UnlimitedStats }): Reac
   );
 }
 
-// R4's mode switch and today-stats card, built as one isolated component so
-// a later U2 layout slot can take it with a one-line swap in GamePage
-// instead of a rewrite: GamePage currently renders this directly, in a
-// flex-wrap row below the keyboard, since U2's own side-panel slot isn't on
-// main yet. Hidden below `sm:` (the approved GamePhone.dc.html mockup has no
-// side panel at all on a true phone width, and a 360x640 screen has no
-// vertical room left for it once the keyboard is on screen, 012-AE5).
+// R4's mode switch and today-stats card. DesktopShell (U2, Plan 012) already
+// renders its own mode nav and status panel asides at `lg:` and up (plus now
+// exposes `left`/`right` slot props for U4 to use there later), so this
+// component only fills the gap between `sm:` (where there is finally room)
+// and `lg:` (where DesktopShell's own asides take over) instead of
+// duplicating them. Hidden below `sm:` entirely: the approved phone mockup
+// (`GamePhone.dc.html`) has no side panel at all on a true phone width, and
+// a 360x640 screen has no vertical room left for it once the keyboard is on
+// screen (012-AE5).
 export default function GameSidePanel({ mode, wordLength, stats }: GameSidePanelProps): React.JSX.Element {
   return (
-    <div className="hidden sm:flex w-full max-w-lg mx-auto px-2 flex-col sm:flex-row gap-3">
+    <div className="hidden sm:flex lg:hidden w-full max-w-lg mx-auto px-2 flex-col sm:flex-row gap-3">
       <ModeSwitch mode={mode} wordLength={wordLength} />
       <TodayStatsCard stats={stats} />
     </div>
