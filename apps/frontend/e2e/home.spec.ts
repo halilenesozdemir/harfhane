@@ -4,9 +4,9 @@ import { assertNoSeriousA11yViolations } from './support/axe';
 test('home page loads with daily and unlimited mode entry points (009-AE2)', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'HARFHANE' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Günlük Oyun' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sınırsız Mod' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Harfhane' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Günlük' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sınırsız' })).toBeVisible();
 
   await assertNoSeriousA11yViolations(page);
 });
@@ -16,7 +16,7 @@ for (const legacyPath of ['/lists', '/play/eski-liste', '/tournament']) {
     await page.goto(legacyPath);
 
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { name: 'HARFHANE' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Harfhane' })).toBeVisible();
   });
 }
 
@@ -25,7 +25,7 @@ test('(008-AE1) home page hides the unlimited length picker when only one length
 
   await page.goto('/');
 
-  await expect(page.getByRole('button', { name: 'Günlük Oyun' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Günlük' })).toBeVisible();
   await expect(page.getByRole('button', { name: '4 harf', exact: true })).not.toBeVisible();
   await expect(page.getByRole('button', { name: '5 harf', exact: true })).not.toBeVisible();
   await expect(page.getByRole('button', { name: '6 harf', exact: true })).not.toBeVisible();
@@ -75,12 +75,12 @@ const DEFAULT_LENGTH_CASES = [
 ] as const;
 
 for (const { stub, expectedDefault } of DEFAULT_LENGTH_CASES) {
-  test(`(008-AE1) clicking Günlük Oyun starts length ${expectedDefault} when playable=[${stub.join(',')}]`, async ({ page, api }) => {
+  test(`(008-AE1) clicking Günlük starts length ${expectedDefault} when playable=[${stub.join(',')}]`, async ({ page, api }) => {
     await api.stubPlayableLengths([...stub]);
     await api.stubDailyWord(expectedDefault, { word: 'KALEM' });
 
     await page.goto('/');
-    await page.getByRole('button', { name: 'Günlük Oyun' }).click();
+    await page.getByRole('button', { name: 'Günlük' }).click();
 
     await expect(page).toHaveURL(`/daily/${expectedDefault}`);
   });

@@ -1,53 +1,46 @@
-import { HelpCircle, BarChart2, Settings } from 'lucide-react';
+import { HelpCircle, BarChart2, Settings, ArrowLeft } from 'lucide-react';
 import BrandMark from './BrandMark';
+import TopBar from './TopBar';
+import IconButton from './IconButton';
 import type { HeaderProps } from '../types';
 
+// Game screens pass modeLabel (R2): the design reference shows a back arrow
+// and the mode name there, instead of the home brand mark and wordmark.
 const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }: HeaderProps): React.JSX.Element => {
+  const left = modeLabel ? (
+    <IconButton icon={<ArrowLeft size={22} />} label="Ana Sayfa" onClick={onTitleClick} />
+  ) : (
+    <button
+      onClick={onTitleClick}
+      className="w-11 h-11 hover:opacity-90 transition-opacity cursor-pointer"
+      aria-label="Ana Sayfa"
+    >
+      <BrandMark className="w-full h-full" decorative />
+    </button>
+  );
+
+  const center = (
+    <button onClick={onTitleClick} className="hover:opacity-80 transition-opacity cursor-pointer text-left">
+      {modeLabel ? (
+        <h1 className="text-lg font-display font-extrabold text-text-primary">{modeLabel}</h1>
+      ) : (
+        <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-text-primary">HARFHANE</h1>
+      )}
+    </button>
+  );
+
   return (
-    <header className="w-full border-b border-border-color py-3 px-4 bg-bg-primary">
-      <div className="max-w-lg mx-auto flex items-center justify-between">
-        {/* Sol - Logo */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onTitleClick}
-            className="w-8 h-8 hover:opacity-90 transition-opacity cursor-pointer"
-            aria-label="Ana Sayfa"
-          >
-            <BrandMark className="w-full h-full" decorative />
-          </button>
-        </div>
-
-        {/* Orta - Başlık */}
-        <div className="text-center">
-          <button
-            onClick={onTitleClick}
-            className="hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            <h1 className="text-2xl md:text-3xl font-bold tracking-wider text-text-primary">
-              HARFHANE
-            </h1>
-          </button>
-          {modeLabel && (
-            <span className="text-xs text-text-secondary block -mt-1">
-              {modeLabel}
-            </span>
-          )}
-        </div>
-
-        {/* Sağ - Butonlar */}
-        <div className="flex items-center gap-0.5">
-          <button onClick={onStatsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="İstatistikler">
-            <BarChart2 size={18} className="text-text-primary" />
-          </button>
-          <button onClick={onHelpClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Nasıl Oynanır">
-            <HelpCircle size={18} className="text-text-primary" />
-          </button>
-          <button onClick={onSettingsClick} className="p-1.5 hover:bg-tile-empty rounded-md transition-colors cursor-pointer" aria-label="Ayarlar">
-            <Settings size={18} className="text-text-primary" />
-          </button>
-        </div>
-      </div>
-    </header>
+    <TopBar
+      left={left}
+      center={center}
+      actions={
+        <>
+          <IconButton icon={<BarChart2 size={18} />} label="İstatistikler" onClick={onStatsClick} />
+          <IconButton icon={<HelpCircle size={18} />} label="Nasıl Oynanır" onClick={onHelpClick} />
+          <IconButton icon={<Settings size={18} />} label="Ayarlar" onClick={onSettingsClick} />
+        </>
+      }
+    />
   );
 };
 
