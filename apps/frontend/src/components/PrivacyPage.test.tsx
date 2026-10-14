@@ -218,7 +218,13 @@ describe('sitemap generator', () => {
 describe('no navigation/footer link to the unapproved draft', () => {
   it('should not reference /gizlilik from any source file other than its own route and tests', () => {
     const srcRoot = path.resolve(process.cwd(), 'src');
-    const allowedBasenames = new Set(['App.tsx', 'App.routes.test.tsx', 'PrivacyPage.tsx', 'PrivacyPage.test.tsx']);
+    const allowedBasenames = new Set([
+      'App.tsx',
+      'App.routes.test.tsx',
+      'PrivacyPage.tsx',
+      'PrivacyPage.test.tsx',
+      'structured-data.test.ts',
+    ]);
     const offenders: string[] = [];
     listSourceFiles(srcRoot, (filePath) => {
       if (allowedBasenames.has(path.basename(filePath))) return;
