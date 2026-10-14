@@ -4,9 +4,26 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { generateBrandIcons } from "./generate-brand-icons.mjs";
+import {
+  generateBrandIcons,
+  ogColorsFromTokens,
+  ogImageSvg,
+  OG_MARK_BOX,
+  OG_MARK_TOP,
+  OG_SUBTITLE,
+  OG_WIDTH,
+  OG_WORDMARK,
+} from "./generate-brand-icons.mjs";
+import { CANVAS_SIZE } from "../../../packages/ui-tokens/src/brand-mark.mjs";
 
-const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const PUBLIC_DIR = join(SCRIPT_DIR, "..", "public");
+const TOKENS_PATH = join(SCRIPT_DIR, "..", "..", "..", "packages", "ui-tokens", "tokens.json");
+
+async function readOgColors() {
+  const tokens = JSON.parse(await readFile(TOKENS_PATH, "utf-8"));
+  return ogColorsFromTokens(tokens);
+}
 
 // og-image.png renders text through the SVG rasterizer's font stack (see
 // generate-brand-icons.mjs's ogImageSvg comment), so it is not byte-reproducible across
@@ -82,5 +99,33 @@ describe("generateBrandIcons", () => {
     const pixel = Array.from(data.slice(idx, idx + 3));
 
     expect(pixel).toEqual([255, 244, 220]); // light theme bg (#fff4dc)
+  });
+
+  // These assert on the raw SVG string, before sharp rasterizes it, so they hold regardless of
+  // which fonts are installed on the machine running the generator (see ogImageSvg's comment).
+  describe("ogImageSvg", () => {
+    it("should size and position the mark group from OG_MARK_BOX, not a hand-picked box", async () => {
+      const colors = await readOgColors();
+      const svg = ogImageSvg(colors);
+
+      const embedScale = OG_MARK_BOX / CANVAS_SIZE;
+      const markX = OG_WIDTH / 2 - OG_MARK_BOX / 2;
+      expect(svg).toContain(`<g transform="translate(${markX} ${OG_MARK_TOP}) scale(${embedScale})">`);
+    });
+
+    it('should give "harf" the brand fill and "hane" the text fill, not a hand-picked colour', async () => {
+      const colors = await readOgColors();
+      const svg = ogImageSvg(colors);
+
+      expect(svg).toContain(`<tspan fill="${colors.brand}">${OG_WORDMARK.brand}</tspan>`);
+      expect(svg).toContain(`<tspan fill="${colors.text}">${OG_WORDMARK.rest}</tspan>`);
+    });
+
+    it("should render the exact subtitle text", async () => {
+      const colors = await readOgColors();
+      const svg = ogImageSvg(colors);
+
+      expect(svg).toContain(`>${OG_SUBTITLE}</text>`);
+    });
   });
 });

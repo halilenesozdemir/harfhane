@@ -24,19 +24,32 @@ const MANIFEST_ICON_SIZE = 192;
 const MANIFEST_ICON_SIZE_LARGE = 512;
 
 // og:image is the standard Open Graph / Twitter card size.
-const OG_WIDTH = 1200;
-const OG_HEIGHT = 630;
-const OG_MARK_BOX = 240;
-const OG_MARK_TOP = 96;
+export const OG_WIDTH = 1200;
+export const OG_HEIGHT = 630;
+export const OG_MARK_BOX = 240;
+export const OG_MARK_TOP = 96;
 const OG_WORDMARK_FONT_SIZE = 96;
 const OG_WORDMARK_Y = 430;
 const OG_SUBTITLE_FONT_SIZE = 32;
 const OG_SUBTITLE_Y = 492;
-const OG_WORDMARK = { brand: "harf", rest: "hane" };
-const OG_SUBTITLE = "Her gün yeni bir kelime";
+export const OG_WORDMARK = { brand: "harf", rest: "hane" };
+export const OG_SUBTITLE = "Her gün yeni bir kelime";
 
 function readTokens() {
   return JSON.parse(readFileSync(TOKENS_PATH, "utf-8"));
+}
+
+/** og-image.png's colours: the mark's own light-theme colours plus the brand/text/text-muted
+ * tokens its wordmark and subtitle need. Exported so the test can build the same object the
+ * generator uses, instead of hand-copying hex literals that could drift from tokens.json. */
+export function ogColorsFromTokens(tokens) {
+  const light = tokens.themes.light;
+  return {
+    ...readThemeColors(light, "light"),
+    brand: `rgb(${readColorToken(light, "brand-rgb", "light")})`,
+    text: readColorToken(light, "text", "light"),
+    textMuted: readColorToken(light, "text-muted", "light"),
+  };
 }
 
 function renderPng(svg, outputPath, options) {
@@ -61,7 +74,7 @@ function embeddedMarkSvg(colors, { x, y, boxSize }) {
  * the exact glyphs depend on fonts installed on the machine that runs this script (documented as
  * a known gap in the PR; the generator still fails loudly if sharp can't render at all).
  */
-function ogImageSvg(colors) {
+export function ogImageSvg(colors) {
   const centerX = OG_WIDTH / 2;
   const mark = embeddedMarkSvg(colors, {
     x: centerX - OG_MARK_BOX / 2,
@@ -142,12 +155,7 @@ export async function generateBrandIcons(outputDir = PUBLIC_DIR) {
 
   // 4. og:image / Twitter card: the mark plus the "harfhane" wordmark ("harf" in the brand
   // colour, "hane" in the text colour) and the tagline, on the light `bg`.
-  const ogColors = {
-    ...lightColors,
-    brand: `rgb(${readColorToken(light, "brand-rgb", "light")})`,
-    text: readColorToken(light, "text", "light"),
-    textMuted: readColorToken(light, "text-muted", "light"),
-  };
+  const ogColors = ogColorsFromTokens(tokens);
   await renderPng(ogImageSvg(ogColors), path.join(outputDir, "og-image.png"), {
     width: OG_WIDTH,
     height: OG_HEIGHT,
