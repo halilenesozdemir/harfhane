@@ -2,6 +2,27 @@
 
 Deliberately deferred work. Delete an item when it is done; status lives in git.
 
+## GameSidePanel not wired into DesktopShell's left/right slots (Plan 012 U4, R4)
+`apps/frontend/src/components/game/GameSidePanel.tsx` renders its own mode switch + today-stats
+card only between `sm:` and `lg:`, because `DesktopShell.tsx` (Plan 012 U2) already has its own
+mode-nav and status-panel asides at `lg:` and up and now exposes `left`/`right` slot props "so the
+game page (U4) can supply its own panels later." U4 deliberately did not wire into those slots:
+`DesktopShell`'s default `ModeNav` includes a home link and the 4/5/6 length picker that
+`GameSidePanel`'s simpler `ModeSwitch` does not, and its `StatusPanel` includes a "Günün Durumu"
+status line `TodayStatsCard` does not — swapping in the simpler components would have been a
+functional regression. Whoever next touches `GamePage.tsx`'s `DesktopShell` usage or the `left`/
+`right` slots should either give `ModeSwitch`/`TodayStatsCard` full parity with `ModeNav`/
+`StatusPanel` and wire them in, or decide the two are intentionally different and leave it.
+
+## Web "başka yerde" vs. mobile "kelimede var" for a present tile letter (Plan 012 U4, R5)
+`apps/frontend/src/components/Tile.tsx`'s `STATUS_LABELS` (and the approved design mockup's own
+render script, `Game.dc.html`/`GamePhone.dc.html`) both read "`<letter>, başka yerde`" for a letter
+that is in the word but in the wrong position. `apps/mobile/src/components/Tile.tsx`'s own
+`STATUS_LABELS` instead reads "`kelimede var`" for the same case. U4 (web) went with the mockup's
+wording rather than mobile's, since the mockup is the owner-approved reference for this unit's R5.
+Whoever owns mobile's wording next should decide whether to match the mockup ("başka yerde") there
+too, or whether the two apps are intentionally allowed to diverge.
+
 ## Baloo 2 on Tile and Key (Plan 011 U4, R4)
 `apps/mobile/src/ui/layout.ts` now exports `FONT_FAMILY_DISPLAY` (Baloo 2 ExtraBold, loaded via
 `@expo-google-fonts/baloo-2` in `App.tsx`). It is applied to the HomeScreen title/card titles, but
