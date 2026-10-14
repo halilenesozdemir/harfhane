@@ -54,4 +54,21 @@ describe('GameGrid', () => {
     expect(currentRowTiles[0]).not.toHaveAttribute('data-hint', 'true');
     expect(currentRowTiles[0]).toBeEmptyDOMElement();
   });
+
+  it('should not apply the shake class to the current row under reduced motion (012-AE6)', () => {
+    window.matchMedia = (() => ({
+      matches: true,
+      media: '',
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+
+    renderGrid({ shakeRow: true });
+
+    expect(screen.getAllByRole('row')[0]!.className).not.toContain('animate-shake');
+  });
 });
