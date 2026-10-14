@@ -5,3 +5,9 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+# Unapproved privacy-policy draft (007 U5/U6): PageMeta sets a client-side
+# noindex meta tag, which crawlers that don't execute JS never see; this
+# header enforces it server-side regardless.
+/gizlilik
+  X-Robots-Tag: noindex
