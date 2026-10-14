@@ -7,6 +7,10 @@ import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/
 import { getThemeColors } from '../theme';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE } from '../ui/layout';
 
+// The first test in this file pays the cold start (theme provider, fonts, Animated) and has
+// exceeded Jest's 5 s default on CI runners twice (#162, #163) while passing locally.
+const COLD_START_TEST_TIMEOUT_MS = 15_000;
+
 type AppStateHandler = (status: string) => void;
 
 function mockAppStateListener(): { fire: (status: string) => void } {
@@ -75,7 +79,7 @@ describe('GameOverCard', () => {
     // Full-text equality kills mutants flipping `won` or emptying `guesses`/`evaluations`.
     const expectedShareText = generateShareText(guesses, evaluations, '#3', true);
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-  });
+  }, COLD_START_TEST_TIMEOUT_MS);
 
   it('should show the solution when a daily game is lost', async () => {
     await renderCard({ gameStatus: 'lost', guesses: [], evaluations: [] });
