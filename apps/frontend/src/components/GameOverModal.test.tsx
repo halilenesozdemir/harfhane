@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import GameOverModal from './GameOverModal';
 import type { DailyStats, GameOverModalProps, WordEntry } from '../types';
@@ -35,7 +36,11 @@ function renderModal(overrides: Partial<GameOverModalProps> = {}) {
     onGoHome: vi.fn(),
     ...overrides,
   };
-  return render(<GameOverModal {...props} />);
+  return render(
+    <MemoryRouter initialEntries={['/daily/5']}>
+      <GameOverModal {...props} />
+    </MemoryRouter>
+  );
 }
 
 describe('GameOverModal', () => {
@@ -82,7 +87,7 @@ describe('GameOverModal', () => {
       renderModal({ hintUsed: true });
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Paylaş'));
+        fireEvent.click(screen.getByText('Sonucu paylaş'));
       });
       expect(shareMock).toHaveBeenCalledTimes(1);
 
@@ -96,7 +101,7 @@ describe('GameOverModal', () => {
       renderModal({ hintUsed: false });
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Paylaş'));
+        fireEvent.click(screen.getByText('Sonucu paylaş'));
       });
       expect(shareMock).toHaveBeenCalledTimes(1);
 
@@ -110,7 +115,7 @@ describe('GameOverModal', () => {
       renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: true });
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Paylaş'));
+        fireEvent.click(screen.getByText('Sonucu paylaş'));
       });
       expect(shareMock).toHaveBeenCalledTimes(1);
 
@@ -126,7 +131,7 @@ describe('GameOverModal', () => {
       renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: false });
 
       await act(async () => {
-        fireEvent.click(screen.getByText('Paylaş'));
+        fireEvent.click(screen.getByText('Sonucu paylaş'));
       });
       expect(shareMock).toHaveBeenCalledTimes(1);
 
@@ -134,6 +139,51 @@ describe('GameOverModal', () => {
       const lines = sharedText.split('\n');
       expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
       expect(lines[0]).not.toContain('ipucu');
+    });
+  });
+
+  describe('game-over sheet', () => {
+    afterEach(() => {
+      window.innerWidth = 1024;
+    });
+
+    it('should show the third distribution bar highlighted with its count outside the bar and "Sonucu paylaş" as the only primary button, on a 390px window (012-AE7)', () => {
+      window.innerWidth = 390;
+      renderModal({
+        gameStatus: 'won',
+        guesses: ['KALEM', 'KALEM', 'KALEM'],
+        evaluations: [
+          ['absent', 'absent', 'absent', 'absent', 'absent'],
+          ['present', 'present', 'present', 'present', 'present'],
+          ['correct', 'correct', 'correct', 'correct', 'correct'],
+        ],
+        stats: { ...STATS, guessDistribution: [0, 0, 1, 0, 0, 0] },
+      });
+
+      const highlightedBar = screen.getByTestId('distribution-bar-3');
+      expect(highlightedBar.className).toContain('bg-correct');
+      const highlightedCount = screen.getByTestId('distribution-count-3');
+      expect(highlightedCount).toHaveTextContent('1');
+      expect(highlightedBar).not.toContainElement(highlightedCount);
+
+      const otherBar = screen.getByTestId('distribution-bar-1');
+      expect(otherBar.className).not.toContain('bg-correct');
+
+      const primaryButtons = screen
+        .getAllByRole('button')
+        .filter((button) => button.className.includes('bg-brand'));
+      expect(primaryButtons).toHaveLength(1);
+      expect(primaryButtons[0]).toHaveTextContent('Sonucu paylaş');
+    });
+
+    it('should show "Sınırsız modda devam et" as the secondary action for a daily game', () => {
+      renderModal({ isUnlimited: false, gameStatus: 'won' });
+      expect(screen.getByText('Sınırsız modda devam et')).toBeInTheDocument();
+    });
+
+    it('should show "Yeni kelime" as the secondary action for an unlimited game', () => {
+      renderModal({ isUnlimited: true, gameStatus: 'won' });
+      expect(screen.getByText('Yeni kelime')).toBeInTheDocument();
     });
   });
 });
