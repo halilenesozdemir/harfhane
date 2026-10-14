@@ -10,12 +10,15 @@ export async function typeOnScreen(page: Page, letters: string[]): Promise<void>
   }
 }
 
+// The Enter/Backspace keys' accessible names read "Gönder"/"Harf sil" (012
+// R4); the internal keyValue dispatched to onKeyPress stays 'ENTER' /
+// 'BACKSPACE' (GamePage.tsx, useGameState), only the label changed.
 export async function submitOnScreen(page: Page): Promise<void> {
-  await keyButton(page, 'ENTER').click();
+  await keyButton(page, 'Gönder').click();
 }
 
 export async function backspaceOnScreen(page: Page): Promise<void> {
-  await keyButton(page, 'BACKSPACE').click();
+  await keyButton(page, 'Harf sil').click();
 }
 
 // The window keydown listener (useGameState) is what a real keyboard drives;
@@ -61,7 +64,7 @@ export async function playGuess(page: Page, letters: string[]): Promise<void> {
 // before dispatching raw keyboard events, which skip Playwright's
 // click-target auto-waiting.
 export async function waitForBoardReady(page: Page): Promise<void> {
-  await keyButton(page, 'ENTER').waitFor({ state: 'visible' });
+  await keyButton(page, 'Gönder').waitFor({ state: 'visible' });
 }
 
 // Forces useShare's clipboard fallback path: deletes navigator.share so the

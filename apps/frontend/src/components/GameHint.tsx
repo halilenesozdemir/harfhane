@@ -1,3 +1,4 @@
+import { Lightbulb } from 'lucide-react';
 import type { LetterHint } from '@harfhane/shared';
 import type { GameStatus } from '../types';
 
@@ -22,10 +23,12 @@ export default function GameHint({ hint, hintUsed, hintAvailable, gameStatus, on
 
   return (
     <button
+      type="button"
       onClick={onRevealHint}
       disabled={hintUsed}
-      className="text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-tile-filled bg-key-bg text-text-primary font-body font-extrabold text-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
     >
+      <Lightbulb size={18} aria-hidden="true" />
       {hintUsed ? 'İpucu kullanıldı' : 'İpucu göster'}
     </button>
   );
