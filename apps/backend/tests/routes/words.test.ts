@@ -108,6 +108,27 @@ describe('POST /api/words/validate', () => {
     expect(body.data.isValid).toBe(false);
   });
 
+  it('returns isValid true for a headword wrongly dropped by the old inflection heuristic (012-AE2)', async () => {
+    // KOYUN ("sheep") looks like KOY + the genitive suffix "-un" and was wrongly
+    // excluded from data/words/valid-5.txt before Plan 012 U1's fix to
+    // scripts/words/inflection.py. Seeded directly into this test's local D1
+    // instance (not the remote database — Invariant 4), as a stand-in for the
+    // regenerated valid_words row the owner applies via
+    // data/words/seed/valid_words_012_additions.sql.
+    await env.DB
+      .prepare(`INSERT INTO valid_words (word, length, source, license) VALUES ('KOYUN', 5, 'test', 'test')`)
+      .run();
+
+    const res = await SELF.fetch('http://example.com/api/words/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word: 'KOYUN' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: { isValid: boolean } };
+    expect(body.data.isValid).toBe(true);
+  });
+
   it('returns 422 with VALIDATION_ERROR for missing word field', async () => {
     const res = await SELF.fetch('http://example.com/api/words/validate', {
       method: 'POST',

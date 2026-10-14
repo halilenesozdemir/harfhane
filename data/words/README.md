@@ -45,10 +45,10 @@ Length-7 lists are generated for future hard-mode / weekly "super word" features
 
 | Length | Valid | Candidates (zipf ≥ 3.0) |
 | --- | --- | --- |
-| 4 | 5828 | 1653 |
-| 5 | 9862 | 3000 |
-| 6 | 12185 | 2708 |
-| 7 | 11694 | 2623 |
+| 4 | 5864 | 1689 |
+| 5 | 9950 | 3088 |
+| 6 | 12255 | 2777 |
+| 7 | 11737 | 2666 |
 
 ## Known limitations
 
@@ -62,3 +62,17 @@ Length-7 lists are generated for future hard-mode / weekly "super word" features
   before promoting them to daily answers is still recommended.
 - `needs_review` is a heuristic (low inflection-flag count), not a verified proper-noun/foreign-
   word detector.
+
+## Headword vs. inflected form (Plan 012 U1)
+
+`inflection.py`'s heuristic tries to tell a genuine headword (keep) from a derived nominal
+form (drop) by comparing `wordfreq` zipf frequency: a word is dropped only when the root it
+could be sliced into (longest matching suffix first) is at least as frequent as the word
+itself, as a real inflected form usually is (e.g. EVLER vs. EV). Before this fix the
+heuristic dropped a word whenever *any* known root existed regardless of frequency, which
+wrongly rejected real headwords ending in a suffix-like sequence (e.g. KOYUN as KOY + -un,
+BOYUN as BOY + -un) — the short slice produced by a coincidental suffix match ("ko", "bo")
+is usually not a meaningful root at all. New valid words from this fix that are not yet in
+`data/words/seed/valid_words.sql` are listed in
+`data/words/seed/valid_words_012_additions.sql` for the owner to apply by hand
+(Invariant 4).

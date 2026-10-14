@@ -14,8 +14,8 @@ ALLOWLIST_PATH = os.path.join(SCRIPT_DIR, "turkish_allowlist.txt")
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "words")
 
-KNOWN_VALID = ("KALEM", "KİTAP", "BEYAZ", "MASA", "HAFTA", "YAPRAK")
-KNOWN_INVALID = ("MASASI", "KÖYÜN", "ELİNDE")
+KNOWN_VALID = ("KALEM", "KİTAP", "BEYAZ", "MASA", "HAFTA", "YAPRAK", "KOYUN", "BOYUN")
+KNOWN_INVALID = ("MASASI", "KÖYÜN", "ELİNDE", "EVLER")
 
 
 class TurkishNormalizationTests(unittest.TestCase):
@@ -56,6 +56,42 @@ class InflectionHeuristicTests(unittest.TestCase):
     def test_keeps_plain_roots(self):
         for word in ("kalem", "kitap", "beyaz", "masa", "hafta", "yaprak"):
             self.assertFalse(is_inflected_form(word, self.known_words))
+
+    def test_keeps_a_headword_more_frequent_than_its_apparent_root_012_AE1(self):
+        # KOYUN ("sheep") looks like KOY + -un and BOYUN ("neck") like BOY +
+        # -un, but both are far more frequent on their own than the short
+        # slices "ko"/"bo" that the suffix match produces; a genuine headword
+        # is at least as entrenched as any root it could be sliced into.
+        known = {"ko", "bo"}
+
+        def fake_zipf(word):
+            return {"koyun": 4.72, "ko": 4.08, "boyun": 4.61, "bo": 4.04}[word]
+
+        self.assertFalse(is_inflected_form("koyun", known, fake_zipf))
+        self.assertFalse(is_inflected_form("boyun", known, fake_zipf))
+
+    def test_settles_on_the_longest_suffix_split_without_trying_shorter_ones_012_AE1(self):
+        # BOYUN ("neck") also ends in the shorter suffix "un" with root "boy"
+        # ("height"), which is more frequent than BOYUN on its own and would
+        # wrongly flag it as inflected if a failed longest-split decision fell
+        # back to that shorter one. The longest split ("yun" -> "bo") settles
+        # the question first and must not be overridden.
+        known = {"bo", "boy"}
+
+        def fake_zipf(word):
+            return {"boyun": 4.61, "bo": 4.08, "boy": 4.91}[word]
+
+        self.assertFalse(is_inflected_form("boyun", known, fake_zipf))
+
+    def test_strips_a_form_rarer_than_its_matched_root_012_AE1(self):
+        # EVLER is a genuine plural of EV: the root is clearly more frequent
+        # than the inflected form, so it must still be dropped.
+        known = {"ev"}
+
+        def fake_zipf(word):
+            return {"evler": 4.22, "ev": 5.57}[word]
+
+        self.assertTrue(is_inflected_form("evler", known, fake_zipf))
 
     def test_does_not_strip_verb_conjugations_or_soften_consonants(self):
         # Verb-conjugation stripping and consonant softening were both tried and
@@ -259,7 +295,7 @@ class GeneratedOutputTests(unittest.TestCase):
         with open(path, encoding="utf-8") as handle:
             return set(line.strip() for line in handle if line.strip())
 
-    def test_known_valid_words_present(self):
+    def test_known_valid_words_present_012_AE1(self):
         by_length = {}
         for word in KNOWN_VALID:
             by_length.setdefault(len(word), []).append(word)
@@ -287,7 +323,7 @@ class GeneratedOutputTests(unittest.TestCase):
             self.assertNotIn(word, self._read_lines(f"review/unlimited-pool-{length}.txt"))
             self.assertNotIn(word, self._read_lines(f"review/pool-{length}.txt"))
 
-    def test_known_inflected_forms_absent(self):
+    def test_known_inflected_forms_absent_012_AE1(self):
         by_length = {}
         for word in KNOWN_INVALID:
             by_length.setdefault(len(word), []).append(word)
