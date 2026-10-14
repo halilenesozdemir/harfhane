@@ -1,4 +1,5 @@
 import { HelpCircle, BarChart2, Settings } from 'lucide-react';
+import BrandMark from './BrandMark';
 import type { HeaderProps } from '../types';
 
 const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, modeLabel }: HeaderProps): React.JSX.Element => {
@@ -9,10 +10,10 @@ const Header = ({ onTitleClick, onHelpClick, onStatsClick, onSettingsClick, mode
         <div className="flex items-center gap-2">
           <button
             onClick={onTitleClick}
-            className="w-8 h-8 bg-brand rounded-md flex items-center justify-center hover:bg-brand/90 transition-colors cursor-pointer"
+            className="w-8 h-8 hover:opacity-90 transition-opacity cursor-pointer"
             aria-label="Ana Sayfa"
           >
-            <span className="text-brand-fg font-bold text-lg">H</span>
+            <BrandMark className="w-full h-full" />
           </button>
         </div>
 

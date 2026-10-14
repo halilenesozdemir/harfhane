@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Flame, Gamepad2, Percent } from 'lucide-react';
 import { getTodayString } from '@harfhane/shared';
+import BrandMark from './BrandMark';
 import type { DailyStats, GameMode, UnlimitedStats, WordLength } from '../types';
 
 const NAV_WIDTH_PX = 260;
@@ -102,9 +103,7 @@ function ModeNav({
         className="flex items-center gap-2 px-1 py-1 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-correct rounded-key"
         aria-label="Ana Sayfa"
       >
-        <span className="w-8 h-8 bg-correct rounded-key flex items-center justify-center shadow-depth-correct">
-          <span className="text-correct-fg font-bold text-lg">H</span>
-        </span>
+        <BrandMark className="w-8 h-8" />
         <span className="font-display font-bold text-text-primary tracking-wide">HARFHANE</span>
       </button>
 
