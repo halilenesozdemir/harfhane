@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import { Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
+import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
@@ -21,7 +22,10 @@ function openPrivacyPolicy(): void {
 
 export interface SettingsScreenProps {
   readonly onClose: () => void;
+  readonly onOpenFeedback: () => void;
 }
+
+const FEEDBACK_LABEL = 'Geri bildirim gönder';
 
 interface ThemeOption {
   readonly value: ThemePreference;
@@ -34,7 +38,7 @@ const THEME_OPTIONS: readonly ThemeOption[] = [
   { value: 'system', label: 'Sistem Ayarı' },
 ];
 
-export function SettingsScreen({ onClose }: SettingsScreenProps) {
+export function SettingsScreen({ onClose, onOpenFeedback }: SettingsScreenProps) {
   const { colors, preference, setPreference, isHighContrast, setHighContrast } = useTheme();
   const {
     isEnabled: isHapticsEnabled,
@@ -94,6 +98,8 @@ export function SettingsScreen({ onClose }: SettingsScreenProps) {
             <ChevronRight size={ICON_SIZE.md} color={colors.textMuted} />
           </Pressable>
         </View>
+
+        <Button label={FEEDBACK_LABEL} variant="secondary" onPress={onOpenFeedback} testID="settings-open-feedback" />
 
         {appVersion ? (
           <Text style={[styles.version, { color: colors.textMuted }]}>Sürüm {appVersion}</Text>

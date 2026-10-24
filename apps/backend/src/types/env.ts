@@ -3,6 +3,7 @@ export interface Env {
   ADMIN_SECRET: string;
   RESEND_API_KEY: string;
   ADMIN_ALERT_EMAIL?: string;
+  FEEDBACK_EMAIL?: string;
   GIT_SHA?: string;
   PLAYABLE_WORD_LENGTHS?: string;
 }

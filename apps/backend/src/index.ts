@@ -5,6 +5,7 @@ import { ApiError } from './errors/api-error';
 import { words } from './routes/words';
 import { health } from './routes/health';
 import { admin } from './routes/admin';
+import { feedback } from './routes/feedback';
 import { gameRateLimiter } from './middleware/rate-limiter';
 import { securityHeaders } from './middleware/security-headers';
 import { checkScheduleHealthAndAlert } from './services/schedule-health-service';
@@ -40,6 +41,7 @@ app.use('/api/words/*', gameRateLimiter);
 app.route('/api/health', health);
 app.route('/api/words', words);
 app.route('/api/admin', admin);
+app.route('/api/feedback', feedback);
 
 app.onError((err, c) => {
   if (err instanceof ApiError) {

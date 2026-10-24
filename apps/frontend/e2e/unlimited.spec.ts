@@ -36,7 +36,7 @@ test('unlimited mode shows no hint button (FREE_UNLIMITED_HINTS = 0)', async ({ 
   await expect(page.getByRole('button', { name: 'İpucu kullanıldı' })).not.toBeVisible();
 });
 
-test('share text header never mentions "ipucu" in unlimited mode (011-AE6)', async ({ page, api }) => {
+test('share text footer reads "İpucusuz" in unlimited mode (011-AE6)', async ({ page, api }) => {
   await api.stubRandomWord(5, [{ word: 'KALEM' }]);
   await api.stubValidate(() => true);
   await forceClipboardShareFallback(page);
@@ -49,6 +49,6 @@ test('share text header never mentions "ipucu" in unlimited mode (011-AE6)', asy
 
   await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
-  const headerLine = copiedText.split('\n')[0]!;
-  expect(headerLine).not.toContain('ipucu');
+  const lines = copiedText.split('\n');
+  expect(lines[lines.length - 2]).toBe('İpucusuz');
 });

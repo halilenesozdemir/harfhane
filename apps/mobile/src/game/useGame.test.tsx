@@ -22,6 +22,7 @@ function createApi(overrides: Partial<ApiClient> = {}): ApiClient {
     fetchRandomWord: jest.fn().mockResolvedValue({ word: { word: 'KİTAP' }, wordId: 42 }),
     validateWord: jest.fn().mockResolvedValue({ isValid: true }),
     fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+    submitFeedback: jest.fn(),
     ...overrides,
   };
 }

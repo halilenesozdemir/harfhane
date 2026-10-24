@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { AccessibilityInfo, AppState, Share } from 'react-native';
-import { generateShareText } from '@harfhane/shared';
+import { generateShareText, type ShareMode } from '@harfhane/shared';
 import { GameOverCard } from './GameOverCard';
 import type { GameOverCardProps } from './GameOverCard';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
@@ -28,6 +28,8 @@ jest.mock('react-native/Libraries/Share/Share', () => ({
 }));
 
 const DAILY_DATE = '2026-01-03';
+const DAILY_MODE: ShareMode = { type: 'daily', date: DAILY_DATE };
+const UNLIMITED_MODE: ShareMode = { type: 'unlimited' };
 const WON_GUESSES = ['KALEM', 'KALEM', 'KALEM'] as const;
 const WON_EVALUATIONS = [
   ['correct', 'correct', 'correct', 'correct', 'correct'],
@@ -77,13 +79,26 @@ describe('GameOverCard', () => {
     const shareButton = screen.getByTestId('gameover-share');
     await act(async () => fireEvent.press(shareButton));
     // Full-text equality kills mutants flipping `won` or emptying `guesses`/`evaluations`.
-    const expectedShareText = generateShareText(guesses, evaluations, '#3', true);
+    const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true);
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   }, COLD_START_TEST_TIMEOUT_MS);
 
   it('should show the solution when a daily game is lost', async () => {
     await renderCard({ gameStatus: 'lost', guesses: [], evaluations: [] });
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
+  });
+
+  it('should not show the report-word action when onReportWord is not supplied', async () => {
+    await renderCard();
+    expect(screen.queryByTestId('gameover-report-word')).toBeNull();
+  });
+
+  it('should call onReportWord when "Kelimeyi bildir" is pressed, leaving mode/length/date/word composition to the parent (013-AE8)', async () => {
+    const onReportWord = jest.fn();
+    await renderCard({ onReportWord });
+    const reportButton = await screen.findByTestId('gameover-report-word');
+    fireEvent.press(reportButton);
+    expect(onReportWord).toHaveBeenCalledTimes(1);
   });
 
   it('should offer a new word and no countdown when the game is unlimited', async () => {
@@ -195,14 +210,16 @@ describe('GameOverCard', () => {
     expect(await screen.findByText('Harika!')).toBeTruthy();
   });
 
-  it('should include "X/6" in the shared text when the game is lost', async () => {
+  it('should include "Bulamadım (6 tahmin)" in the shared text when the game is lost', async () => {
     await renderCard({
       gameStatus: 'lost',
       guesses: ['KAPAK', 'KAPAK', 'KAPAK', 'KAPAK', 'KAPAK', 'KAPAK'],
       evaluations: new Array(6).fill(['absent', 'absent', 'absent', 'absent', 'absent']),
     });
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
-    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('X/6') }));
+    expect(Share.share).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('Bulamadım (6 tahmin)') })
+    );
   });
 
   it('should show the visible "Paylaş" text and the secondary "Yeni kelime" button, not the primary look', async () => {
@@ -220,29 +237,29 @@ describe('GameOverCard', () => {
     expect(newWordFace.backgroundColor).not.toBe(colors.brand);
   });
 
-  it('should append the hint marker to the shared text header when a hint was used in a daily game (011-AE6)', async () => {
+  it('should footer with "İpucuyla" when a hint was used in a daily game (011-AE6)', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
     await renderCard({ guesses, evaluations, hintUsed: true });
 
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
-    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: true });
+    const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: true });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-    expect(expectedShareText.split('\n')[0]).toContain('· ipucu');
+    expect(expectedShareText.split('\n').at(-2)).toContain('İpucuyla');
   });
 
-  it('should not append the hint marker to the shared text header when no hint was used (011-AE6)', async () => {
+  it('should footer with "İpucusuz" when no hint was used (011-AE6)', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
     await renderCard({ guesses, evaluations, hintUsed: false });
 
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
-    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
+    const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: false });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-    expect(expectedShareText.split('\n')[0]).not.toContain('ipucu');
+    expect(expectedShareText.split('\n').at(-2)).toBe('İpucusuz');
   });
 
-  it('should append the hint marker to the unlimited shared text header when a hint was used', async () => {
+  it('should footer with "İpucuyla" in the unlimited shared text when a hint was used', async () => {
     const onNewGame = jest.fn();
     await renderCard({
       mode: 'unlimited',
@@ -257,33 +274,38 @@ describe('GameOverCard', () => {
     const expectedShareText = generateShareText(
       ['KALEM'],
       [['correct', 'correct', 'correct', 'correct', 'correct']],
-      'Sınırsız',
+      5,
+      UNLIMITED_MODE,
       true,
       { hintUsed: true },
     );
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
 
-  it('should use the server gameNumber in the share text when it disagrees with the device-computed number', async () => {
+  it('should append the current streak to the shared text footer when a daily streak is passed', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
-    // dailyGameNumber(DAILY_DATE) === 3, but the server says this is game #99 (e.g. the device
-    // clock is wrong); the server's number must win.
-    await renderCard({ guesses, evaluations, gameNumber: 99 });
+    await renderCard({ guesses, evaluations, streak: 4 });
 
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
-    const expectedShareText = generateShareText(guesses, evaluations, '#99', true, { hintUsed: false });
+    const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: false, streak: 4 });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    expect(expectedShareText.split('\n').at(-2)).toBe('İpucusuz · Seri 4');
   });
 
-  it('should fall back to the device-computed game number when gameNumber is not provided', async () => {
-    const guesses = [...WON_GUESSES];
-    const evaluations = WON_EVALUATIONS.map((row) => [...row]);
-    await renderCard({ guesses, evaluations, gameNumber: null });
+  it('should not append a streak suffix to an unlimited shared text footer even when a streak is passed', async () => {
+    await renderCard({
+      mode: 'unlimited',
+      guesses: ['KALEM'],
+      evaluations: [['correct', 'correct', 'correct', 'correct', 'correct']],
+      wordId: 42,
+      dailyDate: null,
+      streak: 4,
+    });
 
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
-    const expectedShareText = generateShareText(guesses, evaluations, '#3', true, { hintUsed: false });
-    expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
+    const sharedText = (Share.share as jest.Mock).mock.calls.at(-1)![0].message as string;
+    expect(sharedText.split('\n').at(-2)).toBe('İpucusuz');
   });
 
   it('should render the result title in the headline display font, not the body font', async () => {

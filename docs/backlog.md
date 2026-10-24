@@ -604,3 +604,22 @@ the same mobile-ui-standard C2 contrast issue Plan 012 U5 fixed in `GameOverModa
 AE7). Not in U5's scope (StatsModal's distribution bar is not part of R6), but worth the same
 fix — move the count to a sibling span in `text-text-primary`, outside the fill — the next time
 StatsModal.tsx is touched.
+
+## Plan 013: web feedback entry point, PrivacyPage and data-safety draft (2026-10-24)
+
+Plan 013 (in-app feedback) ships backend + mobile only; the web app gets no feedback entry point
+in that plan (left out as "optional, only if small"). Also not done in Plan 013: updating
+`PrivacyPage` and `docs/drafts/play-data-safety.md` to mention the new `feedback` table and
+optional contact field (that draft is on another branch) — do both the next time either file is
+touched, or as its own small follow-up plan.
+
+## D1 export backups do not restore as-is (found 2026-10-24)
+`wrangler d1 export harfhane --remote` taken after 0003 fails to import into a fresh local D1
+(`no such table: main.words`), even with the four `CREATE TRIGGER` blocks moved to the end — the
+dump's statement order no longer matches dependencies after 0003 rebuilt `words`. Time Travel
+(`wrangler d1 time-travel restore`) is the working rollback; the SQL export is not a tested
+restore path. Fix: a `scripts/` helper that reorders an export (tables, then data, then indexes and
+triggers) plus a restore rehearsal in the runbook. Applied 0004 to remote `harfhane` on
+2026-10-24 with owner approval: it only adds the `feedback` table and its index; the faithful
+rehearsal failed on this import issue, a fresh 0001–0004 apply passed locally, and Time Travel
+bookmark `00000076-00000000-0000510e-46b21427665e103e2ac2c7e4950fbd5f` was recorded first.

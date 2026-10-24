@@ -32,6 +32,11 @@ export interface UseResultRecorderResult {
   // when this hook first saw it (a restored session) — nothing was just recorded, so the display
   // falls back to reading storage for that case.
   readonly justRecordedDistribution: readonly number[] | null;
+  // The just-finished game's daily streak (DailyStats.currentStreak after recording this
+  // result), threaded into the share text's footer (see generateShareText's `streak` option).
+  // Always null for unlimited (it has no streak) and for a restored, already-finished game —
+  // same fallback-to-storage story as justRecordedDistribution above.
+  readonly justRecordedStreak: number | null;
 }
 
 interface RecordResultOptions {
@@ -44,7 +49,13 @@ interface RecordResultOptions {
   readonly today: () => string;
 }
 
-async function recordResult({ store, mode, wordLength, won, guessCount, dailyDate, today }: RecordResultOptions): Promise<readonly number[]> {
+interface RecordedResult {
+  readonly distribution: readonly number[];
+  // null for unlimited (it has no streak concept).
+  readonly streak: number | null;
+}
+
+async function recordResult({ store, mode, wordLength, won, guessCount, dailyDate, today }: RecordResultOptions): Promise<RecordedResult> {
   // A rejected read or write (I/O error, corrupt native module) must still let the player see
   // their own just-played result on screen — fall back to initial stats rather than letting this
   // reject, so the computed distribution below always reflects at least this one game.
@@ -52,30 +63,30 @@ async function recordResult({ store, mode, wordLength, won, guessCount, dailyDat
     const stats = await loadDailyStats(store, wordLength).catch(() => createInitialDailyStats());
     const next = recordDailyResult(stats, won, guessCount, dailyDate ?? today());
     await saveDailyStats(store, wordLength, next).catch(() => undefined);
-    return next.guessDistribution;
+    return { distribution: next.guessDistribution, streak: next.currentStreak };
   }
   const stats = await loadUnlimitedStats(store, wordLength).catch(() => createInitialUnlimitedStats());
   const next = recordUnlimitedResult(stats, won, guessCount);
   await saveUnlimitedStats(store, wordLength, next).catch(() => undefined);
-  return next.guessDistribution;
+  return { distribution: next.guessDistribution, streak: null };
 }
 
-const pendingWrites = new Map<string, Promise<readonly number[]>>();
-const EMPTY_DISTRIBUTION: readonly number[] = [];
+const pendingWrites = new Map<string, Promise<RecordedResult>>();
+const EMPTY_RESULT: RecordedResult = { distribution: [], streak: null };
 
 function recordQueueKey(mode: GameMode, wordLength: WordLength): string {
   return `${mode}:${wordLength}`;
 }
 
-function enqueueRecordResult(options: RecordResultOptions): Promise<readonly number[]> {
+function enqueueRecordResult(options: RecordResultOptions): Promise<RecordedResult> {
   const key = recordQueueKey(options.mode, options.wordLength);
-  const previous = pendingWrites.get(key) ?? Promise.resolve(EMPTY_DISTRIBUTION);
+  const previous = pendingWrites.get(key) ?? Promise.resolve(EMPTY_RESULT);
   const next = previous.then(() => recordResult(options));
   // recordResult already swallows load/save failures internally, so this should never reject in
   // practice — but storing the raw promise here would let any future rejection (e.g. a regression
   // that drops one of those internal catches) poison every later queued write for this key, since
   // `.then()` on a rejected promise skips its callback instead of running it.
-  pendingWrites.set(key, next.catch(() => EMPTY_DISTRIBUTION));
+  pendingWrites.set(key, next.catch(() => EMPTY_RESULT));
   return next;
 }
 
@@ -84,17 +95,22 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
   const previousPhaseRef = useRef(phase);
   const previousStatusRef = useRef(game.gameStatus);
   const [justRecordedDistribution, setJustRecordedDistribution] = useState<readonly number[] | null>(null);
+  const [justRecordedStreak, setJustRecordedStreak] = useState<number | null>(null);
 
   // Adjust state when a new game starts loading (React's "adjusting state when a prop changes"
   // pattern, same as useRevealState) instead of from inside the effect below: "Yeni kelime"
   // dispatches 'loading' before the next word resolves, and without this the previous game's
   // distribution kept showing in GameOverDistribution until the new game's own finish resolved
   // its write (B2) — recordedDistribution !== null short-circuits that component's own storage
-  // read, so a stale value here is never replaced by a fresh one in between.
+  // read, so a stale value here is never replaced by a fresh one in between. Same story for the
+  // streak shown in the share footer.
   const [previousPhase, setPreviousPhase] = useState(phase);
   if (phase !== previousPhase) {
     setPreviousPhase(phase);
-    if (phase === 'loading') setJustRecordedDistribution(null);
+    if (phase === 'loading') {
+      setJustRecordedDistribution(null);
+      setJustRecordedStreak(null);
+    }
   }
 
   useEffect(() => {
@@ -113,19 +129,23 @@ export function useResultRecorder({ store, mode, wordLength, session, today = ge
       dailyDate,
       today,
     })
-      .then((distribution) => {
-        if (isCurrent) setJustRecordedDistribution(distribution);
+      .then((result) => {
+        if (!isCurrent) return;
+        setJustRecordedDistribution(result.distribution);
+        setJustRecordedStreak(result.streak);
       })
       .catch(() => {
         // recordResult's own catches (and the pendingWrites queue catch) already cover the
         // realistic failure paths; this is a last-resort guard against an unhandled rejection
         // reaching the console if one of those is ever regressed.
-        if (isCurrent) setJustRecordedDistribution(null);
+        if (!isCurrent) return;
+        setJustRecordedDistribution(null);
+        setJustRecordedStreak(null);
       });
     return () => {
       isCurrent = false;
     };
   }, [phase, game.gameStatus, game.guesses.length, store, mode, wordLength, dailyDate, today]);
 
-  return { justRecordedDistribution };
+  return { justRecordedDistribution, justRecordedStreak };
 }

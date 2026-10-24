@@ -16,6 +16,7 @@ import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
 import type { UseHintResult } from '../game/useHint';
 import type { GameMode, GameSession } from '../game/game-session';
+import type { FeedbackPrefill } from '../lib/api';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 
@@ -27,6 +28,9 @@ export interface GameScreenProps extends GameDependencies {
   // own date, never a device clock — see useGame.ts's loadSession): this is only the live clock
   // GameOverCard's midnight-rollover check and useResultRecorder's stats fallback still need.
   readonly today?: () => string;
+  // R6/AE8: composed here (this screen already knows mode/wordLength/dailyDate/solution) into a
+  // zero-arg callback passed down to GameOverCard, which never imports navigation itself.
+  readonly onReportWord?: (prefill: FeedbackPrefill) => void;
 }
 
 const MODE_TITLES: Record<GameMode, string> = { daily: 'Günlük', unlimited: 'Sınırsız' };
@@ -63,9 +67,11 @@ interface GameBoardProps {
   readonly store: GameDependencies['store'];
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
+  readonly onReportWord: GameScreenProps['onReportWord'];
+  readonly streak: number | null;
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBoardProps) {
+function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord, streak }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   const reduceMotion = useReduceMotion();
   const reveal = useRevealState(session, session.solution.length, reduceMotion);
@@ -76,6 +82,9 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
   // win bounce to finish, same as web's 1500ms wait — a restored, already-finished game has
   // neither running, so its card still shows immediately.
   const isGameOverReady = isFinished && !reveal.isRevealing && !reveal.celebrateRow;
+  const handleReportWord = onReportWord
+    ? () => onReportWord({ mode, wordLength, puzzleDate: session.dailyDate, reportedWord: session.solution })
+    : undefined;
   return (
     <>
       <GameGrid
@@ -106,13 +115,14 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           evaluations={session.game.evaluations}
           wordId={session.wordId}
           dailyDate={session.dailyDate}
-          gameNumber={session.game.gameNumber ?? null}
           date={session.game.date ?? null}
           store={store}
           today={today}
           onNewGame={game.startNewGame}
+          onReportWord={handleReportWord}
           recordedDistribution={recordedDistribution}
           hintUsed={hint.isUsed}
+          streak={streak}
         />
       ) : null}
       {!isFinished && (
@@ -139,9 +149,11 @@ interface GameBodyProps {
   readonly store: GameDependencies['store'];
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
+  readonly onReportWord: GameScreenProps['onReportWord'];
+  readonly streak: number | null;
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBodyProps) {
+function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord, streak }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -163,14 +175,16 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
       store={store}
       today={today}
       recordedDistribution={recordedDistribution}
+      onReportWord={onReportWord}
+      streak={streak}
     />
   );
 }
 
-export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
+export function GameScreen({ mode, wordLength, onBack, api, store, today, onReportWord }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store });
-  const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const { justRecordedDistribution, justRecordedStreak } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,
     mode,
@@ -196,6 +210,8 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
           store={store}
           today={today}
           recordedDistribution={justRecordedDistribution}
+          onReportWord={onReportWord}
+          streak={justRecordedStreak}
         />
       </View>
     </View>
