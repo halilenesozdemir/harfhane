@@ -12,5 +12,3 @@
 012-AE5  Plan 012 approved 2026-10-14; its unit is not implemented yet
 012-AE6  Plan 012 approved 2026-10-14; its unit is not implemented yet
 
-013-AE5  test lands in the stacked PR that adds the admin feedback endpoints (U1 split for PR size)
-013-AE6  Plan 013 U1's admin GET/PATCH endpoints ship in the stacked follow-up PR

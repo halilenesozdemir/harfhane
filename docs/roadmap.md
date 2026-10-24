@@ -4,6 +4,12 @@ Goal: first Play Store release (Track A) while daily content never runs out (Tra
 
 This page orders the plans. Status of each unit lives in git and PRs, not here.
 
+**Owner decision, 2026-10-24: in-app feedback replaces WhatsApp**
+MVP scope now includes in-app feedback: testers and players send feedback and word reports from
+inside the app instead of WhatsApp; messages are stored in D1 and emailed to the owner
+(`docs/plans/2026-10-24-013-feat-in-app-feedback-plan.md`). No accounts are added for this — the
+2026-10-05 scope cut still stands.
+
 Owner decisions made 2026-10-05:
 - MVP has no accounts at all — no Google sign-in, JWT, push or reminder mail, no XP/badges/freeze/leaderboard (`docs/decisions/2026-10-05-mvp-scope-cut.md`). Plan 007 drops to the static privacy page only; its other units are postponed past MVP. This also removed lists, tournaments and duels from the product entirely, on web and mobile (not web-only).
 - Visibility is per word length, 5 letters first (Plan 001 R7, Plan 006 R5); the one-time `DB` binding switch (Plan 001 U4) runs once, the first time a length (5 letters) reaches 90 days. Opening a length (including 4 and 6 later) is a reviewed, one-line `PLAYABLE_WORD_LENGTHS` deploy (Plan 008 KTD1), not automatic — see `docs/decisions/2026-10-06-length-visibility.md` for the "scheduled" vs. "active/playable" split.
