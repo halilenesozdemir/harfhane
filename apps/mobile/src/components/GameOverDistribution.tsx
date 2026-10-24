@@ -59,6 +59,31 @@ export function useDisplayDistribution(
   return recordedDistribution ?? loadedDistribution;
 }
 
+// Mirrors useDisplayDistribution's own fallback story, for the daily streak shown in the share
+// footer: useResultRecorder's own just-recorded value wins (no race, no storage read needed);
+// otherwise (a restored, already-finished daily game) this reads storage directly. Unlimited has
+// no streak concept, so it is always null there.
+export function useDisplayStreak(
+  store: KeyValueStore,
+  mode: GameMode,
+  wordLength: WordLength,
+  recordedStreak: number | null,
+): number | null {
+  const [loadedStreak, setLoadedStreak] = useState<number | null>(null);
+  useEffect(() => {
+    if (recordedStreak !== null || mode !== 'daily') return undefined;
+    let isCurrent = true;
+    loadDailyStats(store, wordLength)
+      .then((stats) => stats.currentStreak)
+      .catch(() => null)
+      .then((value) => isCurrent && setLoadedStreak(value));
+    return () => {
+      isCurrent = false;
+    };
+  }, [store, mode, wordLength, recordedStreak]);
+  return mode === 'daily' ? recordedStreak ?? loadedStreak : null;
+}
+
 interface DistributionRowProps {
   readonly guessNumber: number;
   readonly count: number;

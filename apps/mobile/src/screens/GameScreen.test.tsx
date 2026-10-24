@@ -87,11 +87,11 @@ describe('GameScreen', () => {
     }
   });
 
-  it('should share the server gameNumber, not the device-clock-computed one, when the device clock is wrong', async () => {
+  it('should share the server date, not the device-clock-computed one, when the device clock is wrong', async () => {
     jest.useFakeTimers();
     try {
       // The device thinks it's a day earlier than the server, but the server's own response
-      // (gameNumber: 7, date: '2026-10-06') must still win in the title/share text.
+      // (date: '2026-10-06') must still win in the share text header.
       const wrongToday = () => '2026-10-05';
       const api = {
         fetchDailyWord: jest.fn().mockResolvedValue({ word: { word: 'KALEM' }, gameNumber: 7, date: '2026-10-06' }),
@@ -107,8 +107,8 @@ describe('GameScreen', () => {
       await advancePastGameOverGate(true);
       await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
       const [[{ message }]] = (Share.share as jest.Mock).mock.calls;
-      expect(message).toContain('#7');
-      expect(message).not.toContain(`#${dailyGameNumber(wrongToday())}`);
+      expect(message).toContain('6 Ekim');
+      expect(message).not.toContain('5 Ekim');
     } finally {
       jest.useRealTimers();
     }
@@ -563,7 +563,8 @@ describe('GameScreen', () => {
 
       await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
       const sharedMessage = (Share.share as jest.Mock).mock.calls.at(-1)?.[0]?.message as string;
-      expect(sharedMessage.split('\n')[0]).toContain('· ipucu');
+      const lines = sharedMessage.split('\n');
+      expect(lines[lines.length - 2]).toContain('İpucuyla');
     } finally {
       jest.useRealTimers();
     }

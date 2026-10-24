@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { generateShareText, getTimeUntilMidnight, getTodayString, type TileStatus } from '@harfhane/shared';
+import { generateShareText, getTimeUntilMidnight, getTodayString, type ShareMode, type TileStatus } from '@harfhane/shared';
 import { useTheme } from '../ThemeProvider';
 import { Button } from '../ui/Button';
 import { FONT_FAMILY_DISPLAY, FONT_SIZE, LINE_HEIGHT, RADIUS, SPACING } from '../ui/layout';
@@ -10,7 +10,7 @@ import { useTurkeyDay } from '../game/useTurkeyDay';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 import { dailyGameNumber, selectResultMessage, type FinishedGameStatus } from './gameOverMessages';
-import { Distribution, useDisplayDistribution } from './GameOverDistribution';
+import { Distribution, useDisplayDistribution, useDisplayStreak } from './GameOverDistribution';
 
 export interface GameOverCardProps {
   readonly mode: GameMode;
@@ -21,10 +21,6 @@ export interface GameOverCardProps {
   readonly evaluations: readonly (readonly TileStatus[])[];
   readonly wordId: number | null;
   readonly dailyDate: string | null;
-  // The server's own daily game number (from GameSession's stored game, /words/daily).
-  // Null for unlimited and for a game loaded before this field existed; the title/share text
-  // then fall back to computing the number from `dailyDate`, exactly as before.
-  readonly gameNumber?: number | null;
   // The server's own Turkey-day date for this game (GameState.date, from /words/daily; always
   // set once a daily game has loaded — see useGame.ts's loadSession). Null for unlimited and for
   // a game stored before this field existed, in which case `dailyDate` (which useGame.ts now
@@ -39,11 +35,12 @@ export interface GameOverCardProps {
   // see useDisplayDistribution's doc comment for why this must win over a storage read.
   readonly recordedDistribution?: readonly number[] | null;
   // Whether a hint was revealed this game (mobile's own useHint state); threaded into
-  // generateShareText so the share header carries the same "· ipucu" marker as web (R8/AE6).
+  // generateShareText's footer so it reads "İpucuyla"/"İpucusuz", same as web.
   readonly hintUsed?: boolean;
+  // useResultRecorder's own just-recorded daily streak — see useDisplayStreak's doc comment.
+  readonly streak?: number | null;
 }
 
-const UNLIMITED_MODE_TEXT = 'Sınırsız';
 const COUNTDOWN_LABEL = 'Sonraki kelime';
 const NEW_WORD_LABEL = 'Yeni kelime';
 const SHARE_LABEL = 'Paylaş';
@@ -172,7 +169,6 @@ export function GameOverCard({
   evaluations,
   wordId,
   dailyDate,
-  gameNumber = null,
   date = null,
   store,
   today = getTodayString,
@@ -180,24 +176,27 @@ export function GameOverCard({
   onNewGame,
   recordedDistribution = null,
   hintUsed = false,
+  streak = null,
 }: GameOverCardProps) {
   const { colors } = useTheme();
   const guessCount = guesses.length;
   const seed = useResultSeed(mode, wordId, dailyDate, guessCount);
   const title = selectResultMessage(mode, gameStatus, guessCount, seed);
   const distribution = useDisplayDistribution(store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution);
+  const displayedStreak = useDisplayStreak(store, mode, wordLength, streak);
   const displayedDate = date ?? dailyDate;
   const isStale = useIsDailyGameStale(mode, displayedDate, today);
   const countdown = useCountdown(mode === 'daily' && !isStale, now);
   useResultAnnouncement(title);
 
-  const modeText = mode === 'unlimited' ? UNLIMITED_MODE_TEXT : `#${gameNumber ?? dailyGameNumber(dailyDate ?? today())}`;
+  const shareMode: ShareMode = mode === 'daily' ? { type: 'daily', date: displayedDate ?? today() } : { type: 'unlimited' };
   const shareText = generateShareText(
     [...guesses],
     evaluations.map((row) => [...row]),
-    modeText,
+    wordLength,
+    shareMode,
     gameStatus === 'won',
-    { hintUsed },
+    { hintUsed, streak: displayedStreak ?? undefined },
   );
 
   return (

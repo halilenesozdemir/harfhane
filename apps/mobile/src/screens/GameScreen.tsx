@@ -63,9 +63,10 @@ interface GameBoardProps {
   readonly store: GameDependencies['store'];
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
+  readonly streak: number | null;
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBoardProps) {
+function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution, streak }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   const reduceMotion = useReduceMotion();
   const reveal = useRevealState(session, session.solution.length, reduceMotion);
@@ -106,13 +107,13 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           evaluations={session.game.evaluations}
           wordId={session.wordId}
           dailyDate={session.dailyDate}
-          gameNumber={session.game.gameNumber ?? null}
           date={session.game.date ?? null}
           store={store}
           today={today}
           onNewGame={game.startNewGame}
           recordedDistribution={recordedDistribution}
           hintUsed={hint.isUsed}
+          streak={streak}
         />
       ) : null}
       {!isFinished && (
@@ -139,9 +140,10 @@ interface GameBodyProps {
   readonly store: GameDependencies['store'];
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
+  readonly streak: number | null;
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution }: GameBodyProps) {
+function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution, streak }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -163,6 +165,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
       store={store}
       today={today}
       recordedDistribution={recordedDistribution}
+      streak={streak}
     />
   );
 }
@@ -170,7 +173,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
 export function GameScreen({ mode, wordLength, onBack, api, store, today }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store });
-  const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const { justRecordedDistribution, justRecordedStreak } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,
     mode,
@@ -196,6 +199,7 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today }: Game
           store={store}
           today={today}
           recordedDistribution={justRecordedDistribution}
+          streak={justRecordedStreak}
         />
       </View>
     </View>
