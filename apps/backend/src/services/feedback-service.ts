@@ -27,6 +27,12 @@ async function verifyWordReport(db: Env['DB'], input: CreateFeedbackInput): Prom
     throw new ApiError(422, 'FUTURE_DATE', 'puzzle_date cannot be in the future');
   }
 
+  // AE3: today's answer is never confirmed or denied either — comparing
+  // against today's scheduled word would let a caller probe it via trial and
+  // error (201 for the right word, 422 for a wrong one). Verification only
+  // runs for a strictly past date; today's report is stored as-is.
+  if (input.puzzle_date === today) return;
+
   // Only daily mode has a single "correct" word to verify against; unlimited
   // reports (see feedback-schemas.ts) are stored as-is.
   if (input.mode !== 'daily' || input.word_length === undefined || input.reported_word === undefined) return;

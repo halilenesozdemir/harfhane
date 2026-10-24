@@ -24,7 +24,7 @@ describe('POST /api/feedback', () => {
     expect(row).not.toBeNull();
   });
 
-  it('should accept a matching daily word_report and reject a mismatching one (013-AE3)', async () => {
+  it('should accept a matching daily word_report for a past date and reject a mismatching one (013-AE3)', async () => {
     await seedTestData(env.DB);
     const matchInput = {
       kind: 'word_report',
@@ -73,5 +73,68 @@ describe('POST /api/feedback', () => {
 
     expect(statuses.slice(0, 5)).toEqual([201, 201, 201, 201, 201]);
     expect(statuses[5]).toBe(429);
+  });
+});
+
+describe('POST /api/feedback word_report validation', () => {
+  it('should accept an unlimited word_report without puzzle_date (013-R2)', async () => {
+    const res = await postFeedback(
+      {
+        kind: 'word_report',
+        message: 'Bu kelime bende hiç karşılaşmadı.',
+        app_platform: 'android',
+        mode: 'unlimited',
+        word_length: 5,
+        reported_word: 'KALEM',
+      },
+      { 'CF-Connecting-IP': '203.0.113.11' }
+    );
+
+    expect(res.status).toBe(201);
+  });
+
+  it('should reject a daily word_report without puzzle_date', async () => {
+    const res = await postFeedback(
+      {
+        kind: 'word_report',
+        message: 'x',
+        app_platform: 'android',
+        mode: 'daily',
+        word_length: 5,
+        reported_word: 'KALEM',
+      },
+      { 'CF-Connecting-IP': '203.0.113.12' }
+    );
+
+    expect(res.status).toBe(422);
+  });
+
+  it('should reject an unlimited word_report missing reported_word or word_length', async () => {
+    const res = await postFeedback(
+      { kind: 'word_report', message: 'x', app_platform: 'android', mode: 'unlimited' },
+      { 'CF-Connecting-IP': '203.0.113.13' }
+    );
+
+    expect(res.status).toBe(422);
+  });
+});
+
+describe('POST /api/feedback app_version validation', () => {
+  it('should reject an app_version containing markup', async () => {
+    const res = await postFeedback(
+      { kind: 'general', message: 'x', app_platform: 'android', app_version: '<img src=x onerror=alert(1)>' },
+      { 'CF-Connecting-IP': '203.0.113.14' }
+    );
+
+    expect(res.status).toBe(422);
+  });
+
+  it('should accept a well-formed semver-like app_version', async () => {
+    const res = await postFeedback(
+      { kind: 'general', message: 'x', app_platform: 'android', app_version: '1.4.2+build.7' },
+      { 'CF-Connecting-IP': '203.0.113.15' }
+    );
+
+    expect(res.status).toBe(201);
   });
 });
