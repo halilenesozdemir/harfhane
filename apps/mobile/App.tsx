@@ -13,6 +13,7 @@ import { LaunchIntro } from './src/components/LaunchIntro';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
 import { resolveSelectedLength, usePlayableLengths } from './src/lib/playable-lengths';
+import { FeedbackScreen } from './src/screens/FeedbackScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { HowToPlayScreen } from './src/screens/HowToPlayScreen';
@@ -21,6 +22,7 @@ import { StatsContainer } from './src/screens/StatsContainer';
 import { canGoBack, createInitialNavigationState, currentRoute, reduceNavigation } from './src/navigation/routes';
 import { useHardwareBackHandler } from './src/navigation/useHardwareBackHandler';
 import type { HomeScreenMode } from './src/screens/HomeScreen';
+import type { FeedbackPrefill } from './src/lib/feedback-types';
 import type { Route } from './src/navigation/routes';
 import type { WordLength } from './src/stats/stats';
 
@@ -38,6 +40,7 @@ interface RouteViewProps {
   readonly onOpenHowToPlay: () => void;
   readonly onOpenSettings: () => void;
   readonly onOpenStats: (length: WordLength) => void;
+  readonly onOpenFeedback: (initialKind: 'general' | 'word_report', prefill?: FeedbackPrefill) => void;
   readonly onBack: () => void;
   readonly isHowToPlayFirstLaunch: boolean;
 }
@@ -51,15 +54,28 @@ function RouteView({
   onOpenHowToPlay,
   onOpenSettings,
   onOpenStats,
+  onOpenFeedback,
   onBack,
   isHowToPlayFirstLaunch,
 }: RouteViewProps) {
   if (route.screen === 'game') {
-    return <GameScreen mode={route.mode} wordLength={route.length} onBack={onBack} api={api} store={deviceStore} />;
+    return (
+      <GameScreen
+        mode={route.mode}
+        wordLength={route.length}
+        onBack={onBack}
+        api={api}
+        store={deviceStore}
+        onReportWord={(prefill) => onOpenFeedback('word_report', prefill)}
+      />
+    );
   }
   if (route.screen === 'howToPlay') return <HowToPlayScreen onClose={onBack} isFirstLaunch={isHowToPlayFirstLaunch} />;
-  if (route.screen === 'settings') return <SettingsScreen onClose={onBack} />;
+  if (route.screen === 'settings') return <SettingsScreen onClose={onBack} onOpenFeedback={() => onOpenFeedback('general')} />;
   if (route.screen === 'stats') return <StatsContainer length={route.length} store={deviceStore} onClose={onBack} />;
+  if (route.screen === 'feedback') {
+    return <FeedbackScreen initialKind={route.initialKind} prefill={route.prefill} onClose={onBack} submitFeedback={api.submitFeedback} />;
+  }
   return (
     <HomeScreen
       selectedLength={selectedLength}
@@ -210,6 +226,11 @@ export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen, isIntroActive 
   const handleOpenHowToPlay = useCallback(() => dispatch({ type: 'push', route: { screen: 'howToPlay' } }), []);
   const handleOpenSettings = useCallback(() => dispatch({ type: 'push', route: { screen: 'settings' } }), []);
   const handleOpenStats = useCallback((length: WordLength) => dispatch({ type: 'push', route: { screen: 'stats', length } }), []);
+  const handleOpenFeedback = useCallback(
+    (initialKind: 'general' | 'word_report', prefill?: FeedbackPrefill) =>
+      dispatch({ type: 'push', route: { screen: 'feedback', initialKind, prefill } }),
+    [],
+  );
   const handleBack = goBack;
 
   const insetStyle = {
@@ -230,6 +251,7 @@ export function AppNavigator({ hasSeenHowToPlay, onHowToPlaySeen, isIntroActive 
         onOpenHowToPlay={handleOpenHowToPlay}
         onOpenSettings={handleOpenSettings}
         onOpenStats={handleOpenStats}
+        onOpenFeedback={handleOpenFeedback}
         onBack={handleBack}
         isHowToPlayFirstLaunch={!hasSeenHowToPlayLocally}
       />
