@@ -11,14 +11,19 @@ test('home page loads with daily and unlimited mode entry points (009-AE2)', asy
   await assertNoSeriousA11yViolations(page);
 });
 
-for (const legacyPath of ['/lists', '/play/eski-liste', '/tournament']) {
-  test(`${legacyPath} redirects home`, async ({ page }) => {
-    await page.goto(legacyPath);
+// App.tsx no longer has a dedicated Route per removed-feature path (/lists,
+// /play/:slug, /c/:wordId, /tournament, /discuss, /sifre-sifirla); the
+// catch-all Route below handles them the same way it handles any other
+// unknown path. This suite runs against `vite preview` with no edge, so it
+// cannot exercise the real 301s in public/_redirects (verified by
+// src/redirects.test.ts instead, a unit test over that file's content) —
+// one journey here is enough to prove the client-side fallback still works.
+test('an unknown path falls back to the home page', async ({ page }) => {
+  await page.goto('/play/eski-liste');
 
-    await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Harfhane' })).toBeVisible();
-  });
-}
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Harfhane' })).toBeVisible();
+});
 
 test('(008-AE1) home page hides the unlimited length picker when only one length is playable', async ({ page, api }) => {
   await api.stubPlayableLengths([5]);
