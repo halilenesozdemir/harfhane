@@ -30,7 +30,7 @@ Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tes
 ## Rules agents here have broken before
 
 - Turkish casing: never `.toUpperCase()` / `.toLowerCase()` on Turkish text; `"i".toUpperCase()` is `"I"`, not `"İ"`. Use `normalizeWord()` / `normalizeChar()`.
-- User-facing text uses correct Turkish characters (ç ş ğ ı ö ü İ Ş Ç Ğ Ö Ü) and no emojis (Lucide icons instead).
+- User-facing text uses correct Turkish characters (ç ş ğ ı ö ü İ Ş Ç Ğ Ö Ü) and no emojis (Lucide icons instead), except the share text's circle grid (`docs/decisions/2026-10-24-share-format-circles.md`).
 - Stage files explicitly; never `git add -A`. The frontend build regenerates `apps/frontend/public/sitemap.xml`; commit it only when the change is about the sitemap.
 - Work in a worktree under `../harfhane-wt/`, never in the main checkout, and never touch another agent's worktree.
 - Do not edit `.claude/settings*.json`; that needs the owner.
