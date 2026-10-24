@@ -15,11 +15,12 @@ rozet/seri dondurma, liderlik tablosu, düello, turnuva ve özel kelime listeler
 **geçerli değil**.
 
 Eski hesap verilerini tutan 14 tablo `apps/backend/db/migrations/0003_drop_removed_features.sql`
-ile düşürülmek üzere **yazıldı ve `main`'e birleştirildi**, ama uzak (remote) D1 veritabanına
-henüz **uygulanmadı** — bu, sahibin onayını gerektiren ayrı bir adım (Invariant 4,
-`docs/backlog.md` "Drop migration" bölümü, `docs/runbooks/apply-0003-drop-removed-features.md`).
-Yani o eski hesaplara ait veriler (varsa) bugün itibarıyla **hâlâ üretim veritabanında
-olabilir**, uygulama kodu onlara artık dokunmasa da.
+ile düşürülmüştü ve bu migration **2026-10-24'te sahip onayıyla uzak `harfhane` D1
+veritabanına uygulandı** (Invariant 4; `docs/backlog.md` "Drop migration" bölümü,
+`docs/runbooks/apply-0003-drop-removed-features.md`). Uygulama öncesi `users` tablosu 0 satır
+içeriyordu; uygulama sonrası tetikleyiciler (4) ve `words` satır sayısı (346) kontrol edildi,
+`sqlite_sequence` değişmedi. Yani üretim veritabanında artık **eski hesap verisine ait hiçbir
+tablo kalmadı**.
 
 ## 1. Veri envanteri tablosu
 
@@ -35,8 +36,8 @@ olabilir**, uygulama kodu onlara artık dokunmasa da.
 | Cloudflare platform erişim günlükleri (IP, User-Agent) | Cloudflare platformu, uygulama kodu değil | Belirsiz — Cloudflare hesap ayarına bağlı | Cloudflare (kod tabanından görünmez) | `apps/backend/wrangler.toml` — `[observability]`/`logpush`/`analytics_engine` **yok**; yani uygulama bunu açıkça etkinleştirmiyor, ama Cloudflare hesap düzeyinde varsayılan günlükler kod dışı bir ayar |
 | Analitik/çökme raporlama (crash/analytics SDK) | **Hayır** | — | — | `apps/mobile/package.json` — `expo`, `expo-constants`, `expo-font`, `expo-haptics`, `expo-splash-screen`, `expo-status-bar`, `@react-native-async-storage/async-storage`, `lucide-react-native`, `react-native-safe-area-context`, `react-native-svg` dışında bağımlılık yok; Sentry/Crashlytics/Google Analytics/Mixpanel yok |
 | Paylaşım metni (`Share.share`) | Hayır (uygulama tarafında) | Kullanıcının kendi seçtiği hedefe, OS üzerinden | Cihaz → OS paylaşım sayfası | `apps/mobile/src/components/GameOverCard.tsx:2,105` — React Native'in yerel `Share.share()` API'si çağrılıyor; Harfhane bu paylaşımın hedefini görmez/kaydetmez |
-| Android izinleri (manifest, `expo config --type introspect`) | — | — | Cihaz | Çıkış: `INTERNET`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`; engellenen: `VIBRATE`. `apps/mobile/app.json:12` (`android.blockedPermissions: ["android.permission.VIBRATE"]`); `apps/mobile/app.json` **`android.permissions` anahtarı tanımlı değil** — `READ/WRITE_EXTERNAL_STORAGE` ve `INTERNET` Expo/React Native'in varsayılan birleşmesinden geliyor (aşağıdaki "İzinler" bölümüne bakın) |
-| Eski hesap verileri (e-posta, kullanıcı adı, şifre özeti, Google ID, oyun sonuçları, XP/rozet, push aboneliği, kelime listeleri, yorumlar, düello/turnuva sonuçları) | **Kodda yok, ama veritabanı şemasında olabilir** | Hayır (artık işlenmiyor) | Uzak D1 (henüz silinmedi) | `apps/backend/db/migrations/0001_baseline.sql` (tablolar tanımlı); `apps/backend/db/migrations/0003_drop_removed_features.sql` (14 tabloyu düşüren migration, **merge edildi ama uzak D1'e uygulanmadı**); `docs/backlog.md:77-91` |
+| Android izinleri (manifest, `expo config --type introspect`) | — | — | Cihaz | **PR #173'e bağlı** (şu an `main`'e merge edilmemiş açık PR, `fix/block-storage-permissions`): `apps/mobile/app.json`'da `android.blockedPermissions` artık `VIBRATE`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE` ve `SYSTEM_ALERT_WINDOW`'u engelliyor. EAS build üzerinde `aapt2 dump permissions` ile doğrulama: düzeltmeden önce manifestte `INTERNET`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE` ve `SYSTEM_ALERT_WINDOW` vardı; düzeltmeden sonra `npx expo config --type introspect` çıktısında sadece `INTERNET` kalıyor (`VIBRATE`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `SYSTEM_ALERT_WINDOW` artık `blockedPermissions` listesinde). Kanıt: `apps/mobile/app.json` (PR #173 diff'i). |
+| Eski hesap verileri (e-posta, kullanıcı adı, şifre özeti, Google ID, oyun sonuçları, XP/rozet, push aboneliği, kelime listeleri, yorumlar, düello/turnuva sonuçları) | **Hayır — tablolar kaldırıldı** | Hayır | — (artık yok) | `apps/backend/db/migrations/0003_drop_removed_features.sql` (14 tabloyu düşüren migration) **2026-10-24'te uzak `harfhane` D1'e sahip onayıyla uygulandı**; ön kontrol `users=0`, son kontrol 4 tetikleyici + `words=346`, `sqlite_sequence` değişmedi; `docs/backlog.md` "Drop migration" bölümü |
 
 ## 2. Play "Data safety" formu — taslak cevaplar
 
@@ -105,23 +106,24 @@ U5/U6). Kod ile karşılaştırma:
 | `PrivacyPage.tsx:71-76` — IP, rate limiting için bellekte 1 dakika, D1'e yazılmıyor | **Doğru, kanıtlanmış** | `apps/backend/src/middleware/rate-limiter.ts:9-18` ile birebir (pencere 60 sn = `GAME_WINDOW_MS`, maks. 30 istek = `GAME_MAX_HITS`) |
 | `PrivacyPage.tsx:86-89` — Google Play üzerinden indirme/çökme verisini Google kendi başına işler | **Muhtemelen doğru ama eksik kanıt** | Uygulamanın kendi crash SDK'sı yok (doğrulandı), ama Play Store'un platform-düzeyi ANR/crash raporlaması her Android uygulaması için varsayılan olarak işler — bu, kod tabanından doğrulanamaz, Google'ın kendi politikasına dayanır. Metin bunu doğru şekilde "Harfhane'den bağımsız" olarak çerçeveliyor. |
 | `PrivacyPage.tsx:92-93` — reklam yok, 3. taraf analitik/takip yok, cookie yok | **Doğru** | `apps/mobile/package.json`'da analitik/reklam SDK'sı yok; `apps/backend` grep sonucu: analytics/sentry/logpush/telemetry için sıfır eşleşme |
-| `PrivacyPage.tsx:102-118` — eski hesap verileri kaldırılmadı, silme hazır ama sahip onayı bekliyor | **Doğru ve güncel** | `apps/backend/db/migrations/0003_drop_removed_features.sql` yazıldı+merge edildi, uzak D1'e **uygulanmadı** (`docs/backlog.md:89-91`, Invariant 4) |
+| `PrivacyPage.tsx:102-118` — eski hesap verileri kaldırılmadı, silme hazır ama sahip onayı bekliyor | **Artık güncel değil — veriler zaten silindi** | `apps/backend/db/migrations/0003_drop_removed_features.sql` 2026-10-24'te sahip onayıyla uzak D1'e uygulandı (Invariant 4); bu paragraf artık "silme bekleniyor" demek yerine "eski hesap verisi kalmadı" demeli — PrivacyPage.tsx'e dokunulmadı (sahip onayı gerekiyor, Plan 007 U6), ama metin güncellenmeli |
 | `PrivacyPage.tsx:78-84`, `150-157` — Cloudflare'in kendi erişim günlükleri kod tabanından belirlenemez | **Doğru** | `apps/backend/wrangler.toml`'da `observability`/`logpush` bloğu yok; bu hesap-düzeyi bir ayar, repo'dan görünmüyor |
-| **Eksik: Android izinleri** | **Eksik** | Sayfa, uygulamanın istediği Android izinlerinden (`INTERNET`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`) hiç bahsetmiyor. `READ/WRITE_EXTERNAL_STORAGE` özellikle dikkat çekici: uygulama kodunda dosya sistemi/medya erişimi kullanılmıyor (grep: `FileSystem`, `MediaLibrary`, `expo-file-system` eşleşmesi yok), bu izin React Native/Expo'nun varsayılan manifest birleşmesinden geliyor olmalı — **sayıda bir açıklama eklenmesi, Play'in izin taraması sırasında gereksiz göründüğü için soru işareti bırakabileceğinden önemli.** |
+| **Eksik: Android izinleri** | **Eksik, PR #173'e bağlı** | PR #173 (`fix/block-storage-permissions`, henüz `main`'e merge edilmedi) `apps/mobile/app.json`'da `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE` ve `SYSTEM_ALERT_WINDOW`'u da engelliyor; #173 merge olduktan sonra uygulama yalnızca `INTERNET` istiyor olacak (EAS build + `aapt2 dump permissions` ile düzeltmeden önceki 4 izin doğrulandı; düzeltmeden sonra `npx expo config --type introspect` çıktısında sadece `INTERNET` kalıyor). Sayfa şu an hiçbirinden bahsetmiyor — #173 merge olduktan sonra aşağıdaki önerilen paragraf eklenmeli. |
 | **Eksik: `Share.share()` davranışı** | **Eksik** | Sayfa paylaş özelliğinden hiç bahsetmiyor; kullanıcıya "paylaştığınız metin Harfhane'nin kendi sunucusuna gitmez, OS'un paylaşım sayfasına gider" netliği eklenebilir. |
-| **Eksik: `docs/drafts/gizlilik-politikasi.md` ile çelişki** | **Tutarsızlık — ayrı dosya, PrivacyPage.tsx değil** | Bu dosya 2026-10-05 tarihli, MVP kapsam kesintisinden **önceki** mimariyi anlatıyor: hesap, Google sign-in, Resend e-posta, push, XP/rozet, Google Fonts 3. taraf yüklemesi vb. — hepsi artık yanlış/kaldırıldı. PrivacyPage.tsx'in kendisine dokunmadım (talimata uygun); ancak bu ayrı taslak dosyanın yanlışlıkla "gerçek" metin olarak kullanılma riski var — sahibin bunu arşivlemesi veya silmesi gerekir. |
+| **Çözüldü: eski `docs/drafts/gizlilik-politikasi.md` taslağı** | **Arşivlendi** | Bu dosya 2026-10-05 tarihli, MVP kapsam kesintisinden **önceki** mimariyi anlatıyordu: hesap, Google sign-in, Resend e-posta, push, XP/rozet, Google Fonts 3. taraf yüklemesi vb. — hepsi artık yanlış/kaldırıldı. Yanlışlıkla "gerçek" metin olarak kullanılma riskini kaldırmak için `docs/archive/gizlilik-politikasi-2026-10-24.md`'ye taşındı, başına bir arşiv notu eklendi; PrivacyPage.tsx'in kendisine dokunulmadı. |
 
 ### Önerilen değişiklik metinleri (owner onayına kadar PrivacyPage.tsx'e UYGULANMADI)
 
 Aşağıdakiler yalnızca **öneri**; dosyaya hiçbir değişiklik yapılmadı (Plan 007 U6, sahip onayı
 gerekiyor):
 
-1. **Android izinleri için önerilen ek paragraf** (İşlenen Veriler bölümüne, IP maddesinden sonra):
-   > Android uygulaması, cihazınızdan şu izinleri ister: İnternet erişimi (`INTERNET`, sunucu
-   > isteklerini yapmak için) ve harici depolama okuma/yazma (`READ_EXTERNAL_STORAGE`,
-   > `WRITE_EXTERNAL_STORAGE`). Bu depolama izinleri, uygulamanın kullandığı Android/Expo altyapısı
-   > tarafından varsayılan olarak eklenir; Harfhane bu izinleri dosyalarınıza erişmek için aktif
-   > olarak kullanmaz. Titreşim izni (`VIBRATE`) ise uygulama tarafından açıkça engellenmiştir.
+1. **Android izinleri için önerilen ek paragraf** (İşlenen Veriler bölümüne, IP maddesinden
+   sonra; **PR #173'ün `main`'e merge edilmesine bağlı**):
+   > Android uygulaması, cihazınızdan yalnızca internet erişimi (`INTERNET`, sunucu
+   > isteklerini yapmak için) izni ister. Harici depolama (`READ_EXTERNAL_STORAGE`,
+   > `WRITE_EXTERNAL_STORAGE`), titreşim (`VIBRATE`) ve diğer pencerelerin üzerine çizim
+   > (`SYSTEM_ALERT_WINDOW`) izinleri — Android/Expo altyapısının varsayılan olarak eklediği
+   > ama Harfhane'nin hiç kullanmadığı izinler — uygulama tarafından açıkça engellenmiştir.
 
 2. **`Share.share()` için önerilen ek paragraf:**
    > Sonucunuzu paylaş düğmesine bastığınızda, metin Android'in kendi paylaşım menüsüne
@@ -130,24 +132,26 @@ gerekiyor):
 
 ## 4. Sahibe açık sorular
 
-1. **Eski hesap verilerinin silinmesi:** `0003_drop_removed_features.sql` uzak D1'e ne zaman
-   uygulanacak? Play'e başvurmadan önce uygulanırsa, "eski hesap verisi" paragrafı tamamen
-   kaldırılabilir ve form basitleşir. (`docs/runbooks/apply-0003-drop-removed-features.md`
-   zaten hazır.)
+1. ~~**Eski hesap verilerinin silinmesi**~~ — çözüldü: `0003_drop_removed_features.sql`
+   2026-10-24'te sahip onayıyla uzak `harfhane` D1'e uygulandı; "eski hesap verisi"
+   paragrafı yukarıda kaldırıldı/sadeleştirildi.
 2. **İletişim e-postası:** PrivacyPage.tsx ve bu formdaki `[İLETİŞİM E-POSTASI]` yerine geçecek
    gerçek bir adres/form linki lazım — Play Console'un veri silme talebi alanı bunu isteyecek.
-3. **`docs/drafts/gizlilik-politikasi.md`:** Bu dosya artık yanlış (pre-scope-cut mimariyi
-   anlatıyor). Arşivlenmeli mi, silinmeli mi, yoksa PrivacyPage.tsx ile birleştirilip tek kaynak
-   mı yapılmalı?
+3. ~~**`docs/drafts/gizlilik-politikasi.md`**~~ — çözüldü: `docs/archive/
+   gizlilik-politikasi-2026-10-24.md`'ye taşındı (bir arşiv notuyla); PrivacyPage.tsx tek
+   kaynak olarak kalıyor.
 4. **Veri Sorumlusu kimliği:** PrivacyPage.tsx'te `[SAHİP ADI/UNVANI VE ADRESİ]` boş; KVKK ve
    Play Console'un geliştirici bilgisi tutarlı olmalı.
-5. **READ/WRITE_EXTERNAL_STORAGE izninin kaynağı:** Bu doküman `npx expo config --type
-   introspect` çıktısına dayanıyor (bkz. Bölüm 5), ama izni ekleyen spesifik modülü
-   (örn. `react-native-svg`, `sharp` devDependency'si, ya da React Native'in kendi şablonu)
-   netleştirmek için `npx expo prebuild` sonrası `android/app/src/main/AndroidManifest.xml`
-   dosyasına bakmak gerekir — bu, mobil kod tabanına dokunacağı için bu görevin kapsamı dışında
-   tutuldu. Kaldırılabilir bir izinse (`blockedPermissions`'a eklenerek), Play'in izin taraması
-   daha temiz görünür.
+5. **READ/WRITE_EXTERNAL_STORAGE ve SYSTEM_ALERT_WINDOW:** Kaynak modül netleştirilmedi (izni
+   ekleyen spesifik modül — örn. `react-native-svg`, `sharp` devDependency'si, ya da React
+   Native'in kendi şablonu — `npx expo prebuild` sonrası `AndroidManifest.xml`'e bakmadan
+   kesin değil), ama kaynağı ne olursa olsun PR #173 (`fix/block-storage-permissions`, henüz
+   `main`'e merge edilmedi) bu üç izni ve `VIBRATE`'i `blockedPermissions`'a ekleyerek
+   engelliyor — EAS build + `aapt2 dump permissions` ile düzeltmeden önce bu 4 iznin
+   manifestte olduğu, düzeltmeden sonra `npx expo config --type introspect` çıktısında
+   sadece `INTERNET` kaldığı doğrulandı. Açık soru artık sadece "#173 ne zaman merge
+   edilecek" — bu veri envanteri ve önerilen paragraf, #173 merge olduktan sonraki
+   duruma göre yazıldı.
 6. **Cloudflare hesap ayarları:** Access log / Logpush / Bot Fight Mode açık mı, ne kadar süreyle
    tutuluyor? Bu, kod tabanından görünmüyor; sadece Cloudflare dashboard'undan teyit edilebilir
    (PrivacyPage.tsx'teki `[SAHİP KONTROL ETMELİ]` notuyla aynı açık soru).
@@ -164,5 +168,5 @@ gerekiyor):
   WRITE_EXTERNAL_STORAGE]`, `blockedPermissions: [VIBRATE]`).
 - Google Play Console'un kendi form arayüzündeki soru metinleri (bu doküman Google'ın yardım
   sayfasına dayanıyor, Console'un kendisine erişim yok).
-- Uzak D1'in o eski 14 tabloda bugün gerçekten satır olup olmadığı (remote erişim bu görevin
-  kapsamı dışında, Invariant 4).
+- ~~Uzak D1'in o eski 14 tabloda bugün gerçekten satır olup olmadığı~~ — çözüldü: migration
+  2026-10-24'te uygulandı, bu tablolar artık yok.
