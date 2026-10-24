@@ -149,7 +149,7 @@ test('a hint survives a reload without granting a fresh one', async ({ page, api
   await expect(page.locator('[data-hint="true"]')).toHaveCount(1);
 });
 
-test('share text header ends with "· ipucu" when a hint was revealed (011-AE6)', async ({ page, api }) => {
+test('share text footer reads "İpucuyla" when a hint was revealed (011-AE6)', async ({ page, api }) => {
   const solution = 'KALEM';
   await api.stubDailyWord(5, { word: solution });
   await api.stubValidate(() => true);
@@ -163,11 +163,11 @@ test('share text header ends with "· ipucu" when a hint was revealed (011-AE6)'
 
   await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
-  const headerLine = copiedText.split('\n')[0]!;
-  expect(headerLine.endsWith('· ipucu')).toBe(true);
+  const lines = copiedText.split('\n');
+  expect(lines[lines.length - 2]).toContain('İpucuyla');
 });
 
-test('share text header does not mention "ipucu" when the hint was available but never pressed (011-AE6)', async ({ page, api }) => {
+test('share text footer reads "İpucusuz" when the hint was available but never pressed (011-AE6)', async ({ page, api }) => {
   const solution = 'KALEM';
   await api.stubDailyWord(5, { word: solution });
   await api.stubValidate(() => true);
@@ -183,8 +183,8 @@ test('share text header does not mention "ipucu" when the hint was available but
 
   await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
-  const headerLine = copiedText.split('\n')[0]!;
-  expect(headerLine).not.toContain('ipucu');
+  const lines = copiedText.split('\n');
+  expect(lines[lines.length - 2]).toContain('İpucusuz');
 });
 
 test('a finished daily game survives a reload', async ({ page, api }) => {
