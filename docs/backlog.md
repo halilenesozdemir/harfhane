@@ -616,3 +616,6 @@ triggers) plus a restore rehearsal in the runbook. Applied 0004 to remote `harfh
 2026-10-24 with owner approval: it only adds the `feedback` table and its index; the faithful
 rehearsal failed on this import issue, a fresh 0001–0004 apply passed locally, and Time Travel
 bookmark `00000076-00000000-0000510e-46b21427665e103e2ac2c7e4950fbd5f` was recorded first.
+
+## Public lists and leaderboards (owner, 2026-10-24)
+Owner wants a public list/leaderboard back after launch ("başka insanların da görmesi için"): something other players can see, e.g. a daily solve-distribution or leaderboard and shared word lists. Removed in the MVP scope cut together with accounts (`docs/decisions/2026-10-05-mvp-scope-cut.md`); any version needs a new plan that decides identity (anonymous device id vs. accounts), privacy/Data safety impact and moderation. The old secrets for accounts/push (Google OAuth, JWT, VAPID) are being deleted from the Worker; a returning feature generates fresh ones.
