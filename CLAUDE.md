@@ -25,7 +25,7 @@ rejects odd-numbered Node releases (e.g. 25.x); if your local Node is one of tho
 `npx -y node@22 node_modules/.bin/depcruise --config .dependency-cruiser.cjs apps packages`. CI runs
 Node 22, so it is never affected.
 
-Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests when code is staged (`pnpm install` enables it). A red gate means fix the code; never `--no-verify`.
+Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests when code is staged (`pnpm install` enables it). It prints one line per passing step and the tail of a failing step's log (full logs in `$(git rev-parse --git-dir)/commit-gate/`); `COMMIT_GATE_VERBOSE=1` streams everything. A red gate means fix the code; never `--no-verify`.
 
 ## Rules agents here have broken before
 

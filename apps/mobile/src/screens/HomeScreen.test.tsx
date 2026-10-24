@@ -110,6 +110,14 @@ describe('HomeScreen', () => {
     }
   });
 
+  it('should show the stats summary card that opens stats when the daily stats have loaded', async () => {
+    const onOpenStats = jest.fn();
+    await renderWithTheme(<ControlledHomeScreen onOpenStats={onOpenStats} />);
+    const card = await screen.findByTestId('home-stats-card');
+    await act(async () => fireEvent.press(card));
+    expect(onOpenStats).toHaveBeenCalledTimes(1);
+  });
+
   it('should call onOpenHowToPlay when its icon button is pressed', async () => {
     const onOpenHowToPlay = jest.fn();
     await renderWithTheme(<ControlledHomeScreen onOpenHowToPlay={onOpenHowToPlay} />);

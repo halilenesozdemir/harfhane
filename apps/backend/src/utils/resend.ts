@@ -58,7 +58,7 @@ export async function sendScheduleAlertEmail(
   to: string,
   entries: ScheduleAlertEntry[]
 ): Promise<void> {
-  await fetch(RESEND_API_URL, {
+  const response = await fetch(RESEND_API_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -71,4 +71,10 @@ export async function sendScheduleAlertEmail(
       html: buildScheduleAlertHtml(entries),
     }),
   });
+
+  // A non-OK Resend response (bad key, suspended account, invalid payload) must
+  // not look like a sent alert; treat it as a failure so the caller can observe it.
+  if (!response.ok) {
+    throw new Error(`Resend API error: ${response.status} ${response.statusText}`);
+  }
 }

@@ -50,8 +50,8 @@ function reloadOnChunkError(): never {
 
 const GamePage = lazy(() => import('./components/GamePage').catch(reloadOnChunkError));
 const HomePage = lazy(() => import('./components/HomePage').catch(reloadOnChunkError));
-// Draft (007 U5): not linked from any navigation, footer or sitemap until
-// the owner approves the text (007 U6); PrivacyPage itself sets noindex.
+// Published (007 U6, owner-approved 2026-10-24): linked from Settings on
+// web and mobile, and listed in the sitemap.
 const PrivacyPage = lazy(() => import('./components/PrivacyPage').catch(reloadOnChunkError));
 
 const queryClient = new QueryClient();

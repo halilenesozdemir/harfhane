@@ -86,6 +86,19 @@ describe('GameOverCard', () => {
     expect(await screen.findByText('Kelime: KALEM')).toBeTruthy();
   });
 
+  it('should not show the report-word action when onReportWord is not supplied', async () => {
+    await renderCard();
+    expect(screen.queryByTestId('gameover-report-word')).toBeNull();
+  });
+
+  it('should call onReportWord when "Kelimeyi bildir" is pressed, leaving mode/length/date/word composition to the parent (013-AE8)', async () => {
+    const onReportWord = jest.fn();
+    await renderCard({ onReportWord });
+    const reportButton = await screen.findByTestId('gameover-report-word');
+    fireEvent.press(reportButton);
+    expect(onReportWord).toHaveBeenCalledTimes(1);
+  });
+
   it('should offer a new word and no countdown when the game is unlimited', async () => {
     const onNewGame = jest.fn();
     await renderCard({

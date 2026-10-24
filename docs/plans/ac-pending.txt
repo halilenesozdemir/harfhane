@@ -12,5 +12,3 @@
 012-AE5  Plan 012 approved 2026-10-14; its unit is not implemented yet
 012-AE6  Plan 012 approved 2026-10-14; its unit is not implemented yet
 
-013-AE7  Plan 013 U2 (mobile) is not implemented yet; this PR ships part of U1 (backend) only
-013-AE8  Plan 013 U2 (mobile) is not implemented yet; this PR ships part of U1 (backend) only

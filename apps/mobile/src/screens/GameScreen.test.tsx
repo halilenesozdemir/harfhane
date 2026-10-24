@@ -54,6 +54,7 @@ function createApi(): ApiClient {
     fetchRandomWord: jest.fn().mockResolvedValue({ word: { word: 'KİTAP' }, wordId: 9 }),
     validateWord: jest.fn().mockResolvedValue({ isValid: true }),
     fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+    submitFeedback: jest.fn(),
   };
 }
 
@@ -98,6 +99,7 @@ describe('GameScreen', () => {
         fetchRandomWord: jest.fn(),
         validateWord: jest.fn().mockResolvedValue({ isValid: true }),
         fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+        submitFeedback: jest.fn(),
       };
       await renderWithTheme(
         <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={wrongToday} />,
@@ -127,6 +129,7 @@ describe('GameScreen', () => {
         fetchRandomWord: jest.fn(),
         validateWord: jest.fn().mockResolvedValue({ isValid: true }),
         fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+        submitFeedback: jest.fn(),
       };
       await renderWithTheme(
         <GameScreen mode="daily" wordLength={5} onBack={jest.fn()} api={api} store={createMemoryStore()} today={rollingToday} />,
@@ -170,6 +173,7 @@ describe('GameScreen', () => {
         fetchRandomWord: jest.fn(),
         validateWord: jest.fn().mockResolvedValue({ isValid: true }),
         fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+        submitFeedback: jest.fn(),
       };
       const store = createMemoryStore();
       await renderWithTheme(
@@ -215,6 +219,7 @@ describe('GameScreen', () => {
         fetchRandomWord: jest.fn(),
         validateWord: jest.fn().mockResolvedValue({ isValid: true }),
         fetchPlayableLengths: jest.fn().mockResolvedValue({ lengths: [4, 5, 6] }),
+        submitFeedback: jest.fn(),
       };
       const store = createMemoryStore();
       await renderWithTheme(

@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
-import { Text } from 'react-native';
+import { Linking, Text } from 'react-native';
 import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
 import { renderWithTheme, flattenStyle } from '../test-utils/render-with-theme';
@@ -39,14 +39,14 @@ describe('SettingsScreen', () => {
   });
 
   it('should render the Turkish theme and contrast controls', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.getByText('Ayarlar')).toBeTruthy();
     expect(screen.getByLabelText('Koyu Tema')).toBeTruthy();
     expect(screen.getByLabelText('Yüksek kontrast')).toBeTruthy();
   });
 
   it('should show the high-contrast supporting line as its own text, not appended to the label', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.getByText('Yüksek kontrast')).toBeTruthy();
     expect(screen.getByText('Renk körlüğü dostu renkler')).toBeTruthy();
   });
@@ -54,7 +54,7 @@ describe('SettingsScreen', () => {
   it('should switch the active theme colors when the dark segment is pressed', async () => {
     await renderWithTheme(
       <>
-        <SettingsScreen onClose={() => undefined} />
+        <SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />
         <ColorProbe />
       </>,
     );
@@ -64,37 +64,44 @@ describe('SettingsScreen', () => {
 
   it('should call onClose when the top bar back button is pressed', async () => {
     const onClose = jest.fn();
-    await renderWithTheme(<SettingsScreen onClose={onClose} />);
+    await renderWithTheme(<SettingsScreen onClose={onClose} onOpenFeedback={() => undefined} />);
     await fireEvent.press(screen.getByLabelText('Geri'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('should call onOpenFeedback when "Geri bildirim gönder" is pressed (013-AE7)', async () => {
+    const onOpenFeedback = jest.fn();
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={onOpenFeedback} />);
+    await fireEvent.press(screen.getByTestId('settings-open-feedback'));
+    expect(onOpenFeedback).toHaveBeenCalledTimes(1);
+  });
+
   it('should show the app version when the Expo config has one', async () => {
     mockExpoConfig.version = '1.2.3';
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.getByText('Sürüm 1.2.3')).toBeTruthy();
   });
 
   it('should hide the version line when the Expo config has no version', async () => {
     mockExpoConfig.version = undefined;
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.queryByText(/^Sürüm/)).toBeNull();
   });
 
   it('should show the haptics switch on by default', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.getByLabelText('Titreşim').props.value).toBe(true);
   });
 
   it('should persist turning the haptics switch off', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     await fireEvent(screen.getByLabelText('Titreşim'), 'valueChange', false);
     expect(screen.getByLabelText('Titreşim').props.value).toBe(false);
     expect(mockHapticsStore.get('harfhane:haptics')).toBe('false');
   });
 
   it('should give an inactive theme option a visible border instead of blending into the card bg', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     const inactiveOption = flattenStyle(screen.getByLabelText('Koyu Tema').props.style);
     expect(inactiveOption.borderWidth).toBeGreaterThan(0);
     expect(inactiveOption.borderColor).toBeTruthy();
@@ -102,30 +109,38 @@ describe('SettingsScreen', () => {
   });
 
   it('should keep each theme option at least 48 dp tall to meet the touch target (011-A1)', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     const option = flattenStyle(screen.getByLabelText('Koyu Tema').props.style);
     expect(option.minHeight).toBe(TOUCH_TARGET);
   });
 
   it('should stack the Tema label above the theme options without collapsing its box when the row is stacked', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(flattenStyle(screen.getByTestId('settings-row-Tema').props.style).flexDirection).toBe('column');
     // flex: 1 gives a column child a zero flex-basis, so the label collapses and overlaps the options.
     expect(flattenStyle(screen.getByTestId('settings-row-Tema-text').props.style).flex ?? 0).toBe(0);
   });
 
   it('should not draw a top border on the first settings row (the Tema row)', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     const firstRowText = screen.getByText('Tema');
     const row = flattenStyle(firstRowText.parent?.parent?.props.style);
     expect(row.borderTopWidth).toBeUndefined();
   });
 
   it('should draw a top border on a non-first settings row', async () => {
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     const hapticsRowText = screen.getByText('Titreşim');
     const row = flattenStyle(hapticsRowText.parent?.parent?.props.style);
     expect(row.borderTopWidth).toBe(1);
+  });
+
+  it('should open the published privacy page URL when the Gizlilik politikası row is pressed (007-AE1)', async () => {
+    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
+    await fireEvent.press(screen.getByLabelText('Gizlilik politikası'));
+    expect(openURLSpy).toHaveBeenCalledWith('https://harfhane.app/gizlilik');
+    openURLSpy.mockRestore();
   });
 
   it('should disable the haptics switch until the stored value loads', async () => {
@@ -133,7 +148,7 @@ describe('SettingsScreen', () => {
     const getItemSpy = jest
       .spyOn(deviceStore, 'getItem')
       .mockReturnValueOnce(new Promise((resolve) => { resolveGetItem = resolve; }));
-    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} onOpenFeedback={() => undefined} />);
     expect(screen.getByLabelText('Titreşim').props.disabled).toBe(true);
     await act(async () => {
       resolveGetItem(null);

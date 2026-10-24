@@ -1,5 +1,5 @@
 import type { TurkeyDate, WordEntry, WordLength } from '@harfhane/shared';
-import { DEFAULT_WORD_LENGTH, getGameNumber } from '@harfhane/shared';
+import { DEFAULT_WORD_LENGTH, getGameNumber, getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { normalizeWord } from '../utils/normalize';
 
@@ -46,7 +46,7 @@ export async function findDailyWord(
       `SELECT dw.word_id, dw.date, w.word, w.meaning, w.context, w.category
        FROM daily_words dw
        JOIN words w ON w.id = dw.word_id
-       WHERE dw.date = ? AND length(w.word) = ? AND w.source != 'user'
+       WHERE dw.date = ? AND length(w.word) = ? AND w.source != 'user' AND w.is_active = 1
        LIMIT 1`
     )
     .bind(date, length)
@@ -71,15 +71,19 @@ export async function findRandomWord(
   db: Env['DB'],
   length = 5
 ): Promise<{ entry: WordEntry; id: number } | null> {
+  // Excludes words already scheduled as today's-or-a-later Turkey-day daily answer, from
+  // either pool, so unlimited mode never spoils an upcoming daily puzzle.
+  const today = getTodayString();
   const row = await db
     .prepare(
       `SELECT id, word, meaning, context, category
        FROM words
        WHERE is_active = 1 AND source != 'user' AND length(word) = ?
+         AND id NOT IN (SELECT word_id FROM daily_words WHERE date >= ?)
        ORDER BY RANDOM()
        LIMIT 1`
     )
-    .bind(length)
+    .bind(length, today)
     .first<WordRow>();
 
   return row ? { entry: toWordEntry(row), id: row.id } : null;
