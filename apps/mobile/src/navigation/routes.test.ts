@@ -49,4 +49,15 @@ describe('routes', () => {
     const next = reduceNavigation(state, { type: 'push', route: { screen: 'game', mode: 'unlimited', length: 6 } });
     expect(currentRoute(next)).toEqual({ screen: 'game', mode: 'unlimited', length: 6 });
   });
+
+  it('should push a feedback route carrying its initial kind and prefill', () => {
+    const state = createInitialNavigationState();
+    const prefill = { mode: 'daily' as const, wordLength: 5, puzzleDate: '2026-10-24', reportedWord: 'KALEM' };
+    const next = reduceNavigation(state, {
+      type: 'push',
+      route: { screen: 'feedback', initialKind: 'word_report', prefill },
+    });
+    expect(currentRoute(next)).toEqual({ screen: 'feedback', initialKind: 'word_report', prefill });
+    expect(canGoBack(next)).toBe(true);
+  });
 });
