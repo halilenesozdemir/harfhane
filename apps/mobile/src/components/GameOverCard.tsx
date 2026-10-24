@@ -35,6 +35,10 @@ export interface GameOverCardProps {
   readonly today?: () => string;
   readonly now?: () => Date;
   readonly onNewGame: () => void;
+  // R6/AE8: lets the finished game offer "Kelimeyi bildir" without this presentational card
+  // importing navigation itself — the parent screen composes this from its own already-known
+  // mode/wordLength/dailyDate/solution, the same boundary onNewGame already crosses.
+  readonly onReportWord?: () => void;
   // useResultRecorder's own computed distribution for a game that just finished this session —
   // see useDisplayDistribution's doc comment for why this must win over a storage read.
   readonly recordedDistribution?: readonly number[] | null;
@@ -50,6 +54,7 @@ const SHARE_LABEL = 'Paylaş';
 const ANSWER_LABEL = 'Kelime';
 const NEW_DAY_CAPTION = 'Yeni günün kelimesi hazır';
 const PLAY_LABEL = 'Oyna';
+const REPORT_WORD_LABEL = 'Kelimeyi bildir';
 const COUNTDOWN_UPDATE_INTERVAL_MS = 1000;
 
 function useResultSeed(mode: GameMode, wordId: number | null, dailyDate: string | null, guessCount: number): number {
@@ -178,6 +183,7 @@ export function GameOverCard({
   today = getTodayString,
   now = defaultNow,
   onNewGame,
+  onReportWord,
   recordedDistribution = null,
   hintUsed = false,
 }: GameOverCardProps) {
@@ -210,6 +216,9 @@ export function GameOverCard({
       {distribution !== null && <Distribution distribution={distribution} gameStatus={gameStatus} guessCount={guessCount} />}
       <ShareButton shareText={shareText} variant={isStale ? 'secondary' : 'primary'} />
       <CountdownOrNewWord mode={mode} isStale={isStale} countdown={countdown} onNewGame={onNewGame} colors={colors} />
+      {onReportWord ? (
+        <Button testID="gameover-report-word" label={REPORT_WORD_LABEL} variant="tertiary" onPress={onReportWord} />
+      ) : null}
     </ScrollView>
   );
 }
