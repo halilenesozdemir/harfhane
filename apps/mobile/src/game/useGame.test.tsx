@@ -204,6 +204,29 @@ describe('useGame', () => {
     expect(mockPerformAndroidHapticsAsync).not.toHaveBeenCalledWith('reject');
   });
 
+  it('should allow submitting again after a request times out', async () => {
+    // Simulates api.ts's AbortController timeout (a rejected promise, same shape as any other
+    // request failure) rather than a connection that never settles: that's the behaviour the
+    // timeout fix guarantees, and what releases useSubmit's isInFlight guard so the keyboard
+    // does not stay locked.
+    const validateWord = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('timed out'))
+      .mockResolvedValueOnce({ isValid: true });
+    const api = createApi({ validateWord });
+    const store = createMemoryStore();
+    const { result } = await renderHook(() => useGame({ mode: 'daily', wordLength: 5, api, store }));
+    await waitFor(() => expect(result.current.session.phase).toBe('ready'));
+
+    await typeAndSubmit(result, 'KALAY');
+    await waitFor(() => expect(result.current.session.message).toBe('Bağlantı hatası, tekrar dene'));
+
+    await act(async () => {
+      result.current.onSubmit();
+    });
+    expect(validateWord).toHaveBeenCalledTimes(2);
+  });
+
   it('should validate once when submit is tapped twice quickly', async () => {
     const api = createApi();
     const store = createMemoryStore();

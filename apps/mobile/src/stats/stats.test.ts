@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { KeyValueStore } from '../game/game-storage';
 import {
   createInitialDailyStats,
@@ -58,6 +58,26 @@ describe('recordDailyResult', () => {
     expect(next.maxStreak).toBe(5);
   });
 
+  describe('across a device-timezone DST transition', () => {
+    const originalTz = process.env['TZ'];
+
+    afterEach(() => {
+      process.env['TZ'] = originalTz;
+    });
+
+    // Turkey day is UTC+3 and fixed (no DST since 2016), so the player's "today"/"yesterday"
+    // strings never move — but a device in a DST-observing timezone changes its UTC offset on
+    // the transition day. A `yesterdayOf` built on local-time Date methods ('new Date(str)' +
+    // 'getDate'/'setDate') double-shifts across that boundary and skips a day, breaking the
+    // streak for players outside Turkey even though they played on consecutive Turkey days.
+    it('should continue the streak when the device timezone crosses a DST transition between two consecutive Turkey days', () => {
+      process.env['TZ'] = 'Australia/Sydney'; // DST ends 2026-04-05
+      const stats = { ...createInitialDailyStats(), currentStreak: 3, maxStreak: 3, lastPlayedDate: '2026-04-04' };
+      const next = recordDailyResult(stats, true, 3, '2026-04-05');
+      expect(next.currentStreak).toBe(4);
+    });
+  });
+
   it('should record the winning guess count in the distribution', () => {
     const next = recordDailyResult(createInitialDailyStats(), true, 3, '2026-10-05');
     expect(next.guessDistribution).toEqual([0, 0, 1, 0, 0, 0]);
@@ -103,6 +123,13 @@ describe('daily stats storage', () => {
     expect(await loadDailyStats(store, 5)).toEqual(stats);
   });
 
+  it('should save under the schemaVersion envelope', async () => {
+    const store = createMemoryStore();
+    const stats = recordDailyResult(createInitialDailyStats(), true, 2, '2026-10-05');
+    await saveDailyStats(store, 5, stats);
+    expect(JSON.parse(await store.getItem(dailyStatsKey(5)) as string)).toEqual({ schemaVersion: 1, data: stats });
+  });
+
   it('should return a fresh value when nothing is stored', async () => {
     expect(await loadDailyStats(createMemoryStore(), 6)).toEqual(createInitialDailyStats());
   });
@@ -115,6 +142,18 @@ describe('daily stats storage', () => {
   it('should return a fresh value when the stored value is not JSON', async () => {
     const store = createMemoryStore({ [dailyStatsKey(5)]: '{' });
     expect(await loadDailyStats(store, 5)).toEqual(createInitialDailyStats());
+  });
+
+  it('should load legacy unversioned stats (written before schemaVersion existed) instead of resetting them', async () => {
+    const legacyStats = recordDailyResult(createInitialDailyStats(), true, 3, '2026-10-05');
+    const store = createMemoryStore({ [dailyStatsKey(5)]: JSON.stringify(legacyStats) });
+    expect(await loadDailyStats(store, 5)).toEqual(legacyStats);
+  });
+
+  it('should keep the data when the stored schemaVersion is unrecognised but its shape still matches', async () => {
+    const stats = recordDailyResult(createInitialDailyStats(), true, 4, '2026-10-05');
+    const store = createMemoryStore({ [dailyStatsKey(5)]: JSON.stringify({ schemaVersion: 99, data: stats }) });
+    expect(await loadDailyStats(store, 5)).toEqual(stats);
   });
 });
 
@@ -129,5 +168,17 @@ describe('unlimited stats storage', () => {
   it('should return a fresh value when the stored value does not match the shape', async () => {
     const store = createMemoryStore({ [unlimitedStatsKey(4)]: JSON.stringify({ foo: 'bar' }) });
     expect(await loadUnlimitedStats(store, 4)).toEqual(createInitialUnlimitedStats());
+  });
+
+  it('should load legacy unversioned stats (written before schemaVersion existed) instead of resetting them', async () => {
+    const legacyStats = recordUnlimitedResult(createInitialUnlimitedStats(), true, 5);
+    const store = createMemoryStore({ [unlimitedStatsKey(4)]: JSON.stringify(legacyStats) });
+    expect(await loadUnlimitedStats(store, 4)).toEqual(legacyStats);
+  });
+
+  it('should keep the data when the stored schemaVersion is unrecognised but its shape still matches', async () => {
+    const stats = recordUnlimitedResult(createInitialUnlimitedStats(), true, 6);
+    const store = createMemoryStore({ [unlimitedStatsKey(4)]: JSON.stringify({ schemaVersion: 99, data: stats }) });
+    expect(await loadUnlimitedStats(store, 4)).toEqual(stats);
   });
 });

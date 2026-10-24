@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deviceStore } from './src/game/device-store';
 import { loadHasSeenHowToPlay, markHowToPlaySeen } from './src/first-launch-store';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { LaunchIntro } from './src/components/LaunchIntro';
 import { ThemeProvider, useTheme } from './src/ThemeProvider';
 import { api } from './src/lib/api';
@@ -271,7 +272,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider store={deviceStore}>
-        <FirstLaunchGate />
+        <ErrorBoundary>
+          <FirstLaunchGate />
+        </ErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>
   );

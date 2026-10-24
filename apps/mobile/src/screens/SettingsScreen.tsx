@@ -1,7 +1,7 @@
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight } from 'lucide-react-native';
 import { useCallback, type ReactNode } from 'react';
 import Constants from 'expo-constants';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useTheme } from '../ThemeProvider';
 import { useHapticsSettings } from '../lib/useHapticsSettings';
 import { Button } from '../ui/Button';
@@ -9,6 +9,16 @@ import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import type { ThemePreference } from '../theme';
+
+const PRIVACY_POLICY_URL = 'https://harfhane.app/gizlilik';
+
+// openURL's promise rejects if no app can handle the link (should not happen
+// for a plain https URL) or the user cancels the system chooser; either way
+// there is nothing more the app can do, so the failure is swallowed rather
+// than surfaced with console.* (forbidden in production code).
+function openPrivacyPolicy(): void {
+  Linking.openURL(PRIVACY_POLICY_URL).catch(() => undefined);
+}
 
 export interface SettingsScreenProps {
   readonly onClose: () => void;
@@ -77,6 +87,16 @@ export function SettingsScreen({ onClose, onOpenFeedback }: SettingsScreenProps)
               trackColor={{ true: colors.brand, false: colors.surfaceBorder }}
             />
           </SettingsRow>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Gizlilik politikası"
+            onPress={openPrivacyPolicy}
+            style={[styles.row, { borderTopWidth: 1, borderTopColor: colors.surfaceBorder }]}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]}>Gizlilik politikası</Text>
+            <ChevronRight size={ICON_SIZE.md} color={colors.textMuted} />
+          </Pressable>
         </View>
 
         <Button label={FEEDBACK_LABEL} variant="secondary" onPress={onOpenFeedback} testID="settings-open-feedback" />

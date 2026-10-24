@@ -30,15 +30,23 @@ describe('PrivacyPage', () => {
     document.head.querySelector('meta[name="robots"]')?.remove();
   });
 
-  it('should render the draft heading and the draft-awaiting-approval notice without an internal plan id (007-AE1)', () => {
+  it('should render the published heading with no draft banner and no internal plan id (007-AE1)', () => {
     render(<PrivacyPage />);
-    expect(screen.getByRole('heading', { name: /gizlilik politikası \(taslak\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Gizlilik Politikası' })).toBeInTheDocument();
     const text = normalizedBodyText();
-    expect(text).toContain(
-      "Bu metin bir taslaktır, hukuki görüş değildir ve henüz yayınlanmamıştır. Sahibin onayından önce hiçbir yerden bağlantı verilmez."
-    );
+    expect(text).not.toMatch(/taslak/i);
+    expect(text).toContain('Son güncelleme: 24 Ekim 2026');
     // No internal unit id ("007", "U5", "U6") leaks into user-visible text.
     expect(text).not.toMatch(/\b007\b|\bU5\b|\bU6\b/);
+    // No leftover owner-placeholder brackets.
+    expect(text).not.toContain('[');
+  });
+
+  it('should name the owner as the data controller with the verified contact address (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain('Veri Sorumlusu: Halil Enes Özdemir');
+    expect(text).toContain('İletişim e-postası: destek@harfhane.app');
   });
 
   it('should state there are no accounts, stats stay on-device and data only leaves the device for the listed requests (007-AE1)', () => {
@@ -75,6 +83,15 @@ describe('PrivacyPage', () => {
     );
   });
 
+  it('should state the Cloudflare Worker has no log push or observability configured, without a pending owner-check placeholder (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Bu günlüklerin tutulup tutulmadığı ve saklama süresi Cloudflare'in kendi gizlilik politikasına ve hesap ayarlarına bağlıdır; Harfhane'nin kullandığı Worker yapılandırmasında ayrıca bir günlük toplama (log push) veya gözlemlenebilirlik ayarı etkin değildir."
+    );
+    expect(text).not.toMatch(/SAHİP KONTROL ETMELİ/);
+  });
+
   it('should list the daily, random and lengths endpoints, not only "günün kelimesi" (007-AE1)', () => {
     render(<PrivacyPage />);
     expect(screen.getByText('/api/words/daily')).toBeInTheDocument();
@@ -83,35 +100,50 @@ describe('PrivacyPage', () => {
     expect(screen.getByText('/api/words/validate')).toBeInTheDocument();
   });
 
-  it('should disclose legacy pre-scope-cut account data may still exist in the database and must not be claimed deleted (007-AE1)', () => {
+  it('should disclose that the legacy pre-scope-cut account tables were permanently deleted on 2026-10-24 and no account data remains (007-AE1)', () => {
     render(<PrivacyPage />);
     expect(screen.getByRole('heading', { name: 'Önceki Sürümde Hesap Açtıysanız' })).toBeInTheDocument();
     const text = normalizedBodyText();
     expect(text).toContain(
       "2026-10-05'teki kapsam kararından önce Harfhane'de hesap, oturum açma ve sunucu tarafında oyun sonucu kaydı vardı."
     );
-    // Every legacy data category the reviewer named, not just account basics.
-    for (const legacyField of [
-      'Google hesap kimliği (google_id)',
-      'e-posta bildirim tercihi',
-      'kullanıcıların oluşturduğu kelime listeleri ve yorumlar',
-      'düello ve turnuva sonuçları',
-      'XP ve rozetler',
+    expect(text).toContain('24 Ekim 2026');
+    expect(text).toContain('veritabanından kalıcı olarak silindi');
+    // Every legacy table name the migration dropped.
+    for (const tableName of [
+      'users',
+      'game_results',
+      'badges',
+      'user_xp',
+      'user_badges',
+      'push_subscriptions',
+      'streak_freezes',
+      'password_reset_tokens',
+      'duels',
+      'word_lists',
+      'word_list_words',
+      'list_likes',
+      'list_comments',
+      'tournament_results',
     ]) {
-      expect(text).toContain(legacyField);
+      expect(text).toContain(tableName);
     }
     expect(text).toContain(
-      'Bu nedenle, o döneme ait bir hesabınız varsa, verilerinizin halen veritabanında bulunabileceğini varsaymalısınız.'
+      'bugün veritabanında hesabınıza ait herhangi bir veri bulunmamaktadır.'
     );
-    expect(text).not.toMatch(/(veriler(iniz)?|hesabınız).{0,40}(silinmiştir|tamamen silin|kalıcı olarak silin)/);
   });
 
-  // Meaning-level: a mutant flipping "kullanılmaz" -> "kullanılır" (claiming
-  // the legacy data IS actively used) must fail this.
-  it('should state legacy data is not used for any processing purpose until it is deleted (007-AE1)', () => {
+  it('should not claim legacy account data may still exist (007-AE1)', () => {
     render(<PrivacyPage />);
     const text = normalizedBodyText();
-    expect(text).toContain('Bu veriler silininceye kadar herhangi bir işleme amacıyla kullanılmaz.');
+    expect(text).not.toMatch(/henüz silinmemiştir/);
+    expect(text).not.toMatch(/verilerinizin halen veritabanında bulunabileceğini varsaymalısınız/);
+  });
+
+  it('should not list a legacy-data processing purpose or retention period any more (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).not.toMatch(/Eski hesap verileri/);
   });
 
   it('should mention Cloudflare Pages/Workers IP processing and Google Play\'s own download/crash data policy (007-AE1)', () => {
@@ -173,13 +205,14 @@ describe('PrivacyPage', () => {
     );
   });
 
-  it('should describe the application procedure (Tebliğ methods) and the 30-day KVKK m.13/2 response obligation (007-AE1)', () => {
+  it('should describe the application procedure (Tebliğ methods), the 30-day KVKK m.13/2 response obligation and the verified contact address (007-AE1)', () => {
     render(<PrivacyPage />);
     const text = normalizedBodyText();
     expect(text).toMatch(/Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ/);
     expect(text).toMatch(/Kayıtlı Elektronik Posta \(KEP\)/);
     expect(text).toContain('30 gün');
     expect(text).toMatch(/KVKK m\.13\/2/);
+    expect(text).toContain('Başvurunuzu destek@harfhane.app adresine iletebilirsiniz');
     // KVKK m.13/2 is an obligation on the controller, not a target we aim
     // for — "sonuçlandırırız", not "yanıtlamayı hedefliyoruz".
     expect(text).toContain('en geç 30 gün içinde sonuçlandırırız.');
@@ -201,22 +234,55 @@ describe('PrivacyPage', () => {
     expect(text).toContain('Verileriniz satılmaz veya pazarlama amacıyla üçüncü taraflarla paylaşılmaz.');
   });
 
-  it('should set a noindex meta tag on the page', () => {
+  it('should disclose the cross-border transfer risk through Cloudflare and Google Play without a pending owner-check placeholder (007-AE1)', () => {
     render(<PrivacyPage />);
-    expect(getRobotsMetaContent()).toBe('noindex');
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      'Bu nedenle, altyapı sağlayıcımız Cloudflare ve Google Play, hizmeti sağlamak amacıyla verilerinizi Türkiye dışında da işleyebilir.'
+    );
+    expect(text).not.toMatch(/SAHİP KONTROL ETMELİ/);
+  });
+
+  it('should describe how policy changes are announced without a pending owner-check placeholder (007-AE1)', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      'Bu politikayı güncelleyebiliriz; değişiklik yaptığımızda bu sayfayı ve yukarıdaki "Son güncelleme" tarihini güncelleyerek duyururuz.'
+    );
+    expect(text).not.toMatch(/SAHİP KONTROL ETMELİ/);
+  });
+
+  it('should not set a noindex meta tag (published, not a draft) (007-AE1)', () => {
+    render(<PrivacyPage />);
+    expect(getRobotsMetaContent()).toBeNull();
+  });
+
+  it('should leave no owner-placeholder brackets anywhere on the page (007-AE1)', () => {
+    render(<PrivacyPage />);
+    expect(normalizedBodyText()).not.toMatch(/\[[^\]]*\]/);
   });
 });
 
 describe('sitemap generator', () => {
-  it('should not list the unapproved privacy draft route', () => {
+  it('should list the published privacy route (007-AE1)', () => {
     const scriptPath = path.resolve(process.cwd(), 'scripts', 'generate-sitemap.mjs');
     const source = readFileSync(scriptPath, 'utf-8');
-    expect(source).not.toMatch(/gizlilik/i);
+    expect(source).toMatch(/\/gizlilik/);
   });
 });
 
-describe('no navigation/footer link to the unapproved draft', () => {
-  it('should not reference /gizlilik from any source file other than its own route and tests', () => {
+describe('navigation/footer link to the published privacy page (007-AE1)', () => {
+  it('should reference /gizlilik from the web Settings modal', () => {
+    const settingsModalPath = path.resolve(process.cwd(), 'src', 'components', 'SettingsModal.tsx');
+    expect(readFileSync(settingsModalPath, 'utf-8')).toContain('/gizlilik');
+  });
+
+  it('should not disallow /gizlilik in robots.txt any more', () => {
+    const robotsPath = path.resolve(process.cwd(), 'public', 'robots.txt');
+    expect(readFileSync(robotsPath, 'utf-8')).not.toMatch(/Disallow: \/gizlilik/);
+  });
+
+  it('should list every /gizlilik reference only in files that are expected to mention the published route', () => {
     const srcRoot = path.resolve(process.cwd(), 'src');
     const allowedBasenames = new Set([
       'App.tsx',
@@ -224,6 +290,8 @@ describe('no navigation/footer link to the unapproved draft', () => {
       'PrivacyPage.tsx',
       'PrivacyPage.test.tsx',
       'structured-data.test.ts',
+      'SettingsModal.tsx',
+      'SettingsModal.test.tsx',
     ]);
     const offenders: string[] = [];
     listSourceFiles(srcRoot, (filePath) => {

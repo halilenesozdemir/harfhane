@@ -43,16 +43,16 @@ describe('index.html structured data', () => {
 });
 
 describe('robots.txt', () => {
-  it('should disallow the unapproved privacy draft and the admin panel', () => {
+  it('should disallow the admin panel and not the published privacy page (007-AE1)', () => {
     expect(ROBOTS_TXT).toMatch(/^Disallow: \/admin$/m);
-    expect(ROBOTS_TXT).toMatch(/^Disallow: \/gizlilik$/m);
+    expect(ROBOTS_TXT).not.toMatch(/^Disallow: \/gizlilik$/m);
   });
 });
 
 describe('_headers', () => {
-  it('should send X-Robots-Tag: noindex for the unapproved privacy draft', () => {
+  it('should not send a noindex X-Robots-Tag for the published privacy page any more (007-AE1)', () => {
     const gizlilikBlock = HEADERS_FILE.split(/\n(?=\/)/).find((block) => block.startsWith('/gizlilik'));
-    expect(gizlilikBlock).toContain('X-Robots-Tag: noindex');
+    expect(gizlilikBlock).toBeUndefined();
   });
 });
 

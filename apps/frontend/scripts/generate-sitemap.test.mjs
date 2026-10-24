@@ -21,9 +21,9 @@ describe('generate-sitemap STATIC_ROUTES', () => {
     }
   });
 
-  it('should not list the unapproved privacy draft route', () => {
+  it('should list the published privacy route (007-AE1)', () => {
     const sitemap = buildSitemap('2026-01-01');
-    expect(sitemap).not.toMatch(/gizlilik/i);
+    expect(sitemap).toContain('<loc>https://harfhane.app/gizlilik</loc>');
   });
 
   it('should render a valid urlset with the given lastmod date for every route', () => {

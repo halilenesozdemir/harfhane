@@ -1,4 +1,5 @@
 import { render, screen, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getTodayString } from '@harfhane/shared';
 import HomePage from './HomePage';
@@ -19,9 +20,11 @@ function dailyGameKey(): string {
 
 function renderHomePage(props: HomePageProps): ReturnType<typeof render> {
   return render(
-    <ThemeProvider>
-      <HomePage {...props} />
-    </ThemeProvider>
+    <MemoryRouter>
+      <ThemeProvider>
+        <HomePage {...props} />
+      </ThemeProvider>
+    </MemoryRouter>
   );
 }
 
@@ -79,11 +82,24 @@ describe('HomePage', () => {
     expect(onSelectMode).toHaveBeenCalledWith('daily', DAILY_LENGTH);
   });
 
-  it('should show the footer privacy line without a Gizlilik link', () => {
+  it('should show the footer privacy line, with the Gizlilik link living in the Settings modal instead of the footer', () => {
     renderHomePage({ onSelectMode: vi.fn() });
 
     expect(screen.getByText('Hesap yok. Reklam yok. İlerlemen bu cihazda kalır.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Gizlilik/ })).not.toBeInTheDocument();
+  });
+
+  it('should close the Settings modal and navigate to the published privacy page when Gizlilik is clicked (007-AE1)', () => {
+    renderHomePage({ onSelectMode: vi.fn() });
+
+    act(() => {
+      screen.getByRole('button', { name: 'Ayarlar' }).click();
+    });
+    act(() => {
+      screen.getByRole('button', { name: 'Gizlilik' }).click();
+    });
+
+    expect(screen.queryByRole('heading', { name: 'Ayarlar' })).not.toBeInTheDocument();
   });
 
   it('should mark the selected unlimited length button as aria-pressed and the others as not', () => {
