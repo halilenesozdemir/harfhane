@@ -74,6 +74,7 @@ function GameOverModal({
   stats,
   isUnlimited,
   onPlayAgain,
+  onGoHome,
   sessionChallenge,
   hintUsed = false,
 }: GameOverModalProps): React.JSX.Element {
@@ -270,6 +271,13 @@ function GameOverModal({
               {isNewDayAvailable ? 'Yeni kelimeyi oyna' : 'Sınırsız modda devam et'}
             </button>
           )}
+
+          <button
+            onClick={onGoHome}
+            className="w-full py-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+          >
+            Ana sayfaya dön
+          </button>
         </div>
       </div>
     </Modal>
