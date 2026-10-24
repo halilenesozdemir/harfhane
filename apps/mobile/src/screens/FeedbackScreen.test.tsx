@@ -1,5 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { FeedbackScreen } from './FeedbackScreen';
+import { ApiRequestError } from '../lib/api';
 import { renderWithTheme } from '../test-utils/render-with-theme';
 
 const mockExpoConfig: { version?: string } = { version: '1.2.3' };
@@ -54,6 +55,26 @@ describe('FeedbackScreen', () => {
     expect(screen.getByTestId('feedback-message')).toBeTruthy();
   });
 
+  it('should show a rate-limit message when the server returns 429', async () => {
+    const submitFeedback = jest.fn().mockRejectedValue(new ApiRequestError('Çok fazla istek.', 429, 'RATE_LIMITED'));
+    await renderWithTheme(<FeedbackScreen initialKind="general" onClose={jest.fn()} submitFeedback={submitFeedback} />);
+
+    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'deneme'));
+    await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
+
+    expect(await screen.findByText('Çok sık gönderdin, biraz sonra tekrar dene.')).toBeTruthy();
+  });
+
+  it('should show a validation message when the server returns 422', async () => {
+    const submitFeedback = jest.fn().mockRejectedValue(new ApiRequestError('Invalid', 422, 'VALIDATION_ERROR'));
+    await renderWithTheme(<FeedbackScreen initialKind="general" onClose={jest.fn()} submitFeedback={submitFeedback} />);
+
+    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'deneme'));
+    await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
+
+    expect(await screen.findByText('Gönderilemedi, metni kontrol edip tekrar dene.')).toBeTruthy();
+  });
+
   it('should show the word-report kind with a reason field and the prefilled word already attached, not retyped (013-AE8)', async () => {
     const submitFeedback = jest.fn().mockResolvedValue({ id: 2, status: 'new' });
     const prefill = { mode: 'daily' as const, wordLength: 5, puzzleDate: '2026-10-24', reportedWord: 'KALEM' };
@@ -77,6 +98,29 @@ describe('FeedbackScreen', () => {
       puzzle_date: '2026-10-24',
       reported_word: 'KALEM',
     });
+  });
+
+  it('should send mode/word_length/reported_word without puzzle_date for an unlimited word report', async () => {
+    const submitFeedback = jest.fn().mockResolvedValue({ id: 4, status: 'new' });
+    const prefill = { mode: 'unlimited' as const, wordLength: 5, puzzleDate: null, reportedWord: 'KALEM' };
+    await renderWithTheme(
+      <FeedbackScreen initialKind="word_report" prefill={prefill} onClose={jest.fn()} submitFeedback={submitFeedback} />,
+    );
+
+    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'Bu kelime bende hiç karşılaşmadı'));
+    await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
+
+    expect(submitFeedback).toHaveBeenCalledWith({
+      kind: 'word_report',
+      message: 'Bu kelime bende hiç karşılaşmadı',
+      app_platform: 'android',
+      app_version: '1.2.3',
+      mode: 'unlimited',
+      word_length: 5,
+      reported_word: 'KALEM',
+    });
+    const sentBody = submitFeedback.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(sentBody).not.toHaveProperty('puzzle_date');
   });
 
   it('should include the trimmed contact field only when filled in', async () => {

@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
-import type { ApiClient, FeedbackPrefill } from '../lib/api';
+import { ApiRequestError, type ApiClient, type FeedbackPrefill } from '../lib/api';
 
 export interface FeedbackScreenProps {
   readonly initialKind: 'general' | 'word_report';
@@ -30,9 +30,22 @@ const CONTACT_LABEL = 'İletişim (isteğe bağlı)';
 const CONTACT_PLACEHOLDER = 'E-posta (isteğe bağlı)';
 const SUBMIT_LABEL = 'Gönder';
 const SUCCESS_TEXT = 'Geri bildiriminiz gönderildi, teşekkürler!';
-const FAILURE_TEXT = 'Gönderilemedi. Lütfen bağlantınızı kontrol edip tekrar deneyin.';
+const NETWORK_FAILURE_TEXT = 'Gönderilemedi. Lütfen bağlantınızı kontrol edip tekrar deneyin.';
+const RATE_LIMITED_TEXT = 'Çok sık gönderdin, biraz sonra tekrar dene.';
+const VALIDATION_FAILURE_TEXT = 'Gönderilemedi, metni kontrol edip tekrar dene.';
 const CLOSE_LABEL = 'Kapat';
 const BACK_LABEL = 'Geri';
+const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNPROCESSABLE_ENTITY = 422;
+
+function failureMessageFor(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    if (error.status === HTTP_TOO_MANY_REQUESTS) return RATE_LIMITED_TEXT;
+    if (error.status === HTTP_UNPROCESSABLE_ENTITY || error.status === HTTP_BAD_REQUEST) return VALIDATION_FAILURE_TEXT;
+  }
+  return NETWORK_FAILURE_TEXT;
+}
 
 function wordReportSummary(prefill: FeedbackPrefill): string {
   const modeText = prefill.mode === 'daily' ? 'Günlük' : 'Sınırsız';
@@ -63,6 +76,7 @@ export function FeedbackScreen({ initialKind, prefill, onClose, submitFeedback }
   const [message, setMessage] = useState('');
   const [contact, setContact] = useState('');
   const [status, setStatus] = useState<SubmitStatus>('idle');
+  const [failureMessage, setFailureMessage] = useState(NETWORK_FAILURE_TEXT);
   const appVersion = Constants.expoConfig?.version;
   const messageLabel = initialKind === 'word_report' ? WORD_REPORT_MESSAGE_LABEL : GENERAL_MESSAGE_LABEL;
   const messagePlaceholder = initialKind === 'word_report' ? WORD_REPORT_PLACEHOLDER : GENERAL_PLACEHOLDER;
@@ -88,7 +102,10 @@ export function FeedbackScreen({ initialKind, prefill, onClose, submitFeedback }
         : {}),
     })
       .then(() => setStatus('success'))
-      .catch(() => setStatus('failure'));
+      .catch((error: unknown) => {
+        setFailureMessage(failureMessageFor(error));
+        setStatus('failure');
+      });
   }, [message, contact, initialKind, prefill, appVersion, submitFeedback]);
 
   if (status === 'success') {
@@ -155,7 +172,7 @@ export function FeedbackScreen({ initialKind, prefill, onClose, submitFeedback }
 
         {status === 'failure' ? (
           <Text accessibilityLiveRegion="polite" style={[styles.statusText, { color: colors.text }]}>
-            {FAILURE_TEXT}
+            {failureMessage}
           </Text>
         ) : null}
       </View>
