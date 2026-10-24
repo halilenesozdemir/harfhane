@@ -36,14 +36,12 @@ const VALIDATION_FAILURE_TEXT = 'Gönderilemedi, metni kontrol edip tekrar dene.
 const CLOSE_LABEL = 'Kapat';
 const BACK_LABEL = 'Geri';
 const HTTP_TOO_MANY_REQUESTS = 429;
-const HTTP_BAD_REQUEST = 400;
 const HTTP_UNPROCESSABLE_ENTITY = 422;
 
 function failureMessageFor(error: unknown): string {
-  if (error instanceof ApiRequestError) {
-    if (error.status === HTTP_TOO_MANY_REQUESTS) return RATE_LIMITED_TEXT;
-    if (error.status === HTTP_UNPROCESSABLE_ENTITY || error.status === HTTP_BAD_REQUEST) return VALIDATION_FAILURE_TEXT;
-  }
+  if (!(error instanceof ApiRequestError)) return NETWORK_FAILURE_TEXT;
+  if (error.status === HTTP_TOO_MANY_REQUESTS) return RATE_LIMITED_TEXT;
+  if (error.status === HTTP_UNPROCESSABLE_ENTITY) return VALIDATION_FAILURE_TEXT;
   return NETWORK_FAILURE_TEXT;
 }
 

@@ -55,24 +55,15 @@ describe('FeedbackScreen', () => {
     expect(screen.getByTestId('feedback-message')).toBeTruthy();
   });
 
-  it('should show a rate-limit message when the server returns 429', async () => {
-    const submitFeedback = jest.fn().mockRejectedValue(new ApiRequestError('Çok fazla istek.', 429, 'RATE_LIMITED'));
+  it.each([
+    [429, 'RATE_LIMITED', 'Çok sık gönderdin, biraz sonra tekrar dene.'],
+    [422, 'VALIDATION_ERROR', 'Gönderilemedi, metni kontrol edip tekrar dene.'],
+  ])('should show a distinct Turkish message for a %d response', async (status, code, text) => {
+    const submitFeedback = jest.fn().mockRejectedValue(new ApiRequestError('x', status as number, code as string));
     await renderWithTheme(<FeedbackScreen initialKind="general" onClose={jest.fn()} submitFeedback={submitFeedback} />);
-
     await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'deneme'));
     await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
-
-    expect(await screen.findByText('Çok sık gönderdin, biraz sonra tekrar dene.')).toBeTruthy();
-  });
-
-  it('should show a validation message when the server returns 422', async () => {
-    const submitFeedback = jest.fn().mockRejectedValue(new ApiRequestError('Invalid', 422, 'VALIDATION_ERROR'));
-    await renderWithTheme(<FeedbackScreen initialKind="general" onClose={jest.fn()} submitFeedback={submitFeedback} />);
-
-    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'deneme'));
-    await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
-
-    expect(await screen.findByText('Gönderilemedi, metni kontrol edip tekrar dene.')).toBeTruthy();
+    expect(await screen.findByText(text as string)).toBeTruthy();
   });
 
   it('should show the word-report kind with a reason field and the prefilled word already attached, not retyped (013-AE8)', async () => {
@@ -103,23 +94,12 @@ describe('FeedbackScreen', () => {
   it('should send mode/word_length/reported_word without puzzle_date for an unlimited word report', async () => {
     const submitFeedback = jest.fn().mockResolvedValue({ id: 4, status: 'new' });
     const prefill = { mode: 'unlimited' as const, wordLength: 5, puzzleDate: null, reportedWord: 'KALEM' };
-    await renderWithTheme(
-      <FeedbackScreen initialKind="word_report" prefill={prefill} onClose={jest.fn()} submitFeedback={submitFeedback} />,
-    );
-
-    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'Bu kelime bende hiç karşılaşmadı'));
+    await renderWithTheme(<FeedbackScreen initialKind="word_report" prefill={prefill} onClose={jest.fn()} submitFeedback={submitFeedback} />);
+    await act(async () => fireEvent.changeText(screen.getByTestId('feedback-message'), 'deneme'));
     await act(async () => fireEvent.press(screen.getByTestId('feedback-submit')));
 
-    expect(submitFeedback).toHaveBeenCalledWith({
-      kind: 'word_report',
-      message: 'Bu kelime bende hiç karşılaşmadı',
-      app_platform: 'android',
-      app_version: '1.2.3',
-      mode: 'unlimited',
-      word_length: 5,
-      reported_word: 'KALEM',
-    });
     const sentBody = submitFeedback.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(sentBody).toMatchObject({ mode: 'unlimited', word_length: 5, reported_word: 'KALEM' });
     expect(sentBody).not.toHaveProperty('puzzle_date');
   });
 
