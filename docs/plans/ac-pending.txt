@@ -9,6 +9,4 @@
 004-AE2  build/export behavior (expo export bundling from TS source), not exercised by a unit test
 
 009-AE4  covered only by a local Maestro flow (apps/mobile/.maestro/daily.yaml); no gate runs it (R5: not in CI)
-012-AE4  Plan 012 approved 2026-10-14; its unit is not implemented yet
 012-AE5  Plan 012 approved 2026-10-14; its unit is not implemented yet
-012-AE7  Plan 012 approved 2026-10-14; its unit is not implemented yet

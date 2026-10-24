@@ -7,7 +7,12 @@ interface HitRecord {
 }
 
 const GAME_WINDOW_MS = 60 * 1000;
-const GAME_MAX_HITS = 30;
+export const GAME_MAX_HITS = 30;
+
+// Stricter than the game endpoints (Plan 013 R3/AE5): feedback is a
+// low-frequency, write-heavy action with no gameplay reason to retry often.
+const FEEDBACK_WINDOW_MS = 10 * 60 * 1000;
+const FEEDBACK_MAX_HITS = 5;
 
 const hits = new Map<string, HitRecord>();
 
@@ -51,3 +56,4 @@ export function createRateLimiter(
 }
 
 export const gameRateLimiter = createRateLimiter(GAME_MAX_HITS, GAME_WINDOW_MS);
+export const feedbackRateLimiter = createRateLimiter(FEEDBACK_MAX_HITS, FEEDBACK_WINDOW_MS);

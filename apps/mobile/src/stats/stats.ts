@@ -45,9 +45,14 @@ function withGuessRecorded(distribution: readonly number[], won: boolean, guessC
   return next;
 }
 
+// `today` is already a Turkey-day string (UTC+3, fixed — Turkey has not observed DST since
+// 2016), so this must stay pure UTC-calendar arithmetic. `new Date(today)` followed by the
+// local-time `getDate`/`setDate` would instead walk the device's own calendar day, which can
+// double-shift across a device-timezone DST transition (losing or repeating a Turkey day) for
+// players outside Turkey — see stats.test.ts's DST regression test.
 function yesterdayOf(today: string): string {
-  const date = new Date(today);
-  date.setDate(date.getDate() - 1);
+  const date = new Date(`${today}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
   return date.toISOString().split('T')[0]!;
 }
 
@@ -120,22 +125,56 @@ function parseJson(raw: string): unknown {
   }
 }
 
+// Added before the first public release so a later field addition to DailyStats/UnlimitedStats
+// never looks like corrupt data to isDailyStats/isUnlimitedStats and gets silently reset.
+export const STATS_SCHEMA_VERSION = 1;
+
+interface StatsEnvelope {
+  readonly schemaVersion: number;
+  readonly data: unknown;
+}
+
+function isStatsEnvelope(value: unknown): value is StatsEnvelope {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate['schemaVersion'] === 'number' && 'data' in candidate;
+}
+
+// Decides what a stored stats blob means, for both the pre-versioning shape and any future
+// schemaVersion. An install from before this envelope existed wrote the stats object directly
+// (no envelope) — that shape is treated as schema v1 so those installs keep their stats/streak
+// instead of being wiped by the new guard. schemaVersion itself is not checked against
+// STATS_SCHEMA_VERSION: an unrecognised version (older or newer than this build knows about) is
+// still accepted as long as its `data` structurally matches the current shape, so a version
+// bump alone never wipes data. Only a `data` shape this guard cannot recognise — e.g. a future
+// release that changes the fields, or genuinely corrupt storage — falls back to initial stats;
+// that loss is accepted as the cost of a guard that can only validate shapes it knows about.
+function decodeStats<T>(parsed: unknown, isData: (value: unknown) => value is T, createInitial: () => T): T {
+  if (isData(parsed)) return parsed;
+  if (isStatsEnvelope(parsed) && isData(parsed.data)) return parsed.data;
+  return createInitial();
+}
+
+function encodeStats<T>(data: T): string {
+  return JSON.stringify({ schemaVersion: STATS_SCHEMA_VERSION, data });
+}
+
 export async function loadDailyStats(store: KeyValueStore, length: WordLength): Promise<DailyStats> {
   const raw = await store.getItem(dailyStatsKey(length));
   const parsed = raw === null ? null : parseJson(raw);
-  return isDailyStats(parsed) ? parsed : createInitialDailyStats();
+  return decodeStats(parsed, isDailyStats, createInitialDailyStats);
 }
 
 export async function saveDailyStats(store: KeyValueStore, length: WordLength, stats: DailyStats): Promise<void> {
-  await store.setItem(dailyStatsKey(length), JSON.stringify(stats));
+  await store.setItem(dailyStatsKey(length), encodeStats(stats));
 }
 
 export async function loadUnlimitedStats(store: KeyValueStore, length: WordLength): Promise<UnlimitedStats> {
   const raw = await store.getItem(unlimitedStatsKey(length));
   const parsed = raw === null ? null : parseJson(raw);
-  return isUnlimitedStats(parsed) ? parsed : createInitialUnlimitedStats();
+  return decodeStats(parsed, isUnlimitedStats, createInitialUnlimitedStats);
 }
 
 export async function saveUnlimitedStats(store: KeyValueStore, length: WordLength, stats: UnlimitedStats): Promise<void> {
-  await store.setItem(unlimitedStatsKey(length), JSON.stringify(stats));
+  await store.setItem(unlimitedStatsKey(length), encodeStats(stats));
 }

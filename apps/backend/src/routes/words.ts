@@ -8,7 +8,6 @@ import {
   getRandomWord,
   validateWord,
 } from '../services/word-service';
-import { gameRateLimiter } from '../middleware/rate-limiter';
 
 const words = new Hono<{ Bindings: Env }>();
 
@@ -47,8 +46,9 @@ words.get('/lengths', (c) => {
   return c.json({ data: result });
 });
 
-words.use('/validate', gameRateLimiter);
-
+// `/validate` is already rate-limited by the `/api/words/*` middleware in `index.ts`;
+// a second `words.use` here used to double-count every hit against the same limiter
+// key (`${ip}:${path}`), tripping GAME_MAX_HITS at half the intended request count.
 words.post(
   '/validate',
   zValidator('json', validateWordBodySchema, (result, c) => {

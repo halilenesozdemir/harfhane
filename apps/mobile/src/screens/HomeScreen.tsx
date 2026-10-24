@@ -9,6 +9,7 @@ import { AppText } from '../ui/Typography';
 import { HomeHero } from '../home/HomeHero';
 import { DailyCard } from '../home/DailyCard';
 import { UnlimitedCard } from '../home/UnlimitedCard';
+import { HomeStatsCard } from '../home/HomeStatsCard';
 import { useHomeStatus } from '../home/useHomeStatus';
 import { CONTENT_MAX_WIDTH, ICON_SIZE, SCREEN_PADDING, SPACING } from '../ui/layout';
 import type { KeyValueStore } from '../game/game-storage';
@@ -75,7 +76,7 @@ export function HomeScreen({
   now,
 }: HomeScreenProps) {
   const { colors } = useTheme();
-  const { status } = useHomeStatus(store, selectedLength, now);
+  const { status, stats } = useHomeStatus(store, selectedLength, now);
   const isDailyFinished = status !== null && (status.state.kind === 'won' || status.state.kind === 'lost');
   const displayedStreak = status?.displayedStreak ?? 0;
 
@@ -114,6 +115,7 @@ export function HomeScreen({
           <DailyCard wordLength={selectedLength} status={status} now={now} onPress={handleStartDaily} />
           <LengthPicker playableLengths={playableLengths} selectedLength={selectedLength} onSelectLength={onSelectLength} />
           <UnlimitedCard wordLength={selectedLength} isDailyFinished={isDailyFinished} onPress={handleStartUnlimited} />
+          {stats !== null ? <HomeStatsCard displayedStreak={displayedStreak} stats={stats} onPress={handleOpenStats} /> : null}
         </View>
       </ScrollView>
     </View>

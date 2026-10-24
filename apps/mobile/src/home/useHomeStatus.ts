@@ -6,12 +6,19 @@ import { useTurkeyDay } from '../game/useTurkeyDay';
 import { loadDailyStats } from '../stats/stats';
 import { getTodayStatus } from './today-status';
 import type { KeyValueStore } from '../game/game-storage';
-import type { WordLength } from '../stats/stats';
+import type { DailyStats, WordLength } from '../stats/stats';
 import type { TodayStatus } from './today-status';
 
 export interface UseHomeStatusResult {
   /** Null until the stored stats and daily game state have both loaded (mobile-redesign-spec.md section B, "Loading"). */
   readonly status: TodayStatus | null;
+  /** The stored daily stats for the selected length; null while loading or when the store rejects. */
+  readonly stats: DailyStats | null;
+}
+
+interface LoadedHome {
+  readonly status: TodayStatus;
+  readonly stats: DailyStats | null;
 }
 
 // A stable module-level reference: a fresh arrow function as the default
@@ -27,10 +34,10 @@ function fallbackStatus(): TodayStatus {
   return { displayedStreak: 0, state: { kind: 'not-started' } };
 }
 
-function useLoadedStatus(store: KeyValueStore, length: WordLength, today: string): TodayStatus | null {
+function useLoadedHome(store: KeyValueStore, length: WordLength, today: string): LoadedHome | null {
   const loadKey = `${length}:${today}`;
   const [loadedKey, setLoadedKey] = useState(loadKey);
-  const [status, setStatus] = useState<TodayStatus | null>(null);
+  const [loaded, setLoaded] = useState<LoadedHome | null>(null);
 
   // Drop the previous length/day's status during render, not in the effect
   // below: otherwise its state would briefly show for the newly selected
@@ -38,28 +45,28 @@ function useLoadedStatus(store: KeyValueStore, length: WordLength, today: string
   // React's "adjust state while rendering" pattern, not a side effect.
   if (loadKey !== loadedKey) {
     setLoadedKey(loadKey);
-    setStatus(null);
+    setLoaded(null);
   }
 
   useEffect(() => {
     let isCurrent = true;
     Promise.all([loadDailyStats(store, length), loadGameState(store, dailyGameKey(today, length))])
       .then(([stats, game]) => {
-        if (isCurrent) setStatus(getTodayStatus(stats, game, today));
+        if (isCurrent) setLoaded({ status: getTodayStatus(stats, game, today), stats });
       })
       .catch(() => {
         // A rejecting store must not leave status null forever (and must
         // not throw an unhandled rejection): fall back to a defined
         // not-started/streak-0 status, matching how useResultRecorder
         // handles a rejecting store on main.
-        if (isCurrent) setStatus(fallbackStatus());
+        if (isCurrent) setLoaded({ status: fallbackStatus(), stats: null });
       });
     return () => {
       isCurrent = false;
     };
   }, [store, length, today]);
 
-  return status;
+  return loaded;
 }
 
 /** Drives the daily mode card (mobile-redesign-spec.md section B): today's state and the displayed streak. */
@@ -72,6 +79,6 @@ export function useHomeStatus(store: KeyValueStore, length: WordLength, now: () 
   // own midnight-rollover check (mobile-redesign-spec.md section B, "Midnight").
   const toToday = useCallback(() => getTodayString(now()), [now]);
   const today = useTurkeyDay(toToday);
-  const status = useLoadedStatus(store, length, today);
-  return { status };
+  const loaded = useLoadedHome(store, length, today);
+  return { status: loaded?.status ?? null, stats: loaded?.stats ?? null };
 }

@@ -6,6 +6,8 @@ import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
 import { loadDailyStats, loadUnlimitedStats, recordDailyResult } from '../stats/stats';
+import { getDisplayedStreak } from '../home/today-status';
+import { getTodayString } from '@harfhane/shared';
 import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
@@ -57,6 +59,33 @@ export function useDisplayDistribution(
     };
   }, [store, mode, wordLength, gameStatus, guessCount, dailyDate, today, recordedDistribution]);
   return recordedDistribution ?? loadedDistribution;
+}
+
+// Mirrors useDisplayDistribution's own fallback story, for the daily streak shown in the share
+// footer: useResultRecorder's own just-recorded value wins (no race, no storage read needed);
+// otherwise (a restored, already-finished daily game) this reads storage directly. Unlimited has
+// no streak concept, so it is always null there.
+export function useDisplayStreak(
+  store: KeyValueStore,
+  mode: GameMode,
+  wordLength: WordLength,
+  recordedStreak: number | null,
+): number | null {
+  const [loadedStreak, setLoadedStreak] = useState<number | null>(null);
+  useEffect(() => {
+    if (recordedStreak !== null || mode !== 'daily') return undefined;
+    let isCurrent = true;
+    loadDailyStats(store, wordLength)
+      // A restored, already-finished game may be days old: show the streak as home does
+      // (reset after a missed day), not the stored value that only resets on the next result.
+      .then((stats) => getDisplayedStreak(stats, getTodayString()))
+      .catch(() => null)
+      .then((value) => isCurrent && setLoadedStreak(value));
+    return () => {
+      isCurrent = false;
+    };
+  }, [store, mode, wordLength, recordedStreak]);
+  return mode === 'daily' ? recordedStreak ?? loadedStreak : null;
 }
 
 interface DistributionRowProps {

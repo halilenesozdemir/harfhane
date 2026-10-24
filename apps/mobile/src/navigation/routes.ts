@@ -1,4 +1,5 @@
 import type { HomeScreenMode } from '../screens/HomeScreen';
+import type { FeedbackPrefill } from '../lib/api';
 import type { WordLength } from '../stats/stats';
 
 export type Route =
@@ -6,7 +7,12 @@ export type Route =
   | { readonly screen: 'game'; readonly mode: HomeScreenMode; readonly length: WordLength }
   | { readonly screen: 'howToPlay' }
   | { readonly screen: 'settings' }
-  | { readonly screen: 'stats'; readonly length: WordLength };
+  | { readonly screen: 'stats'; readonly length: WordLength }
+  | {
+      readonly screen: 'feedback';
+      readonly initialKind: 'general' | 'word_report';
+      readonly prefill?: FeedbackPrefill;
+    };
 
 export interface NavigationState {
   readonly stack: readonly Route[];

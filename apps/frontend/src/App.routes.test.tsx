@@ -21,6 +21,6 @@ describe('AppRoutes', () => {
       </MemoryRouter>
     );
     // PrivacyPage is lazy-loaded behind Suspense; wait for the chunk to resolve.
-    expect(await screen.findByRole('heading', { name: /gizlilik politikası \(taslak\)/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gizlilik Politikası' })).toBeInTheDocument();
   });
 });

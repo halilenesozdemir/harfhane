@@ -1,16 +1,28 @@
 import fc from 'fast-check';
 import { describe, it, expect } from 'vitest';
 import { generateShareText } from './share';
+import type { ShareMode } from './share';
 import type { TileStatus } from './types';
 
 const NUM_RUNS = 500;
-// Mirrors the private constant in share.ts; evaluations.length is bounded to
-// the real game's guess limit.
 const MAX_GUESSES = 6;
-const EMOJI: Record<string, string> = { correct: '🟩', present: '🟨', absent: '⬜' };
-const toEmoji = (status: TileStatus): string => (status ? EMOJI[status]! : '⬜');
+const CORRECT = '🟢';
+const PRESENT = '🟡';
+const ABSENT = '⚪';
 
 const tileStatusArb: fc.Arbitrary<TileStatus> = fc.constantFrom('correct', 'present', 'absent', null);
+
+const modeArb: fc.Arbitrary<ShareMode> = fc.oneof(
+  fc.constant<ShareMode>({ type: 'unlimited' }),
+  fc
+    .tuple(fc.integer({ min: 2026, max: 2030 }), fc.integer({ min: 1, max: 12 }), fc.integer({ min: 1, max: 28 }))
+    .map(
+      ([year, month, day]): ShareMode => ({
+        type: 'daily',
+        date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      })
+    )
+);
 
 const gameArb = fc
   .integer({ min: 1, max: MAX_GUESSES })
@@ -24,89 +36,121 @@ const gameArb = fc
           maxLength: numGuesses,
         }),
         fc.boolean(),
-        fc.string({ minLength: 1, maxLength: 6 }),
-        fc.boolean()
+        modeArb,
+        fc.boolean(),
+        fc.nat({ max: 50 })
       )
     )
   );
 
-// Independently built expected text, mirroring share.ts's own construction
-// but without calling it, so a mutated header, emoji map, row order, row
-// count or footer is caught by plain string equality.
-const buildExpectedText = (
-  numGuesses: number,
-  evaluations: TileStatus[][],
-  isWon: boolean,
-  modeText: string,
-  hintUsed: boolean
-): string => {
-  const attemptText = isWon ? `${numGuesses}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
-  const hintSuffix = hintUsed ? ' · ipucu' : '';
-  const rows = evaluations.map((row) => row.map(toEmoji).join('')).join('\n');
-  return `Harfhane ${modeText} ${attemptText}${hintSuffix}\n\n${rows}\n\nhttps://harfhane.app`;
-};
+// Independently built expected grid line, mirroring share.ts's own construction but without
+// calling it, so a mutated circle character or a swapped status mapping is caught by plain
+// equality. Positional: each tile keeps its own index, unlike an aggregate count.
+function buildExpectedGridLine(row: TileStatus[]): string {
+  return row
+    .map((status) => {
+      if (status === 'correct') return CORRECT;
+      if (status === 'present') return PRESENT;
+      return ABSENT;
+    })
+    .join('');
+}
 
 describe('generateShareText property tests', () => {
-  it('should produce exactly the header, rows and footer the format intends, for any guess count, tile pattern and hint flag', () => {
+  it('should have exactly one line per guess plus 5 fixed lines (header, result, blank, blank, url)', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const actual = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
-        const expected = buildExpectedText(numGuesses, evaluations, isWon, modeText, hintUsed);
-        expect(actual).toBe(expected);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon);
+        expect(text.split('\n')).toHaveLength(numGuesses + 5);
       }),
       { numRuns: NUM_RUNS }
     );
   });
 
-  it('should have exactly one line per guess plus 4 fixed lines (header, blank, blank, URL)', () => {
+  it('should render every grid line with the exact positional circle for its row', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const text = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
-        expect(text.split('\n')).toHaveLength(numGuesses + 4);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon);
+        const gridLines = text.split('\n').slice(3, 3 + numGuesses);
+        const expected = evaluations.map(buildExpectedGridLine);
+        expect(gridLines).toEqual(expected);
       }),
       { numRuns: NUM_RUNS }
     );
   });
 
-  it('should show "n/6" when won and "X/6" when lost, matching guesses.length', () => {
+  it('should show "<n>/6" when won and "Bulamadım · 6/6" when lost', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText, hintUsed]) => {
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const text = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed });
-        const headerLine = text.split('\n')[0]!;
-        const attemptText = isWon ? `${numGuesses}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
-        if (hintUsed) {
-          expect(headerLine.endsWith(`${attemptText} · ipucu`)).toBe(true);
-        } else {
-          expect(headerLine.endsWith(attemptText)).toBe(true);
-        }
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon);
+        const resultLine = text.split('\n')[1]!.split(' · Seri')[0]!.split(' · İpucuyla')[0]!;
+        const expected = isWon ? `${numGuesses}/${MAX_GUESSES}` : `Bulamadım · ${MAX_GUESSES}/${MAX_GUESSES}`;
+        expect(resultLine).toBe(expected);
       }),
       { numRuns: NUM_RUNS }
     );
   });
 
-  it('should keep the emoji grid identical regardless of the hint flag', () => {
+  it('should keep the grid lines identical regardless of the hint flag or streak', () => {
     fc.assert(
-      fc.property(gameArb, ([numGuesses, , evaluations, isWon, modeText]) => {
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode, , streak]) => {
         const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
-        const withHint = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed: true });
-        const withoutHint = generateShareText(guesses, evaluations, modeText, isWon, { hintUsed: false });
-        const gridLines = (text: string): string[] => text.split('\n').slice(2, 2 + numGuesses);
+        const withHint = generateShareText(guesses, evaluations, wordLength, mode, isWon, { hintUsed: true, streak });
+        const withoutHint = generateShareText(guesses, evaluations, wordLength, mode, isWon, { hintUsed: false, streak });
+        const gridLines = (text: string): string[] => text.split('\n').slice(3, 3 + numGuesses);
         expect(gridLines(withHint)).toEqual(gridLines(withoutHint));
       }),
       { numRuns: NUM_RUNS }
     );
   });
 
-  it.each<[TileStatus[][], boolean, string]>([
-    [[['correct', 'correct', 'correct', 'correct', 'correct']], true, '🟩🟩🟩🟩🟩'],
-    [[['present', 'present', 'present', 'present', 'present']], true, '🟨🟨🟨🟨🟨'],
-    [[['absent', 'absent', 'absent', 'absent', 'absent']], true, '⬜⬜⬜⬜⬜'],
-  ])('should render %j exactly as %s, never swapping tile colors', (evaluations, isWon, expectedRow) => {
-    const text = generateShareText(['KELME'], evaluations, 1, isWon);
-    const rows = text.split('\n');
-    expect(rows[2]).toBe(expectedRow);
+  it('should only ever show a streak suffix on the second line when the mode is daily and the streak is positive', () => {
+    fc.assert(
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode, hintUsed, streak]) => {
+        const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon, { hintUsed, streak });
+        const secondLine = text.split('\n')[1]!;
+        const expectsStreak = mode.type === 'daily' && streak > 0;
+        expect(secondLine.includes('· Seri')).toBe(expectsStreak);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('should only ever show the hint suffix on the second line when hintUsed is true', () => {
+    fc.assert(
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode, hintUsed, streak]) => {
+        const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon, { hintUsed, streak });
+        const secondLine = text.split('\n')[1]!;
+        expect(secondLine.includes('İpucuyla')).toBe(hintUsed);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('should always end with the resolved share URL as the last line', () => {
+    fc.assert(
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode]) => {
+        const guesses = Array.from({ length: numGuesses }, (_, i) => `G${i}`);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon);
+        expect(text.split('\n').at(-1)).toBe('harfhane.app');
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+
+  it('should never contain a guess word anywhere in the generated text', () => {
+    fc.assert(
+      fc.property(gameArb, ([numGuesses, wordLength, evaluations, isWon, mode]) => {
+        const guesses = Array.from({ length: numGuesses }, (_, i) => `SOLUTION${i}`);
+        const text = generateShareText(guesses, evaluations, wordLength, mode, isWon);
+        for (const guess of guesses) expect(text).not.toContain(guess);
+      }),
+      { numRuns: NUM_RUNS }
+    );
   });
 });
