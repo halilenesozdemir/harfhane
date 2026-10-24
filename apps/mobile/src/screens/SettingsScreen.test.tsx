@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { themes } from '@harfhane/ui-tokens';
-import { Text } from 'react-native';
+import { Linking, Text } from 'react-native';
 import { SettingsScreen } from './SettingsScreen';
 import { useTheme } from '../ThemeProvider';
 import { renderWithTheme, flattenStyle } from '../test-utils/render-with-theme';
@@ -126,6 +126,14 @@ describe('SettingsScreen', () => {
     const hapticsRowText = screen.getByText('Titreşim');
     const row = flattenStyle(hapticsRowText.parent?.parent?.props.style);
     expect(row.borderTopWidth).toBe(1);
+  });
+
+  it('should open the published privacy page URL when the Gizlilik politikası row is pressed (007-AE1)', async () => {
+    const openURLSpy = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await renderWithTheme(<SettingsScreen onClose={() => undefined} />);
+    await fireEvent.press(screen.getByLabelText('Gizlilik politikası'));
+    expect(openURLSpy).toHaveBeenCalledWith('https://harfhane.app/gizlilik');
+    openURLSpy.mockRestore();
   });
 
   it('should disable the haptics switch until the stored value loads', async () => {
