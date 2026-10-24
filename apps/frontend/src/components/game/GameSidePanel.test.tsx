@@ -40,7 +40,7 @@ describe('GameSidePanel', () => {
     expect(screen.getByRole('button', { name: 'Günlük' })).not.toHaveAttribute('aria-current');
   });
 
-  it('shows Seri, Oynanan and Kazanma from the stats hook (012-AE... side content)', () => {
+  it('should show Seri, Oynanan and Kazanma from the stats hook when the side panel renders', () => {
     renderPanel('daily', dailyStats);
     expect(screen.getByText('Seri')).toBeInTheDocument();
     expect(screen.getByText('Oynanan')).toBeInTheDocument();
