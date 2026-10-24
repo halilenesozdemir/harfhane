@@ -1,5 +1,5 @@
 import type { HomeScreenMode } from '../screens/HomeScreen';
-import type { FeedbackPrefill } from '../lib/feedback-types';
+import type { FeedbackPrefill } from '../lib/api';
 import type { WordLength } from '../stats/stats';
 
 export type Route =

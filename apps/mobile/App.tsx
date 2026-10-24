@@ -22,7 +22,7 @@ import { StatsContainer } from './src/screens/StatsContainer';
 import { canGoBack, createInitialNavigationState, currentRoute, reduceNavigation } from './src/navigation/routes';
 import { useHardwareBackHandler } from './src/navigation/useHardwareBackHandler';
 import type { HomeScreenMode } from './src/screens/HomeScreen';
-import type { FeedbackPrefill } from './src/lib/feedback-types';
+import type { FeedbackPrefill } from './src/lib/api';
 import type { Route } from './src/navigation/routes';
 import type { WordLength } from './src/stats/stats';
 

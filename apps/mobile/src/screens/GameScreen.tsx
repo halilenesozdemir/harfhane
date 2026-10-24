@@ -16,7 +16,7 @@ import { useResultRecorder } from '../stats/useResultRecorder';
 import type { GameDependencies } from '../game/useGame';
 import type { UseHintResult } from '../game/useHint';
 import type { GameMode, GameSession } from '../game/game-session';
-import type { FeedbackPrefill } from '../lib/feedback-types';
+import type { FeedbackPrefill } from '../lib/api';
 import type { WordLength } from '../stats/stats';
 import type { ThemeColors } from '../theme';
 

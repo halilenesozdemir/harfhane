@@ -7,8 +7,7 @@ import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { TopBar } from '../ui/TopBar';
 import { FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING } from '../ui/layout';
-import type { ApiClient } from '../lib/api';
-import type { FeedbackPrefill } from '../lib/feedback-types';
+import type { ApiClient, FeedbackPrefill } from '../lib/api';
 
 export interface FeedbackScreenProps {
   readonly initialKind: 'general' | 'word_report';
