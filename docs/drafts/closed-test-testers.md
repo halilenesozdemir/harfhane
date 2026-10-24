@@ -14,7 +14,7 @@
 Selam,
 
 Harfhane adında bir Türkçe kelime oyunu üzerinde çalışıyorum (günlük bulmaca + sınırsız
-mod, Wordle benzeri ama Türkçe harflere uygun). Google Play'de "kapalı test" aşamasındayım
+mod, Türkçe harflere uygun). Google Play'de "kapalı test" aşamasındayım
 ve denemek isteyen birkaç kişiye ihtiyacım var.
 
 Katılmak için gereken tek şey bir Gmail hesabı (Play Store için gerekli). Aşağıdaki Google
@@ -23,8 +23,9 @@ Grup'a katıl: [GRUP LİNKİ] (veya bana Gmail adresini yaz, listeye ekleyeyim).
 Gruba eklendikten sonra sana bir Play Store linki geleceğinde, o linkten uygulamayı normal
 bir uygulama gibi indirip kurabilirsin.
 
-Ricam: Önümüzdeki 14 gün içinde en az 10 gün uygulamayı aç ve bir bulmaca çöz (günde 2-3
-dakika yeterli). Google'ın test süresini "aktif" sayması için düzenli açılması gerekiyor.
+Ricam: Google Grup'tan/testten 14 gün boyunca çıkmadan (opt-out etmeden) devam et — asıl şart bu.
+Ayrıca, gerçek geri bildirim için önümüzdeki 14 gün içinde ara sıra (günde 2-3 dakika yeterli)
+uygulamayı açıp bir bulmaca çözersen çok iyi olur.
 
 Bir şey bozuksa, kafan karışırsa veya önerin olursa bana doğrudan yaz — ekran görüntüsü
 atman çok yardımcı olur. Teşekkürler.
@@ -60,15 +61,20 @@ Nedenler:
 
 ### Tester sayısı hedefi
 
-**Hedef: 15-20 tester** (Play Console'un asgari şartı 12'dir, ama pay bırakılmalı).
+**Hedef: 18-20 tester** (Play Console'un asgari şartı 12'dir, pay bırakılmalı).
 
-Gerekçe: bir testerin günlük açma serisi kesilirse (14 günlük pencerede düzenli
-açmazsa), bazı anlatımlara göre o testerin "aktif gün" sayacı sıfırlanabilir veya o tester
-asgari 12 sayısına dahil edilmeyebilir — **bu, doğrulanmamış, üçüncü taraf bir iddiadır**
-(resmi Google Play dokümantasyonunda bu "sıfırlama" davranışı bu ayrıntı düzeyinde teyit
-edilmemiştir); temkinli davranmak için 12'nin üzerinde pay bırakmak düşük maliyetli bir
-önlemdir. [SAHİP: lansmandan önce Play Console'un güncel "kapalı test" kurallarını resmi
-yardım sayfasından teyit edin.]
+Gerekçe — resmi kural (Google Play Console yardım sayfası, kontrol edildi 2026-10-24,
+https://support.google.com/googleplay/android-developer/answer/14151465): production erişimi
+için başvuru anında en az 12 tester kapalı teste kayıtlı olmalı ve bu testerler **önceki 14 gün
+boyunca sürekli** kayıtlı kalmış olmalı. 14 günden az süreyle test edip teste ara veren testerler
+asgari şarta sayılmaz; bir tester teste ara verip sonra yeniden katılırsa, sayılabilmesi için
+14 günün **kesintisiz (ardışık)** olması gerekir — yani ara veren bir tester sayaç sıfırlanmış
+gibi yeniden 14 gün boyunca kesintisiz kalmalıdır. 18-20 hedefi bu kesintisizlik riskine karşı
+(birkaç testerin pencere içinde ara vermesi ihtimaline) pay bırakır.
+
+Not: testerin pencere boyunca uygulamayı **gerçekten açıp oynaması** resmi "aktif sayılma"
+şartı değildir (şart sadece opt-in'in kesintisiz kalmasıdır), ama geri bildirim kalitesi için
+hâlâ önerilir — bkz. aşağıdaki hatırlatma planı ve geri bildirim formu.
 
 ### Gün gün hatırlatma planı (14 günlük pencere)
 
@@ -88,3 +94,39 @@ yardım sayfasından teyit edin.]
 
 [SAHİP: Play Console'da gerçek "aktif tester" ve "gün" sayaçlarının nasıl göründüğünü
 kapalı test başladıktan sonra teyit edin; bu plan varsayımsaldır.]
+
+### Kapalı test geri bildirim formu
+
+14 günlük pencere boyunca üç kez (gün 3, 7 ve 12) testerlere gönderilecek kısa bir Google
+Form, aşağıdaki 4 soruyu içerir:
+
+1. Bu hafta hangi özellikleri kullandın? (günlük bulmaca, sınırsız mod, tema değiştirme, paylaşım)
+2. Karşılaştığın bir hata veya bozukluk var mı? Varsa açıklar mısın?
+3. Garip veya tanımadığın bir kelimeyle karşılaştın mı? Hangi kelime(ler)?
+4. Uygulamayı yarın da açar mısın? (Evet / Hayır / Belki — neden?)
+
+Bu dört soru, production erişimi anketinin ("About your closed test" bölümü) istediği bilgiyi
+besler (Google Play Console yardım sayfası, kontrol edildi 2026-10-24,
+https://support.google.com/googleplay/android-developer/answer/14151465):
+
+- **Bölüm 1 — Kapalı test hakkında:** tester toplamanın ne kadar kolay/zor olduğu, tester
+  katılımı (hangi özellikler kullanıldı, davranış üretim kullanıcısına ne kadar benziyor) ve
+  alınan geri bildirimin özeti ile nasıl toplandığı. → form soruları 1 ve 4 bu bölümü besler.
+- **Bölüm 2 — Uygulama/oyun hakkında:** hedef kitle, uygulamanın değer önerisi/benzersizliği,
+  ilk yıl tahmini kurulum aralığı. → bu doküman dışında owner tarafından doldurulur.
+- **Bölüm 3 — Production hazırlığı hakkında:** kapalı testten öğrenilenlere göre yapılan
+  değişiklikler, production'a hazır olunduğuna nasıl karar verildiği. → form soruları 2 ve 3,
+  aşağıdaki "değişiklik günlüğü" ile birlikte bu bölümü besler.
+
+### Değişiklik günlüğü şablonu
+
+Her form turundan sonra (gün 3, 7, 12) owner tarafından doldurulacak, production erişimi
+anketinin 3. bölümüne kaynak olacak kısa günlük:
+
+```
+## [Tarih] — Gün [3/7/12] geri bildirim turu
+
+- Alınan geri bildirim özeti:
+- Yapılan değişiklik(ler) (varsa commit/PR linki):
+- Değişiklik yapılmadıysa neden (örn. düşük öncelik, tek kişilik rapor):
+```
