@@ -63,6 +63,26 @@ const PrivacyPage = (): React.JSX.Element => {
                 veritabanına yazılmaz, Worker&apos;ın geçici belleğinde Worker yeniden başlayana kadar kalabilir.
               </li>
               <li>
+                Uygulama içinden geri bildirim gönderdiğinizde veya oyun sonunda bir kelimeyi bildirdiğinizde (
+                <code>POST /api/feedback</code>), yazdığınız mesajı (en fazla 1000 karakter) ve yazmayı seçtiğiniz
+                takdirde isteğe bağlı bir iletişim bilgisini (en fazla 200 karakter) alırız; ayrıca geri bildirim
+                türünü (genel geri bildirim veya kelime bildirimi), kullandığınız platformu (web veya Android) ve
+                uygulama sürümünüzü kaydederiz. Bir kelime bildiriminde bunlara ek olarak oyun modu, kelime uzunluğu,
+                bulmaca tarihi ve bildirdiğiniz kelime de kaydedilir. Bu formda IP adresiniz veya herhangi bir cihaz
+                kimliği kaydedilmez.
+              </li>
+              <li>
+                Geri bildirim isteklerini (<code>POST /api/feedback</code>) kötüye kullanıma karşı ayrıca sınırlarız:
+                aynı IP adresinden gelen istekler, yukarıdaki istek sınırlama ile aynı yöntemle (sunucu belleğinde,
+                veritabanına yazılmadan) ama daha uzun bir pencerede — on dakikada en fazla 5 istek — sayılır.
+              </li>
+              <li>
+                Gönderdiğiniz geri bildirim, Cloudflare D1 veritabanımızdaki <code>feedback</code> tablosunda
+                saklanır ve bildirimi görebilmemiz için e-posta gönderim sağlayıcımız Resend aracılığıyla
+                destek@harfhane.app adresine iletilir; Resend bu e-postayı göndermemize aracılık eden bir hizmet
+                sağlayıcıdır (veri işleyen), geri bildiriminizi kendi amaçları için kullanmaz.
+              </li>
+              <li>
                 Bu istekler ve web sayfasının statik dosyaları, barınma sağlayıcımız Cloudflare&apos;in altyapısından
                 (Workers ve Pages) geçer; Cloudflare da bu sırada IP adresinizi kendi standart sunucu
                 günlüklerinde işleyebilir. Bu günlüklerin tutulup tutulmadığı ve saklama süresi
@@ -107,6 +127,12 @@ const PrivacyPage = (): React.JSX.Element => {
                 oyun hizmetinin sağlanması için gerekli olması).
               </li>
               <li>İstek sınırlama (rate limiting) için IP adresinin geçici işlenmesi: meşru menfaat (KVKK m.5/2-f).</li>
+              <li>
+                Geri bildirim veya kelime bildirimi gönderme: KVKK m.5/1 (açık rızanız) — geri bildirim formunu
+                doldurup göndermeniz, yazdığınız mesajın bu amaçla (okunması, değerlendirilmesi ve varsa
+                yanıtlanması) işlenmesine yönelik açık rızanız anlamına gelir; bu alan isteğe bağlıdır, doldurmak
+                zorunda değilsiniz.
+              </li>
             </ul>
           </section>
 
@@ -132,6 +158,11 @@ const PrivacyPage = (): React.JSX.Element => {
                 ayarına bağlıdır; Harfhane&apos;nin Worker yapılandırmasında ayrıca bir günlük toplama (log push)
                 veya gözlemlenebilirlik ayarı etkin değildir.
               </li>
+              <li>
+                Geri bildirim ve kelime bildirimleri: değerlendirilip işlendikten sonra makul bir süre içinde
+                silinir; dilediğiniz zaman destek@harfhane.app adresine yazarak gönderdiğiniz bir geri bildirimin
+                silinmesini talep edebilirsiniz.
+              </li>
             </ul>
           </section>
 
@@ -144,6 +175,10 @@ const PrivacyPage = (): React.JSX.Element => {
               indirirseniz Google, indirme/çökme verilerini kendi politikası kapsamında işler. Bu nedenle,
               altyapı sağlayıcımız Cloudflare ve Google Play, hizmeti sağlamak amacıyla verilerinizi Türkiye
               dışında da işleyebilir.
+            </p>
+            <p>
+              Geri bildirim gönderdiğinizde, e-posta gönderim sağlayıcımız Resend de bu e-postayı iletmek amacıyla
+              verilerinizi Türkiye dışında işleyebilir.
             </p>
             <p>Verileriniz satılmaz veya pazarlama amacıyla üçüncü taraflarla paylaşılmaz.</p>
           </section>
