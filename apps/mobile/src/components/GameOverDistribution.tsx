@@ -6,6 +6,8 @@ import type { KeyValueStore } from '../game/game-storage';
 import type { GameMode } from '../game/game-session';
 import type { WordLength } from '../stats/stats';
 import { loadDailyStats, loadUnlimitedStats, recordDailyResult } from '../stats/stats';
+import { getDisplayedStreak } from '../home/today-status';
+import { getTodayString } from '@harfhane/shared';
 import type { FinishedGameStatus } from './gameOverMessages';
 
 const DISTRIBUTION_LABEL = 'Tahmin dağılımı';
@@ -74,7 +76,9 @@ export function useDisplayStreak(
     if (recordedStreak !== null || mode !== 'daily') return undefined;
     let isCurrent = true;
     loadDailyStats(store, wordLength)
-      .then((stats) => stats.currentStreak)
+      // A restored, already-finished game may be days old: show the streak as home does
+      // (reset after a missed day), not the stored value that only resets on the next result.
+      .then((stats) => getDisplayedStreak(stats, getTodayString()))
       .catch(() => null)
       .then((value) => isCurrent && setLoadedStreak(value));
     return () => {

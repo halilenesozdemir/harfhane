@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import { getTodayString } from '@harfhane/shared';
 import { Distribution, useDisplayDistribution, useDisplayStreak } from './GameOverDistribution';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
@@ -192,9 +193,16 @@ describe('useDisplayStreak', () => {
 
   it('should fall back to the stored daily streak when nothing was just recorded (a restored, already-finished game)', async () => {
     const store = createMemoryStore();
-    await saveDailyStats(store, 5, { ...createInitialDailyStats(), currentStreak: 7 });
+    await saveDailyStats(store, 5, { ...createInitialDailyStats(), currentStreak: 7, lastPlayedDate: getTodayString() });
     await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={null} />);
     await waitFor(() => expect(screen.getByTestId('streak-value')).toHaveTextContent('7'));
+  });
+
+  it('should show a streak of 0 when the stored streak is stale because a day was missed', async () => {
+    const store = createMemoryStore();
+    await saveDailyStats(store, 5, { ...createInitialDailyStats(), currentStreak: 7, lastPlayedDate: '2020-01-01' });
+    await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={null} />);
+    await waitFor(() => expect(screen.getByTestId('streak-value')).toHaveTextContent('0'));
   });
 
   it('should always be null for unlimited, even when a streak value was passed in', async () => {
