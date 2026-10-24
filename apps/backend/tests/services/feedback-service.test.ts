@@ -12,6 +12,9 @@ const { insertFeedbackMock, findScheduledWordMock, sendFeedbackEmailMock } = vi.
 
 vi.mock('../../src/repositories/feedback-repository', () => ({
   insertFeedback: insertFeedbackMock,
+  listFeedback: vi.fn(),
+  updateFeedbackStatus: vi.fn(),
+  getFeedbackById: vi.fn(),
   findScheduledWord: findScheduledWordMock,
 }));
 

@@ -10,6 +10,7 @@ const MAX_CONTACT_LENGTH = 200;
 const APP_VERSION_PATTERN = /^[0-9A-Za-z.+-]{1,50}$/;
 
 const kindSchema = z.enum(['general', 'word_report']);
+const statusSchema = z.enum(['new', 'seen', 'done']);
 
 const puzzleDateField = z
   .string()
@@ -68,6 +69,15 @@ export const createFeedbackSchema = z
 
 export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;
 
-// listFeedbackQuerySchema/updateFeedbackStatusSchema (admin triage) ship in
-// the stacked follow-up PR alongside the admin routes that are their only
-// caller.
+export const listFeedbackQuerySchema = z.object({ status: statusSchema.optional() });
+export const updateFeedbackStatusSchema = z.object({ status: statusSchema });
+
+// PATCH /feedback/:id — reject anything that is not a positive integer
+// before it reaches the repository; Number("not-a-number") is NaN, which a
+// D1 bind silently coerces away instead of erroring.
+export const feedbackIdParamSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[1-9]\d*$/, 'id must be a positive integer')
+    .transform(Number),
+});
