@@ -146,6 +146,17 @@ jobs:
             exit 1
           fi
 
+          # The health check above only proves the Worker is up, not that it can reach
+          # D1. Today's daily word always exists once the schedule is healthy
+          # (Invariant 10), so a non-200 here means the deploy broke the D1 binding or
+          # the query path, which /api/health alone would never catch.
+          DAILY_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "https://api.harfhane.app/api/words/daily")
+          echo "GET /api/words/daily status: $DAILY_STATUS"
+          if [ "$DAILY_STATUS" != "200" ]; then
+            echo "::error::Smoke test failed: /api/words/daily returned $DAILY_STATUS, expected 200"
+            exit 1
+          fi
+
       - name: Roll back failed deploy
         if: failure() && (steps.deploy.conclusion == 'failure' || steps.smoke.conclusion == 'failure')
         working-directory: apps/backend
