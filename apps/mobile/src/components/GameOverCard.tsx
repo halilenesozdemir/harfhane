@@ -39,7 +39,7 @@ export interface GameOverCardProps {
   // see useDisplayDistribution's doc comment for why this must win over a storage read.
   readonly recordedDistribution?: readonly number[] | null;
   // Whether a hint was revealed this game (mobile's own useHint state); threaded into
-  // generateShareText's footer so it reads "İpucuyla"/"İpucusuz", same as web.
+  // generateShareText so the result line gets " · İpucuyla" when a hint was used, same as web.
   readonly hintUsed?: boolean;
   // useResultRecorder's own just-recorded daily streak — see useDisplayStreak's doc comment.
   readonly streak?: number | null;
