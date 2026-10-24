@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { env, SELF } from 'cloudflare:test';
 import { applySchema, seedTestData } from '../helpers/db';
+import { GAME_MAX_HITS } from '../../src/middleware/rate-limiter';
 
 beforeAll(async () => {
   await applySchema(env.DB);
@@ -138,6 +139,38 @@ describe('POST /api/words/validate', () => {
     expect(res.status).toBe(422);
     const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('VALIDATION_ERROR');
+  });
+});
+
+describe('rate limiting on POST /api/words/validate', () => {
+  function validateRequest(ip: string): Promise<Response> {
+    return SELF.fetch('http://example.com/api/words/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
+      body: JSON.stringify({ word: 'KİTAP' }),
+    });
+  }
+
+  it('should allow exactly GAME_MAX_HITS requests within the window when counted once per hit', async () => {
+    const ip = '203.0.113.10';
+    let lastStatus = 0;
+    for (let i = 0; i < GAME_MAX_HITS; i++) {
+      const res = await validateRequest(ip);
+      lastStatus = res.status;
+    }
+    // If `/validate` were still rate-limited by two stacked middlewares (index.ts's
+    // `/api/words/*` plus the route's own), each request would count twice and this
+    // request would already be the 429 at half the budget.
+    expect(lastStatus).toBe(200);
+  });
+
+  it('should rate limit the request after GAME_MAX_HITS within the window', async () => {
+    const ip = '203.0.113.11';
+    for (let i = 0; i < GAME_MAX_HITS; i++) {
+      await validateRequest(ip);
+    }
+    const res = await validateRequest(ip);
+    expect(res.status).toBe(429);
   });
 });
 
