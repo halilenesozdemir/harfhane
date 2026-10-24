@@ -29,7 +29,7 @@ every deploy workflow lists its own file in `paths` and keeps `workflow_dispatch
   live before this run (captured in a "Capture current deployed version" step).
 - **`.github/workflows/deploy-frontend.yml`** — triggers on push to `main` touching
   `apps/frontend/**`, `packages/shared/**`, `packages/ui-tokens/**`, `pnpm-lock.yaml` or its own
-  file. Builds the frontend (`VITE_API_URL` from the `vars` environment, `VITE_BUILD_SHA` set to
+  file. Builds the frontend (`VITE_API_URL` from the repository Actions variable `vars.VITE_API_URL`, `VITE_BUILD_SHA` set to
   `$GITHUB_SHA`) and deploys with `wrangler pages deploy ../frontend/dist --project-name harfhane`.
   Smoke test: polls `https://harfhane.app/` until the page's `<meta name="build" content="...">`
   marker matches `$GITHUB_SHA` and the response contains `id="root"`. No automatic rollback —
@@ -76,10 +76,10 @@ doc without updating that file too):
 | `ADMIN_ALERT_EMAIL` | optional | `wrangler secret put ADMIN_ALERT_EMAIL` | Recipient for the daily schedule-health alert (Invariant 10); also the feedback-email fallback if `FEEDBACK_EMAIL` is unset. |
 | `FEEDBACK_EMAIL` | optional | `wrangler secret put FEEDBACK_EMAIL` | Recipient for in-app feedback notifications; falls back to `ADMIN_ALERT_EMAIL` when unset. |
 | `GIT_SHA` | set by CI | `--var GIT_SHA:"$GITHUB_SHA"` on `wrangler deploy` | Exposed at `/api/health` so the deploy smoke test can confirm the live version. |
-| `PLAYABLE_WORD_LENGTHS` | yes | `[vars]` in `apps/backend/wrangler.toml` (currently `"5"`) | Comma-separated word lengths actually playable; a non-empty subset of the always-scheduled 4/5/6 (`apps/backend/src/constants/schedule.ts`). Not a secret — plain `[vars]`, not `wrangler secret put`. |
+| `PLAYABLE_WORD_LENGTHS` | no (optional in `env.ts`; set to `"5"` today) | `[vars]` in `apps/backend/wrangler.toml` (currently `"5"`) | Comma-separated word lengths actually playable; a non-empty subset of the always-scheduled 4/5/6 (`apps/backend/src/constants/schedule.ts`). Not a secret — plain `[vars]`, not `wrangler secret put`. |
 
-Frontend: `VITE_API_URL` (production only, injected by `deploy-frontend.yml` from the `vars`
-GitHub Actions environment) and `VITE_BUILD_SHA` (`$GITHUB_SHA`, read by the smoke test's `<meta
+Frontend: `VITE_API_URL` (production only, injected by `deploy-frontend.yml` from the repository
+Actions variable `vars.VITE_API_URL`) and `VITE_BUILD_SHA` (`$GITHUB_SHA`, read by the smoke test's `<meta
 name="build">` tag). Local dev needs neither — the Vite proxy sends `/api` to
 `localhost:8787` (`apps/frontend/vite.config.ts`).
 
@@ -99,11 +99,12 @@ Only needed if `workflow_dispatch` isn't available:
 # Backend
 cd apps/backend && CLOUDFLARE_API_TOKEN=... pnpm exec wrangler deploy
 
-# Frontend
-cd apps/frontend
-VITE_API_URL=https://api.harfhane.app/api pnpm run build
-CLOUDFLARE_API_TOKEN=... pnpm exec wrangler pages deploy dist --project-name harfhane
+# Frontend (wrangler is a dependency of apps/backend, not apps/frontend — same as CI)
+pnpm --filter @harfhane/shared run build
+VITE_API_URL=https://api.harfhane.app/api pnpm --filter @harfhane/frontend run build
+cd apps/backend && CLOUDFLARE_API_TOKEN=... pnpm exec wrangler pages deploy ../frontend/dist --project-name harfhane --branch main
 ```
+Without `--branch main`, running this from any other local branch creates a preview deploy, not production.
 
 ## Post-deploy checks
 
