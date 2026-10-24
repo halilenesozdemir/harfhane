@@ -118,7 +118,7 @@ const HomePage = ({ onSelectMode }: HomePageProps): React.JSX.Element => {
       </div>
 
       <footer className="w-full max-w-[1200px] px-4 pb-6 sm:px-6 lg:px-8 text-sm text-text-secondary">
-        Hesap yok. Reklam yok. İlerlemen bu cihazda kalır.
+        Hesap yok. Reklam yok. İlerlemen yalnızca bu cihazda saklanır.
       </footer>
 
       <HowToPlayModal isOpen={showHelp} onClose={() => { localStorage.setItem(HAS_SEEN_HELP_KEY, JSON.stringify(true)); setShowHelp(false); }} />

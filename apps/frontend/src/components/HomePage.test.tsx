@@ -85,7 +85,7 @@ describe('HomePage', () => {
   it('should show the footer privacy line, with the Gizlilik link living in the Settings modal instead of the footer', () => {
     renderHomePage({ onSelectMode: vi.fn() });
 
-    expect(screen.getByText('Hesap yok. Reklam yok. İlerlemen bu cihazda kalır.')).toBeInTheDocument();
+    expect(screen.getByText('Hesap yok. Reklam yok. İlerlemen yalnızca bu cihazda saklanır.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Gizlilik/ })).not.toBeInTheDocument();
   });
 
