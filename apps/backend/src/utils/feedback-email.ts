@@ -13,10 +13,10 @@ function buildFeedbackEmailHtml(feedback: FeedbackRow): string {
   const title = feedback.kind === 'word_report' ? 'Kelime bildirimi' : 'Geri bildirim';
   const details = [
     feedback.kind === 'word_report'
-      ? `Mod: ${feedback.mode} · Uzunluk: ${feedback.word_length} · Tarih: ${feedback.puzzle_date} · Kelime: ${feedback.reported_word}`
+      ? `Mod: ${feedback.mode} · Uzunluk: ${feedback.word_length} · Tarih: ${feedback.puzzle_date} · Kelime: ${escapeHtml(feedback.reported_word ?? '-')}`
       : null,
     feedback.contact ? `İletişim: ${escapeHtml(feedback.contact)}` : null,
-    `Platform: ${feedback.app_platform} · Sürüm: ${feedback.app_version ?? '-'}`,
+    `Platform: ${feedback.app_platform} · Sürüm: ${escapeHtml(feedback.app_version ?? '-')}`,
   ].filter(Boolean);
 
   return `<!DOCTYPE html><html lang="tr"><body style="font-family:Arial,sans-serif;">
