@@ -129,6 +129,13 @@ describe('GameOverModal', () => {
     });
   });
 
+  it('should call onGoHome when "Ana sayfaya dön" is clicked', () => {
+    const onGoHome = vi.fn();
+    renderModal({ onGoHome });
+    fireEvent.click(screen.getByText('Ana sayfaya dön'));
+    expect(onGoHome).toHaveBeenCalledTimes(1);
+  });
+
   describe('game-over sheet', () => {
     afterEach(() => {
       window.innerWidth = 1024;

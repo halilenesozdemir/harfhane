@@ -44,9 +44,10 @@ describe('Modal', () => {
   it('should trap Tab focus inside the panel, wrapping from the last control to the first', () => {
     renderModal(vi.fn(), 'sheet');
     const first = screen.getByText('First');
-    const second = screen.getByText('Second');
-    second.focus();
-    expect(second).toHaveFocus();
+    // The sheet's own close button is the panel's last focusable control.
+    const close = screen.getByLabelText('Kapat');
+    close.focus();
+    expect(close).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(first).toHaveFocus();
   });
@@ -54,11 +55,10 @@ describe('Modal', () => {
   it('should trap Shift+Tab focus inside the panel, wrapping from the first control to the last', () => {
     renderModal(vi.fn(), 'sheet');
     const first = screen.getByText('First');
-    const second = screen.getByText('Second');
     first.focus();
     expect(first).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
-    expect(second).toHaveFocus();
+    expect(screen.getByLabelText('Kapat')).toHaveFocus();
   });
 
   it('should return focus to the trigger button once the modal closes', () => {
@@ -74,10 +74,16 @@ describe('Modal', () => {
     expect(trigger).toHaveFocus();
   });
 
-  it('should render a grab handle and no header for the sheet variant', () => {
+  it('should render no header title for the sheet variant', () => {
     renderModal(vi.fn(), 'sheet');
     expect(screen.queryByText('Test modal')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Kapat')).not.toBeInTheDocument();
+  });
+
+  it('should close the sheet variant from its visible Kapat button', () => {
+    const onClose = vi.fn();
+    renderModal(onClose, 'sheet');
+    fireEvent.click(screen.getByLabelText('Kapat'));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('should render a visible header and title for the default dialog variant', () => {
