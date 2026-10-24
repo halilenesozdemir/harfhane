@@ -130,16 +130,14 @@ export function AppRoutes(): React.JSX.Element {
         <Routes>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/gizlilik" element={<PrivacyPage />} />
-          <Route path="/lists" element={<Navigate to="/" replace />} />
-          <Route path="/play/:slug" element={<Navigate to="/" replace />} />
-          <Route path="/c/:wordId" element={<Navigate to="/" replace />} />
           <Route path="/daily" element={<GameRoute mode="daily" />} />
           <Route path="/daily/:length" element={<GameRoute mode="daily" />} />
           <Route path="/unlimited" element={<GameRoute mode="unlimited" />} />
           <Route path="/unlimited/:length" element={<GameRoute mode="unlimited" />} />
-          <Route path="/tournament" element={<Navigate to="/" replace />} />
-          <Route path="/discuss" element={<Navigate to="/" replace />} />
-          <Route path="/sifre-sifirla" element={<Navigate to="/" replace />} />
+          {/* Removed-feature paths (/lists, /play/:slug, /c/:wordId, /tournament,
+              /discuss, /sifre-sifirla) no longer have their own Route: the edge's
+              301s in public/_redirects handle them for crawlers and inbound links,
+              and the catch-all below sends anything else home client-side. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
