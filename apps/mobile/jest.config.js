@@ -1,5 +1,11 @@
+// Component tests render through the theme provider, fonts and Animated; under the full
+// parallel `pnpm test` load several files have exceeded Jest's 5 s default while passing
+// alone (GameOverCard in #162/#163, Button in #167/#169). Matches the per-test value #164 used.
+const TEST_TIMEOUT_MS = 15_000;
+
 module.exports = {
   preset: 'jest-expo',
+  testTimeout: TEST_TIMEOUT_MS,
   testMatch: ['<rootDir>/src/**/*.test.tsx', '<rootDir>/App.test.tsx'],
   transformIgnorePatterns: [
     'node_modules/(?!.*(react-native|@react-native|expo|@expo|@react-native-async-storage))',

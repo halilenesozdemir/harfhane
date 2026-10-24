@@ -9,6 +9,7 @@ import { AppText } from '../ui/Typography';
 import { DISTRIBUTION_COUNT_MAX_FONT_SCALE, DISTRIBUTION_COUNT_WIDTH, FONT_SIZE, ICON_SIZE, RADIUS, SCREEN_PADDING, SPACING, TOUCH_TARGET } from '../ui/layout';
 import { getDisplayedStreak } from '../home/today-status';
 import type { DailyStats, UnlimitedStats, WordLength } from '../stats/stats';
+import { winPercentage } from '../stats/win-percentage';
 
 export type StatsMode = 'daily' | 'unlimited';
 
@@ -44,11 +45,6 @@ const MODE_OPTIONS: readonly ModeOption[] = [
   { value: 'daily', label: 'Günlük' },
   { value: 'unlimited', label: 'Sınırsız' },
 ];
-
-function winPercentage(stats: DailyStats | UnlimitedStats): number {
-  if (stats.gamesPlayed === 0) return 0;
-  return Math.round((stats.gamesWon / stats.gamesPlayed) * PERCENT_MULTIPLIER);
-}
 
 function isDailyStats(stats: DailyStats | UnlimitedStats): stats is DailyStats {
   return 'currentStreak' in stats;

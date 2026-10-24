@@ -47,8 +47,4 @@ export default defineConfig([
     },
     rules: { 'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }] },
   },
-  {
-    files: [`${FRONTEND}/public/push-handler.js`],
-    languageOptions: { globals: globals.serviceworker },
-  },
 ])

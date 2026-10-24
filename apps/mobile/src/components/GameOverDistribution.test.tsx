@@ -1,5 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react-native';
-import { Distribution, useDisplayDistribution } from './GameOverDistribution';
+import { Text } from 'react-native';
+import { getTodayString } from '@harfhane/shared';
+import { Distribution, useDisplayDistribution, useDisplayStreak } from './GameOverDistribution';
 import { createMemoryStore, flattenStyle, renderWithTheme } from '../test-utils/render-with-theme';
 import { getThemeColors } from '../theme';
 import { saveDailyStats, saveUnlimitedStats, createInitialDailyStats, createInitialUnlimitedStats } from '../stats/stats';
@@ -167,5 +169,51 @@ describe('GameOverDistribution', () => {
     const filledRowCount = flattenStyle(screen.getByTestId('gameover-distribution-2-count').props.style);
     expect(emptyRowCount.width).toBe(filledRowCount.width);
     expect(screen.getByTestId('gameover-distribution-1-count', { includeHiddenElements: true })).toHaveTextContent('');
+  });
+});
+
+interface StreakHarnessProps {
+  readonly store: KeyValueStore;
+  readonly mode: GameMode;
+  readonly wordLength: WordLength;
+  readonly recordedStreak: number | null;
+}
+
+function StreakHarness({ store, mode, wordLength, recordedStreak }: StreakHarnessProps) {
+  const streak = useDisplayStreak(store, mode, wordLength, recordedStreak);
+  return <Text testID="streak-value">{streak === null ? 'null' : String(streak)}</Text>;
+}
+
+describe('useDisplayStreak', () => {
+  it('should use the recorded streak directly when one was just recorded, with no storage read', async () => {
+    const store = createMemoryStore();
+    await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={4} />);
+    expect(screen.getByTestId('streak-value')).toHaveTextContent('4');
+  });
+
+  it('should fall back to the stored daily streak when nothing was just recorded (a restored, already-finished game)', async () => {
+    const store = createMemoryStore();
+    await saveDailyStats(store, 5, { ...createInitialDailyStats(), currentStreak: 7, lastPlayedDate: getTodayString() });
+    await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={null} />);
+    await waitFor(() => expect(screen.getByTestId('streak-value')).toHaveTextContent('7'));
+  });
+
+  it('should show a streak of 0 when the stored streak is stale because a day was missed', async () => {
+    const store = createMemoryStore();
+    await saveDailyStats(store, 5, { ...createInitialDailyStats(), currentStreak: 7, lastPlayedDate: '2020-01-01' });
+    await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={null} />);
+    await waitFor(() => expect(screen.getByTestId('streak-value')).toHaveTextContent('0'));
+  });
+
+  it('should always be null for unlimited, even when a streak value was passed in', async () => {
+    const store = createMemoryStore();
+    await renderWithTheme(<StreakHarness store={store} mode="unlimited" wordLength={5} recordedStreak={9} />);
+    expect(screen.getByTestId('streak-value')).toHaveTextContent('null');
+  });
+
+  it('should load a zero stored streak as 0, not null, once the storage read resolves', async () => {
+    const store = createMemoryStore();
+    await renderWithTheme(<StreakHarness store={store} mode="daily" wordLength={5} recordedStreak={null} />);
+    await waitFor(() => expect(screen.getByTestId('streak-value')).toHaveTextContent('0'));
   });
 });

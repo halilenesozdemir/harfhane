@@ -125,6 +125,48 @@ describe('useResultRecorder', () => {
     expect(result.current.justRecordedDistribution).toEqual([1, 0, 0, 0, 0, 0]);
   });
 
+  it('should expose the just-recorded streak once a daily win resolves', async () => {
+    const store = createMemoryStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', []) } },
+    );
+    expect(result.current.justRecordedStreak).toBeNull();
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedStreak).toBe(1);
+  });
+
+  it('should always expose a null streak for unlimited (it has no streak concept)', async () => {
+    const store = createMemoryStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'unlimited', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', [], null) } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM'], null) });
+    await flushPendingWrites();
+
+    expect(result.current.justRecordedStreak).toBeNull();
+  });
+
+  it('should clear the just-recorded streak once a new game starts loading', async () => {
+    const store = createMemoryStore();
+    const { result, rerender } = await renderHook(
+      ({ session }: { session: GameSession }) => useResultRecorder({ store, mode: 'daily', wordLength: 5, session, today }),
+      { initialProps: { session: buildSession('ready', 'playing', []) } },
+    );
+
+    await rerender({ session: buildSession('ready', 'won', ['KALEM']) });
+    await flushPendingWrites();
+    expect(result.current.justRecordedStreak).toBe(1);
+
+    await rerender({ session: buildSession('loading', 'playing', []) });
+    expect(result.current.justRecordedStreak).toBeNull();
+  });
+
   it('should clear the just-recorded distribution once a new game starts loading (B2)', async () => {
     const store = createMemoryStore();
     const { result, rerender } = await renderHook(

@@ -3,3 +3,6 @@ node_modules/
 dist/
 android/
 ios/
+
+# Google Play service account key for eas submit; never commit it
+google-service-account*.json

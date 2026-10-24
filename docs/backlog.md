@@ -89,6 +89,8 @@ word scheduled in the future, refuse activating a `rejected` word).
 - Applying it to the remote `harfhane` database needs explicit owner approval (Invariant 4). Runbook:
   `docs/runbooks/apply-0003-drop-removed-features.md` (backup + Time Travel bookmark, remote read-only
   pre-checks, a local rehearsal, the remote apply with smoke queries, and the rollback path).
+- Applied to remote `harfhane` on 2026-10-24 with owner approval (Invariant 4); pre-check users=0,
+  post-check 4 triggers, words=346, seq unchanged.
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.
@@ -145,7 +147,6 @@ The web app carries code from many experiments; removed features such as challen
 - `USAGE.md`: a Claude Code usage guide for the old multi-agent setup in `AGENTS.md`. It overlaps with the owner's global config.
   - Recommendation: fold the still-valid parts into `AGENTS.md`, then archive.
 - `PWA_TEST.md`: still relevant while the web PWA ships. Keep.
-- `DEPLOYMENT.md`: update the database section at cutover (`harfhane` and `db/migrations`).
 - `SECURITY.md`: keep.
 - `LEGACY_TEST_GUIDE.md`: untracked and owned by the owner; not touched.
 
@@ -216,12 +217,6 @@ and already removed end to end in #54.
   keyboard; `index.html:7` disables zoom (`user-scalable=no`, WCAG 1.4.4); guesses and results are not
   announced to screen readers (no `aria-live` on the grid); admin components are eagerly imported into the
   player bundle (`App.tsx`); `/admin` lacks `noindex`.
-- **Sitemap still lists hidden lengths.** `apps/frontend/scripts/generate-sitemap.mjs`'s `STATIC_ROUTES`
-  hard-codes `/daily/4`, `/daily/5` and `/daily/6` regardless of `PLAYABLE_WORD_LENGTHS` (Plan 008 R1); with
-  only 5 playable, the sitemap still advertises `/daily/4`/`/daily/6` to crawlers even though the app
-  redirects them away. Generate the sitemap's daily routes from the backend's playable lengths (or drop the
-  non-playable ones) once this is worth a build-time fetch.
-
 ## Plan 008 U2/U3 follow-ups (playable lengths, 2026-10-06)
 - **Lengths refresh only on cold start.** Both `apps/frontend/src/hooks/usePlayableLengths.ts`
   (`staleTime: Infinity`) and `apps/mobile/src/lib/playable-lengths.ts` (`usePlayableLengths`,
@@ -605,3 +600,40 @@ a throwaway Playwright probe against `/daily/4`, `/daily/5` and `/daily/6` at th
 Not chased in U4: fitting six rows plus a full keyboard in 360px of height needs either a smaller
 keyboard, a collapsible header, or scroll-to-the-active-row behavior, none of which R4 asked for.
 Revisit if real traffic shows landscape phone play.
+
+## Plan 012 U5: StatsModal still renders distribution counts inside the filled bar (2026-10-14)
+
+`apps/frontend/src/components/StatsModal.tsx`'s `DistributionBar` still draws the guess count
+inside the coloured fill (`text-white text-xs font-bold` layered on `bg-correct`/`bg-absent`),
+the same mobile-ui-standard C2 contrast issue Plan 012 U5 fixed in `GameOverModal.tsx` (R6,
+AE7). Not in U5's scope (StatsModal's distribution bar is not part of R6), but worth the same
+fix — move the count to a sibling span in `text-text-primary`, outside the fill — the next time
+StatsModal.tsx is touched.
+
+## Plan 013: web feedback entry point, PrivacyPage and data-safety draft (2026-10-24)
+
+Plan 013 (in-app feedback) ships backend + mobile only; the web app gets no feedback entry point
+in that plan (left out as "optional, only if small"). Also not done in Plan 013: updating
+`PrivacyPage` and `docs/drafts/play-data-safety.md` to mention the new `feedback` table and
+optional contact field (that draft is on another branch) — do both the next time either file is
+touched, or as its own small follow-up plan.
+
+## D1 export backups do not restore as-is (found 2026-10-24)
+`wrangler d1 export harfhane --remote` taken after 0003 fails to import into a fresh local D1
+(`no such table: main.words`), even with the four `CREATE TRIGGER` blocks moved to the end — the
+dump's statement order no longer matches dependencies after 0003 rebuilt `words`. Time Travel
+(`wrangler d1 time-travel restore`) is the working rollback; the SQL export is not a tested
+restore path. Fix: a `scripts/` helper that reorders an export (tables, then data, then indexes and
+triggers) plus a restore rehearsal in the runbook. Applied 0004 to remote `harfhane` on
+2026-10-24 with owner approval: it only adds the `feedback` table and its index; the faithful
+rehearsal failed on this import issue, a fresh 0001–0004 apply passed locally, and Time Travel
+bookmark `00000076-00000000-0000510e-46b21427665e103e2ac2c7e4950fbd5f` was recorded first.
+
+## Public lists and leaderboards (owner, 2026-10-24)
+Owner wants a public list/leaderboard back after launch ("başka insanların da görmesi için"): something other players can see, e.g. a daily solve-distribution or leaderboard and shared word lists. Removed in the MVP scope cut together with accounts (`docs/decisions/2026-10-05-mvp-scope-cut.md`); any version needs a new plan that decides identity (anonymous device id vs. accounts), privacy/Data safety impact and moderation. The old secrets for accounts/push (Google OAuth, JWT, VAPID) are being deleted from the Worker; a returning feature generates fresh ones.
+
+## Admin scheduler defaults to the UTC day (2026-10-24)
+`apps/frontend/src/components/admin/DailyScheduler.tsx:10-17` derives "today" and its date range
+from `toISOString()` (UTC), so between 00:00 and 03:00 Turkey time the default date is one Turkey
+day behind. Admin-only; players are unaffected since the streak fix. Use `getTodayString()` and
+Turkey-day arithmetic when that screen is next touched.

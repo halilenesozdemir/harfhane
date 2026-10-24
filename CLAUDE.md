@@ -25,12 +25,12 @@ rejects odd-numbered Node releases (e.g. 25.x); if your local Node is one of tho
 `npx -y node@22 node_modules/.bin/depcruise --config .dependency-cruiser.cjs apps packages`. CI runs
 Node 22, so it is never affected.
 
-Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests when code is staged (`pnpm install` enables it). A red gate means fix the code; never `--no-verify`.
+Commit gate: `.githooks/pre-commit` runs typecheck, test typecheck, lint and tests when code is staged (`pnpm install` enables it). It prints one line per passing step and the tail of a failing step's log (full logs in `$(git rev-parse --git-dir)/commit-gate/`); `COMMIT_GATE_VERBOSE=1` streams everything. A red gate means fix the code; never `--no-verify`.
 
 ## Rules agents here have broken before
 
 - Turkish casing: never `.toUpperCase()` / `.toLowerCase()` on Turkish text; `"i".toUpperCase()` is `"I"`, not `"İ"`. Use `normalizeWord()` / `normalizeChar()`.
-- User-facing text uses correct Turkish characters (ç ş ğ ı ö ü İ Ş Ç Ğ Ö Ü) and no emojis (Lucide icons instead).
+- User-facing text uses correct Turkish characters (ç ş ğ ı ö ü İ Ş Ç Ğ Ö Ü) and no emojis (Lucide icons instead), except the share text's circle grid (`docs/decisions/2026-10-24-share-format-circles.md`).
 - Stage files explicitly; never `git add -A`. The frontend build regenerates `apps/frontend/public/sitemap.xml`; commit it only when the change is about the sitemap.
 - Work in a worktree under `../harfhane-wt/`, never in the main checkout, and never touch another agent's worktree.
 - Do not edit `.claude/settings*.json`; that needs the owner.

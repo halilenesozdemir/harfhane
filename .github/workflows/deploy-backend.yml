@@ -146,6 +146,21 @@ jobs:
             exit 1
           fi
 
+          # The health check above only proves the Worker is up, not that it can reach
+          # D1. /api/words/daily runs a D1 query: 200 (word found) and 404 (no word
+          # scheduled today) both prove the query path works. Only a 5xx or no response
+          # means the deploy broke D1; a 404 must not roll back, or a hotfix for an
+          # empty schedule could never ship. Invariant 10's alert covers the 404 case.
+          DAILY_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "https://api.harfhane.app/api/words/daily" || echo "000")
+          echo "GET /api/words/daily status: $DAILY_STATUS"
+          if [ "$DAILY_STATUS" != "200" ] && [ "$DAILY_STATUS" != "404" ]; then
+            echo "::error::Smoke test failed: /api/words/daily returned $DAILY_STATUS, expected 200 or 404"
+            exit 1
+          fi
+          if [ "$DAILY_STATUS" = "404" ]; then
+            echo "::warning::No daily word scheduled for today; deploy kept, check the schedule"
+          fi
+
       - name: Roll back failed deploy
         if: failure() && (steps.deploy.conclusion == 'failure' || steps.smoke.conclusion == 'failure')
         working-directory: apps/backend

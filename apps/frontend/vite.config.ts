@@ -1,13 +1,34 @@
-import { defineConfig } from 'vite'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { configDefaults } from 'vitest/config'
+import { PRERENDERED_ROUTES, outputFileFor, renderRouteHtml } from './src/seo/prerender'
 
 // Give `%VITE_BUILD_SHA%` in index.html a fallback so a local or
 // non-CI build doesn't leave the placeholder literal in the page; the
 // deploy workflow still overrides this with the real GITHUB_SHA, which
 // the smoke check compares against.
 process.env.VITE_BUILD_SHA ??= 'dev';
+
+// Writes one HTML file per sitemap route (src/seo/prerender.ts) next to the
+// built index.html, so crawlers see each route's own title and canonical.
+function prerenderRoutes(): Plugin {
+  return {
+    name: 'harfhane:prerender-routes',
+    apply: 'build',
+    writeBundle(options) {
+      const outDir = options.dir ?? 'dist';
+      const indexHtml = readFileSync(path.join(outDir, 'index.html'), 'utf8');
+      for (const route of PRERENDERED_ROUTES) {
+        const outputPath = path.join(outDir, outputFileFor(route));
+        mkdirSync(path.dirname(outputPath), { recursive: true });
+        writeFileSync(outputPath, renderRouteHtml(indexHtml, route));
+      }
+    },
+  };
+}
 
 export default defineConfig({
   test: {
@@ -28,6 +49,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    prerenderRoutes(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -79,7 +101,6 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        importScripts: ['/push-handler.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [

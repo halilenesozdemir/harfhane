@@ -22,7 +22,8 @@ per game.
 _Avoid_: clue, meaning
 
 **Game number**:
-The running number of a daily answer for a length, shown in the share text.
+The running number of a daily answer for a length. Not shown in the share text (owner decision
+2026-10-24, `docs/decisions/2026-10-24-share-format.md`), which shows the daily date instead.
 
 ## Lengths
 

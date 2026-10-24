@@ -65,11 +65,16 @@ export interface HeaderProps {
   modeLabel?: string;
 }
 
+export type ModalVariant = 'dialog' | 'sheet';
+
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  // 'sheet' slides up from the bottom under ~640px (Tailwind's `sm` breakpoint) and becomes a
+  // centred dialog at or above it; 'dialog' (the default) is always the centred layout.
+  variant?: ModalVariant | undefined;
 }
 
 export interface TileProps {
@@ -127,7 +132,6 @@ export interface GameOverModalProps {
   onPlayAgain: () => void;
   onGoHome: () => void;
   sessionChallenge?: SessionChallenge | undefined;
-  challengeUrl?: string | undefined;
   hintUsed?: boolean;
 }
 
