@@ -14,7 +14,7 @@ const Keyboard = ({ onKeyPress, keyboardStatus }: KeyboardProps): React.JSX.Elem
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto px-2 pb-4">
+    <div className="w-full max-w-lg mx-auto px-2 pb-2">
       {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div key={rowIndex} className="flex justify-center gap-1.5 mb-1.5">
           {row.map((key) => (
