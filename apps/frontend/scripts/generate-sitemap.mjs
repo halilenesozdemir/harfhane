@@ -20,6 +20,7 @@ export const STATIC_ROUTES = [
   { path: `/daily/${PLAYABLE_AT_LAUNCH_LENGTH}`, changefreq: 'daily', priority: '0.9' },
   { path: '/unlimited', changefreq: 'weekly', priority: '0.7' },
   { path: `/unlimited/${PLAYABLE_AT_LAUNCH_LENGTH}`, changefreq: 'weekly', priority: '0.7' },
+  { path: '/gizlilik', changefreq: 'yearly', priority: '0.3' },
 ];
 
 export function buildSitemap(lastmod) {
