@@ -4,6 +4,8 @@ import { requestPersistentStorage } from '../utils/persistStorage';
 import { getTodayString } from '@harfhane/shared';
 import type { DailyStats, UnlimitedStats, WordLength } from '../types';
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 interface UseGameStatsOptions {
   isUnlimited: boolean;
   wordLength: WordLength;
@@ -45,10 +47,9 @@ export function useGameStats({ isUnlimited, wordLength }: UseGameStatsOptions): 
     }
 
     setStats(prev => {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayString = yesterday.toISOString().split('T')[0]!;
-      const isConsecutive = prev.lastPlayedDate === yesterdayString;
+      // Turkey has no DST, so 24 hours back is always the previous Turkey day.
+      const now = Date.now();
+      const isConsecutive = prev.lastPlayedDate === getTodayString(new Date(now - MS_PER_DAY));
       const newCurrentStreak = won ? (isConsecutive ? prev.currentStreak + 1 : 1) : 0;
       const newDistribution = [...prev.guessDistribution];
       if (won && guessCount > 0 && guessCount <= 6) {
@@ -61,7 +62,7 @@ export function useGameStats({ isUnlimited, wordLength }: UseGameStatsOptions): 
         currentStreak: newCurrentStreak,
         maxStreak: Math.max(prev.maxStreak, newCurrentStreak),
         guessDistribution: newDistribution,
-        lastPlayedDate: getTodayString(),
+        lastPlayedDate: getTodayString(new Date(now)),
       };
     });
   }, [isUnlimited, setStats, setUnlimitedStats]);
