@@ -29,14 +29,16 @@ describe('renderRouteHtml', () => {
 
     expect(html).not.toContain(HOME_META.title);
     expect(html).not.toContain(HOME_META.description);
+    expect(html).not.toContain('Her gün yeni bir Türkçe kelime bul!');
     expect(html).not.toContain('href="https://harfhane.app/"');
     expect(html).not.toContain('>HARFHANE</h1>');
   });
 
   it('should escape HTML-special characters when the meta text contains them', () => {
-    const html = renderRouteHtml(INDEX_HTML, { ...DAILY_FIVE, title: 'A & B <C> | Harfhane' });
+    const html = renderRouteHtml(INDEX_HTML, { ...DAILY_FIVE, title: 'A & B <C> | Harfhane', description: 'Say "hi"' });
 
     expect(html).toContain('<title>A &amp; B &lt;C&gt; | Harfhane</title>');
+    expect(html).toContain('<meta name="description" content="Say &quot;hi&quot;" />');
   });
 
   it('should throw when index.html no longer contains a marker it replaces', () => {

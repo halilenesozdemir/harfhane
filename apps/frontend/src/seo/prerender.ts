@@ -54,7 +54,8 @@ export function renderRouteHtml(indexHtml: string, route: RouteMeta): string {
 }
 
 // `/daily/5` -> `daily/5.html`: Cloudflare Pages serves it at `/daily/5`
-// without a trailing-slash redirect, ahead of the `/* /index.html 200` rule.
+// without a trailing-slash redirect. Pages ignores `/* /index.html 200` as a
+// loop; its own SPA fallback (no top-level 404.html) only covers missing files.
 export function outputFileFor(route: RouteMeta): string {
   return `${route.canonicalPath.slice(1)}.html`;
 }
