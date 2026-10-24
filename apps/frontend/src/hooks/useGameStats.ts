@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { requestPersistentStorage } from '../utils/persistStorage';
 import { getTodayString } from '@harfhane/shared';
 import type { DailyStats, UnlimitedStats, WordLength } from '../types';
 
@@ -30,6 +31,7 @@ export function useGameStats({ isUnlimited, wordLength }: UseGameStatsOptions): 
   });
 
   const updateStats = useCallback((won: boolean, guessCount: number): void => {
+    void requestPersistentStorage();
     if (isUnlimited) {
       setUnlimitedStats(prev => {
         const newDistribution = [...prev.guessDistribution];
