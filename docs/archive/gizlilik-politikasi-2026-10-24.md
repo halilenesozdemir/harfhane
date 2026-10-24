@@ -1,3 +1,8 @@
+<!-- Archived 2026-10-24: stale pre-MVP-scope-cut draft (accounts, Google sign-in, push, XP/badges —
+all removed, see docs/decisions/2026-10-05-mvp-scope-cut.md). Superseded by
+docs/drafts/play-data-safety.md and apps/frontend/src/components/PrivacyPage.tsx. Kept verbatim
+for history only; do not use as a source for the current privacy policy. -->
+
 > **TASLAK — hukuki görüş değildir, yayınlanmadan önce sahibi ve gerekirse bir hukukçu onaylamalıdır.**
 > Bu metin, Harfhane kod tabanının 2026-10-05 tarihli incelemesine dayanır
 > (bkz. `docs/research/2026-10-05-privacy-data-inventory.md`). Köşeli parantez içindeki
