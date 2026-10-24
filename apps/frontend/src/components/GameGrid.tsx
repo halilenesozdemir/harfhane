@@ -1,6 +1,7 @@
 import Tile from './Tile';
 import type { GameGridProps } from '../types';
 import { isHintSolved, MAX_GUESSES } from '@harfhane/shared';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 
 // Matches the Tailwind gap-1.5 used between tiles and between rows.
 const TILE_GAP_PX = 6;
@@ -24,6 +25,7 @@ const GameGrid = ({
   wordLength,
   hint,
 }: GameGridProps): React.JSX.Element => {
+  const reduceMotion = useReduceMotion();
   const rows = [];
 
   for (let i = 0; i < MAX_GUESSES; i++) {
@@ -61,6 +63,7 @@ const GameGrid = ({
           revealDelay={j}
           isFilled={!isHint && !!letter}
           isHint={isHint}
+          reduceMotion={reduceMotion}
         />
       );
     }
@@ -68,9 +71,11 @@ const GameGrid = ({
     rows.push(
       <div
         key={i}
+        role="row"
+        aria-label={`${i + 1}. tahmin`}
         className={`
           flex gap-1.5 justify-center
-          ${isCurrentRow && shakeRow ? 'animate-shake' : ''}
+          ${isCurrentRow && shakeRow && !reduceMotion ? 'animate-shake' : ''}
         `}
       >
         {tiles}
@@ -80,6 +85,8 @@ const GameGrid = ({
 
   return (
     <div
+      role="grid"
+      aria-label="Tahmin tablosu"
       className="flex flex-col gap-1.5 px-2 py-2"
       style={
         {

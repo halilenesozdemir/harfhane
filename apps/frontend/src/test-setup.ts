@@ -22,6 +22,22 @@ function createMemoryStorage(): Storage {
 Object.defineProperty(window, 'localStorage', { value: createMemoryStorage(), configurable: true });
 Object.defineProperty(window, 'sessionStorage', { value: createMemoryStorage(), configurable: true });
 
+// jsdom has no matchMedia; default to "no preference" so useReduceMotion and
+// useTheme's system-preference check don't throw. Tests that care about a
+// specific query override this per-file (see Tile.test.tsx).
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia;
+}
+
 afterEach(() => {
   window.localStorage.clear();
   window.sessionStorage.clear();
