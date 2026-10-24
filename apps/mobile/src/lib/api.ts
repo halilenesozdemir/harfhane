@@ -71,7 +71,8 @@ export function createApiClient({ baseUrl = DEFAULT_API_URL, fetchImpl = fetch }
     } catch (error) {
       // Mapped onto the same ApiRequestError the caller already handles (useGame.ts's generic
       // .catch), so a timeout shows the same retry/error state as any other request failure.
-      if (error instanceof Error && error.name === 'AbortError') {
+      // Hermes may not throw an Error instance on abort; match on the name only.
+      if (typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError') {
         throw new ApiRequestError('Request timed out', 0, REQUEST_TIMEOUT_CODE);
       }
       throw error;

@@ -60,6 +60,23 @@ describe('createApiClient', () => {
     // A half-open connection never resolves or rejects fetch on its own; without the
     // AbortController timeout the request promise (and anything awaiting it, e.g.
     // useGame.ts's isInFlight) would hang forever instead of reaching this error path.
+    it('should reject with a timeout error when the abort rejection is not an Error instance', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi.fn<typeof fetch>().mockImplementation(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject({ name: 'AbortError', message: 'Aborted' }));
+          }),
+      );
+      const client = createApiClient({ baseUrl: BASE_URL, fetchImpl });
+
+      const pending = client.fetchDailyWord(5);
+      const assertion = expect(pending).rejects.toMatchObject({ code: 'REQUEST_TIMEOUT' });
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await assertion;
+      vi.useRealTimers();
+    });
+
     it('should reject with a timeout error when the request exceeds REQUEST_TIMEOUT_MS', async () => {
       vi.useFakeTimers();
       const fetchImpl = vi.fn<typeof fetch>().mockImplementation(
