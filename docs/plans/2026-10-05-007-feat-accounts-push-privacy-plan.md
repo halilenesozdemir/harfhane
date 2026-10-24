@@ -47,7 +47,13 @@ what the admin's own data pipeline holds.
 - U2. *Postponed past MVP (R2).* Expo push sender in the cron with batching and receipt pruning; mocked `fetch` tests.
 - U3. *Postponed past MVP (R1).* `POST /api/auth/google/mobile` with `jose`; tests with a local JWKS. *Owner:* Android OAuth client ID secret.
 - U4. *Postponed past MVP (R4).* Play counter table, endpoint and admin read.
-- U5. Privacy page route with draft Turkish text (no-accounts content), not linked until approved. (R3)
-- U6. *Owner:* approve privacy text; then link it from Settings and the store listing. (R3)
+- U5. Privacy page route with draft Turkish text (no-accounts content), not linked until approved. (R3) — **Done.**
+- U6. *Owner:* approve privacy text; then link it from Settings and the store listing. (R3) — **Done, owner decision 2026-10-24:**
+  - Veri sorumlusu: "Halil Enes Özdemir"; contact for questions and KVKK applications: destek@harfhane.app (Cloudflare Email Routing forwards it, verified active). No postal address.
+  - Text published: draft banner, "(Taslak)", `PageMeta`'s `noIndex`, the `_headers` `X-Robots-Tag: noindex` block and the `robots.txt` `Disallow: /gizlilik` line are all removed; `/gizlilik` is added to `scripts/generate-sitemap.mjs`; linked from the web Settings modal (`SettingsModal.tsx`) and the mobile Settings screen (`SettingsScreen.tsx`, opens `https://harfhane.app/gizlilik` with React Native `Linking`).
+  - "Son güncelleme": 24 Ekim 2026.
+  - Legacy account data: migration `0003_drop_removed_features.sql` was applied to the remote `harfhane` D1 database on 2026-10-24 with owner approval (Invariant 4); `users` had 0 rows; all 14 pre-scope-cut tables are permanently dropped. The "Önceki Sürümde Hesap Açtıysanız" section now states this factually instead of warning the data may still exist; the legacy-data bullets are removed from "İşleme Amacı" and "Saklama Süreleri" and the related sentence from "Haklarınız".
+  - Remaining `[SAHİP KONTROL ETMELİ ...]` placeholders replaced with verified, honest wording: Cloudflare access logs are processed under Cloudflare's own policy/account settings, and the Worker (`apps/backend/wrangler.toml`) has no log push / observability configuration; cross-border transfer names Cloudflare and Google Play as the reason data may leave Turkey; policy changes are announced by updating the page and its "Son güncelleme" date.
+  - The in-app feedback feature is intentionally not mentioned yet (separate PR).
 - U7. *Postponed past MVP (R1, R2).* Mobile sign-in screen and push permission flow. *Owner:* Google Cloud client, EAS dev build.
 - U8. *Postponed past MVP (R4).* *Owner:* enable Cloudflare Web Analytics on the zone if wanted.

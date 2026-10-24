@@ -1,5 +1,6 @@
 import { Sun, Moon, Monitor, Check, Contrast } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { useThemeContext } from '../context/ThemeContext';
 import type { Theme } from '../types';
@@ -35,6 +36,12 @@ interface SettingsModalProps {
 
 const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Element => {
   const { theme, setTheme, resolvedTheme, isHighContrast, setHighContrast } = useThemeContext();
+  const navigate = useNavigate();
+
+  const goToPrivacyPage = (): void => {
+    onClose();
+    navigate('/gizlilik');
+  };
 
   const themeOptions: Array<{ icon: LucideIcon; label: string; value: Theme }> = [
     { icon: Sun, label: 'Açık Tema', value: 'light' },
@@ -106,9 +113,13 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps): React.JSX.Eleme
               GitHub
             </a>
             <span className="text-text-secondary/40">•</span>
-            <span className="text-text-secondary/40 text-sm cursor-default">
+            <button
+              type="button"
+              onClick={goToPrivacyPage}
+              className="text-text-secondary hover:text-text-primary transition-colors text-sm cursor-pointer"
+            >
               Gizlilik
-            </span>
+            </button>
           </div>
         </div>
       </div>

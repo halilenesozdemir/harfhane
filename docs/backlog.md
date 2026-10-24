@@ -89,6 +89,8 @@ word scheduled in the future, refuse activating a `rejected` word).
 - Applying it to the remote `harfhane` database needs explicit owner approval (Invariant 4). Runbook:
   `docs/runbooks/apply-0003-drop-removed-features.md` (backup + Time Travel bookmark, remote read-only
   pre-checks, a local rehearsal, the remote apply with smoke queries, and the rollback path).
+- Applied to remote `harfhane` on 2026-10-24 with owner approval (Invariant 4); pre-check users=0,
+  post-check 4 triggers, words=346, seq unchanged.
 
 ## Web cleanup before the shared engine
 The web app carries code from many experiments; removed features such as challenge mode and the discuss page may have left dead code.

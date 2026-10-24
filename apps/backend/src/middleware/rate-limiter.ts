@@ -7,7 +7,7 @@ interface HitRecord {
 }
 
 const GAME_WINDOW_MS = 60 * 1000;
-const GAME_MAX_HITS = 30;
+export const GAME_MAX_HITS = 30;
 
 const hits = new Map<string, HitRecord>();
 
