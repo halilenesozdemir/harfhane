@@ -96,7 +96,7 @@ export default function GamePage({
           modeLabel={modeLabel}
         />
         <Toast message={message} />
-        <main className="flex-1 flex flex-col items-center justify-center gap-3">
+        <main className="flex-1 flex flex-col items-center justify-center gap-3 pb-5">
           <GameGrid
             guesses={guesses}
             evaluations={evaluations}
