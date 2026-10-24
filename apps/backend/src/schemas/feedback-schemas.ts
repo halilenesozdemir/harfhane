@@ -71,3 +71,13 @@ export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;
 
 export const listFeedbackQuerySchema = z.object({ status: statusSchema.optional() });
 export const updateFeedbackStatusSchema = z.object({ status: statusSchema });
+
+// PATCH /feedback/:id — reject anything that is not a positive integer
+// before it reaches the repository; Number("not-a-number") is NaN, which a
+// D1 bind silently coerces away instead of erroring.
+export const feedbackIdParamSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[1-9]\d*$/, 'id must be a positive integer')
+    .transform(Number),
+});

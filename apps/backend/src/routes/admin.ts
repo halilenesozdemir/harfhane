@@ -26,7 +26,7 @@ import {
   autoFillDailySchedule,
 } from '../services/admin-service';
 import { getScheduleHealth } from '../services/schedule-health-service';
-import { listFeedbackQuerySchema, updateFeedbackStatusSchema } from '../schemas/feedback-schemas';
+import { listFeedbackQuerySchema, updateFeedbackStatusSchema, feedbackIdParamSchema } from '../schemas/feedback-schemas';
 import { listFeedback, updateFeedbackStatus } from '../services/feedback-service';
 
 const admin = new Hono<{ Bindings: Env }>();
@@ -186,12 +186,16 @@ admin.get(
 
 admin.patch(
   '/feedback/:id',
+  zValidator('param', feedbackIdParamSchema, (r, c) => {
+    if (!r.success) return c.json({ error: { code: 'BAD_REQUEST', message: r.error.issues[0]?.message ?? 'Invalid id' } }, 400);
+    return;
+  }),
   zValidator('json', updateFeedbackStatusSchema, (r, c) => {
     if (!r.success) return c.json({ error: { code: 'VALIDATION_ERROR', message: r.error.issues[0]?.message ?? 'Invalid body' } }, 422);
     return;
   }),
   async (c) => {
-    const id = Number(c.req.param('id'));
+    const { id } = c.req.valid('param');
     const { status } = c.req.valid('json');
     const result = await updateFeedbackStatus(c.env.DB, id, status);
     return c.json({ data: result });

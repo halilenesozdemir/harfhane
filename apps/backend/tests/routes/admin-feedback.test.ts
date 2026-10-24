@@ -45,4 +45,24 @@ describe('admin feedback routes', () => {
     const allBody = (await all.json()) as { data: Array<{ id: number; status: string }> };
     expect(allBody.data.find((r) => r.id === seenId)?.status).toBe('done');
   });
+
+  it('should return 400 for a non-numeric id instead of passing NaN to D1', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/feedback/not-a-number', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ status: 'done' }),
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('should return 400 for a negative or non-integer id', async () => {
+    const res = await SELF.fetch('http://example.com/api/admin/feedback/-1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+      body: JSON.stringify({ status: 'done' }),
+    });
+
+    expect(res.status).toBe(400);
+  });
 });
