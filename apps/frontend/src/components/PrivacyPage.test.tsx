@@ -261,6 +261,54 @@ describe('PrivacyPage', () => {
     render(<PrivacyPage />);
     expect(normalizedBodyText()).not.toMatch(/\[[^\]]*\]/);
   });
+
+  it('should disclose the in-app feedback feature\'s data fields, including that it stores no IP or device identifier', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Uygulama içinden geri bildirim gönderdiğinizde veya oyun sonunda bir kelimeyi bildirdiğinizde (POST /api/feedback), yazdığınız mesajı (en fazla 1000 karakter) ve yazmayı seçtiğiniz takdirde isteğe bağlı bir iletişim bilgisini (en fazla 200 karakter) alırız; ayrıca geri bildirim türünü (genel geri bildirim veya kelime bildirimi), kullandığınız platformu (web veya Android) ve uygulama sürümünüzü kaydederiz. Bir kelime bildiriminde bunlara ek olarak oyun modu, kelime uzunluğu, bulmaca tarihi ve bildirdiğiniz kelime de kaydedilir. Bu formda IP adresiniz veya herhangi bir cihaz kimliği kaydedilmez."
+    );
+  });
+
+  it('should disclose the stricter in-memory rate limit on the feedback endpoint without claiming it is written to the database', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Geri bildirim isteklerini (POST /api/feedback) kötüye kullanıma karşı ayrıca sınırlarız: aynı IP adresinden gelen istekler, yukarıdaki istek sınırlama ile aynı yöntemle (sunucu belleğinde, veritabanına yazılmadan) ama daha uzun bir pencerede — on dakikada en fazla 5 istek — sayılır."
+    );
+  });
+
+  it('should disclose that feedback is stored in D1 and emailed to the owner via Resend as a processor', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Gönderdiğiniz geri bildirim, Cloudflare D1 veritabanımızdaki feedback tablosunda saklanır ve bildirimi görebilmemiz için e-posta gönderim sağlayıcımız Resend aracılığıyla destek@harfhane.app adresine iletilir; Resend bu e-postayı göndermemize aracılık eden bir hizmet sağlayıcıdır (veri işleyen), geri bildiriminizi kendi amaçları için kullanmaz."
+    );
+  });
+
+  it('should state the feedback legal basis is the sender\'s own explicit act of submitting it, and that the field is optional', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Geri bildirim veya kelime bildirimi gönderme: KVKK m.5/1 (açık rızanız) — geri bildirim formunu doldurup göndermeniz, yazdığınız mesajın bu amaçla (okunması, değerlendirilmesi ve varsa yanıtlanması) işlenmesine yönelik açık rızanız anlamına gelir; bu alan isteğe bağlıdır, doldurmak zorunda değilsiniz."
+    );
+  });
+
+  it('should state feedback retention is deletion on request, not an indefinite or automated retention claim', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Geri bildirim ve kelime bildirimleri: değerlendirilip işlendikten sonra makul bir süre içinde silinir; dilediğiniz zaman destek@harfhane.app adresine yazarak gönderdiğiniz bir geri bildirimin silinmesini talep edebilirsiniz."
+    );
+  });
+
+  it('should disclose Resend as a cross-border processor for feedback emails', () => {
+    render(<PrivacyPage />);
+    const text = normalizedBodyText();
+    expect(text).toContain(
+      "Geri bildirim gönderdiğinizde, e-posta gönderim sağlayıcımız Resend de bu e-postayı iletmek amacıyla verilerinizi Türkiye dışında işleyebilir."
+    );
+  });
 });
 
 describe('sitemap generator', () => {
