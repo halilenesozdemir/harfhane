@@ -1,33 +1,20 @@
-import { AlertTriangle } from 'lucide-react';
 import { PageMeta } from './page-meta';
 
-// Draft (plan 007 U5): accurate for the no-accounts product as of 2026-10,
-// but not yet reviewed by the owner. Not linked from any navigation,
-// footer, sitemap or store listing until approved — see PageMeta's noIndex
-// (search engines are not guaranteed to honor it without a server-level
-// X-Robots-Tag header, which is a separate, pending change).
+// Published (Plan 007 U6, owner-approved 2026-10-24): accurate for the
+// no-accounts product. Linked from Settings on web and mobile.
 
 const PrivacyPage = (): React.JSX.Element => {
   return (
     <>
       <PageMeta
-        title="Gizlilik Politikası (Taslak) | Harfhane"
-        description="Harfhane gizlilik politikası taslağı — sahip onayı bekliyor."
+        title="Gizlilik Politikası | Harfhane"
+        description="Harfhane gizlilik politikası: hangi veriler işlenir, ne kadar saklanır ve haklarınız."
         canonicalPath="/gizlilik"
-        noIndex
       />
       <div className="min-h-screen bg-bg-primary text-text-primary">
         <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-          <div className="flex items-start gap-3 rounded-lg border-2 border-present bg-present/10 p-4" role="note">
-            <AlertTriangle size={20} className="text-present shrink-0 mt-0.5" />
-            <p className="text-sm">
-              Bu metin bir <strong>taslaktır</strong>, hukuki görüş değildir ve henüz yayınlanmamıştır. Sahibin
-              onayından önce hiçbir yerden bağlantı verilmez.
-            </p>
-          </div>
-
-          <h1 className="text-2xl font-bold">Gizlilik Politikası (Taslak)</h1>
-          <p className="text-sm text-text-secondary">Son güncelleme: [TARİH — sahip tarafından doldurulacak]</p>
+          <h1 className="text-2xl font-bold">Gizlilik Politikası</h1>
+          <p className="text-sm text-text-secondary">Son güncelleme: 24 Ekim 2026</p>
 
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Veri Sorumlusu</h2>
@@ -36,9 +23,9 @@ const PrivacyPage = (): React.JSX.Element => {
               uygulamasında sunulan ücretsiz bir Türkçe kelime oyunudur.
             </p>
             <p>
-              <strong>Veri Sorumlusu:</strong> [SAHİP ADI/UNVANI VE ADRESİ]
+              <strong>Veri Sorumlusu:</strong> Halil Enes Özdemir
               <br />
-              <strong>İletişim e-postası:</strong> [İLETİŞİM E-POSTASI — PLACEHOLDER]
+              <strong>İletişim e-postası:</strong> destek@harfhane.app
             </p>
           </section>
 
@@ -77,10 +64,10 @@ const PrivacyPage = (): React.JSX.Element => {
               <li>
                 Bu istekler ve web sayfasının statik dosyaları, barınma sağlayıcımız Cloudflare&apos;in altyapısından
                 (Workers ve Pages) geçer; Cloudflare da bu sırada IP adresinizi kendi standart sunucu
-                günlüklerinde işleyebilir. Bu günlüklerin tutulup tutulmadığı ve saklama süresi, Cloudflare&apos;in
-                kendi gizlilik politikasına ve hesap ayarlarına bağlıdır, Harfhane kod tabanından belirlenemez.
-                [SAHİP KONTROL ETMELİ: Cloudflare erişim günlüğü ve Bot Fight Mode gibi ayarlar tutuluyor mu, ne
-                kadar süreyle?]
+                günlüklerinde işleyebilir. Bu günlüklerin tutulup tutulmadığı ve saklama süresi
+                Cloudflare&apos;in kendi gizlilik politikasına ve hesap ayarlarına bağlıdır; Harfhane&apos;nin
+                kullandığı Worker yapılandırmasında ayrıca bir günlük toplama (log push) veya gözlemlenebilirlik
+                ayarı etkin değildir.
               </li>
               <li>
                 Android uygulamasını Google Play üzerinden indirirseniz, Google; indirme, yükleme, çökme ve
@@ -102,19 +89,12 @@ const PrivacyPage = (): React.JSX.Element => {
             <h2 className="text-lg font-semibold">Önceki Sürümde Hesap Açtıysanız</h2>
             <p>
               2026-10-05&apos;teki kapsam kararından önce Harfhane&apos;de hesap, oturum açma ve sunucu tarafında
-              oyun sonucu kaydı vardı. Bu özelliklerin kodu kaldırılmıştır, ancak o dönemde oluşturulmuş olabilecek
-              veriler (e-posta, kullanıcı adı, şifre özeti, Google hesap kimliği (google_id), e-posta bildirim
-              tercihi, oyun sonuçları, kullanıcıların oluşturduğu kelime listeleri ve yorumlar, düello ve turnuva
-              sonuçları, XP ve rozetler, push bildirim aboneliği, şifre sıfırlama kayıtları gibi) veritabanı
-              şemasından henüz silinmemiştir; bu tabloları kalıcı olarak silecek işlem hazırlanmış ama sahibin
-              onayı beklenmektedir ve bu onay/uygulama henüz gerçekleşmemiştir. Bu veriler silininceye kadar
-              herhangi bir işleme amacıyla kullanılmaz. Bu nedenle, o döneme ait bir hesabınız varsa,
-              verilerinizin halen veritabanında bulunabileceğini varsaymalısınız.
-            </p>
-            <p>
-              Eski hesabınızla ilgili verilerin önceden silinmesini talep etmek için [İLETİŞİM E-POSTASI]
-              adresine yazabilirsiniz; talebiniz aşağıdaki &quot;Başvuru Yolu&quot; bölümünde açıklanan süre
-              içinde sonuçlandırılır.
+              oyun sonucu kaydı vardı. Bu özelliklerin kodu daha önce kaldırılmıştı; 24 Ekim 2026&apos;da sahibin
+              onayıyla, o döneme ait 14 tablo (users, game_results, badges, user_xp, user_badges,
+              push_subscriptions, streak_freezes, password_reset_tokens, duels, word_lists, word_list_words,
+              list_likes, list_comments, tournament_results) veritabanından kalıcı olarak silindi; silme
+              sırasında users tablosunda zaten hiçbir kayıt yoktu. Bu nedenle, o döneme ait bir hesabınız olsa
+              bile bugün veritabanında hesabınıza ait herhangi bir veri bulunmamaktadır.
             </p>
           </section>
 
@@ -126,11 +106,6 @@ const PrivacyPage = (): React.JSX.Element => {
                 oyun hizmetinin sağlanması için gerekli olması).
               </li>
               <li>İstek sınırlama (rate limiting) için IP adresinin geçici işlenmesi: meşru menfaat (KVKK m.5/2-f).</li>
-              <li>
-                Eski hesap verileri (yukarıdaki bölüm): o dönemde KVKK m.5/2-c kapsamında toplanmıştı; bu veriler
-                silinmek üzere planlanmıştır, silininceye kadar herhangi bir işleme amacıyla kullanılmaz, Başvuru
-                Yolu üzerinden daha önce silinmesini talep edebilirsiniz.
-              </li>
             </ul>
           </section>
 
@@ -152,12 +127,9 @@ const PrivacyPage = (): React.JSX.Element => {
                 yazılmaz, Worker&apos;ın geçici belleğinde Worker yeniden başlayana kadar kalabilir.
               </li>
               <li>
-                Cloudflare&apos;in kendi erişim günlükleri: Cloudflare&apos;in kendi politikasına/hesap ayarına
-                bağlı. [SAHİP KONTROL ETMELİ.]
-              </li>
-              <li>
-                Eski hesap verileri: silme işleminin sahip onayıyla uygulanmasına kadar veritabanında kalır; bu
-                süre içinde herhangi bir işleme amacıyla kullanılmaz ve henüz kesin bir tarih belirlenmemiştir.
+                Cloudflare&apos;in kendi erişim günlükleri: Cloudflare&apos;in kendi politikasına ve hesap
+                ayarına bağlıdır; Harfhane&apos;nin Worker yapılandırmasında ayrıca bir günlük toplama (log push)
+                veya gözlemlenebilirlik ayarı etkin değildir.
               </li>
             </ul>
           </section>
@@ -168,8 +140,9 @@ const PrivacyPage = (): React.JSX.Element => {
               Uygulamanın barınma ve API altyapısı <strong>Cloudflare</strong> (Workers, D1 veritabanı, Pages)
               üzerindedir; istekleriniz bu altyapı üzerinden işlenir. D1&apos;in verileri fiziksel olarak hangi
               Cloudflare bölgesinde tuttuğu kod üzerinden belirlenemez. Android uygulamasını Google Play&apos;den
-              indirirseniz Google, indirme/çökme verilerini kendi politikası kapsamında işler. [SAHİP KONTROL
-              ETMELİ: KVKK m.9 kapsamında gerekli aktarım mekanizması belirlenmeli.]
+              indirirseniz Google, indirme/çökme verilerini kendi politikası kapsamında işler. Bu nedenle,
+              altyapı sağlayıcımız Cloudflare ve Google Play, hizmeti sağlamak amacıyla verilerinizi Türkiye
+              dışında da işleyebilir.
             </p>
             <p>Verileriniz satılmaz veya pazarlama amacıyla üçüncü taraflarla paylaşılmaz.</p>
           </section>
@@ -202,8 +175,7 @@ const PrivacyPage = (): React.JSX.Element => {
             </ul>
             <p>
               Hesap sistemi olmadığından Harfhane&apos;nin kendi sunucularında aktif olarak işlediği, kimliğinizle
-              eşleşen bir veri bugün bulunmaz; cihazınızdaki oyun verileri tamamen sizin kontrolünüzdedir. Eski bir
-              hesabınız varsa yukarıdaki &quot;Önceki Sürümde Hesap Açtıysanız&quot; bölümü geçerlidir.
+              eşleşen bir veri bugün bulunmaz; cihazınızdaki oyun verileri tamamen sizin kontrolünüzdedir.
             </p>
           </section>
 
@@ -213,22 +185,22 @@ const PrivacyPage = (): React.JSX.Element => {
               Bu haklarınızı, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ&apos;e uygun şekilde;
               yazılı olarak, Kayıtlı Elektronik Posta (KEP) adresi, güvenli elektronik imza, mobil imza ya da
               Harfhane&apos;ye önceden bildirip sistemde kayıtlı bulunan bir e-posta adresi üzerinden
-              kullanabilirsiniz. Başvurunuzu [İLETİŞİM E-POSTASI] adresine iletebilirsiniz; talebinizi, KVKK m.13/2
-              uyarınca en geç <strong>30 gün</strong> içinde sonuçlandırırız.
+              kullanabilirsiniz. Başvurunuzu destek@harfhane.app adresine iletebilirsiniz; talebinizi, KVKK
+              m.13/2 uyarınca en geç <strong>30 gün</strong> içinde sonuçlandırırız.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">Değişiklikler</h2>
             <p>
-              Bu politikayı güncelleyebiliriz; önemli değişikliklerde bu sayfadan duyuracağız. [SAHİP
-              KONTROL ETMELİ: bildirim yöntemi.]
+              Bu politikayı güncelleyebiliriz; değişiklik yaptığımızda bu sayfayı ve yukarıdaki &quot;Son
+              güncelleme&quot; tarihini güncelleyerek duyururuz.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">İletişim</h2>
-            <p>Sorularınız için: [İLETİŞİM E-POSTASI]</p>
+            <p>Sorularınız ve KVKK başvurularınız için: destek@harfhane.app</p>
           </section>
         </main>
       </div>
