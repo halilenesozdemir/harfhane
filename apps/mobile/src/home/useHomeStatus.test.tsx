@@ -70,6 +70,23 @@ describe('useHomeStatus', () => {
     expect(result.current.status).toEqual({ displayedStreak: 3, state: { kind: 'not-started' } });
   });
 
+  it('should expose the stored daily stats alongside the status when loaded', async () => {
+    const store = createMemoryStore(storedStats({ gamesPlayed: 7, gamesWon: 6, maxStreak: 9 }));
+    const { result } = await setup(store);
+    await waitFor(() => expect(result.current.stats).not.toBeNull());
+    expect(result.current.stats).toMatchObject({ gamesPlayed: 7, gamesWon: 6, maxStreak: 9 });
+  });
+
+  it('should keep stats null while the status falls back when the store rejects', async () => {
+    const store: KeyValueStore = {
+      getItem: () => Promise.reject(new Error('storage unavailable')),
+      setItem: () => Promise.resolve(),
+    };
+    const { result } = await setup(store);
+    await waitFor(() => expect(result.current.status).not.toBeNull());
+    expect(result.current.stats).toBeNull();
+  });
+
   it('should report in-progress with the guess count from the stored daily game', async () => {
     const store = createMemoryStore({
       ...storedStats({}),
