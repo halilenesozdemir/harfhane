@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import GameGrid from './GameGrid';
 import type { GameGridProps } from '../types';
 
@@ -17,7 +17,13 @@ function renderGrid(overrides: Partial<GameGridProps> = {}) {
   return render(<GameGrid {...props} />);
 }
 
+const ORIGINAL_MATCH_MEDIA = window.matchMedia;
+
 describe('GameGrid', () => {
+  afterEach(() => {
+    window.matchMedia = ORIGINAL_MATCH_MEDIA;
+  });
+
   it('should mark the hint tile on the board with its revealed letter (008-AE7)', () => {
     renderGrid({ hint: { position: 2, letter: 'L' } });
 
