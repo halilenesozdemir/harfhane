@@ -13,10 +13,20 @@
 ## Uygulama Adı (≤ 30 karakter)
 
 ```
-Harfhane - Kelime Oyunu
+Harfhane: Türkçe Kelime Oyunu
 ```
 
-(23 karakter — owner kararı: bu ad kullanılacak.)
+(29 karakter — review önerisi; önceki taslaktaki "Harfhane - Kelime Oyunu" yerine. [SAHİP: bu,
+önceden kararlaştırılmış adın üzerine bir öneri — onaylayın veya eski adı koruyun.] Google Play
+meta veri politikası başlıkta/simgede/geliştirici adında sıralama veya promosyon ifadesi
+yasaklıyor ("Don't use text or image in the app title, icon, or developer name that indicate
+store performance or ranking, price or promotional information" — örnekler: "#1", "Best of Play
+20XX", "Popular"; kaynak:
+https://support.google.com/googleplay/android-developer/answer/9898842). Bu ad bu ifadelerden
+hiçbirini içermiyor. "reklamsız"/"ücretsiz" kelimeleri resmi politika metninde başlık için açıkça
+yasaklanmamış ama "promotional information" kapsamına girme riski taşıdığından başlıkta/simgede/
+geliştirici adında kullanılmadı; kısa ve tam açıklamada kullanımı politika tarafından açıkça
+yasaklanmıyor, bu nedenle aşağıda korunuyor.)
 
 ## Kısa Açıklama (≤ 80 karakter)
 
@@ -30,7 +40,7 @@ Her gün yeni bir Türkçe kelime bulmacası. Günlük ve sınırsız mod, rekla
 
 ```
 Harfhane, Türkçe kelime dağarcığınızı eğlenceli bir bulmacayla test eden bir kelime
-oyunudur. Her yaştan kelime meraklısına uygundur.
+oyunudur.
 
 GÜNLÜK BULMACA
 Her gün herkese aynı anda açılan tek bir bulmaca. Belirlenen deneme hakkınız
@@ -41,14 +51,13 @@ SINIRSIZ MOD
 Günlük bulmacayı tamamladınız mı? Sınırsız modda istediğiniz kadar oynayın,
 kelime dağarcığınızı geliştirin.
 
-4, 5 VEYA 6 HARF
-Kelime uzunluğunu kendiniz seçin: 4 harften başlayıp 6 harfe kadar farklı
-zorluk seviyelerinde oynayın.
+5 HARF
+Oyun şu an 5 harfli kelimelerle oynanıyor.
 
-HERKES İÇİN TASARLANDI
+ERİŞİLEBİLİRLİK
 Yüksek kontrast teması dahil birden fazla görünüm seçeneğiyle, görme
-farklılığı olan oyuncular da dahil herkes rahatça oynayabilir. Açık ve koyu
-tema arasında otomatik veya elle geçiş yapabilirsiniz.
+farklılığı olan oyuncular rahatça oynayabilir. Açık ve koyu tema arasında
+otomatik veya elle geçiş yapabilirsiniz.
 
 REKLAMSIZ, HESAPSIZ
 Harfhane'de reklam yoktur, hesap veya giriş gerekmez. İstatistikleriniz ve
@@ -84,12 +93,11 @@ Harfhane hakkında daha fazla bilgi ve web sürümü: harfhane.app
 
 ## Veri Güvenliği (Data Safety) Formu İçin Not
 
-Taslak gizlilik politikasına bakınız: `docs/drafts/gizlilik-politikasi.md`. Mobil uygulama hesap
-veya giriş kullanmaz (`docs/decisions/2026-10-05-mvp-scope-cut.md`,
+Mobil uygulama hesap veya giriş kullanmaz (`docs/decisions/2026-10-05-mvp-scope-cut.md`,
 `docs/decisions/2026-10-06-free-launch.md`); istatistikler ve seri yalnızca cihazda tutulur,
-sunucuya kişisel veri gönderilmez. [SAHİP: `docs/drafts/gizlilik-politikasi.md` hâlâ eski
-(hesap/XP döneminden kalma) metin içeriyor — bu dosya ayrı bir birimde no-accounts modeline göre
-güncellenmeli; Play Console Veri Güvenliği formu o güncel metne göre doldurulmalı.]
+sunucuya kişisel veri gönderilmez. Play Console Veri Güvenliği formu `docs/drafts/
+play-data-safety.md`'deki güncel envantere göre doldurulmalı (eski `docs/drafts/
+gizlilik-politikasi.md` taslağı artık yanlış mimariyi anlatıyor ve arşivlendi — bkz. PR #175).
 
 ## Gerekli Ekran Görüntüleri
 
@@ -98,7 +106,7 @@ Play Console minimum 2, önerilen 4-8 telefon ekran görüntüsü ister. Öneril
 1. Günlük bulmaca — oyun ekranı, birkaç tahmin yapılmış, renkli (doğru/yanlış/yanlış-yerde)
    geri bildirim görünür halde.
 2. Kazanma ekranı / günlük sonuç özeti (seri, istatistik, paylaş butonu).
-3. Kelime uzunluğu seçim ekranı (4/5/6 harf).
+3. Kelime uzunluğu bilgisi görünür bir ekran (şu an tek oynanabilir uzunluk: 5 harf).
 4. Sınırsız mod — oyun içi ekran.
 5. Tema seçimi — açık/koyu/yüksek kontrast karşılaştırması (tek görselde ikiye bölünmüş veya
    galeri halinde ayrı ayrı).
@@ -120,9 +128,8 @@ Ayrıca gerekli:
 - **Geliştirici adı:** Halil Enes Özdemir
 - **İletişim e-postası:** destek@harfhane.app
 - **Gizlilik politikası URL'si:** https://harfhane.app/gizlilik — [SAHİP: web uygulamasının
-  `/gizlilik` rotası (`apps/frontend/src/components/PrivacyPage.tsx`) henüz
-  `docs/drafts/gizlilik-politikasi.md`'deki güncel metni yansıtmıyor olabilir; yayından önce
-  sayfa içeriğinin güncel taslakla eşleştiğini doğrulayın.]
+  `/gizlilik` rotası (`apps/frontend/src/components/PrivacyPage.tsx`) yayınlanmadan önce
+  `docs/drafts/play-data-safety.md`'deki güncel veri envanteriyle eşleştiğini doğrulayın.]
 - **Web sitesi:** https://harfhane.app
 - **Uygulama kategorisi için etiketler/anahtar kelimeler:** kelime oyunu, Türkçe, günlük bulmaca,
   kelime bulmaca — [SAHİP: Play Console başlık/açıklama dışında ayrı bir anahtar kelime alanı
