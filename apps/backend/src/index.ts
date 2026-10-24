@@ -52,15 +52,42 @@ app.notFound((c) => {
   return c.json({ error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404);
 });
 
+export interface CronJobResult {
+  ok: boolean;
+  error?: unknown;
+}
+
+export interface CronRunResult {
+  autoFill: CronJobResult;
+  alert: CronJobResult;
+}
+
+function toJobResult(settled: PromiseSettledResult<unknown>): CronJobResult {
+  return settled.status === 'fulfilled' ? { ok: true } : { ok: false, error: settled.reason };
+}
+
+// Runs the cron's two jobs and returns a structured, per-job result instead of letting
+// `allSettled` discard failures silently — so a future monitoring hook (or a test) can
+// tell a failed auto-fill or alert apart from a successful run without `console.*`
+// (forbidden in production code here).
+export async function runScheduledJobs(env: Env): Promise<CronRunResult> {
+  // Top up the schedule before checking its health, so the health check (and alert)
+  // reflect what auto-fill could actually place, not stale gaps (Plan 006 U3a).
+  const [autoFillSettled] = await Promise.allSettled([autoFillDailySchedule(env.DB, SCHEDULE_TOPUP_DAYS)]);
+  const [alertSettled] = await Promise.allSettled([
+    checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL, env.PLAYABLE_WORD_LENGTHS),
+  ]);
+
+  return {
+    autoFill: toJobResult(autoFillSettled),
+    alert: toJobResult(alertSettled),
+  };
+}
+
 export default {
   fetch: app.fetch,
 
   async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
-    // Top up the schedule before checking its health, so the health check (and alert)
-    // reflect what auto-fill could actually place, not stale gaps (Plan 006 U3a).
-    await Promise.allSettled([autoFillDailySchedule(env.DB, SCHEDULE_TOPUP_DAYS)]);
-    await Promise.allSettled([
-      checkScheduleHealthAndAlert(env.DB, env.RESEND_API_KEY, env.ADMIN_ALERT_EMAIL, env.PLAYABLE_WORD_LENGTHS),
-    ]);
+    await runScheduledJobs(env);
   },
 };

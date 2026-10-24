@@ -89,3 +89,40 @@ describe('scheduled()', () => {
     );
   });
 });
+
+describe('runScheduledJobs()', () => {
+  it('should report both jobs as ok when auto-fill and the alert both succeed', async () => {
+    autoFillDailyScheduleMock.mockResolvedValue({ scheduled: 1, skipped: 0 });
+    checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
+    const { runScheduledJobs } = await import('../src/index');
+
+    const result = await runScheduledJobs(env as never);
+
+    expect(result.autoFill).toEqual({ ok: true });
+    expect(result.alert).toEqual({ ok: true });
+  });
+
+  it('should record the alert failure as a structured result when sending the alert rejects', async () => {
+    autoFillDailyScheduleMock.mockResolvedValue({ scheduled: 0, skipped: 0 });
+    const alertError = new Error('Resend API error: 401 Unauthorized');
+    checkScheduleHealthAndAlertMock.mockRejectedValue(alertError);
+    const { runScheduledJobs } = await import('../src/index');
+
+    const result = await runScheduledJobs(env as never);
+
+    expect(result.autoFill).toEqual({ ok: true });
+    expect(result.alert).toEqual({ ok: false, error: alertError });
+  });
+
+  it('should record the auto-fill failure as a structured result when auto-fill rejects', async () => {
+    const autoFillError = new Error('autofill boom');
+    autoFillDailyScheduleMock.mockRejectedValue(autoFillError);
+    checkScheduleHealthAndAlertMock.mockResolvedValue(undefined);
+    const { runScheduledJobs } = await import('../src/index');
+
+    const result = await runScheduledJobs(env as never);
+
+    expect(result.autoFill).toEqual({ ok: false, error: autoFillError });
+    expect(result.alert).toEqual({ ok: true });
+  });
+});
