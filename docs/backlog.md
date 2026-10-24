@@ -125,8 +125,9 @@ The web app carries code from many experiments; removed features such as challen
 `npx tsc -p apps/backend/tsconfig.test.json` reports 79 errors: missing Workers types, `ScheduledEvent`, implicit `any` in repositories. The cause is that the `types` override drops `@cloudflare/workers-types`. The normal `pnpm typecheck` passes.
 
 ## Legacy migrations folder
-`apps/backend/migrations/` (26 files) is replaced by `apps/backend/db/migrations/0001_baseline.sql`.
-- Delete the legacy folder at database cutover.
+`apps/backend/migrations/` (26 files, replaced by `apps/backend/db/migrations/0001_baseline.sql`)
+was deleted (2026-10-24) — nothing referenced it outside docs (verified by grep across scripts,
+tests, workflows and `knip.jsonc`).
 - Point the root `scripts/` (which target `harfhane-db`) at the new pipeline, or retire them.
   `schedule-new-words.mjs`, `schedule-daily-words.ts` and the generated `schedule-new-words.sql`
   were deleted at the cutover binding switch (would have silently written to the now-dead
@@ -145,7 +146,7 @@ The web app carries code from many experiments; removed features such as challen
 - `USAGE.md`: a Claude Code usage guide for the old multi-agent setup in `AGENTS.md`. It overlaps with the owner's global config.
   - Recommendation: fold the still-valid parts into `AGENTS.md`, then archive.
 - `PWA_TEST.md`: still relevant while the web PWA ships. Keep.
-- `DEPLOYMENT.md`: update the database section at cutover (`harfhane` and `db/migrations`).
+- `DEPLOYMENT.md`: database section updated to `harfhane` and `db/migrations` (2026-10-24).
 - `SECURITY.md`: keep.
 - `LEGACY_TEST_GUIDE.md`: untracked and owned by the owner; not touched.
 

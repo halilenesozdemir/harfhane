@@ -1,1 +1,0 @@
-ALTER TABLE users ADD COLUMN email_notifications INTEGER NOT NULL DEFAULT 1;

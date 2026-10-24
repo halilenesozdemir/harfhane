@@ -6,7 +6,7 @@
 | -------- | -------------------- | -------------------------- |
 | Frontend | Cloudflare Pages     | `harfhane.app`             |
 | Backend  | Cloudflare Workers   | `api.harfhane.app`         |
-| Veritabanı | Cloudflare D1      | `harfhane-db`                |
+| Veritabanı | Cloudflare D1      | `harfhane`                |
 
 GitHub Actions üzerinden `main` branch'e push ile otomatik tetiklenir.
 
@@ -62,13 +62,13 @@ Lokalde env var gerekmez — Vite proxy `/api` → `localhost:8787` yönlendirir
 
 ```bash
 # Lokal — geliştirme ortamı
-wrangler d1 migrations apply harfhane-db --local
+wrangler d1 migrations apply harfhane --local
 
-# Production — dikkatli uygula
-wrangler d1 migrations apply harfhane-db --remote
+# Production — dikkatli uygula (Invariant 4: owner approval)
+wrangler d1 migrations apply harfhane --remote
 ```
 
-Migration dosyaları: `apps/backend/migrations/`
+Migration dosyaları: `apps/backend/db/migrations/`
 
 ---
 
