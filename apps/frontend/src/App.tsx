@@ -8,35 +8,10 @@ import AdminLogin from './components/admin/AdminLogin';
 import AdminPanel from './components/admin/AdminPanel';
 import { PageMeta } from './components/page-meta';
 import { getDefaultPlayableLength, usePlayableLengths, usePlayableLengthsQuery } from './hooks/usePlayableLengths';
+import { HOME_META, getGameMeta, type DailyOrUnlimited } from './seo/route-meta';
 import type { GameMode, WordLength } from './types';
 
 const CHUNK_RELOAD_KEY = 'harfhane:chunk-reload';
-
-const DAILY_TITLES: Record<WordLength, string> = {
-  4: 'Günlük Kelime Oyunu — 4 Harf | Harfhane',
-  5: 'Günlük Kelime Oyunu — 5 Harf | Harfhane',
-  6: 'Günlük Kelime Oyunu — 6 Harf | Harfhane',
-};
-
-const UNLIMITED_TITLES: Record<WordLength, string> = {
-  4: 'Sınırsız Kelime Oyunu — 4 Harf | Harfhane',
-  5: 'Sınırsız Kelime Oyunu — 5 Harf | Harfhane',
-  6: 'Sınırsız Kelime Oyunu — 6 Harf | Harfhane',
-};
-
-type DailyOrUnlimited = Extract<GameMode, 'daily' | 'unlimited'>;
-
-const GAME_TITLES: Record<DailyOrUnlimited, Record<WordLength, string>> = {
-  daily: DAILY_TITLES,
-  unlimited: UNLIMITED_TITLES,
-};
-
-const GAME_DESCRIPTIONS: Record<DailyOrUnlimited, (wordLength: WordLength) => string> = {
-  daily: (wordLength) =>
-    `Her gün yeni bir ${wordLength} harfli Türkçe kelimeyi 6 denemede bul. Ücretsiz günlük kelime bulmacası.`,
-  unlimited: (wordLength) =>
-    `Dilediğin kadar oyna! ${wordLength} harfli Türkçe kelime bulmacasında sınırsız pratik yap.`,
-};
 
 function reloadOnChunkError(): never {
   const lastReload = sessionStorage.getItem(CHUNK_RELOAD_KEY);
@@ -91,14 +66,10 @@ function GameRoute({ mode }: { mode: DailyOrUnlimited }): React.JSX.Element {
   }
 
   const wordLength: WordLength = length === undefined ? fallbackLength : (parsed as WordLength);
-  const canonicalPath = length === undefined ? `/${mode}` : `/${mode}/${wordLength}`;
+  const meta = getGameMeta(mode, wordLength, length === undefined ? undefined : wordLength);
   return (
     <>
-      <PageMeta
-        title={GAME_TITLES[mode][wordLength]}
-        description={GAME_DESCRIPTIONS[mode](wordLength)}
-        canonicalPath={canonicalPath}
-      />
+      <PageMeta title={meta.title} description={meta.description} canonicalPath={meta.canonicalPath} />
       <GamePage mode={mode} wordLength={wordLength} playableLengths={playableLengths} onGoHome={() => navigate('/')} />
     </>
   );
@@ -109,11 +80,7 @@ function HomeRoute(): React.JSX.Element {
 
   return (
     <>
-      <PageMeta
-        title="Harfhane — Türkçe Kelime Oyunu | Günlük Bulmaca"
-        description="Harfhane ile her gün yeni bir Türkçe kelime bul! Ücretsiz Türkçe kelime oyunu. Günlük bulmaca ve sınırsız mod."
-        canonicalPath="/"
-      />
+      <PageMeta title={HOME_META.title} description={HOME_META.description} canonicalPath={HOME_META.canonicalPath} />
       <HomePage
         onSelectMode={(mode: GameMode, length: WordLength) => {
           navigate(`/${mode}/${length}`);

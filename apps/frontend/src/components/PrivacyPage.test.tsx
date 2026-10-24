@@ -289,6 +289,7 @@ describe('navigation/footer link to the published privacy page (007-AE1)', () =>
       'App.routes.test.tsx',
       'PrivacyPage.tsx',
       'PrivacyPage.test.tsx',
+      'route-meta.ts',
       'structured-data.test.ts',
       'SettingsModal.tsx',
       'SettingsModal.test.tsx',

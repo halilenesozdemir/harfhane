@@ -1,3 +1,4 @@
+import { PRIVACY_META } from '../seo/route-meta';
 import { PageMeta } from './page-meta';
 
 // Published (Plan 007 U6, owner-approved 2026-10-24): accurate for the
@@ -7,9 +8,9 @@ const PrivacyPage = (): React.JSX.Element => {
   return (
     <>
       <PageMeta
-        title="Gizlilik Politikası | Harfhane"
-        description="Harfhane gizlilik politikası: hangi veriler işlenir, ne kadar saklanır ve haklarınız."
-        canonicalPath="/gizlilik"
+        title={PRIVACY_META.title}
+        description={PRIVACY_META.description}
+        canonicalPath={PRIVACY_META.canonicalPath}
       />
       <div className="min-h-screen bg-bg-primary text-text-primary">
         <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
