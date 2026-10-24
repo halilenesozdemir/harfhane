@@ -17,9 +17,11 @@ optional free-text contact field the sender chooses to fill in, not an account.
 ## Requirements
 - R1. `POST /api/feedback` validates and stores a feedback row, then best-effort emails the owner
   via Resend; the stored row is never lost because the email failed.
-- R2. A `word_report` on a daily puzzle is only accepted if the reported word matches that date's
-  scheduled word and the date is today or in the past; the endpoint never confirms a future
-  answer.
+- R2. A `word_report` on a daily puzzle is verified against that date's scheduled word only for a
+  strictly past date — comparing against today's word would let a caller probe today's answer by
+  trial and error (201 for the right word, 422 for a wrong one), so a report for today or a future
+  date is never compared: today's report is stored as-is, and a future date is rejected outright.
+  The endpoint never confirms or denies today's or a future answer.
 - R3. The endpoint is rate limited more strictly than the existing game endpoints (in-memory, per
   IP).
 - R4. `GET /api/admin/feedback` (existing admin auth) lists recent feedback with an optional
@@ -36,10 +38,12 @@ optional free-text contact field the sender chooses to fill in, not an account.
   once.
 - AE2 (R1). Given `sendFeedbackEmail` rejects, `POST /api/feedback` still returns 201 and the row
   is stored.
-- AE3 (R2). Given today's scheduled 5-letter word is `KALEM` and the body reports `{ kind:
-  'word_report', mode: 'daily', word_length: 5, puzzle_date: today, reported_word: 'KALEM' }`,
-  the row is stored with the matching word; given `reported_word: 'MASAL'` for the same date, the
-  route returns 422 and nothing is stored.
+- AE3 (R2). Given a past date's scheduled 5-letter word was `KALEM`, the body `{ kind:
+  'word_report', mode: 'daily', word_length: 5, puzzle_date: <that past date>, reported_word:
+  'KALEM' }` is stored (201); given `reported_word: 'MASAL'` for the same past date, the route
+  returns 422 and nothing is stored. Given `puzzle_date` is today, `POST /api/feedback` returns
+  an identical 201 response whether `reported_word` matches today's scheduled word or not, and
+  never looks up today's scheduled word.
 - AE4 (R2). Given `puzzle_date` is tomorrow's Turkey day, `POST /api/feedback` returns 422 and
   never looks up tomorrow's scheduled word.
 - AE5 (R3). Given 6 requests from the same IP within 10 minutes, the 6th returns 429.
@@ -62,8 +66,10 @@ optional free-text contact field the sender chooses to fill in, not an account.
 - KTD2. Word-report verification reuses the existing daily-word lookup (same repository pattern
   as `apps/backend/src/repositories/word-repository.ts`'s daily lookup, read-only, not touching
   that file while the concurrent `fix/backend-mvp-review` branch edits it) scoped to
-  `date <= today` (Turkey day via `getTodayString()`); a future date is rejected by zod before
-  any lookup runs (R2, AE4).
+  `date < today` (Turkey day via `getTodayString()`): a future date is rejected before any lookup
+  runs, and today's date skips the lookup entirely and is stored as-is, since comparing against
+  today's scheduled word would turn the endpoint into an answer oracle (right word → 201, wrong
+  word → 422) (R2, AE3, AE4).
 - KTD3. `feedback.status` is server-owned triage state (`new` default), separate from
   `kind`/`mode`; the admin list and patch follow the existing `routes -> services ->
   repositories` layering and the same `{ data }` / `{ error }` response shape as `admin.ts`.
