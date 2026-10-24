@@ -8,54 +8,47 @@ const DAILY: ShareMode = { type: 'daily', date: '2026-10-24' };
 const UNLIMITED: ShareMode = { type: 'unlimited' };
 
 describe('generateShareText', () => {
-  it('should render a fully filled bar when every tile in the row is correct', () => {
+  it('should render a correct tile as a green circle', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    expect(result).toContain('▰▰▰▰▰');
+    expect(result).toContain('🟢🟢🟢🟢🟢');
   });
 
-  it('should render an empty bar with a present marker when every tile is present but misplaced', () => {
-    const evaluations = createEvaluations([['present', 'present', 'present', 'present', 'present']]);
+  it('should render a present tile as a yellow circle and an absent tile as a white circle, in position', () => {
+    const evaluations = createEvaluations([['correct', 'present', 'absent', 'absent', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    expect(result).toContain('▱▱▱▱▱ ✦5');
+    const gridLine = result.split('\n')[3]!;
+    expect(gridLine).toBe('🟢🟡⚪⚪🟢');
   });
 
-  it('should render a fully empty bar with no present marker when every tile is absent', () => {
-    const evaluations = createEvaluations([['absent', 'absent', 'absent', 'absent', 'absent']]);
+  it('should reveal which positions are correct, present or absent (positional, unlike an aggregate count)', () => {
+    const evaluations = createEvaluations([['absent', 'correct', 'absent', 'correct', 'present']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    const barLine = result.split('\n')[3]!;
-    expect(barLine).toBe('▱▱▱▱▱');
+    const gridLine = result.split('\n')[3]!;
+    expect(gridLine).toBe('⚪🟢⚪🟢🟡');
   });
 
-  it('should not append a present marker when no letters are present but misplaced', () => {
-    const evaluations = createEvaluations([['correct', 'absent', 'correct', 'absent', 'correct']]);
+  it('should render a null (unrevealed) tile as a white circle', () => {
+    const evaluations = createEvaluations([[null, 'correct', null, null, 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    const barLine = result.split('\n')[3]!;
-    // Bar count only, never the tile positions (that would reveal which letters are placed).
-    expect(barLine).toBe('▰▰▰▱▱');
+    const gridLine = result.split('\n')[3]!;
+    expect(gridLine).toBe('⚪🟢⚪⚪🟢');
   });
 
-  it('should mix filled and empty segments with the present count suffix when some letters are present', () => {
-    const evaluations = createEvaluations([['correct', 'correct', 'present', 'absent', 'absent']]);
-    const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    const barLine = result.split('\n')[3]!;
-    expect(barLine).toBe('▰▰▱▱▱ ✦1');
-  });
-
-  it('should show "<n>. tahminde buldum" when the game is won', () => {
+  it('should show "<n>/6" as the second line when the game is won', () => {
     const evaluations = createEvaluations([
       ['absent', 'absent', 'absent', 'absent', 'absent'],
       ['correct', 'correct', 'correct', 'correct', 'correct'],
     ]);
     const result = generateShareText(['YANLI', 'DOGRU'], evaluations, 5, DAILY, true);
-    expect(result.split('\n')[1]).toBe('2. tahminde buldum');
+    expect(result.split('\n')[1]).toBe('2/6');
   });
 
-  it('should show "Bulamadım (6 tahmin)" when the game is lost', () => {
+  it('should show "Bulamadım · 6/6" as the second line when the game is lost', () => {
     const guesses = ['AAAAA', 'BBBBB', 'CCCCC', 'DDDDD', 'EEEEE', 'FFFFF'];
     const evaluations = createEvaluations(guesses.map(() => Array(5).fill('absent') as TileStatus[]));
     const result = generateShareText(guesses, evaluations, 5, DAILY, false);
-    expect(result.split('\n')[1]).toBe('Bulamadım (6 tahmin)');
+    expect(result.split('\n')[1]).toBe('Bulamadım · 6/6');
   });
 
   it('should header with the day and Turkish month name and word length for a daily game', () => {
@@ -77,45 +70,46 @@ describe('generateShareText', () => {
     expect(result.split('\n')[0]).toBe('Harfhane · 5 Ocak · 5 harf');
   });
 
-  it('should footer with "İpucusuz" when no hint was used', () => {
+  it('should not append a streak or hint suffix to the second line by default', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    const lines = result.split('\n');
-    expect(lines[lines.length - 2]).toBe('İpucusuz');
+    expect(result.split('\n')[1]).toBe('1/6');
   });
 
-  it('should footer with "İpucuyla" when a hint was used', () => {
+  it('should append " · İpucuyla" to the second line when a hint was used', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true, { hintUsed: true });
-    const lines = result.split('\n');
-    expect(lines[lines.length - 2]).toBe('İpucuyla');
+    expect(result.split('\n')[1]).toBe('1/6 · İpucuyla');
   });
 
-  it('should append the daily streak to the footer when it is greater than zero and mode is daily', () => {
+  it('should append " · Seri <n>" to the second line when the daily streak is greater than zero', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true, { streak: 4 });
-    const lines = result.split('\n');
-    expect(lines[lines.length - 2]).toBe('İpucusuz · Seri 4');
+    expect(result.split('\n')[1]).toBe('1/6 · Seri 4');
   });
 
   it('should not append a streak suffix when the streak is zero', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, DAILY, true, { streak: 0 });
-    const lines = result.split('\n');
-    expect(lines[lines.length - 2]).toBe('İpucusuz');
+    expect(result.split('\n')[1]).toBe('1/6');
   });
 
   it('should not append a streak suffix for unlimited games even when a streak value is passed', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
     const result = generateShareText(['KELME'], evaluations, 5, UNLIMITED, true, { streak: 9 });
-    const lines = result.split('\n');
-    expect(lines[lines.length - 2]).toBe('İpucusuz');
+    expect(result.split('\n')[1]).toBe('1/6');
   });
 
-  it('should end with "harfhane.app" by default', () => {
+  it('should append both the streak and hint suffixes, in that order, when both apply', () => {
     const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
-    const result = generateShareText(['KELME'], evaluations, 5, DAILY, true);
-    expect(result.split('\n').at(-1)).toBe('harfhane.app');
+    const result = generateShareText(['KELME'], evaluations, 5, DAILY, true, { streak: 4, hintUsed: true });
+    expect(result.split('\n')[1]).toBe('1/6 · Seri 4 · İpucuyla');
+  });
+
+  it('should end with "harfhane.app" by default, for daily and unlimited alike', () => {
+    const evaluations = createEvaluations([['correct', 'correct', 'correct', 'correct', 'correct']]);
+    expect(generateShareText(['KELME'], evaluations, 5, DAILY, true).split('\n').at(-1)).toBe('harfhane.app');
+    expect(generateShareText(['KELME'], evaluations, 5, UNLIMITED, true).split('\n').at(-1)).toBe('harfhane.app');
   });
 
   it('should honor a custom share URL in the last line', () => {
@@ -142,13 +136,12 @@ describe('generateShareText', () => {
     expect(result).toBe(
       [
         'Harfhane · 24 Ekim · 5 harf',
-        '3. tahminde buldum',
+        '3/6 · Seri 4',
         '',
-        '▱▱▱▱▱',
-        '▰▰▱▱▱',
-        '▰▰▰▰▰',
+        '⚪⚪⚪⚪⚪',
+        '🟢🟢⚪⚪⚪',
+        '🟢🟢🟢🟢🟢',
         '',
-        'İpucusuz · Seri 4',
         'harfhane.app',
       ].join('\n')
     );
@@ -173,7 +166,7 @@ describe('generateShareText', () => {
     expect(result.split('\n')[0]).toBe(`Harfhane · ${expectedLabel} · 5 harf`);
   });
 
-  it('should have one bar line per guess', () => {
+  it('should have one grid line per guess', () => {
     const evaluations = createEvaluations([
       ['absent', 'absent', 'absent', 'absent', 'absent'],
       ['present', 'present', 'absent', 'absent', 'absent'],
@@ -181,7 +174,7 @@ describe('generateShareText', () => {
     ]);
     const result = generateShareText(['YANLI', 'YANLI', 'DOGRU'], evaluations, 5, DAILY, true);
     const lines = result.split('\n');
-    // header, result, blank, 3 bar lines, blank, footer x2 = 9 lines.
-    expect(lines).toHaveLength(9);
+    // header, result, blank, 3 grid lines, blank, url = 8 lines.
+    expect(lines).toHaveLength(8);
   });
 });

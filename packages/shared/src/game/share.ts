@@ -1,14 +1,17 @@
 import type { TileStatus } from './types';
 
-// Owner decision 2026-10-24 (docs/decisions/2026-10-24-share-format.md): an original share
-// format with no positional emoji grid, replacing the Wordle-style 🟩🟨⬜ rows + "n/6" text.
-const FILLED_BAR_CHAR = '▰';
-const EMPTY_BAR_CHAR = '▱';
-const PRESENT_MARKER = '✦';
+// Owner decision 2026-10-24 (docs/decisions/2026-10-24-share-format-circles.md): a positional
+// circle grid — one 🟢/🟡/⚪ per guessed tile, mirroring the game board itself — replacing the
+// aggregate progress-bar format (▰/▱ + "✦N") merged the same day, which told the reader nothing
+// about *which* letters were right. The emoji grid is a narrow, explicit exception to the
+// no-emoji rule in root CLAUDE.md: see that ADR for the trade-dress reasoning.
+const CORRECT_CIRCLE = '🟢';
+const PRESENT_CIRCLE = '🟡';
+const ABSENT_CIRCLE = '⚪';
 const MAX_GUESSES = 6;
 const DEFAULT_SHARE_URL = 'harfhane.app';
-const HINT_USED_LABEL = 'İpucuyla';
-const HINT_UNUSED_LABEL = 'İpucusuz';
+const LOST_LABEL = 'Bulamadım';
+const HINT_USED_SUFFIX = ' · İpucuyla';
 const UNLIMITED_HEADER_LABEL = 'Sınırsız';
 
 const TURKISH_MONTH_NAMES: readonly string[] = [
@@ -49,14 +52,7 @@ function buildHeaderLine(mode: ShareMode, wordLength: number): string {
 }
 
 function buildResultLine(isWon: boolean, guessCount: number): string {
-  return isWon ? `${guessCount}. tahminde buldum` : `Bulamadım (${MAX_GUESSES} tahmin)`;
-}
-
-function buildBarLine(row: TileStatus[]): string {
-  const correctCount = row.filter((status) => status === 'correct').length;
-  const presentCount = row.filter((status) => status === 'present').length;
-  const bar = FILLED_BAR_CHAR.repeat(correctCount) + EMPTY_BAR_CHAR.repeat(row.length - correctCount);
-  return presentCount > 0 ? `${bar} ${PRESENT_MARKER}${presentCount}` : bar;
+  return isWon ? `${guessCount}/${MAX_GUESSES}` : `${LOST_LABEL} · ${MAX_GUESSES}/${MAX_GUESSES}`;
 }
 
 interface ResolvedShareOptions {
@@ -65,17 +61,31 @@ interface ResolvedShareOptions {
   readonly streak: number;
 }
 
-function buildFooterLines(mode: ShareMode, options: ResolvedShareOptions): [string, string] {
-  const hintLabel = options.hintUsed ? HINT_USED_LABEL : HINT_UNUSED_LABEL;
+function buildSecondLine(mode: ShareMode, isWon: boolean, guessCount: number, options: ResolvedShareOptions): string {
+  const resultLine = buildResultLine(isWon, guessCount);
   const showsStreak = mode.type === 'daily' && options.streak > 0;
   const streakSuffix = showsStreak ? ` · Seri ${options.streak}` : '';
-  return [`${hintLabel}${streakSuffix}`, options.shareUrl];
+  const hintSuffix = options.hintUsed ? HINT_USED_SUFFIX : '';
+  return `${resultLine}${streakSuffix}${hintSuffix}`;
+}
+
+// Absent and null (unrevealed) both render as the empty circle: neither tells the reader the
+// letter was right, so they are indistinguishable in the share text.
+function mapStatusToCircle(status: TileStatus): string {
+  if (status === 'correct') return CORRECT_CIRCLE;
+  if (status === 'present') return PRESENT_CIRCLE;
+  return ABSENT_CIRCLE;
+}
+
+function buildGridLine(row: TileStatus[]): string {
+  return row.map(mapStatusToCircle).join('');
 }
 
 /**
- * Builds Harfhane's own share text (owner decision 2026-10-24): one progress bar per guess
- * (▰ = correct position, ▱ = the rest), a `✦N` marker only when N letters are present but
- * misplaced, and never a positional reveal of which letters those are.
+ * Builds Harfhane's own share text (owner decision 2026-10-24,
+ * `docs/decisions/2026-10-24-share-format-circles.md`): a positional circle grid, one row per
+ * guess, mapping each tile to 🟢 (correct position), 🟡 (present elsewhere) or ⚪ (absent) —
+ * never the letters themselves.
  */
 export const generateShareText = (
   guesses: string[],
@@ -93,11 +103,11 @@ export const generateShareText = (
 
   const lines = [
     buildHeaderLine(mode, wordLength),
-    buildResultLine(isWon, guesses.length),
+    buildSecondLine(mode, isWon, guesses.length, resolvedOptions),
     '',
-    ...evaluations.map(buildBarLine),
+    ...evaluations.map(buildGridLine),
     '',
-    ...buildFooterLines(mode, resolvedOptions),
+    resolvedOptions.shareUrl,
   ];
 
   return lines.join('\n');

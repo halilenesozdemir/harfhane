@@ -210,7 +210,7 @@ describe('GameOverCard', () => {
     expect(await screen.findByText('Harika!')).toBeTruthy();
   });
 
-  it('should include "Bulamadım (6 tahmin)" in the shared text when the game is lost', async () => {
+  it('should include "Bulamadım · 6/6" in the shared text when the game is lost', async () => {
     await renderCard({
       gameStatus: 'lost',
       guesses: ['KAPAK', 'KAPAK', 'KAPAK', 'KAPAK', 'KAPAK', 'KAPAK'],
@@ -218,7 +218,7 @@ describe('GameOverCard', () => {
     });
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     expect(Share.share).toHaveBeenCalledWith(
-      expect.objectContaining({ message: expect.stringContaining('Bulamadım (6 tahmin)') })
+      expect.objectContaining({ message: expect.stringContaining('Bulamadım · 6/6') })
     );
   });
 
@@ -245,10 +245,10 @@ describe('GameOverCard', () => {
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: true });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-    expect(expectedShareText.split('\n').at(-2)).toContain('İpucuyla');
+    expect(expectedShareText.split('\n')[1]).toContain('İpucuyla');
   });
 
-  it('should footer with "İpucusuz" when no hint was used (011-AE6)', async () => {
+  it('should leave the hint marker out of the shared text when no hint was used (011-AE6)', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
     await renderCard({ guesses, evaluations, hintUsed: false });
@@ -256,10 +256,10 @@ describe('GameOverCard', () => {
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: false });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-    expect(expectedShareText.split('\n').at(-2)).toBe('İpucusuz');
+    expect(expectedShareText.split('\n')[1]).not.toContain('İpucu');
   });
 
-  it('should footer with "İpucuyla" in the unlimited shared text when a hint was used', async () => {
+  it('should mark the unlimited shared text with "İpucuyla" when a hint was used', async () => {
     const onNewGame = jest.fn();
     await renderCard({
       mode: 'unlimited',
@@ -282,7 +282,7 @@ describe('GameOverCard', () => {
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
   });
 
-  it('should append the current streak to the shared text footer when a daily streak is passed', async () => {
+  it('should append the current streak to the result line when a daily streak is passed', async () => {
     const guesses = [...WON_GUESSES];
     const evaluations = WON_EVALUATIONS.map((row) => [...row]);
     await renderCard({ guesses, evaluations, streak: 4 });
@@ -290,10 +290,10 @@ describe('GameOverCard', () => {
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     const expectedShareText = generateShareText(guesses, evaluations, 5, DAILY_MODE, true, { hintUsed: false, streak: 4 });
     expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: expectedShareText }));
-    expect(expectedShareText.split('\n').at(-2)).toBe('İpucusuz · Seri 4');
+    expect(expectedShareText.split('\n')[1]).toMatch(/ · Seri 4$/);
   });
 
-  it('should not append a streak suffix to an unlimited shared text footer even when a streak is passed', async () => {
+  it('should not append a streak suffix to an unlimited shared text even when a streak is passed', async () => {
     await renderCard({
       mode: 'unlimited',
       guesses: ['KALEM'],
@@ -305,7 +305,7 @@ describe('GameOverCard', () => {
 
     await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
     const sharedText = (Share.share as jest.Mock).mock.calls.at(-1)![0].message as string;
-    expect(sharedText.split('\n').at(-2)).toBe('İpucusuz');
+    expect(sharedText.split('\n')[1]).not.toContain('Seri');
   });
 
   it('should render the result title in the headline display font, not the body font', async () => {

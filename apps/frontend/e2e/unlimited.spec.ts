@@ -36,7 +36,7 @@ test('unlimited mode shows no hint button (FREE_UNLIMITED_HINTS = 0)', async ({ 
   await expect(page.getByRole('button', { name: 'İpucu kullanıldı' })).not.toBeVisible();
 });
 
-test('share text footer reads "İpucusuz" in unlimited mode (011-AE6)', async ({ page, api }) => {
+test('unlimited share text has no hint marker and ends with the bare host (011-AE6)', async ({ page, api }) => {
   await api.stubRandomWord(5, [{ word: 'KALEM' }]);
   await api.stubValidate(() => true);
   await forceClipboardShareFallback(page);
@@ -50,5 +50,7 @@ test('share text footer reads "İpucusuz" in unlimited mode (011-AE6)', async ({
   await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
   const copiedText = await getCopiedShareText(page);
   const lines = copiedText.split('\n');
-  expect(lines[lines.length - 2]).toBe('İpucusuz');
+  expect(lines[0]).toBe('Harfhane · Sınırsız · 5 harf');
+  expect(lines[1]).toBe('1/6');
+  expect(lines[lines.length - 1]).toBe('harfhane.app');
 });

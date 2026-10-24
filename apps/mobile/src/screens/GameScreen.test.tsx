@@ -569,7 +569,7 @@ describe('GameScreen', () => {
       await act(async () => fireEvent.press(screen.getByTestId('gameover-share')));
       const sharedMessage = (Share.share as jest.Mock).mock.calls.at(-1)?.[0]?.message as string;
       const lines = sharedMessage.split('\n');
-      expect(lines[lines.length - 2]).toContain('İpucuyla');
+      expect(lines[1]).toContain('İpucuyla');
     } finally {
       jest.useRealTimers();
     }

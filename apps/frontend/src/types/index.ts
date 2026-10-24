@@ -132,7 +132,6 @@ export interface GameOverModalProps {
   onPlayAgain: () => void;
   onGoHome: () => void;
   sessionChallenge?: SessionChallenge | undefined;
-  challengeUrl?: string | undefined;
   hintUsed?: boolean;
 }
 
