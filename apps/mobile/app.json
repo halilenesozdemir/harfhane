@@ -40,6 +40,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f66c593c-cecd-43a1-9686-618ee449a8fd"
+      }
+    },
+    "owner": "halilenes"
   }
 }

@@ -10,6 +10,7 @@ Expo Android app (Plan 004, `docs/plans/2026-10-05-004-feat-android-mvp-plan.md`
 - Tests: Vitest for logic (`src/**/*.test.ts`), jest-expo + React Native Testing Library for components (`src/**/*.test.tsx`; `render` is async in RNTL 14). `pnpm test` runs both.
 - Bundle check without a device: `pnpm --filter @harfhane/mobile run export:android`.
 - Running on a phone or emulator: `docs/guides/mobile-run.md`.
+- Release builds and Play submission: `docs/guides/mobile-release.md` (profiles in `eas.json`).
 - Haptics (`src/lib/haptics.ts`): `app.json` blocks the `VIBRATE` permission, so only
   `performAndroidHapticsAsync` may be used — `expo-haptics`' `impactAsync`, `notificationAsync`
   and `selectionAsync` call `Vibrator` under the hood and will silently fail without it.
