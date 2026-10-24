@@ -1,6 +1,6 @@
 # Share text: Harfhane's own format, no positional grid
 
-Date: 2026-10-24 · Status: accepted
+Date: 2026-10-24 · Status: superseded by `2026-10-24-share-format-circles.md` (same day)
 
 ## Decision
 `generateShareText` (`packages/shared/src/game/share.ts`) no longer copies Wordle's share format
