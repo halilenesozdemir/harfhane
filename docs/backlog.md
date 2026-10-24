@@ -589,6 +589,18 @@ Strict flags (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) and ts-r
 which these flags would not have caught. Pick up after launch with the U1/U2 pattern (type tests
 that fail when a flag is removed).
 
+## Plan 012 U4: landscape phones (740x360) cannot fit 6 rows plus a keyboard (2026-10-14)
+
+`GameGrid`'s board-height budget (`BOARD_HEIGHT_VIEWPORT_PCT`, 40dvh) is sized for 360x640
+portrait (R4/AE5/KTD2). At a 740x360 landscape viewport the tile size clamps to
+`--hh-tile-size-min` (40px) same as portrait, but the viewport only has 360px of height total
+against a measured `document.documentElement.scrollHeight` of 663px for a 4, 5 or 6 letter daily
+board (header + board + hint button + keyboard) — a 303px overflow in every case, confirmed with
+a throwaway Playwright probe against `/daily/4`, `/daily/5` and `/daily/6` at that viewport.
+Not chased in U4: fitting six rows plus a full keyboard in 360px of height needs either a smaller
+keyboard, a collapsible header, or scroll-to-the-active-row behavior, none of which R4 asked for.
+Revisit if real traffic shows landscape phone play.
+
 ## Plan 012 U5: StatsModal still renders distribution counts inside the filled bar (2026-10-14)
 
 `apps/frontend/src/components/StatsModal.tsx`'s `DistributionBar` still draws the guess count

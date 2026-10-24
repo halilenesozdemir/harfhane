@@ -11,6 +11,7 @@ import SettingsModal from './SettingsModal';
 import GameLoadingScreen from './GameLoadingScreen';
 import GameErrorScreen from './GameErrorScreen';
 import GameHint from './GameHint';
+import GameSidePanel from './game/GameSidePanel';
 import { useGameState } from '../hooks/useGameState';
 import { useGameModals } from '../hooks/useGameModals';
 import { useSessionChallenge } from '../hooks/useSessionChallenge';
@@ -116,6 +117,7 @@ export default function GamePage({
           />
         </main>
         <Keyboard onKeyPress={handleKeyPress} keyboardStatus={keyboardStatus} />
+        <GameSidePanel mode={mode} wordLength={wordLength} stats={stats} />
         <HowToPlayModal isOpen={modals.showHelp} onClose={modals.closeHelp} />
         <StatsModal
           isOpen={modals.showStats}

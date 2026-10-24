@@ -1,8 +1,18 @@
 import Tile from './Tile';
 import type { GameGridProps } from '../types';
-import { isHintSolved } from '@harfhane/shared';
+import { isHintSolved, MAX_GUESSES } from '@harfhane/shared';
 
-const MAX_GUESSES = 6;
+// Matches the Tailwind gap-1.5 used between tiles and between rows.
+const TILE_GAP_PX = 6;
+// Width budget: leaves margin either side of the board on narrow screens.
+const BOARD_WIDTH_VIEWPORT_PCT = 90;
+// Height budget: leaves room for the header, hint button and keyboard below
+// so the whole screen fits without a vertical scroll at 360x640 for 4, 5
+// and 6 letter boards (012-AE5). Divided by MAX_GUESSES (the row count),
+// never by word length: the board is always 6 rows regardless of how many
+// columns a word has, so the height term must not shrink as words get
+// longer.
+const BOARD_HEIGHT_VIEWPORT_PCT = 40;
 
 const GameGrid = ({
   guesses,
@@ -54,7 +64,7 @@ const GameGrid = ({
         />
       );
     }
-    
+
     rows.push(
       <div
         key={i}
@@ -69,7 +79,23 @@ const GameGrid = ({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 p-4">
+    <div
+      className="flex flex-col gap-1.5 px-2 py-2"
+      style={
+        {
+          '--tile-count': wordLength,
+          // KTD2: tile size is a CSS clamp on the board width, bounded by
+          // min(vw, dvh) terms and the tile-size-min/max tokens; this is a
+          // static formula built from the word length prop, not a measured
+          // value, so there is no JS resize listener behind it. The width
+          // term is divided by the column count (word length): more
+          // letters means narrower tiles. The height term is divided by
+          // MAX_GUESSES (the fixed row count), never by word length, since
+          // the board always has 6 rows no matter how long the word is.
+          '--board-tile-size': `clamp(var(--hh-tile-size-min), min(calc((${BOARD_WIDTH_VIEWPORT_PCT}vw - (var(--tile-count) - 1) * ${TILE_GAP_PX}px) / var(--tile-count)), calc((${BOARD_HEIGHT_VIEWPORT_PCT}dvh - (${MAX_GUESSES} - 1) * ${TILE_GAP_PX}px) / ${MAX_GUESSES})), var(--hh-tile-size-max))`,
+        } as React.CSSProperties
+      }
+    >
       {rows}
     </div>
   );
