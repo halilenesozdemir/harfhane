@@ -39,6 +39,9 @@ const MESSAGE_HEIGHT = 28;
 // Board starts 8 dp below the top bar (mobile-redesign-spec.md section C).
 const BODY_TOP_GAP = SPACING.sm;
 const SECTION_GAP = SPACING.md;
+// The hint sits with the board, not the keyboard: the board group takes the free height and
+// centres itself, and this keeps a clear gap above the keyboard.
+const HINT_KEYBOARD_GAP = SPACING.lg;
 const BUTTON_PADDING = SPACING.md;
 const BUTTON_RADIUS = RADIUS.md;
 function NOOP(): void {}
@@ -87,24 +90,26 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
     : undefined;
   return (
     <>
-      <GameGrid
-        guesses={session.game.guesses}
-        evaluations={session.game.evaluations}
-        currentGuess={session.game.currentGuess}
-        wordLength={session.solution.length}
-        hints={hint.hints}
-        isPlaying={!isFinished}
-        isRevealing={reveal.isRevealing}
-        shakeRow={reveal.shakeRow}
-        celebrateRow={reveal.celebrateRow}
-        reduceMotion={reduceMotion}
-      />
-      {!isFinished && (
-        <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
-      )}
-      {mode === 'daily' && !isFinished && (
-        <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
-      )}
+      <View style={styles.boardGroup} testID="game-board-group">
+        <GameGrid
+          guesses={session.game.guesses}
+          evaluations={session.game.evaluations}
+          currentGuess={session.game.currentGuess}
+          wordLength={session.solution.length}
+          hints={hint.hints}
+          isPlaying={!isFinished}
+          isRevealing={reveal.isRevealing}
+          shakeRow={reveal.shakeRow}
+          celebrateRow={reveal.celebrateRow}
+          reduceMotion={reduceMotion}
+        />
+        {!isFinished && (
+          <Text accessibilityLiveRegion="polite" style={[styles.message, { color: colors.text }]}>{session.message ?? ''}</Text>
+        )}
+        {mode === 'daily' && !isFinished && (
+          <HintControl canReveal={hint.canReveal} hints={hint.hints} isUsed={hint.isUsed} onReveal={hint.revealHint} />
+        )}
+      </View>
       {isGameOverReady && (session.game.gameStatus === 'won' || session.game.gameStatus === 'lost') ? (
         <GameOverCard
           mode={mode}
@@ -223,6 +228,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, paddingHorizontal: SCREEN_PADDING, paddingTop: BODY_TOP_GAP, paddingBottom: SCREEN_PADDING, gap: SECTION_GAP, justifyContent: 'space-between' },
   message: { fontSize: MESSAGE_SIZE, fontWeight: '700', textAlign: 'center', minHeight: MESSAGE_HEIGHT },
   center: { alignItems: 'center', gap: SECTION_GAP },
+  boardGroup: { flex: 1, justifyContent: 'center', gap: SECTION_GAP, paddingBottom: HINT_KEYBOARD_GAP },
   button: { alignSelf: 'center', paddingHorizontal: BUTTON_PADDING * 2, paddingVertical: BUTTON_PADDING, borderRadius: BUTTON_RADIUS },
   buttonLabel: { fontSize: MESSAGE_SIZE, fontWeight: '800' },
 });
