@@ -2,13 +2,37 @@
 set -e
 
 CODE_PATTERN='^\.githooks/|^(apps|packages)/.*\.(ts|tsx|js|jsx|json|css|sql)$|^[^/]+\.(js|mjs|cjs|ts|json|yaml)$'
+# Lines of a failing step's log printed to the terminal; the full log stays on disk.
+FAIL_TAIL_LINES=80
 
 if ! git diff --cached --name-only --diff-filter=ACMR | grep -qE "$CODE_PATTERN"; then
   exit 0
 fi
 
+LOG_DIR="$(git rev-parse --git-dir)/commit-gate"
+mkdir -p "$LOG_DIR"
+
+# Runs one gate step quietly: one line on success, the log's tail and path on failure.
+# COMMIT_GATE_VERBOSE=1 streams the full output instead.
+run_step() {
+  name="$1"
+  shift
+  if [ "${COMMIT_GATE_VERBOSE:-0}" = "1" ]; then
+    "$@"
+    return
+  fi
+  log="$LOG_DIR/$name.log"
+  if "$@" >"$log" 2>&1; then
+    echo "[commit-gate] $name ok"
+  else
+    echo "[commit-gate] $name FAILED, last $FAIL_TAIL_LINES lines (full log: $log):"
+    tail -n "$FAIL_TAIL_LINES" "$log"
+    exit 1
+  fi
+}
+
 echo "[commit-gate] typecheck + test typecheck + lint + test"
-pnpm typecheck
-pnpm typecheck:test
-pnpm lint
-pnpm test
+run_step typecheck pnpm typecheck
+run_step typecheck-test pnpm typecheck:test
+run_step lint pnpm lint
+run_step test pnpm test
