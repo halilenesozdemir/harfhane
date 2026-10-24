@@ -51,4 +51,27 @@ describe('createApiClient', () => {
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(error).toMatchObject({ status: 502, code: 'INVALID_RESPONSE' });
   });
+
+  it('should post the feedback body as JSON and return the stored row', async () => {
+    const { client, fetchImpl } = createClient(jsonResponse({ data: { id: 7, status: 'new' } }, 201));
+    const input = { kind: 'general' as const, message: 'Harika oyun!', app_platform: 'android' as const };
+    await expect(client.submitFeedback(input)).resolves.toEqual({ id: 7, status: 'new' });
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(`${BASE_URL}/feedback`);
+    const init = fetchImpl.mock.calls[0]?.[1];
+    expect(init?.method).toBe('POST');
+    expect(init?.body).toBe(JSON.stringify(input));
+  });
+
+  it('should throw an ApiRequestError with the server code when feedback submission is rejected (e.g. validation)', async () => {
+    const { client } = createClient(jsonResponse({ error: { code: 'VALIDATION_ERROR', message: 'Mesaj gerekli' } }, 422));
+    const input = { kind: 'general' as const, message: '', app_platform: 'android' as const };
+    await expect(client.submitFeedback(input)).rejects.toMatchObject({ status: 422, code: 'VALIDATION_ERROR', message: 'Mesaj gerekli' });
+  });
+
+  it('should reject with the underlying error when the network request fails', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Network request failed'));
+    const client = createApiClient({ baseUrl: BASE_URL, fetchImpl });
+    const input = { kind: 'general' as const, message: 'Test', app_platform: 'android' as const };
+    await expect(client.submitFeedback(input)).rejects.toThrow('Network request failed');
+  });
 });

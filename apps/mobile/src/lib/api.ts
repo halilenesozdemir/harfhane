@@ -5,6 +5,7 @@ import type {
   RandomWordResponse,
   ValidateWordResponse,
 } from '@harfhane/shared';
+import type { FeedbackInput, FeedbackResponse } from './feedback-types';
 
 const DEFAULT_API_URL = 'https://api.harfhane.app/api';
 const DEFAULT_WORD_LENGTH = 5;
@@ -32,6 +33,7 @@ export interface ApiClient {
   fetchRandomWord(length: number): Promise<RandomWordResponse>;
   validateWord(word: string): Promise<ValidateWordResponse>;
   fetchPlayableLengths(): Promise<PlayableLengthsResponse>;
+  submitFeedback(input: FeedbackInput): Promise<FeedbackResponse>;
 }
 
 function lengthQuery(length: number): string {
@@ -64,6 +66,7 @@ export function createApiClient({ baseUrl = DEFAULT_API_URL, fetchImpl = fetch }
     fetchRandomWord: (length) => request<RandomWordResponse>(`/words/random${lengthQuery(length)}`),
     validateWord: (word) => request<ValidateWordResponse>('/words/validate', { method: 'POST', body: JSON.stringify({ word }) }),
     fetchPlayableLengths: () => request<PlayableLengthsResponse>('/words/lengths'),
+    submitFeedback: (input) => request<FeedbackResponse>('/feedback', { method: 'POST', body: JSON.stringify(input) }),
   };
 }
 
