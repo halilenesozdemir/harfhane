@@ -2,13 +2,7 @@ import { getTodayString } from '@harfhane/shared';
 import type { Env } from '../types/env';
 import { ApiError } from '../errors/api-error';
 import { normalizeWord } from '../utils/normalize';
-import {
-  insertFeedback,
-  listFeedback as listFeedbackRows,
-  updateFeedbackStatus as updateFeedbackStatusRow,
-  findScheduledWord,
-  type FeedbackRow,
-} from '../repositories/feedback-repository';
+import { insertFeedback, findScheduledWord, type FeedbackRow } from '../repositories/feedback-repository';
 import { sendFeedbackEmail } from '../utils/feedback-email';
 import type { CreateFeedbackInput } from '../schemas/feedback-schemas';
 
@@ -59,12 +53,5 @@ export async function submitFeedback(
   }
 }
 
-export async function listFeedback(db: Env['DB'], status?: FeedbackRow['status']): Promise<FeedbackRow[]> {
-  return listFeedbackRows(db, status);
-}
-
-export async function updateFeedbackStatus(db: Env['DB'], id: number, status: FeedbackRow['status']): Promise<FeedbackRow> {
-  const row = await updateFeedbackStatusRow(db, id, status);
-  if (!row) throw new ApiError(404, 'NOT_FOUND', 'Feedback not found');
-  return row;
-}
+// listFeedback/updateFeedbackStatus (admin triage) ship in the stacked
+// follow-up PR alongside the admin routes that are their only caller.

@@ -6,7 +6,6 @@ const MAX_MESSAGE_LENGTH = 1000;
 const MAX_CONTACT_LENGTH = 200;
 
 const kindSchema = z.enum(['general', 'word_report']);
-const statusSchema = z.enum(['new', 'seen', 'done']);
 
 const puzzleDateField = z
   .string()
@@ -62,5 +61,6 @@ export const createFeedbackSchema = z
 
 export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;
 
-export const listFeedbackQuerySchema = z.object({ status: statusSchema.optional() });
-export const updateFeedbackStatusSchema = z.object({ status: statusSchema });
+// listFeedbackQuerySchema/updateFeedbackStatusSchema (admin triage) ship in
+// the stacked follow-up PR alongside the admin routes that are their only
+// caller.
