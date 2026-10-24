@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { ApiRequestError, createApiClient } from './api';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiRequestError, createApiClient, REQUEST_TIMEOUT_MS } from './api';
 
 const BASE_URL = 'https://api.example.test/api';
 
@@ -50,5 +50,42 @@ describe('createApiClient', () => {
     const error = await client.fetchDailyWord(5).catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(error).toMatchObject({ status: 502, code: 'INVALID_RESPONSE' });
+  });
+
+  describe('timeout', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    // A half-open connection never resolves or rejects fetch on its own; without the
+    // AbortController timeout the request promise (and anything awaiting it, e.g.
+    // useGame.ts's isInFlight) would hang forever instead of reaching this error path.
+    it('should reject with a timeout error when the request exceeds REQUEST_TIMEOUT_MS', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi.fn<typeof fetch>().mockImplementation(
+        (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => {
+              const abortError = new Error('Aborted');
+              abortError.name = 'AbortError';
+              reject(abortError);
+            });
+          }),
+      );
+      const client = createApiClient({ baseUrl: BASE_URL, fetchImpl });
+
+      const pending = client.fetchDailyWord(5);
+      const assertion = expect(pending).rejects.toMatchObject({ code: 'REQUEST_TIMEOUT' });
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await assertion;
+    });
+
+    it('should not time out when the response arrives before REQUEST_TIMEOUT_MS', async () => {
+      vi.useFakeTimers();
+      const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ data: { lengths: [5] } }));
+      const client = createApiClient({ baseUrl: BASE_URL, fetchImpl });
+
+      await expect(client.fetchPlayableLengths()).resolves.toEqual({ lengths: [5] });
+    });
   });
 });
