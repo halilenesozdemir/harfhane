@@ -1,6 +1,13 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
-import { getGameNumber, parseTurkeyDate, type TurkeyDate } from '@harfhane/shared';
+import {
+  getGameNumber,
+  getTodayString,
+  parseTurkeyDate,
+  parseWordLength,
+  type TurkeyDate,
+  type WordLength,
+} from '@harfhane/shared';
 import {
   findDailyWord,
   findRandomWord,
@@ -14,6 +21,12 @@ import { applySchema, seedTestData } from '../helpers/db';
 function td(value: string): TurkeyDate {
   const parsed = parseTurkeyDate(value);
   if (parsed === null) throw new Error(`invalid fixture date: ${value}`);
+  return parsed;
+}
+
+function wl(value: number): WordLength {
+  const parsed = parseWordLength(value);
+  if (parsed === null) throw new Error(`invalid fixture length: ${value}`);
   return parsed;
 }
 
@@ -54,6 +67,26 @@ describe('findDailyWord', () => {
     expect(result).toBeNull();
   });
 
+  it('should return null when the scheduled word was deactivated after scheduling', async () => {
+    await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES ('SERGEN', 'Raf', 'Sergene koydu.', 'isim', 6, 'test', 'test', 'approved', 1, 1)`
+    ).run();
+    const word = await env.DB
+      .prepare("SELECT id FROM words WHERE word = 'SERGEN'")
+      .first<{ id: number }>();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 6)')
+      .bind(word!.id, '2026-03-01')
+      .run();
+
+    // A word deactivated after it was scheduled must not keep serving as the daily
+    // answer (Invariant 1); deactivation does not run through the insert-time trigger.
+    await env.DB.prepare('UPDATE words SET is_active = 0 WHERE id = ?').bind(word!.id).run();
+
+    const result = await findDailyWord(env.DB, td('2026-03-01'), wl(6));
+    expect(result).toBeNull();
+  });
+
   it('should compute gameNumber from the Turkey calendar date, not from counting scheduled rows', async () => {
     // Only 3 rows ever exist in daily_words in this test DB, but a word scheduled
     // ~100 days after the game epoch must still report a gameNumber in the hundreds —
@@ -88,6 +121,51 @@ describe('findRandomWord', () => {
 
   it('never returns a user-submitted word, even one marked approved and active', async () => {
     const result = await findRandomWord(env.DB, 6);
+    expect(result).toBeNull();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should exclude a word scheduled as today\'s daily answer when drawing a random word', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-10T10:00:00Z'));
+    const today = getTodayString();
+
+    await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES ('KARAKTER', 'Özellik', 'Karakteri güçlü.', 'isim', 8, 'test', 'test', 'approved', 1, 1)`
+    ).run();
+    const word = await env.DB
+      .prepare("SELECT id FROM words WHERE word = 'KARAKTER'")
+      .first<{ id: number }>();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 8)')
+      .bind(word!.id, today)
+      .run();
+
+    const result = await findRandomWord(env.DB, 8);
+    expect(result).toBeNull();
+  });
+
+  it('should exclude a word scheduled as a future daily answer when drawing a random word', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-10T10:00:00Z'));
+    const today = getTodayString();
+    const futureDate = `${Number(today.slice(0, 4))}-${today.slice(5, 7)}-${String(Number(today.slice(8, 10)) + 1).padStart(2, '0')}`;
+
+    await env.DB.prepare(
+      `INSERT INTO words (word, meaning, context, category, length, source, license, status, family_safe, is_active)
+       VALUES ('BASLANGIC', 'Baş', 'Başlangıç yaptı.', 'isim', 9, 'test', 'test', 'approved', 1, 1)`
+    ).run();
+    const word = await env.DB
+      .prepare("SELECT id FROM words WHERE word = 'BASLANGIC'")
+      .first<{ id: number }>();
+    await env.DB.prepare('INSERT INTO daily_words (word_id, date, length) VALUES (?, ?, 9)')
+      .bind(word!.id, futureDate)
+      .run();
+
+    const result = await findRandomWord(env.DB, 9);
     expect(result).toBeNull();
   });
 
