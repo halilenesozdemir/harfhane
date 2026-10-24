@@ -15,6 +15,13 @@ Owner decisions made 2026-10-05:
 - Visibility is per word length, 5 letters first (Plan 001 R7, Plan 006 R5); the one-time `DB` binding switch (Plan 001 U4) runs once, the first time a length (5 letters) reaches 90 days. Opening a length (including 4 and 6 later) is a reviewed, one-line `PLAYABLE_WORD_LENGTHS` deploy (Plan 008 KTD1), not automatic — see `docs/decisions/2026-10-06-length-visibility.md` for the "scheduled" vs. "active/playable" split.
 - Launch sequencing (`docs/decisions/2026-10-05-launch-sequencing.md`): the Expo/Play owner steps stay last, on the owner's own timing; the content import + database cutover session runs after the "Web cleanup before the shared engine" backlog item, not before it.
 
+**Owner decision, 2026-10-24: original share text format, no Wordle-style grid**
+(`docs/decisions/2026-10-24-share-format.md`). The share text's emoji grid + "n/6" copied
+Wordle's trade dress; it is replaced with Harfhane's own progress-bar format (▰/▱ bars, a daily
+date or "Sınırsız" header, no positional reveal). Done in the same session: `packages/shared`'s
+`generateShareText`, web's `GameOverModal`/`SharePreview`, mobile's `GameOverCard` and the legacy
+`apps/backend/migrations/` folder removal (unrelated cleanup, same PR set).
+
 **Owner decision, 2026-10-06 (later): free launch, no monetization yet**
 (`docs/decisions/2026-10-06-free-launch.md`, supersedes the 2026-10-05 purchase-without-account
 decision as a launch commitment, though that decision's design still stands for whenever a

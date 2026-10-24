@@ -68,9 +68,10 @@ interface GameBoardProps {
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
   readonly onReportWord: GameScreenProps['onReportWord'];
+  readonly streak: number | null;
 }
 
-function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord }: GameBoardProps) {
+function GameBoard({ session, mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord, streak }: GameBoardProps) {
   const isFinished = session.game.gameStatus !== 'playing';
   const reduceMotion = useReduceMotion();
   const reveal = useRevealState(session, session.solution.length, reduceMotion);
@@ -114,7 +115,6 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           evaluations={session.game.evaluations}
           wordId={session.wordId}
           dailyDate={session.dailyDate}
-          gameNumber={session.game.gameNumber ?? null}
           date={session.game.date ?? null}
           store={store}
           today={today}
@@ -122,6 +122,7 @@ function GameBoard({ session, mode, wordLength, game, hint, colors, store, today
           onReportWord={handleReportWord}
           recordedDistribution={recordedDistribution}
           hintUsed={hint.isUsed}
+          streak={streak}
         />
       ) : null}
       {!isFinished && (
@@ -149,9 +150,10 @@ interface GameBodyProps {
   readonly today: GameScreenProps['today'];
   readonly recordedDistribution: readonly number[] | null;
   readonly onReportWord: GameScreenProps['onReportWord'];
+  readonly streak: number | null;
 }
 
-function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord }: GameBodyProps) {
+function GameBody({ mode, wordLength, game, hint, colors, store, today, recordedDistribution, onReportWord, streak }: GameBodyProps) {
   const { session } = game;
   if (session.phase === 'loading') return <ActivityIndicator accessibilityLabel="Kelime yükleniyor" color={colors.brand} />;
   if (session.phase === 'error') {
@@ -174,6 +176,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
       today={today}
       recordedDistribution={recordedDistribution}
       onReportWord={onReportWord}
+      streak={streak}
     />
   );
 }
@@ -181,7 +184,7 @@ function GameBody({ mode, wordLength, game, hint, colors, store, today, recorded
 export function GameScreen({ mode, wordLength, onBack, api, store, today, onReportWord }: GameScreenProps) {
   const { colors } = useTheme();
   const game = useGame({ mode, wordLength, api, store });
-  const { justRecordedDistribution } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
+  const { justRecordedDistribution, justRecordedStreak } = useResultRecorder({ store, mode, wordLength, session: game.session, today });
   const hint = useHint({
     store,
     mode,
@@ -208,6 +211,7 @@ export function GameScreen({ mode, wordLength, onBack, api, store, today, onRepo
           today={today}
           recordedDistribution={justRecordedDistribution}
           onReportWord={onReportWord}
+          streak={justRecordedStreak}
         />
       </View>
     </View>

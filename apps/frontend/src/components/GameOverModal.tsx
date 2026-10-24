@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Share2, Check, RotateCcw, Clock, X } from "lucide-react";
 import Modal from "./Modal";
 import SharePreview from "./SharePreview";
-import { getTimeUntilMidnight, generateShareText } from "@harfhane/shared";
+import { getTimeUntilMidnight, getTodayString, generateShareText, type ShareMode } from "@harfhane/shared";
 import { useShare } from "../hooks/useShare";
 import type { GameOverModalProps, TimeCountdown } from "../types";
 
@@ -71,7 +71,6 @@ function GameOverModal({
   solution,
   guesses,
   evaluations,
-  gameNumber,
   stats,
   isUnlimited,
   onPlayAgain,
@@ -86,13 +85,15 @@ function GameOverModal({
   );
   const [isNewDayAvailable, setIsNewDayAvailable] = useState<boolean>(false);
 
-  const modeText = isUnlimited ? "Sınırsız" : `#${gameNumber}`;
+  const shareMode: ShareMode = isUnlimited ? { type: "unlimited" } : { type: "daily", date: getTodayString() };
+  const streak = "currentStreak" in stats ? stats.currentStreak : undefined;
   const shareText = generateShareText(
     guesses,
     evaluations,
-    modeText,
+    solution.length,
+    shareMode,
     gameStatus === "won",
-    challengeUrl === undefined ? { hintUsed } : { shareUrl: challengeUrl, hintUsed }
+    { hintUsed, streak, ...(challengeUrl === undefined ? {} : { shareUrl: challengeUrl }) }
   );
   const { share, copied, failed } = useShare(shareText);
 
@@ -227,13 +228,7 @@ function GameOverModal({
         )}
 
         {gameStatus !== "playing" && (
-          <SharePreview
-            evaluations={evaluations}
-            gameNumber={gameNumber}
-            guessCount={guesses.length}
-            isWon={gameStatus === "won"}
-            challengeUrl={challengeUrl}
-          />
+          <SharePreview shareText={shareText} />
         )}
 
         <div className="space-y-3">

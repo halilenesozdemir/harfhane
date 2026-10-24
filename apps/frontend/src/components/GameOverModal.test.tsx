@@ -75,70 +75,64 @@ describe('GameOverModal', () => {
     expect(screen.queryByText('Bağlam:')).not.toBeInTheDocument();
   });
 
-  describe('share text hint marker', () => {
+  describe('share text footer', () => {
     afterEach(() => {
       Reflect.deleteProperty(navigator, 'share');
       vi.restoreAllMocks();
     });
 
-    it('should end the shared header line with "· ipucu" when a hint was used (011-AE6)', async () => {
+    async function captureSharedText(): Promise<string> {
       const shareMock = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+      await act(async () => {
+        fireEvent.click(screen.getByText('Sonucu paylaş'));
+      });
+      expect(shareMock).toHaveBeenCalledTimes(1);
+      return (shareMock.mock.calls[0]![0] as { text: string }).text;
+    }
+
+    it('should footer with "İpucuyla" when a hint was used (011-AE6)', async () => {
       renderModal({ hintUsed: true });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Sonucu paylaş'));
-      });
-      expect(shareMock).toHaveBeenCalledTimes(1);
-
-      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
-      expect(sharedText.split('\n')[0]).toContain('· ipucu');
+      const lines = (await captureSharedText()).split('\n');
+      expect(lines[lines.length - 2]).toContain('İpucuyla');
     });
 
-    it('should not append "· ipucu" to the shared header line when no hint was used', async () => {
-      const shareMock = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+    it('should footer with "İpucusuz" and the current streak when no hint was used', async () => {
       renderModal({ hintUsed: false });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Sonucu paylaş'));
-      });
-      expect(shareMock).toHaveBeenCalledTimes(1);
-
-      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
-      expect(sharedText.split('\n')[0]).not.toContain('ipucu');
+      const lines = (await captureSharedText()).split('\n');
+      expect(lines[lines.length - 2]).toBe('İpucusuz · Seri 1');
     });
 
-    it('should end the shared text with the challengeUrl and mark the header with "· ipucu" when hintUsed is true', async () => {
-      const shareMock = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
+    it('should not append a streak suffix when the current streak is zero', async () => {
+      renderModal({ hintUsed: false, stats: { ...STATS, currentStreak: 0 } });
+      const lines = (await captureSharedText()).split('\n');
+      expect(lines[lines.length - 2]).toBe('İpucusuz');
+    });
+
+    it('should end the shared text with the challengeUrl and footer "İpucuyla" when hintUsed is true', async () => {
       renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: true });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Sonucu paylaş'));
-      });
-      expect(shareMock).toHaveBeenCalledTimes(1);
-
-      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
-      const lines = sharedText.split('\n');
+      const lines = (await captureSharedText()).split('\n');
       expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
-      expect(lines[0]).toContain('· ipucu');
+      expect(lines[lines.length - 2]).toContain('İpucuyla');
     });
 
-    it('should end the shared text with the challengeUrl and not mark the header when hintUsed is false', async () => {
-      const shareMock = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'share', { value: shareMock, configurable: true });
-      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: false });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText('Sonucu paylaş'));
-      });
-      expect(shareMock).toHaveBeenCalledTimes(1);
-
-      const sharedText = (shareMock.mock.calls[0]![0] as { text: string }).text;
-      const lines = sharedText.split('\n');
+    it('should end the shared text with the challengeUrl and footer "İpucusuz" when hintUsed is false', async () => {
+      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: false, stats: { ...STATS, currentStreak: 0 } });
+      const lines = (await captureSharedText()).split('\n');
       expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
-      expect(lines[0]).not.toContain('ipucu');
+      expect(lines[lines.length - 2]).toBe('İpucusuz');
+    });
+
+    it('should never reveal the solution in the shared text', async () => {
+      renderModal({ hintUsed: false });
+      const sharedText = await captureSharedText();
+      expect(sharedText).not.toContain('KALEM');
+    });
+
+    it('should default to "harfhane.app" as the last line when no challengeUrl is given', async () => {
+      renderModal({ hintUsed: false, challengeUrl: undefined });
+      const lines = (await captureSharedText()).split('\n');
+      expect(lines[lines.length - 1]).toBe('harfhane.app');
     });
   });
 
