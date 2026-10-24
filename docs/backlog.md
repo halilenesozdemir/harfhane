@@ -598,13 +598,10 @@ AE7). Not in U5's scope (StatsModal's distribution bar is not part of R6), but w
 fix — move the count to a sibling span in `text-text-primary`, outside the fill — the next time
 StatsModal.tsx is touched.
 
-## Plan 013: web feedback entry point, PrivacyPage and data-safety draft (2026-10-24)
+## Plan 013: web feedback entry point (2026-10-24)
 
 Plan 013 (in-app feedback) ships backend + mobile only; the web app gets no feedback entry point
-in that plan (left out as "optional, only if small"). Also not done in Plan 013: updating
-`PrivacyPage` and `docs/drafts/play-data-safety.md` to mention the new `feedback` table and
-optional contact field (that draft is on another branch) — do both the next time either file is
-touched, or as its own small follow-up plan.
+in that plan (left out as "optional, only if small"). Pick it up as its own small follow-up plan.
 
 ## D1 export backups do not restore as-is (found 2026-10-24)
 `wrangler d1 export harfhane --remote` taken after 0003 fails to import into a fresh local D1
