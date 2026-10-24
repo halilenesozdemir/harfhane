@@ -91,36 +91,28 @@ describe('GameOverModal', () => {
       return (shareMock.mock.calls[0]![0] as { text: string }).text;
     }
 
-    it('should footer with "İpucuyla" when a hint was used (011-AE6)', async () => {
-      renderModal({ hintUsed: true });
+    it('should append "İpucuyla" to the result line when a hint was used (011-AE6)', async () => {
+      renderModal({ hintUsed: true, stats: { ...STATS, currentStreak: 0 } });
       const lines = (await captureSharedText()).split('\n');
-      expect(lines[lines.length - 2]).toContain('İpucuyla');
+      expect(lines[1]).toBe('1/6 · İpucuyla');
     });
 
-    it('should footer with "İpucusuz" and the current streak when no hint was used', async () => {
+    it('should show the guess count and the current streak when no hint was used', async () => {
       renderModal({ hintUsed: false });
       const lines = (await captureSharedText()).split('\n');
-      expect(lines[lines.length - 2]).toBe('İpucusuz · Seri 1');
+      expect(lines[1]).toBe('1/6 · Seri 1');
     });
 
     it('should not append a streak suffix when the current streak is zero', async () => {
       renderModal({ hintUsed: false, stats: { ...STATS, currentStreak: 0 } });
       const lines = (await captureSharedText()).split('\n');
-      expect(lines[lines.length - 2]).toBe('İpucusuz');
+      expect(lines[1]).toBe('1/6');
     });
 
-    it('should end the shared text with the challengeUrl and footer "İpucuyla" when hintUsed is true', async () => {
-      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: true });
+    it('should render one circle per tile for each guess', async () => {
+      renderModal({ hintUsed: false });
       const lines = (await captureSharedText()).split('\n');
-      expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
-      expect(lines[lines.length - 2]).toContain('İpucuyla');
-    });
-
-    it('should end the shared text with the challengeUrl and footer "İpucusuz" when hintUsed is false', async () => {
-      renderModal({ challengeUrl: 'https://harfhane.app/daily/5', hintUsed: false, stats: { ...STATS, currentStreak: 0 } });
-      const lines = (await captureSharedText()).split('\n');
-      expect(lines[lines.length - 1]).toBe('https://harfhane.app/daily/5');
-      expect(lines[lines.length - 2]).toBe('İpucusuz');
+      expect(lines[3]).toBe('🟢🟢🟢🟢🟢');
     });
 
     it('should never reveal the solution in the shared text', async () => {
@@ -129,9 +121,10 @@ describe('GameOverModal', () => {
       expect(sharedText).not.toContain('KALEM');
     });
 
-    it('should default to "harfhane.app" as the last line when no challengeUrl is given', async () => {
-      renderModal({ hintUsed: false, challengeUrl: undefined });
+    it('should end with "harfhane.app", never a daily link, for an unlimited game', async () => {
+      renderModal({ hintUsed: false, isUnlimited: true });
       const lines = (await captureSharedText()).split('\n');
+      expect(lines[0]).toBe('Harfhane · Sınırsız · 5 harf');
       expect(lines[lines.length - 1]).toBe('harfhane.app');
     });
   });

@@ -4,7 +4,7 @@ import SharePreview from './SharePreview';
 
 describe('SharePreview', () => {
   it('should render exactly the given share text', () => {
-    const shareText = ['Harfhane · 24 Ekim · 5 harf', '3. tahminde buldum', '', '▰▰▱▱▱ ✦1', '', 'İpucusuz', 'harfhane.app'].join(
+    const shareText = ['Harfhane · 24 Ekim · 5 harf', '3/6 · Seri 4', '', '⚪🟡⚪⚪🟢', '🟢🟢⚪🟡⚪', '🟢🟢🟢🟢🟢', '', 'harfhane.app'].join(
       '\n'
     );
     const { getByTestId } = render(<SharePreview shareText={shareText} />);

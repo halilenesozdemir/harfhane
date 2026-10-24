@@ -56,8 +56,6 @@ export default function GamePage({
     }
   }, [hasSeenHelp, setHasSeenHelp, openHelp]);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://harfhane.app';
-  const challengeUrl = `${origin}/daily/${wordLength}`;
 
   const handleKeyPress = (key: string): void => {
     if (key === 'ENTER') submitGuess();
@@ -141,7 +139,6 @@ export default function GamePage({
           onPlayAgain={handlePlayAgain}
           onGoHome={handleGoHome}
           sessionChallenge={isUnlimited ? sessionChallenge : undefined}
-          challengeUrl={challengeUrl}
           hintUsed={hintUsed}
         />
         <SettingsModal isOpen={modals.showSettings} onClose={modals.closeSettings} />

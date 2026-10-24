@@ -75,7 +75,6 @@ function GameOverModal({
   isUnlimited,
   onPlayAgain,
   sessionChallenge,
-  challengeUrl,
   hintUsed = false,
 }: GameOverModalProps): React.JSX.Element {
   const navigate = useNavigate();
@@ -93,7 +92,7 @@ function GameOverModal({
     solution.length,
     shareMode,
     gameStatus === "won",
-    { hintUsed, streak, ...(challengeUrl === undefined ? {} : { shareUrl: challengeUrl }) }
+    { hintUsed, streak }
   );
   const { share, copied, failed } = useShare(shareText);
 
