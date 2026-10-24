@@ -95,6 +95,19 @@ const Modal = ({ isOpen, onClose, title, children, variant = 'dialog' }: ModalPr
         <div className="p-4">
           {children}
         </div>
+
+        {/* A sheet also closes on backdrop click and Escape, but neither is visible: without this
+            button a player on desktop felt stuck behind the game-over sheet. It comes after the body
+            in DOM order so opening the sheet focuses its content, not the close button. */}
+        {isSheet && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-1 hover:bg-tile-empty rounded-md transition-colors cursor-pointer"
+            aria-label="Kapat"
+          >
+            <X size={22} className="text-text-secondary" />
+          </button>
+        )}
       </div>
     </div>
   );
