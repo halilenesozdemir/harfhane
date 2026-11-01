@@ -655,3 +655,12 @@ Owner wants a public list/leaderboard back after launch ("başka insanların da 
 from `toISOString()` (UTC), so between 00:00 and 03:00 Turkey time the default date is one Turkey
 day behind. Admin-only; players are unaffected since the streak fix. Use `getTodayString()` and
 Turkey-day arithmetic when that screen is next touched.
+
+## Monthly research 2026-11
+From `docs/research/2026-11-01-monthly-standards.md` (sources and advisory links are there). Listed in priority order.
+
+1. **In-range security bumps** (impact high, effort low). Bump `hono` from 4.12.5 to ^4.13.16 (33 advisories, including a ReDoS in the CORS middleware we use) and `react-router-dom` from 7.13.1 to ^7.18.5 (open redirect in `<Link>`, route-matching DoS). Patch the dev tools too: `vitest` 3.2.7 (critical, UI server), `vite` 7.3.7 and `wrangler` ≥4.59.1 (`wrangler pages` command injection). Then regenerate the lockfile. Files: `apps/backend/package.json`, `apps/frontend/package.json`, `pnpm-lock.yaml`.
+2. **zod 3 → 4 in the backend** (impact medium, effort medium). GHSA-mrhx-c7xc-m3w5 (memory exhaustion) is fixed only in `>=4.6.6`, so v3 has no patch. Move with `@hono/zod-validator` 0.4 → 0.9. Files: `apps/backend/package.json`, the validators in `apps/backend/src/**`.
+3. **Replace the deprecated `@cloudflare/vitest-pool-workers`** (impact medium, effort medium). It is renamed to `@cloudflare/vitest-plugin` and gets no more updates. The new package needs Vitest ≥4.1, so plan it as one Vitest 4/5 upgrade with one unit per workspace. Bump `compatibility_date` (2025-01-01) in the same plan. Files: `apps/backend/package.json`, `apps/backend/vitest.config.*`, `apps/backend/wrangler.toml`, every workspace's `package.json`.
+4. **Add `.github/dependabot.yml`** (impact medium, effort low). None exists, although the 2026-10-06 note chose "keep Dependabot". Use a monthly schedule, grouped updates and a low `open-pull-requests-limit` for npm, pip and github-actions, so it does not burn the Actions-minutes budget. File: `.github/dependabot.yml`.
+5. **Owner checks before Phase 4** (impact medium, effort low). (a) Confirm the Cloudflare plan tier and whether D1's Free-plan daily row caps (enforced from 2026-09-01 per a changelog preview, unverified) could fail the daily word. (b) Upgrade Expo SDK 57 to 58 (React Native 0.88, R8 on by default) before the first EAS build. Files: none for (a); `apps/mobile/package.json` for (b).
